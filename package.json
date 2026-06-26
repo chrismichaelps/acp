@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "bin": {
+    "acp": "./dist/app/cli/main.js"
+  },
   "scripts": {
     "lint": "eslint .",
     "format": "prettier --write .",

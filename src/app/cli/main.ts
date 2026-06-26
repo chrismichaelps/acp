@@ -1,0 +1,48 @@
+/** @Acp.App.Cli.Main — acp command-line entrypoint */
+import process from 'node:process'
+import { HttpClient, HttpClientRequest } from '@effect/platform'
+import { NodeHttpClient, NodeRuntime } from '@effect/platform-node'
+import { Config, Console, Effect, Either, Stream } from 'effect'
+import { runCliRequest } from './client.js'
+import { CliError, parseArgs, usage } from './commands.js'
+
+const program = Effect.gen(function* () {
+  const parsed = parseArgs(process.argv.slice(2))
+  if (Either.isLeft(parsed)) {
+    yield* Console.error(parsed.left.message)
+    yield* Console.error(usage)
+    return yield* Effect.fail(parsed.left)
+  }
+  const request = parsed.right
+
+  const configuredBaseUrl = yield* Config.string('ACP_BASE_URL').pipe(
+    Config.withDefault(''),
+  )
+  const port = yield* Config.integer('ACP_PORT').pipe(Config.withDefault(4317))
+  const baseUrl =
+    configuredBaseUrl === ''
+      ? `http://localhost:${String(port)}`
+      : configuredBaseUrl
+
+  if (request.stream === true) {
+    const client = yield* HttpClient.HttpClient
+    const response = yield* client.execute(
+      HttpClientRequest.get(`${baseUrl}${request.path}`),
+    )
+    return yield* Stream.runForEach(
+      Stream.decodeText(response.stream),
+      (chunk) => Console.log(chunk),
+    )
+  }
+
+  const result = yield* runCliRequest(request, baseUrl)
+  if (result.status >= 400) {
+    yield* Console.error(result.body)
+    return yield* Effect.fail(
+      new CliError({ message: `request failed (${String(result.status)})` }),
+    )
+  }
+  return yield* Console.log(result.body)
+})
+
+NodeRuntime.runMain(program.pipe(Effect.provide(NodeHttpClient.layer)))
