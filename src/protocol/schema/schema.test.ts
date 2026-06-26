@@ -85,6 +85,20 @@ describe('WorkUnit schema', () => {
       }),
     ).toThrow()
   })
+
+  it('decodes changes_requested from the state machine', () => {
+    const wu = decodeWork({
+      id: 'work_changes_requested',
+      workspace_id: 'workspace_123',
+      title: 'Address review feedback',
+      state: 'changes_requested',
+      priority: 'normal',
+      created_by: 'human_chris',
+      created_at: '2026-06-26T01:30:00Z',
+      updated_at: '2026-06-26T01:30:00Z',
+    })
+    expect(wu.state).toBe('changes_requested')
+  })
 })
 
 describe('CreateWorkPayload', () => {
