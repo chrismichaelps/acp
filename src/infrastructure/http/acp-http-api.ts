@@ -171,7 +171,7 @@ export const EventsGroup = HttpApiGroup.make('events').add(
     .addError(ProtocolError, protocolError(401)),
 )
 
-export class HadoofHttpApi extends HttpApi.make('hadoof')
+export class AcpHttpApi extends HttpApi.make('acp')
   .add(SessionGroup)
   .add(WorkspaceGroup)
   .add(WorkGroup)

@@ -8,7 +8,7 @@ tags: [moc, src, infrastructure, http]
 Mirror of `@root/src/infrastructure/http/`.
 
 - [[http-index]] — opaque public HTTP infrastructure exports.
-- [[hadoof-http-api]] — Effect Platform `HttpApi` declaration for the v0.1 REST surface.
+- [[acp-http-api]] — Effect Platform `HttpApi` declaration for the v0.1 REST surface.
 - [[http-error-mapper]] — transport boundary mapper from tagged domain errors to JSON HTTP responses.
 
 ## Referenced by
