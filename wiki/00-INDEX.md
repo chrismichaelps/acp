@@ -1,0 +1,29 @@
+---
+type: index
+tags: [index]
+---
+
+# ACP Vault — Index (MOC of MOCs)
+
+**Agent Coordination Protocol (ACP)** reference implementation. The wiki is the
+truth; code is a projection of it (FMCF v4.0). Build the wiki first, then code the wiki.
+
+> Front door. Open a `_MOC` to navigate a folder. Maturity: **EXPLORING**.
+
+## Maps of Content
+- [[architecture/_MOC|Architecture]] — layer topology, seam health, depth dashboard, build order.
+- [[domain/_MOC|Domain]] — the ACP glossary (Worker, Workspace, WorkUnit, Lease, …).
+- [[seams/_MOC|Seams]] — Storage, Transport, EventStream boundaries.
+- [[decisions/_MOC|Decisions]] — ADRs.
+- [[src/_MOC|Source Mirror]] — 1:1 mirror of `@root/src/`.
+
+## Law Anchors
+- Grammar (Law 4): [[grammar/typescript]] — pinned SDK versions, real imports, prohibited patterns.
+- Vocabulary: [[architecture/LANGUAGE]] — Ousterhout-grounded architecture terms.
+- Ledger: [[CHANGELOG]] — temporal log of logic deltas.
+- Handoffs: `wiki/handoffs/` — session/role continuity.
+
+## Source of Truth
+- Spec: `@root/specs.md` (canonical protocol). Note: older sections name "Hadoof";
+  per [[ADR-0001-architecture-foundation]] the canonical name is **ACP**.
+- Governance: `@root/SKILL.md` (FMCF v4.0).
