@@ -109,3 +109,9 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   route/query values are encoded at the parser boundary and TTLs fail locally
   before HTTP decoding · 97 tests green · risk LOW ·
   [[ADR-0001-architecture-foundation]]
+- 2026-06-26 · readme-foundation slice · replaced the stub README with a
+  maintainer-facing project introduction covering ACP scope, current runtime shape,
+  local validation/build commands, server/CLI smoke entrypoints, wiki-first design
+  record, repository layout, and Apache-2.0 licensing; added `build` script for the
+  documented `dist/` entrypoints and refreshed the architecture build-order ledger ·
+  docs-only risk LOW · [[ADR-0001-architecture-foundation]]
