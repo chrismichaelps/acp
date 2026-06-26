@@ -24,3 +24,8 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   tests for create, claim, review-loop transition, invalid transitions, missing
   work, ordered event emission, and `changes_requested` schema decode · 31 tests green · risk LOW ·
   [[ADR-0001-architecture-foundation]]
+- 2026-06-26 · http-transport slice · projected [[Transport]] HTTP contract to
+  code: [[http-index]], [[hadoof-http-api]] Effect Platform API declaration,
+  [[http-error-mapper]] JSON protocol error mapper, HTTP MOC, and tests for
+  reflected v0.1 routes plus status/no-leak error responses · 34 tests green ·
+  risk LOW · [[ADR-0001-architecture-foundation]]
