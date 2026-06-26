@@ -1,0 +1,95 @@
+/** @Acp.App.Server.Router.Test — HTTP routes over a web handler */
+import { describe, expect, it } from 'vitest'
+import { HttpApp } from '@effect/platform'
+import { Layer } from 'effect'
+import { AppLive } from '../index.js'
+import { IdClockLive } from './identity.js'
+import { acpRouter } from './router.js'
+
+const makeHandler = () =>
+  HttpApp.toWebHandlerLayer(acpRouter, Layer.mergeAll(AppLive, IdClockLive))
+    .handler
+
+const post = (path: string, body?: unknown) =>
+  new Request(`http://acp.test${path}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+
+const worker = {
+  id: 'agent_claude_code',
+  name: 'Claude Code',
+  kind: 'agent',
+  status: 'online',
+  capabilities: ['can_edit_files', 'can_review'],
+}
+
+describe('acpRouter', () => {
+  it('initializes a session and echoes capabilities', async () => {
+    const handler = makeHandler()
+    const res = await handler(post('/v1/session/initialize', { worker }))
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as {
+      worker: { id: string }
+      capabilities: readonly string[]
+    }
+    expect(body.worker.id).toBe('agent_claude_code')
+    expect(body.capabilities).toContain('can_review')
+  })
+
+  it('lists workspaces (empty by default)', async () => {
+    const handler = makeHandler()
+    const res = await handler(
+      new Request('http://acp.test/v1/workspaces', { method: 'GET' }),
+    )
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual([])
+  })
+
+  it('creates a work unit as open (201)', async () => {
+    const handler = makeHandler()
+    const res = await handler(
+      post('/v1/work', { workspace_id: 'workspace_1', title: 'Fix bug' }),
+    )
+    expect(res.status).toBe(201)
+    const body = (await res.json()) as { state: string; id: string }
+    expect(body.state).toBe('open')
+    expect(body.id).toMatch(/^work_/)
+  })
+
+  it('claims open work, rejecting a missing work unit with 404', async () => {
+    const handler = makeHandler()
+    const created = await handler(
+      post('/v1/work', { workspace_id: 'workspace_1', title: 'Fix bug' }),
+    )
+    const { id } = (await created.json()) as { id: string }
+
+    const claimed = await handler(
+      post(`/v1/work/${id}/claim`, { worker_id: 'agent_claude_code' }),
+    )
+    expect(claimed.status).toBe(200)
+    expect(((await claimed.json()) as { state: string }).state).toBe('claimed')
+
+    const missing = await handler(
+      post('/v1/work/work_missing/claim', { worker_id: 'agent_claude_code' }),
+    )
+    expect(missing.status).toBe(404)
+  })
+
+  it('requests a lease (201) and 404s releasing a missing one', async () => {
+    const handler = makeHandler()
+    const lease = await handler(
+      post('/v1/leases', {
+        workspace_id: 'workspace_1',
+        holder: 'agent_claude_code',
+        resource: { kind: 'file', uri: 'file://src/auth.ts' },
+      }),
+    )
+    expect(lease.status).toBe(201)
+    expect(((await lease.json()) as { state: string }).state).toBe('active')
+
+    const release = await handler(post('/v1/leases/lease_missing/release'))
+    expect(release.status).toBe(404)
+  })
+})
