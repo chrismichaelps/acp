@@ -84,3 +84,9 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   transition, approve requirements, unmet requirement rejection, changes
   requested transition, list filters, and missing review · 75 tests green · risk LOW ·
   [[ADR-0001-architecture-foundation]]
+- 2026-06-26 · app-live slice · projected application Layer composition to code:
+  [[app-live-index]], [[app-live]] in-memory dependency graph wiring
+  [[app-config]], [[Storage]], [[EventStore]], WorkUnit, Worker, Workspace,
+  Lease, Artifact, Checkpoint, and Review services for future server/CLI
+  entrypoints · 76 tests green · risk LOW ·
+  [[ADR-0001-architecture-foundation]]
