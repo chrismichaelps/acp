@@ -27,6 +27,7 @@ file has exactly one page here. A source file with no page is UNREGISTERED.
 
 - [[domain/_MOC|Domain services]] — transport-agnostic protocol behavior.
 - [[artifacts/_MOC|Artifacts]] — Artifact metadata registry and content bounds.
+- [[checkpoints/_MOC|Checkpoints]] — append-only resume points for WorkUnit handoff.
 - [[events/_MOC|Events]] — persisted append-only event store and live fan-out.
 - [[leases/_MOC|Leases]] — Lease lifecycle service and conflict guard.
 - [[work-units/_MOC|Work Units]] — WorkUnit lifecycle service and state machine.

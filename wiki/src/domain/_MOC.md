@@ -12,6 +12,10 @@ They depend on seams such as [[Storage]], never on HTTP, JSON-RPC, or Node APIs.
 
 - [[artifacts/_MOC|Artifacts MOC]] — Artifact metadata registry and content bounds.
 
+## checkpoints/
+
+- [[checkpoints/_MOC|Checkpoints MOC]] — append-only resume points for WorkUnit handoff.
+
 ## events/
 
 - [[events/_MOC|Events MOC]] — append-only event persistence and live fan-out.
