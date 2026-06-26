@@ -30,12 +30,14 @@ adapter renders the stream into its wire format (SSE `event:`/`data:` frames).
 
 | Adapter   | Type       | Path                          | Last verified | Status           |
 | --------- | ---------- | ----------------------------- | ------------- | ---------------- |
-| SSE       | production | @root/src/infrastructure/sse/ | —             | PLANNED (v0.1)   |
+| SSE       | production | @root/src/infrastructure/sse/ | 2026-06-26    | CURRENT (v0.1)   |
 | WebSocket | —          | —                             | —             | SPECULATIVE (§7) |
 
 ## Health
 
-DRIFT 0 (HEALTHY). Designed, not yet implemented.
+DRIFT 0 (HEALTHY). SSE adapter code-complete and tested (4 targeted tests: frame
+shape, UTF-8 byte rendering, streaming response metadata, heartbeat comment).
+Handler/server route wiring remains in the HTTP server slice.
 
 ## Deepening
 
@@ -44,4 +46,4 @@ ADR: [[ADR-0001-architecture-foundation]]. Heartbeat interval from
 
 ## Referenced by
 
-[[Event]] · [[event-store]] · [[architecture/_MOC]]
+[[Event]] · [[event-store]] · [[sse-event-stream]] · [[architecture/_MOC]]

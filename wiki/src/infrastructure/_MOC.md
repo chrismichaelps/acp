@@ -16,6 +16,10 @@ construction and hides it behind narrow service tags.
 
 - [[http/_MOC|HTTP MOC]] — Effect Platform REST API declaration and error mapper.
 
+## sse/
+
+- [[sse/_MOC|SSE MOC]] — Server-Sent Events adapter for live event streams.
+
 ## Referenced by
 
 [[src/_MOC]]
