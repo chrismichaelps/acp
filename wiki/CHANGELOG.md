@@ -29,3 +29,8 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   [[http-error-mapper]] JSON protocol error mapper, HTTP MOC, and tests for
   reflected v0.1 routes plus status/no-leak error responses · 34 tests green ·
   risk LOW · [[ADR-0001-architecture-foundation]]
+- 2026-06-26 · sse-event-stream slice · projected [[EventStream]] SSE adapter to
+  code: [[sse-index]], [[sse-event-stream]] frame/byte/response rendering,
+  heartbeat comments from [[app-config]], SSE MOC, and tests for event frames,
+  UTF-8 output, response metadata, and heartbeat shape · 38 tests green · risk LOW ·
+  [[ADR-0001-architecture-foundation]]

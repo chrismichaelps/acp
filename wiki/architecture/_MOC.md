@@ -25,14 +25,16 @@ ConfigLayer
 
 | status  | count |
 | ------- | ----- |
-| DEEP    | 10    |
-| MEDIUM  | 14    |
+| DEEP    | 11    |
+| MEDIUM  | 15    |
 | SHALLOW | 0     |
 
-_24 source modules distilled across schema, config, storage, events, work units, and HTTP. DEEP:
+_26 source modules distilled across schema, config, storage, events, work units,
+HTTP, and SSE. DEEP:
 [[ids]] [[common]] [[event.schema]] [[protocol-error]] [[app-config]] [[storage]]
-[[in-memory-store]] [[event-store]] [[work-unit-service]] [[http-error-mapper]].
-Distribution remains DEEP/MEDIUM with no shallow pass-throughs._
+[[in-memory-store]] [[event-store]] [[work-unit-service]] [[http-error-mapper]]
+[[sse-event-stream]]. Distribution remains DEEP/MEDIUM with no shallow
+pass-throughs._
 
 ## Seam Health Table
 
@@ -66,8 +68,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 4. ✅ EventStore (PubSub) service — 24 tests green
 5. ✅ Domain services (WorkUnit first — state machine) — 31 tests green
 6. ✅ HTTP transport (HttpApi) + error mapper — 34 tests green
-7. ▶ SSE event stream
-8. ☐ CLI client + server main
+7. ✅ SSE event stream — 38 tests green
+8. ▶ CLI client + server main
 
 ## Referenced by
 
