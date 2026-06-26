@@ -22,6 +22,7 @@ truth; code is a projection of it (FMCF v4.0). Build the wiki first, then code t
 - Vocabulary: [[architecture/LANGUAGE]] — Ousterhout-grounded architecture terms.
 - Ledger: [[CHANGELOG]] — temporal log of logic deltas.
 - Handoffs: `wiki/handoffs/` — session/role continuity.
+- External alignment: [[external-protocols]] — how ACP relates to MCP and IBM/LF ACP.
 
 ## Source of Truth
 - Spec: `@root/specs.md` (canonical protocol). Note: older sections name "Hadoof";
