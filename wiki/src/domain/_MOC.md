@@ -24,6 +24,10 @@ They depend on seams such as [[Storage]], never on HTTP, JSON-RPC, or Node APIs.
 
 - [[leases/_MOC|Leases MOC]] — Lease lifecycle service and conflict guard.
 
+## reviews/
+
+- [[reviews/_MOC|Reviews MOC]] — human-in-the-loop Review gates for WorkUnits.
+
 ## work-units/
 
 - [[work-units/_MOC|Work Units MOC]] — WorkUnit lifecycle service and state machine.

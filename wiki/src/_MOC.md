@@ -30,6 +30,7 @@ file has exactly one page here. A source file with no page is UNREGISTERED.
 - [[checkpoints/_MOC|Checkpoints]] — append-only resume points for WorkUnit handoff.
 - [[events/_MOC|Events]] — persisted append-only event store and live fan-out.
 - [[leases/_MOC|Leases]] — Lease lifecycle service and conflict guard.
+- [[reviews/_MOC|Reviews]] — human-in-the-loop Review gates for WorkUnits.
 - [[work-units/_MOC|Work Units]] — WorkUnit lifecycle service and state machine.
 - [[workers/_MOC|Workers]] — Worker registry service (register, get, list, status).
 - [[workspaces/_MOC|Workspaces]] — Workspace registry service with `workspace.*` events.
