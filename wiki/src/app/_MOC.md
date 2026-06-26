@@ -16,6 +16,10 @@ Application modules compose runtime Layers for server and CLI entrypoints.
 
 - [[server/_MOC|Server MOC]] — HTTP transport entrypoint (router, id-clock, Node main).
 
+## cli/
+
+- [[cli/_MOC|CLI MOC]] — `acp` command-line client (parser, client, Node main).
+
 ## Referenced by
 
 [[src/_MOC]]
