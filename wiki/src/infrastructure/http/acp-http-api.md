@@ -1,6 +1,6 @@
 ---
 type: module
-path: '@root/src/infrastructure/http/hadoof-http-api.ts'
+path: '@root/src/infrastructure/http/acp-http-api.ts'
 fidelity: Active
 domain: '[[WorkUnit]]'
 grammar: '[[grammar/typescript]]'
@@ -8,10 +8,10 @@ seam: '[[Transport]]'
 depth_score: 0.68
 depth_status: MEDIUM
 tags: [module, seam, medium]
-aliases: [hadoof-http-api, HadoofHttpApi]
+aliases: [acp-http-api, AcpHttpApi]
 ---
 
-# Hadoof HTTP API
+# ACP HTTP API
 
 ## Purpose
 
@@ -37,7 +37,7 @@ export const InitializeSessionResponse: Schema.Struct<{ worker: Worker; capabili
 export const WorkGroup: HttpApiGroup.HttpApiGroup<'work', ...>
 export const LeaseGroup: HttpApiGroup.HttpApiGroup<'leases', ...>
 export const EventsGroup: HttpApiGroup.HttpApiGroup<'events', ...>
-export class HadoofHttpApi extends HttpApi.make('hadoof').add(...) {}
+export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 ```
 
 ### Routes

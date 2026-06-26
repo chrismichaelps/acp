@@ -48,4 +48,4 @@ declarative API (see [[grammar/typescript]]).
 
 ## Referenced by
 
-[[Event]] · [[hadoof-http-api]] · [[http-error-mapper]] · [[architecture/_MOC]]
+[[Event]] · [[acp-http-api]] · [[http-error-mapper]] · [[architecture/_MOC]]
