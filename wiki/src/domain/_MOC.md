@@ -16,6 +16,14 @@ They depend on seams such as [[Storage]], never on HTTP, JSON-RPC, or Node APIs.
 
 - [[work-units/_MOC|Work Units MOC]] — WorkUnit lifecycle service and state machine.
 
+## workers/
+
+- [[workers/_MOC|Workers MOC]] — Worker registry service (register, get, list, status).
+
+## workspaces/
+
+- [[workspaces/_MOC|Workspaces MOC]] — Workspace registry service with `workspace.*` events.
+
 ## Referenced by
 
 [[src/_MOC]]

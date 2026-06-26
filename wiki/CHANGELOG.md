@@ -25,7 +25,7 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   work, ordered event emission, and `changes_requested` schema decode · 31 tests green · risk LOW ·
   [[ADR-0001-architecture-foundation]]
 - 2026-06-26 · http-transport slice · projected [[Transport]] HTTP contract to
-  code: [[http-index]], [[hadoof-http-api]] Effect Platform API declaration,
+  code: [[http-index]], [[acp-http-api]] Effect Platform API declaration,
   [[http-error-mapper]] JSON protocol error mapper, HTTP MOC, and tests for
   reflected v0.1 routes plus status/no-leak error responses · 34 tests green ·
   risk LOW · [[ADR-0001-architecture-foundation]]
@@ -33,4 +33,24 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   code: [[sse-index]], [[sse-event-stream]] frame/byte/response rendering,
   heartbeat comments from [[app-config]], SSE MOC, and tests for event frames,
   UTF-8 output, response metadata, and heartbeat shape · 38 tests green · risk LOW ·
+  [[ADR-0001-architecture-foundation]]
+- 2026-06-26 · worker-service slice · projected the [[Worker]] registry to code:
+  [[worker-service-index]], [[worker-service]] service (register upsert, get, list,
+  setStatus), workers MOC, and tests for register/read-back, upsert overwrite,
+  missing-worker none, list, status update, and `NotFoundError` on missing.
+  Grill-resolved: no per-workspace presence events this slice (Worker is
+  host-scoped; deferred to a future host event stream) · 44 tests green · risk LOW ·
+  [[ADR-0001-architecture-foundation]]
+- 2026-06-26 · naming · renamed the HTTP API drift `HadoofHttpApi`/`hadoof-http-api`
+  → `AcpHttpApi`/`acp-http-api` (`HttpApi.make('acp')`) per
+  [[ADR-0001-architecture-foundation]] §Decision-1 (canonical name ACP); mirrored
+  page [[acp-http-api]] + all wikilinks updated; historical "Hadoof" mentions kept
+  only in the ADR/INDEX as rejected-name context · 44 tests green · risk LOW
+- 2026-06-26 · workspace-service slice · projected the [[Workspace]] registry to
+  code: [[workspace-service-index]], [[workspace-service]] service (create, get,
+  list, update) emitting `workspace.created`/`workspace.updated` through
+  [[EventStore]], workspaces MOC, and tests for create+event, list, update+event,
+  missing-workspace none, and `NotFoundError` on update. Grill-resolved: Workspace
+  emits its own events (it *is* the per-workspace event scope); `workspace.archived`
+  deferred (no lifecycle field in the wire schema) · 49 tests green · risk LOW ·
   [[ADR-0001-architecture-foundation]]
