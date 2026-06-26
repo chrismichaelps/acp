@@ -69,7 +69,7 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 5. ✅ Domain services (WorkUnit first — state machine) — 31 tests green
 6. ✅ HTTP transport (HttpApi) + error mapper — 34 tests green
 7. ✅ SSE event stream — 38 tests green
-8. ▶ CLI client + server main
+8. ▶ AppLive dependency graph + CLI client + server main
 
 ## Referenced by
 

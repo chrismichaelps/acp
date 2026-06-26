@@ -23,6 +23,10 @@ file has exactly one page here. A source file with no page is UNREGISTERED.
 
 - [[app-config]] — typed `ACP_*` configuration + Layer.
 
+## app/
+
+- [[app/_MOC|App]] — application Layer composition for entrypoints.
+
 ## domain/
 
 - [[domain/_MOC|Domain services]] — transport-agnostic protocol behavior.
