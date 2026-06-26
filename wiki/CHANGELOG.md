@@ -76,3 +76,11 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   [[EventStore]], checkpoints MOC, and tests for create+event, work/workspace
   filters, latest checkpoint, and missing checkpoint/latest none · 69 tests
   green · risk LOW · [[ADR-0001-architecture-foundation]]
+- 2026-06-26 · review-service slice · projected the [[Review]] gate to code:
+  [[review-service-index]], [[review-service]] service (request, get,
+  listForWork, listForWorkspace, approve, reject, requestChanges) with
+  WorkUnit-backed workspace resolution, requirement validation, `review.*`
+  events through [[EventStore]], reviews MOC, and tests for request+event+work
+  transition, approve requirements, unmet requirement rejection, changes
+  requested transition, list filters, and missing review · 75 tests green · risk LOW ·
+  [[ADR-0001-architecture-foundation]]
