@@ -14,15 +14,6 @@ The HTTP server exposes the v0.1 REST surface and an SSE endpoint for workspace-
 
 ## Working Locally
 
-The repository pins TypeScript, Effect, Effect Platform, and Vitest through the existing package metadata. Do not reinstall dependencies as part of normal feature work when `node_modules` is already present; the validation commands below call the local tool binaries directly against the checked-out workspace.
-
-```bash
-./node_modules/.bin/tsc --noEmit
-./node_modules/.bin/eslint .
-./node_modules/.bin/vitest run
-./node_modules/.bin/tsc
-```
-
 The local server binds to `ACP_PORT`, defaulting to `4317`.
 
 ```bash
