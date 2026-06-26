@@ -11,9 +11,10 @@ aliases: [WorkUnit, work, work-unit]
 - **Canonical name:** Work Unit (`work`). Never "task", "ticket", "job".
 - **Not:** a [[Lease]] (a claim on a resource) nor an [[Artifact]] (an output).
 - **Lifecycle states:** `open · claimed · running · blocked · needs_review ·
-  approved · rejected · completed · cancelled` (state machine in spec §14).
+changes_requested · approved · rejected · completed · cancelled` (state machine
+  in spec §14).
 - **Seams:** persisted through the [[Storage]] seam; mutations emit [[Event]]s
-  through the [[EventStream]] seam.
+  through [[EventStore]], then stream through the [[EventStream]] seam.
 - **Example:** `work_123` "Fix login redirect bug", priority high, created by `human_chris`.
 
 ## State Machine (authoritative)
@@ -25,8 +26,11 @@ needs_review → rejected
 needs_review → changes_requested → running
 ```
 
+`changes_requested` is part of [[WorkUnit]] state because the spec §14 state
+machine requires it, even though the §10.3 allowed-state prose omitted it.
+
 Invalid transition ⇒ `InvalidStateTransitionError` ⇒ HTTP `409`.
 
 ## Referenced by
 
-(maintained by Forensic Guardian)
+[[work-unit-service]] · [[work-unit-service-index]]
