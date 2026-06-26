@@ -1,7 +1,7 @@
 /** @Acp.Infra.Http.Api.Test — reflected route contract */
 import { describe, expect, it } from 'vitest'
 import { HttpApi } from '@effect/platform'
-import { HadoofHttpApi } from './index.js'
+import { AcpHttpApi } from './index.js'
 
 interface ReflectedEndpoint {
   readonly group: string
@@ -12,7 +12,7 @@ interface ReflectedEndpoint {
 
 const reflectEndpoints = (): readonly ReflectedEndpoint[] => {
   const endpoints: ReflectedEndpoint[] = []
-  HttpApi.reflect(HadoofHttpApi, {
+  HttpApi.reflect(AcpHttpApi, {
     onGroup: () => undefined,
     onEndpoint: ({ group, endpoint }) => {
       endpoints.push({
@@ -26,7 +26,7 @@ const reflectEndpoints = (): readonly ReflectedEndpoint[] => {
   return endpoints
 }
 
-describe('HadoofHttpApi', () => {
+describe('AcpHttpApi', () => {
   it('declares the v0.1 REST routes from spec section 12', () => {
     expect(reflectEndpoints()).toEqual([
       {
