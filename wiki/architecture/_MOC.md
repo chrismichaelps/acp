@@ -23,10 +23,12 @@ ConfigLayer
 ## Depth Distribution (target 60 DEEP / 30 MEDIUM / 10 SHALLOW)
 | status | count |
 |--------|-------|
-| DEEP | 0 |
-| MEDIUM | 0 |
+| DEEP | 5 |
+| MEDIUM | 9 |
 | SHALLOW | 0 |
-_(populated as modules are distilled — query `#deep` / `#medium` / `#shallow`)_
+_14 schema-slice modules distilled. DEEP: [[ids]] [[common]] [[event.schema]]
+[[protocol-error]] [[app-config]]. Distribution skews DEEP/MEDIUM (no shallow
+pass-throughs) — healthy for a schema layer._
 
 ## Seam Health Table
 | Seam | Capacity | Lifecycle | Drift | Status |
@@ -49,8 +51,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 
 ## Build Order (vertical slices)
 1. ✅ Governance scaffold (vault, grammar, domain, seams, ADR-0001)
-2. ▶ Protocol Schema (`wiki/src/protocol/schema/*`) + Config + Errors
-3. ☐ Storage seam + InMemory adapter
+2. ✅ Protocol Schema (`wiki/src/protocol/schema/*`) + Config + Errors — 14 tests green
+3. ▶ Storage seam + InMemory adapter
 4. ☐ EventStore (PubSub) service
 5. ☐ Domain services (WorkUnit first — state machine)
 6. ☐ HTTP transport (HttpApi) + error mapper

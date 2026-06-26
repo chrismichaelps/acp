@@ -1,0 +1,12 @@
+/** @Acp.Protocol.Schema — opaque barrel for all protocol schemas */
+export * from './ids.js'
+export * from './common.js'
+export * from './worker.schema.js'
+export * from './workspace.schema.js'
+export * from './work-unit.schema.js'
+export * from './lease.schema.js'
+export * from './artifact.schema.js'
+export * from './checkpoint.schema.js'
+export * from './review.schema.js'
+export * from './event.schema.js'
+export * from './error.schema.js'
