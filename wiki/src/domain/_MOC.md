@@ -12,6 +12,10 @@ They depend on seams such as [[Storage]], never on HTTP, JSON-RPC, or Node APIs.
 
 - [[events/_MOC|Events MOC]] — append-only event persistence and live fan-out.
 
+## leases/
+
+- [[leases/_MOC|Leases MOC]] — Lease lifecycle service and conflict guard.
+
 ## work-units/
 
 - [[work-units/_MOC|Work Units MOC]] — WorkUnit lifecycle service and state machine.

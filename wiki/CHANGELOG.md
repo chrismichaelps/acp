@@ -51,6 +51,13 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   list, update) emitting `workspace.created`/`workspace.updated` through
   [[EventStore]], workspaces MOC, and tests for create+event, list, update+event,
   missing-workspace none, and `NotFoundError` on update. Grill-resolved: Workspace
-  emits its own events (it *is* the per-workspace event scope); `workspace.archived`
+  emits its own events (it _is_ the per-workspace event scope); `workspace.archived`
   deferred (no lifecycle field in the wire schema) · 49 tests green · risk LOW ·
+  [[ADR-0001-architecture-foundation]]
+- 2026-06-26 · lease-service slice · projected the [[Lease]] lifecycle to code:
+  [[lease-service-index]], [[lease-service]] service (request, get, list, renew,
+  release, revoke, expireDue) with active-resource conflict detection, TTL from
+  [[app-config]], `lease.*` events through [[EventStore]], leases MOC, and tests
+  for grant+event, default TTL, conflict, renew, release/revoke, expiry sweep,
+  missing lease, and expired renew rejection · 57 tests green · risk LOW ·
   [[ADR-0001-architecture-foundation]]
