@@ -84,4 +84,5 @@ zero domain code. This is the seam's whole value.
 
 ## Referenced by
 
-[[storage-index]] · [[in-memory-store]] · [[Storage]] · [[src/_MOC]]
+[[storage-index]] · [[in-memory-store]] · [[event-store]] · [[Storage]] ·
+[[src/_MOC]]
