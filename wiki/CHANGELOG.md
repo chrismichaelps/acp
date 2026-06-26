@@ -100,3 +100,12 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   HttpApiBuilder) to reuse the existing correct-status error mapper without touching
   the merged [[acp-http-api]] contract; fixed `worker_system` actor until auth ·
   83 tests green · risk LOW · [[ADR-0001-architecture-foundation]]
+- 2026-06-26 · cli slice · projected the local `acp` command-line client to code:
+  [[cli-index]], [[cli-commands]] pure argv→HTTP request parser, [[cli-client]]
+  Effect Platform `HttpClient` sender, [[cli-main]] Node runtime entrypoint, package
+  `bin` wiring, CLI MOC, and parser tests for work, lease, checkpoint, artifact,
+  review, and SSE stream commands. Grill-resolved: CLI remains an HTTP client of
+  [[acp-router]] so discrete invocations share state through the local ACP host;
+  route/query values are encoded at the parser boundary and TTLs fail locally
+  before HTTP decoding · 97 tests green · risk LOW ·
+  [[ADR-0001-architecture-foundation]]
