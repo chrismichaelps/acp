@@ -39,7 +39,9 @@ Each field is a `Config.*` with `Config.withDefault`:
 - `ACP_EVENT_RETENTION_DAYS` int → 30
 - `ACP_MAX_ARTIFACT_SIZE_MB` int → 16 (stored as bytes)
 - `ACP_SSE_HEARTBEAT` duration → 15 seconds
-`AppConfigLive = Layer.effect(AppConfigTag, <composed Config>)`.
+`AppConfigLive = Layer.effect(AppConfigTag, Effect.orDie(<composed Config>))` —
+invalid configuration is fatal at startup, so the `ConfigError` channel is
+converted to a defect, giving `Layer.Layer<AppConfigTag>` (no error param).
 
 ## Negative Logic (Prohibited Paths)
 - ❌ Do NOT hardcode a port, TTL, retention window, size limit, or heartbeat anywhere else.
