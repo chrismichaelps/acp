@@ -14,3 +14,8 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   [[storage]] port, [[in-memory-store]] adapter, storage MOCs, and adapter tests for
   KV state plus append-only per-workspace [[Event]] seqs · 20 tests green · risk LOW ·
   [[ADR-0001-architecture-foundation]]
+- 2026-06-26 · event-store slice · projected [[EventStore]] to code:
+  [[event-store-index]], [[event-store]] service, domain events MOCs, and tests for
+  append seqs, read-after replay, empty replay, and scoped workspace-filtered live
+  PubSub delivery · 24 tests green · risk LOW ·
+  [[ADR-0001-architecture-foundation]]
