@@ -31,6 +31,7 @@ export const WorkState = Schema.Literal(
   'running',
   'blocked',
   'needs_review',
+  'changes_requested',
   'approved',
   'rejected',
   'completed',
