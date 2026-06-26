@@ -69,3 +69,10 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   create+content+event, metadata-only artifacts, size rejection, list filters,
   removal+event, missing get, and missing remove · 64 tests green · risk LOW ·
   [[ADR-0001-architecture-foundation]]
+- 2026-06-26 · checkpoint-service slice · projected the [[Checkpoint]] registry
+  to code: [[checkpoint-service-index]], [[checkpoint-service]] service (create,
+  get, listForWork, listForWorkspace, latestForWork) with append-only semantics,
+  newest-first resume ordering, `checkpoint.created` events through
+  [[EventStore]], checkpoints MOC, and tests for create+event, work/workspace
+  filters, latest checkpoint, and missing checkpoint/latest none · 69 tests
+  green · risk LOW · [[ADR-0001-architecture-foundation]]
