@@ -90,3 +90,13 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   Lease, Artifact, Checkpoint, and Review services for future server/CLI
   entrypoints · 76 tests green · risk LOW ·
   [[ADR-0001-architecture-foundation]]
+- 2026-06-26 · http-server slice · projected the HTTP transport entrypoint to code:
+  [[id-clock]] id/timestamp primitive, [[acp-router]] `HttpRouter` binding all 12
+  spec §12 routes to the domain services (decode → mint id/now → delegate → encode →
+  total error→status map via [[http-error-mapper]]) plus the SSE stream via
+  [[sse-event-stream]], [[server-main]] Node `NodeHttpServer` entrypoint on
+  `ACP_PORT`, server MOC, and web-handler tests for initialize, list, create/claim
+  work, 404s, and lease request/release. Grill-resolved: manual router (not
+  HttpApiBuilder) to reuse the existing correct-status error mapper without touching
+  the merged [[acp-http-api]] contract; fixed `worker_system` actor until auth ·
+  83 tests green · risk LOW · [[ADR-0001-architecture-foundation]]
