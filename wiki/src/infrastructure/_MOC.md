@@ -12,6 +12,10 @@ construction and hides it behind narrow service tags.
 
 - [[storage/_MOC|Storage MOC]] — persistence seam interface and in-memory adapter.
 
+## http/
+
+- [[http/_MOC|HTTP MOC]] — Effect Platform REST API declaration and error mapper.
+
 ## Referenced by
 
 [[src/_MOC]]

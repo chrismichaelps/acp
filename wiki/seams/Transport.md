@@ -14,29 +14,38 @@ aliases: [Transport, TransportLayer]
 # Transport (seam)
 
 ## Classification
+
 CRITICAL — the protocol boundary between [[Worker]] clients and the [[Host]]. One
 production adapter in v0.1 (HTTP + SSE); JSON-RPC is a confirmed v0.2 adapter
 (spec §13, §21). On a core path (all commands cross it), so failure = system
 failure, but variation is still emerging — lifecycle EXPLORATORY.
 
 ## Interface
+
 Transport adapters translate wire requests into decoded protocol payloads, invoke
 domain services, and encode protocol responses + protocol errors. Domain services
 are transport-agnostic — they never see HTTP or JSON-RPC types. The decode →
 delegate → encode → error-map boundary is mandatory (spec §16.8).
 
 ## Adapters
-| Adapter | Type | Path | Last verified | Status |
-|---------|------|------|---------------|--------|
-| HTTP+SSE | production | @root/src/infrastructure/http/ | — | PLANNED (v0.1) |
-| JSON-RPC | production | @root/src/infrastructure/jsonrpc/ | — | FUTURE (v0.2 §13) |
+
+| Adapter  | Type       | Path                              | Last verified | Status                |
+| -------- | ---------- | --------------------------------- | ------------- | --------------------- |
+| HTTP     | production | @root/src/infrastructure/http/    | 2026-06-26    | API CONTRACT CURRENT  |
+| SSE      | production | @root/src/infrastructure/sse/     | —             | PLANNED (v0.1 stream) |
+| JSON-RPC | production | @root/src/infrastructure/jsonrpc/ | —             | FUTURE (v0.2 §13)     |
 
 ## Health
-DRIFT 0 (HEALTHY). Designed, not yet implemented.
+
+DRIFT 0 (HEALTHY). HTTP API declaration and error mapper are code-complete and
+tested (3 targeted tests: reflected v0.1 routes, status mapping, internal-cause
+redaction). Handler/server wiring remains the next transport deepening.
 
 ## Deepening
+
 ADR: [[ADR-0001-architecture-foundation]]. Built on `@effect/platform` `HttpApi`
 declarative API (see [[grammar/typescript]]).
 
 ## Referenced by
-[[Event]] · [[architecture/_MOC]]
+
+[[Event]] · [[hadoof-http-api]] · [[http-error-mapper]] · [[architecture/_MOC]]
