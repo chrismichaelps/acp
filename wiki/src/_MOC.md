@@ -27,6 +27,7 @@ file has exactly one page here. A source file with no page is UNREGISTERED.
 
 - [[domain/_MOC|Domain services]] — transport-agnostic protocol behavior.
 - [[events/_MOC|Events]] — persisted append-only event store and live fan-out.
+- [[work-units/_MOC|Work Units]] — WorkUnit lifecycle service and state machine.
 
 ## infrastructure/
 

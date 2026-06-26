@@ -19,3 +19,8 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   append seqs, read-after replay, empty replay, and scoped workspace-filtered live
   PubSub delivery · 24 tests green · risk LOW ·
   [[ADR-0001-architecture-foundation]]
+- 2026-06-26 · work-unit slice · projected [[WorkUnit]] lifecycle to code:
+  [[work-unit-service-index]], [[work-unit-service]] service, WorkUnit MOCs, and
+  tests for create, claim, review-loop transition, invalid transitions, missing
+  work, ordered event emission, and `changes_requested` schema decode · 31 tests green · risk LOW ·
+  [[ADR-0001-architecture-foundation]]
