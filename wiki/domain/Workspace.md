@@ -19,4 +19,6 @@ aliases: [Workspace, workspace]
 
 ## Referenced by
 
+[[workspace-service]] · [[workspace.schema]]
+
 (maintained by Forensic Guardian)
