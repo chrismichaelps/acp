@@ -20,4 +20,4 @@ aliases: [Worker, worker]
 
 ## Referenced by
 
-(maintained by Forensic Guardian)
+[[worker-service]] · [[worker.schema]]
