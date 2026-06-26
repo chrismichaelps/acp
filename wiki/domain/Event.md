@@ -1,0 +1,24 @@
+---
+type: domain
+tags: [domain]
+aliases: [Event, event]
+---
+
+# Event
+
+- **Definition:** An immutable, append-only record of something that happened in a
+  [[Workspace]]. The protocol is **state-first**: workers coordinate by publishing
+  events, not by chatting (Design Principle 4.1, 4.6).
+- **Canonical name:** Event. Never "message", never "notification".
+- **Not:** a chat message — events are typed protocol facts, not free text.
+- **Shape:** `id`, `type`, `workspace_id`, `actor`, `timestamp`, `data`, plus optional
+  `work_id`. Carries a monotonic sequence for ordered replay.
+- **Type families:** `worker.* · workspace.* · work.* · lease.* · artifact.* ·
+  checkpoint.* · review.*` (full list in spec §11).
+- **Delivery:** persisted via the [[Storage]] seam, fanned out live via the
+  [[EventStream]] seam (SSE in v0.1).
+- **Example:** `event_123` type `work.claimed`, actor `agent_claude_code`.
+
+## Referenced by
+
+(maintained by Forensic Guardian)
