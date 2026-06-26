@@ -9,18 +9,27 @@ tags: [moc, src]
 file has exactly one page here. A source file with no page is UNREGISTERED.
 
 ## protocol/schema/
+
 - [[ids]] — branded protocol identifiers (`WorkId`, `WorkerId`, …).
 - [[common]] — shared enums/value objects (timestamps, priority, status literals).
 - [[worker.schema]] · [[workspace.schema]] · [[work-unit.schema]] · [[lease.schema]]
   · [[artifact.schema]] · [[checkpoint.schema]] · [[review.schema]] · [[event.schema]]
 
 ## protocol/errors/
+
 - [[protocol-error]] — tagged domain error families + protocol error code mapping.
 
 ## config/
+
 - [[app-config]] — typed `ACP_*` configuration + Layer.
 
-_(services, infrastructure, apps added as their slices land)_
+## infrastructure/
+
+- [[infrastructure/_MOC|Infrastructure]] — runtime adapters and platform edges.
+- [[storage/_MOC|Storage]] — persistence seam interface, opaque barrel, and InMemory adapter.
+
+_(services and apps added as their slices land)_
 
 ## Referenced by
+
 [[00-INDEX]]
