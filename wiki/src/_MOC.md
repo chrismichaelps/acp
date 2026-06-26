@@ -23,12 +23,17 @@ file has exactly one page here. A source file with no page is UNREGISTERED.
 
 - [[app-config]] — typed `ACP_*` configuration + Layer.
 
+## domain/
+
+- [[domain/_MOC|Domain services]] — transport-agnostic protocol behavior.
+- [[events/_MOC|Events]] — persisted append-only event store and live fan-out.
+
 ## infrastructure/
 
 - [[infrastructure/_MOC|Infrastructure]] — runtime adapters and platform edges.
 - [[storage/_MOC|Storage]] — persistence seam interface, opaque barrel, and InMemory adapter.
 
-_(services and apps added as their slices land)_
+_(apps added as their slices land)_
 
 ## Referenced by
 

@@ -1,0 +1,55 @@
+/** @Acp.Domain.Events.EventStore — persisted event append + live fan-out */
+import { Context, Effect, Layer, PubSub, Stream } from 'effect'
+import type { Chunk, Scope } from 'effect'
+import { Storage } from '../../infrastructure/storage/index.js'
+import type { EventDraft as StorageEventDraft } from '../../infrastructure/storage/index.js'
+import type { StorageError } from '../../protocol/errors/protocol-error.js'
+import type { Event } from '../../protocol/schema/index.js'
+
+export type EventDraft = StorageEventDraft
+
+export interface EventStoreApi {
+  readonly append: (draft: EventDraft) => Effect.Effect<Event, StorageError>
+  readonly readAfter: (
+    workspaceId: string,
+    afterSeq: number,
+  ) => Effect.Effect<Chunk.Chunk<Event>, StorageError>
+  readonly subscribe: (
+    workspaceId: string,
+  ) => Effect.Effect<Stream.Stream<Event>, never, Scope.Scope>
+}
+
+export class EventStore extends Context.Tag('EventStore')<
+  EventStore,
+  EventStoreApi
+>() {}
+
+const make = Effect.gen(function* () {
+  const storage = yield* Storage
+  const pubsub = yield* PubSub.unbounded<Event>()
+
+  const append: EventStoreApi['append'] = (draft) =>
+    Effect.gen(function* () {
+      const event = yield* storage.appendEvent(draft.workspace_id, draft)
+      yield* PubSub.publish(pubsub, event)
+      return event
+    })
+
+  const readAfter: EventStoreApi['readAfter'] = (workspaceId, afterSeq) =>
+    storage.readEventsAfter(workspaceId, afterSeq)
+
+  const subscribe: EventStoreApi['subscribe'] = (workspaceId) =>
+    Effect.map(
+      Stream.fromPubSub(pubsub, { scoped: true }),
+      Stream.filter((event) => event.workspace_id === workspaceId),
+    )
+
+  return {
+    append,
+    readAfter,
+    subscribe,
+  } satisfies EventStoreApi
+})
+
+export const EventStoreLive: Layer.Layer<EventStore, never, Storage> =
+  Layer.effect(EventStore, make)
