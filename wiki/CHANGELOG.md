@@ -61,3 +61,11 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   for grant+event, default TTL, conflict, renew, release/revoke, expiry sweep,
   missing lease, and expired renew rejection · 57 tests green · risk LOW ·
   [[ADR-0001-architecture-foundation]]
+- 2026-06-26 · artifact-service slice · projected the [[Artifact]] registry to
+  code: [[artifact-service-index]], [[artifact-service]] service (create, get,
+  readContent, listForWork, listForWorkspace, remove) with host-stored
+  `acp://artifacts/{id}` URIs, content-size validation from [[app-config]],
+  `artifact.*` events through [[EventStore]], artifacts MOC, and tests for
+  create+content+event, metadata-only artifacts, size rejection, list filters,
+  removal+event, missing get, and missing remove · 64 tests green · risk LOW ·
+  [[ADR-0001-architecture-foundation]]

@@ -8,6 +8,10 @@ tags: [moc, src, domain]
 Domain services coordinate protocol behavior while staying transport-agnostic.
 They depend on seams such as [[Storage]], never on HTTP, JSON-RPC, or Node APIs.
 
+## artifacts/
+
+- [[artifacts/_MOC|Artifacts MOC]] — Artifact metadata registry and content bounds.
+
 ## events/
 
 - [[events/_MOC|Events MOC]] — append-only event persistence and live fan-out.
