@@ -126,6 +126,31 @@ describe('JSON-RPC transport mapping', () => {
     })
   })
 
+  it('maps work.publish_event to the progress event route', () => {
+    const command = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_progress',
+        method: 'work.publish_event',
+        params: {
+          work_id: 'work/progress',
+          type: 'work.progressed',
+          data: { message: 'Added failing regression test' },
+        },
+      }),
+    )
+
+    expect(command.request).toEqual({
+      method: 'POST',
+      path: '/v1/work/work%2Fprogress/events',
+      body: {
+        type: 'work.progressed',
+        data: { message: 'Added failing regression test' },
+      },
+      label: 'work.publish_event',
+    })
+  })
+
   it('maps events.subscribe to the SSE stream route', () => {
     const command = expectRight(
       parseJsonRpcCommand({

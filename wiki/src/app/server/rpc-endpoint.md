@@ -31,7 +31,8 @@ export const makeRpcHandler: <E, R>(
 ) => Effect.Effect<
   HttpServerResponse.HttpServerResponse,
   never,
-  Exclude<R, HttpServerRequest.HttpServerRequest> | HttpServerRequest.HttpServerRequest
+  | Exclude<R, HttpServerRequest.HttpServerRequest>
+  | HttpServerRequest.HttpServerRequest
 >
 ```
 
@@ -70,8 +71,9 @@ export const makeRpcHandler: <E, R>(
 DEEP (0.74). Bridges HTTP bytes ↔ JSON-RPC while reusing the entire router
 (routing, bearer auth, §8 scopes, encoding, error mapping). Tested over the
 `acpRouter` web handler: single round-trip, a `/rpc`-minted session authorizing a
-direct `/v1` call (shared store), notification `204`, batch folding, unknown-method
-`-32601`, and non-JSON `-32700`.
+direct `/v1` call (shared store), `work.publish_event` progress publication,
+notification `204`, batch folding, unknown-method `-32601`, and non-JSON
+`-32700`.
 
 ## Grill Log
 
@@ -80,19 +82,19 @@ direct `/v1` call (shared store), notification `204`, batch folding, unknown-met
   **A:** `dispatchVia` replays each command against the **same** `v1Router` app
   value in the ambient service context — it provides only a synthetic
   `HttpServerRequest`, leaving the services (`R`) to the ambient layer that already
-  serves the router. *Rationale:* one store, one auth path, zero duplication.
-  *Rejected:* `HttpApp.toWebHandlerLayer(acpRouter, AppLive)` inside the handler
+  serves the router. _Rationale:_ one store, one auth path, zero duplication.
+  _Rejected:_ `HttpApp.toWebHandlerLayer(acpRouter, AppLive)` inside the handler
   (builds an independent store — `/rpc` would never see `/v1`'s sessions).
 - **Q:** Why split `v1Router` out from `acpRouter`?
-  **A:** `/rpc` dispatches into the `/v1` routes; if it were a route *on* the same
+  **A:** `/rpc` dispatches into the `/v1` routes; if it were a route _on_ the same
   router it dispatched into, the value would reference itself. `acpRouter =
-  v1Router + POST /rpc`, and dispatch targets `v1Router`. *Rationale:* a clean
-  acyclic shape — JSON-RPC can never recurse into `/rpc`. *Rejected:* a lazy
+v1Router + POST /rpc`, and dispatch targets `v1Router`. _Rationale:_ a clean
+  acyclic shape — JSON-RPC can never recurse into `/rpc`. _Rejected:_ a lazy
   self-reference inside `acpRouter` (works via deferred evaluation but is a footgun).
 - **Q:** Where do JSON-RPC parse failures sit — HTTP status or JSON-RPC error?
   **A:** A non-JSON body returns HTTP `200` with a JSON-RPC `-32700` (spec §13 keeps
   protocol errors in the envelope); only transport-level failures would be non-2xx.
-  *Rejected:* HTTP `400` for a malformed envelope (leaks JSON-RPC semantics into the
+  _Rejected:_ HTTP `400` for a malformed envelope (leaks JSON-RPC semantics into the
   HTTP status).
 
 ## Referenced by
