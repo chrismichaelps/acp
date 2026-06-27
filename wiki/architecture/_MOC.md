@@ -81,7 +81,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 15. ✅ JSON-RPC stdio framing bridge — 149 tests green
 16. ✅ WebSocket transport evaluation — deferred by ADR-0002
 17. ✅ Protocol coverage audit — command parity gaps identified
-18. ▶ JSON-RPC progress event method
+18. ✅ JSON-RPC progress event method — 151 tests green
+19. ▶ Review action transport decision
 
 ## Referenced by
 

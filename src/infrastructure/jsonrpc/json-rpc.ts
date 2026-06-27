@@ -3,6 +3,7 @@ import { Data, Either, Option, Schema } from 'effect'
 import {
   EventsStreamParams,
   InitializeSessionPayload,
+  PublishWorkEventPayload,
   UpdateWorkStatePayload,
 } from '../http/index.js'
 import {
@@ -91,6 +92,7 @@ export type JsonRpcMethod =
   | 'work.create'
   | 'work.claim'
   | 'work.update'
+  | 'work.publish_event'
   | 'lease.request'
   | 'lease.release'
   | 'artifact.create'
@@ -104,6 +106,7 @@ const methodLabels = new Set<string>([
   'work.create',
   'work.claim',
   'work.update',
+  'work.publish_event',
   'lease.request',
   'lease.release',
   'artifact.create',
@@ -273,6 +276,28 @@ const commandFor = (
           method: 'PATCH',
           path: `/v1/work/${encodeSegment(params.work_id)}`,
           body: { state: params.state },
+          label: method,
+        },
+      }
+    }
+
+    if (method === 'work.publish_event') {
+      const params = yield* decodeParams(
+        Schema.Struct({
+          work_id: WorkId,
+          type: PublishWorkEventPayload.fields.type,
+          data: PublishWorkEventPayload.fields.data,
+        }),
+        envelope.params,
+        id,
+      )
+      return {
+        id,
+        expects_response: expectsResponse,
+        request: {
+          method: 'POST',
+          path: `/v1/work/${encodeSegment(params.work_id)}/events`,
+          body: { type: params.type, data: params.data },
           label: method,
         },
       }

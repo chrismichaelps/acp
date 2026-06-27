@@ -34,9 +34,10 @@ artifact create, checkpoint create, review request, and event subscription over
 SSE. Mandatory-auth mode exists behind `ACP_REQUIRE_AUTH`, with
 `session.initialize` left open as the bootstrap route.
 
-JSON-RPC coverage is current for spec §13. Method normalization, response
-folding, batch handling, notifications, `POST /rpc`, and stdio Content-Length
-framing are implemented. WebSocket remains explicitly deferred by
+JSON-RPC coverage is current for spec §13 plus the REST progress-publication
+parity alias `work.publish_event`. Method normalization, response folding, batch
+handling, notifications, `POST /rpc`, and stdio Content-Length framing are
+implemented. WebSocket remains explicitly deferred by
 [[ADR-0002-json-rpc-transport-framing]] because stdio satisfies the non-HTTP
 JSON-RPC option for v0.1.
 
@@ -55,11 +56,6 @@ workspace lifecycle field yet. Artifact update/delete events are declared in the
 spec vocabulary, but the implementation only creates and removes artifacts, and
 the remove path is currently domain-only rather than exposed through REST or
 JSON-RPC.
-
-JSON-RPC §13 does not include a method for `POST /v1/work/{work_id}/events`.
-REST can publish progress events, but JSON-RPC cannot yet call the same surface.
-This is the highest-value compatibility gap because progress publication is part
-of the HTTP API and the event vocabulary.
 
 Review completion beyond request is mostly a domain capability. The Review
 service supports approve, reject, and request-changes flows, but the public
@@ -80,11 +76,10 @@ ignored and has not been rewritten.
 
 ## Next Slice
 
-Add JSON-RPC progress publication by introducing `work.publish_event` as the
-transport alias for the existing REST `POST /v1/work/{work_id}/events` surface.
-That slice should update [[json-rpc]], [[json-rpc-runtime]] tests if needed,
-[[acp-http-api]] references, and the Transport seam. It closes the largest
-command parity gap without inventing new domain behavior.
+Clarify review action transport coverage. The domain service supports approve,
+reject, and request-changes flows, but the public transport only exposes review
+request. The next slice should either expose explicit review action routes or
+record an ADR that review action remains host-internal for v0.1.
 
 ## Referenced by
 

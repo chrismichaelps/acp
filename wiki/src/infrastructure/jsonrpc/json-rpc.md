@@ -31,6 +31,7 @@ export type JsonRpcMethod =
   | 'work.create'
   | 'work.claim'
   | 'work.update'
+  | 'work.publish_event'
   | 'lease.request'
   | 'lease.release'
   | 'artifact.create'
@@ -77,9 +78,10 @@ Decode the outer envelope as JSON-RPC 2.0, preserve the distinction between an
 omitted notification id and an explicit `null` id, validate the method against
 the closed spec §13 table, then decode params with the existing protocol schema
 for that operation. Path-bearing methods split resource ids from request bodies:
-`work.claim`, `work.update`, and `lease.release` URL-encode the path segment and
-leave only operation payload fields in the body. `events.subscribe` maps to the
-SSE stream route and marks the command as stream-capable.
+`work.claim`, `work.update`, `work.publish_event`, and `lease.release`
+URL-encode the path segment and leave only operation payload fields in the body.
+`events.subscribe` maps to the SSE stream route and marks the command as
+stream-capable.
 
 Full-payload methods validate params with the schema but forward the **original
 wire JSON** as the request body (`validatedBody`), not the decoded Type side: the

@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-27 · json-rpc-progress-event slice · added `work.publish_event` to
+  [[json-rpc]] as the command-parity alias for REST
+  `POST /v1/work/{work_id}/events`, including path encoding, schema-backed event
+  params validation, `/rpc` integration coverage, and audit/dashboard updates ·
+  151 tests green · risk LOW
 - 2026-06-27 · protocol-coverage-audit slice · added
   [[protocol-coverage-2026-06-27]] comparing `specs.md` v0.1 to the current
   implementation. Covered schemas/domain/storage/REST/JSON-RPC/runtime standards,
