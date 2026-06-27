@@ -8,6 +8,7 @@ import {
   UpdateWorkStatePayload,
 } from '../http/index.js'
 import {
+  ArtifactId,
   ClaimWorkPayload,
   CreateArtifactPayload,
   CreateCheckpointPayload,
@@ -45,7 +46,7 @@ const JsonRpcEnvelope = Schema.Struct({
 type JsonRpcEnvelope = typeof JsonRpcEnvelope.Type
 
 export interface JsonRpcHttpRequest {
-  readonly method: 'GET' | 'POST' | 'PATCH'
+  readonly method: 'DELETE' | 'GET' | 'POST' | 'PATCH'
   readonly path: string
   readonly body?: unknown
   readonly stream?: boolean
@@ -98,6 +99,7 @@ export type JsonRpcMethod =
   | 'lease.request'
   | 'lease.release'
   | 'artifact.create'
+  | 'artifact.delete'
   | 'checkpoint.create'
   | 'review.request'
   | 'review.approve'
@@ -115,6 +117,7 @@ const methodLabels = new Set<string>([
   'lease.request',
   'lease.release',
   'artifact.create',
+  'artifact.delete',
   'checkpoint.create',
   'review.request',
   'review.approve',
@@ -351,6 +354,23 @@ const commandFor = (
         id,
         expects_response: expectsResponse,
         request: { method: 'POST', path: '/v1/artifacts', body, label: method },
+      }
+    }
+
+    if (method === 'artifact.delete') {
+      const params = yield* decodeParams(
+        Schema.Struct({ artifact_id: ArtifactId }),
+        envelope.params,
+        id,
+      )
+      return {
+        id,
+        expects_response: expectsResponse,
+        request: {
+          method: 'DELETE',
+          path: `/v1/artifacts/${encodeSegment(params.artifact_id)}`,
+          label: method,
+        },
       }
     }
 

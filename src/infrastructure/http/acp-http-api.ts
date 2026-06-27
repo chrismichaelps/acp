@@ -8,6 +8,7 @@ import {
 import { Schema } from 'effect'
 import {
   Artifact,
+  ArtifactId,
   Capability,
   Checkpoint,
   ClaimWorkPayload,
@@ -49,6 +50,11 @@ export const ReviewPath = Schema.Struct({
   review_id: HttpApiSchema.param('review_id', ReviewId),
 })
 export type ReviewPath = typeof ReviewPath.Type
+
+export const ArtifactPath = Schema.Struct({
+  artifact_id: HttpApiSchema.param('artifact_id', ArtifactId),
+})
+export type ArtifactPath = typeof ArtifactPath.Type
 
 export const EventsStreamParams = Schema.Struct({
   workspace_id: WorkspaceId,
@@ -208,13 +214,20 @@ export const LeaseGroup = HttpApiGroup.make('leases')
       .addError(ProtocolError, protocolError(404)),
   )
 
-export const ArtifactGroup = HttpApiGroup.make('artifacts').add(
-  HttpApiEndpoint.post('createArtifact', '/v1/artifacts')
-    .setPayload(CreateArtifactPayload)
-    .addSuccess(Artifact, { status: 201 })
-    .addError(ProtocolError, protocolError(400))
-    .addError(ProtocolError, protocolError(404)),
-)
+export const ArtifactGroup = HttpApiGroup.make('artifacts')
+  .add(
+    HttpApiEndpoint.post('createArtifact', '/v1/artifacts')
+      .setPayload(CreateArtifactPayload)
+      .addSuccess(Artifact, { status: 201 })
+      .addError(ProtocolError, protocolError(400))
+      .addError(ProtocolError, protocolError(404)),
+  )
+  .add(
+    HttpApiEndpoint.del('deleteArtifact', '/v1/artifacts/:artifact_id')
+      .setPath(ArtifactPath)
+      .addSuccess(Artifact)
+      .addError(ProtocolError, protocolError(404)),
+  )
 
 export const CheckpointGroup = HttpApiGroup.make('checkpoints').add(
   HttpApiEndpoint.post('createCheckpoint', '/v1/checkpoints')

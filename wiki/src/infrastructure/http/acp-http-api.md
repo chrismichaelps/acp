@@ -28,6 +28,7 @@ wiring land in a later slice.
 ```typescript
 export const WorkPath: Schema.Struct<{ work_id: WorkId }>
 export const LeasePath: Schema.Struct<{ lease_id: LeaseId }>
+export const ArtifactPath: Schema.Struct<{ artifact_id: ArtifactId }>
 export const EventsStreamParams: Schema.Struct<{ workspace_id: WorkspaceId }>
 export const UpdateWorkStatePayload: Schema.Struct<{ state: WorkState }>
 export const PublishWorkEventPayload: Schema.Struct<{ type: EventType; data: Record<string, unknown> }>
@@ -59,6 +60,7 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 - `POST /v1/leases`
 - `POST /v1/leases/{lease_id}/release`
 - `POST /v1/artifacts`
+- `DELETE /v1/artifacts/{artifact_id}`
 - `POST /v1/checkpoints`
 - `POST /v1/reviews`
 - `POST /v1/reviews/{review_id}/approve`
@@ -85,6 +87,10 @@ with `addSuccess`/`addError`.
 `protocol_version`, a lean worker descriptor, and a top-level client capability
 object. Defaults keep reconnects compact while the router normalizes the decoded
 descriptor back into a canonical [[Worker]] for storage.
+
+Artifact deletion is declared as `DELETE /v1/artifacts/{artifact_id}` because the
+domain [[artifact-service]] already owns removal and emits `artifact.deleted`;
+update remains intentionally absent until artifact mutation exists in the domain.
 
 ## Negative Logic (Prohibited Paths)
 

@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-27 · artifact-delete-transport slice · exposed backed artifact removal
+  through `DELETE /v1/artifacts/{artifact_id}` and JSON-RPC `artifact.delete`,
+  preserving `artifact.deleted` event emission in [[artifact-service]] and leaving
+  artifact update pending until the domain grows mutation semantics · focused
+  transport tests, lint, and typecheck green; full suite blocked by environment
+  usage limit before commit · risk LOW
 - 2026-06-27 · session-capability-negotiation slice · accepted the draft §9
   `session.initialize` request shape (`protocol_version`, lean worker descriptor,
   client capability flags) alongside the existing full-worker payload, normalizing
