@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-27 · protocol-coverage-audit slice · added
+  [[protocol-coverage-2026-06-27]] comparing `specs.md` v0.1 to the current
+  implementation. Covered schemas/domain/storage/REST/JSON-RPC/runtime standards,
+  identified event vocabulary and review-action gaps, and selected JSON-RPC
+  progress publication as the next command-parity slice · docs-only · risk LOW
 - 2026-06-27 · websocket-evaluation slice · accepted
   [[ADR-0002-json-rpc-transport-framing]]: v0.1 JSON-RPC ships over `POST /rpc`
   and stdio Content-Length framing; WebSocket is deferred until server upgrade,
