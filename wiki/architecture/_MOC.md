@@ -84,7 +84,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 18. ✅ JSON-RPC progress event method — 151 tests green
 19. ✅ Review action transport routes — 154 tests green
 20. ✅ Capability negotiation compatibility — 157 tests green
-21. ▶ Event vocabulary surface decision
+21. ✅ Artifact delete transport route — focused gate green
+22. ▶ Event vocabulary domain decisions
 
 ## Referenced by
 

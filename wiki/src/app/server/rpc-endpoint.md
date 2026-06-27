@@ -72,8 +72,9 @@ DEEP (0.74). Bridges HTTP bytes ↔ JSON-RPC while reusing the entire router
 (routing, bearer auth, §8 scopes, encoding, error mapping). Tested over the
 `acpRouter` web handler: single round-trip, a `/rpc`-minted session authorizing a
 direct `/v1` call (shared store), `work.publish_event` progress publication,
-`review.approve` decision publication, notification `204`, batch folding,
-unknown-method `-32601`, and non-JSON `-32700`.
+`review.approve` decision publication, `artifact.delete` removal publication,
+notification `204`, batch folding, unknown-method `-32601`, and non-JSON
+`-32700`.
 
 ## Grill Log
 

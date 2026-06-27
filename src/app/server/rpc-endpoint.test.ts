@@ -243,6 +243,58 @@ describe('POST /rpc', () => {
     expect(approved.result.state).toBe('approved')
   })
 
+  it('deletes an artifact through JSON-RPC', async () => {
+    const handler = makeHandler()
+    const initRes = await handler(
+      rpc({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'session.initialize',
+        params: { worker, permissions: ['artifact:create'] },
+      }),
+    )
+    const token = ((await initRes.json()) as { result: { session_id: string } })
+      .result.session_id
+
+    const createRes = await handler(
+      rpc(
+        {
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'artifact.create',
+          params: {
+            workspace_id: 'workspace_1',
+            work_id: 'work_1',
+            kind: 'markdown',
+            content: 'Review notes',
+          },
+        },
+        token,
+      ),
+    )
+    const artifactId = ((await createRes.json()) as { result: { id: string } })
+      .result.id
+
+    const deleteRes = await handler(
+      rpc(
+        {
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'artifact.delete',
+          params: { artifact_id: artifactId },
+        },
+        token,
+      ),
+    )
+
+    expect(deleteRes.status).toBe(200)
+    const deleted = (await deleteRes.json()) as {
+      result: { id: string; kind: string }
+    }
+    expect(deleted.result.id).toBe(artifactId)
+    expect(deleted.result.kind).toBe('markdown')
+  })
+
   it('returns 204 with no body for a notification (no id)', async () => {
     const handler = makeHandler()
     const res = await handler(

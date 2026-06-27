@@ -51,7 +51,8 @@ export const acpRouter: HttpRouter.HttpRouter<
 - `POST /v1/work` · `POST /v1/work/:work_id/claim` · `PATCH /v1/work/:work_id`
   · `POST /v1/work/:work_id/events`
 - `POST /v1/leases` · `POST /v1/leases/:lease_id/release` (→ 204)
-- `POST /v1/artifacts` · `POST /v1/checkpoints` · `POST /v1/reviews`
+- `POST /v1/artifacts` · `DELETE /v1/artifacts/:artifact_id`
+  · `POST /v1/checkpoints` · `POST /v1/reviews`
   · `POST /v1/reviews/:review_id/approve`
   · `POST /v1/reviews/:review_id/reject`
   · `POST /v1/reviews/:review_id/request_changes`
@@ -83,6 +84,10 @@ beside a lean worker descriptor. The router derives the stored [[Worker]]
 capability array from those booleans when the worker record did not already
 carry capabilities, defaults missing worker status to `online`, and preserves
 `permissions` as the host's bearer-scope extension.
+
+`deleteArtifact` delegates to [[artifact-service]] `remove`, returns the deleted
+metadata at `200`, and lets the service emit `artifact.deleted`. A missing
+artifact maps through the shared domain error path to `404`.
 
 ## Negative Logic (Prohibited Paths)
 

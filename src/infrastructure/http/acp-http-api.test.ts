@@ -105,6 +105,12 @@ describe('AcpHttpApi', () => {
         path: '/v1/artifacts',
       },
       {
+        group: 'artifacts',
+        name: 'deleteArtifact',
+        method: 'DELETE',
+        path: '/v1/artifacts/:artifact_id',
+      },
+      {
         group: 'checkpoints',
         name: 'createCheckpoint',
         method: 'POST',
