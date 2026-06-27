@@ -10,6 +10,7 @@ export interface AppConfig {
   readonly sseHeartbeat: Duration.Duration
   readonly sessionTtl: Duration.Duration
   readonly sweepInterval: Duration.Duration
+  readonly requireAuth: boolean
 }
 
 export class AppConfigTag extends Context.Tag('AppConfig')<
@@ -43,6 +44,9 @@ const load = Effect.gen(function* () {
   const sweepInterval = yield* Config.duration('ACP_SWEEP_INTERVAL').pipe(
     Config.withDefault(Duration.seconds(60)),
   )
+  const requireAuth = yield* Config.boolean('ACP_REQUIRE_AUTH').pipe(
+    Config.withDefault(false),
+  )
   return {
     port,
     logLevel,
@@ -52,6 +56,7 @@ const load = Effect.gen(function* () {
     sseHeartbeat,
     sessionTtl,
     sweepInterval,
+    requireAuth,
   }
 })
 

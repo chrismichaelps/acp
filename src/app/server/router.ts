@@ -6,6 +6,7 @@ import {
   HttpServerResponse,
 } from '@effect/platform'
 import { Effect, Option, Schema } from 'effect'
+import { AppConfigTag } from '../../config/app-config.js'
 import { ArtifactService } from '../../domain/artifacts/index.js'
 import { CheckpointService } from '../../domain/checkpoints/index.js'
 import { EventStore } from '../../domain/events/index.js'
@@ -82,14 +83,22 @@ const bearerToken = Effect.map(HttpServerRequest.HttpServerRequest, (req) =>
 )
 
 // Resolve the acting worker and enforce the optional required scope (spec §8):
-// - no bearer token → unauthenticated, attributed to systemActor;
+// - no bearer token → systemActor, unless AppConfig.requireAuth → 401 unauthorized;
 // - token with no matching session → 401 unauthorized;
 // - session missing the required scope → 401 unauthorized;
 // - otherwise → the session's worker id.
 const authorize = (scope?: Permission) =>
   Effect.gen(function* () {
     const token = yield* bearerToken
-    if (token === '') return systemActor
+    if (token === '') {
+      const config = yield* AppConfigTag
+      if (config.requireAuth) {
+        return yield* Effect.fail(
+          new UnauthorizedError({ reason: 'authentication required' }),
+        )
+      }
+      return systemActor
+    }
     const sessions = yield* SessionService
     const session = yield* sessions.get(token as SessionId)
     return yield* Option.match(session, {

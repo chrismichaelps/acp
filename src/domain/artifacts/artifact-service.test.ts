@@ -24,6 +24,7 @@ const TestConfigLive = Layer.succeed(AppConfigTag, {
   sseHeartbeat: Duration.seconds(15),
   sessionTtl: Duration.hours(1),
   sweepInterval: Duration.seconds(60),
+  requireAuth: false,
 })
 
 const StorageAndEventsLive = Layer.provideMerge(

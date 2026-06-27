@@ -31,6 +31,7 @@ export interface AppConfig {
   readonly sseHeartbeat: Duration.Duration
   readonly sessionTtl: Duration.Duration
   readonly sweepInterval: Duration.Duration
+  readonly requireAuth: boolean
 }
 export class AppConfigTag extends Context.Tag('AppConfig')<
   AppConfigTag,
@@ -51,9 +52,12 @@ Each field is a `Config.*` with `Config.withDefault`:
 - `ACP_SSE_HEARTBEAT` duration → 15 seconds
 - `ACP_SESSION_TTL` duration → 1 hour (bearer-session lifetime; [[sweeper]] eviction)
 - `ACP_SWEEP_INTERVAL` duration → 60 seconds ([[sweeper]] poll cadence)
-  `AppConfigLive = Layer.effect(AppConfigTag, Effect.orDie(<composed Config>))` —
-  invalid configuration is fatal at startup, so the `ConfigError` channel is
-  converted to a defect, giving `Layer.Layer<AppConfigTag>` (no error param).
+- `ACP_REQUIRE_AUTH` boolean → false (when true, [[acp-router]] `authorize` rejects
+  _unauthenticated_ mutations with `401` instead of degrading to `worker_system`)
+
+`AppConfigLive = Layer.effect(AppConfigTag, Effect.orDie(<composed Config>))` —
+invalid configuration is fatal at startup, so the `ConfigError` channel is
+converted to a defect, giving `Layer.Layer<AppConfigTag>` (no error param).
 
 ## Negative Logic (Prohibited Paths)
 
