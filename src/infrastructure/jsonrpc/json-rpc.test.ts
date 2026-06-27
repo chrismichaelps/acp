@@ -189,6 +189,54 @@ describe('JSON-RPC transport mapping', () => {
     })
   })
 
+  it('maps review action methods to review routes', () => {
+    const approve = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_review_approve',
+        method: 'review.approve',
+        params: {
+          review_id: 'review/needs encoding',
+          met_requirements: ['tests_pass'],
+        },
+      }),
+    )
+    expect(approve.request).toEqual({
+      method: 'POST',
+      path: '/v1/reviews/review%2Fneeds%20encoding/approve',
+      body: { met_requirements: ['tests_pass'] },
+      label: 'review.approve',
+    })
+
+    const reject = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_review_reject',
+        method: 'review.reject',
+        params: { review_id: 'review_main' },
+      }),
+    )
+    expect(reject.request).toEqual({
+      method: 'POST',
+      path: '/v1/reviews/review_main/reject',
+      label: 'review.reject',
+    })
+
+    const requestChanges = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_review_changes',
+        method: 'review.request_changes',
+        params: { review_id: 'review_main' },
+      }),
+    )
+    expect(requestChanges.request).toEqual({
+      method: 'POST',
+      path: '/v1/reviews/review_main/request_changes',
+      label: 'review.request_changes',
+    })
+  })
+
   it('returns invalid-params when required params are missing', () => {
     const failure = expectLeft(
       parseJsonRpcCommand({

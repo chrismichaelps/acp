@@ -18,6 +18,7 @@ import { WorkerService } from '../../domain/workers/index.js'
 import { WorkspaceService } from '../../domain/workspaces/index.js'
 import { toHttpErrorResponse } from '../../infrastructure/http/index.js'
 import {
+  ApproveReviewPayload,
   EventsStreamParams,
   InitializeSessionPayload,
   InitializeSessionResponse,
@@ -347,6 +348,49 @@ const requestReview = respond(
   }),
 )
 
+const approveReview = respond(
+  Effect.gen(function* () {
+    const service = yield* ReviewService
+    const idClock = yield* IdClock
+    const reviewId = (yield* pathParam('review_id')) as ReviewId
+    const payload =
+      yield* HttpServerRequest.schemaBodyJson(ApproveReviewPayload)
+    const now = yield* idClock.now
+    const actor = yield* authorize()
+    const review = yield* service.approve(
+      reviewId,
+      actor,
+      now,
+      payload.met_requirements,
+    )
+    return yield* ok(200)(Review, review)
+  }),
+)
+
+const rejectReview = respond(
+  Effect.gen(function* () {
+    const service = yield* ReviewService
+    const idClock = yield* IdClock
+    const reviewId = (yield* pathParam('review_id')) as ReviewId
+    const now = yield* idClock.now
+    const actor = yield* authorize()
+    const review = yield* service.reject(reviewId, actor, now)
+    return yield* ok(200)(Review, review)
+  }),
+)
+
+const requestReviewChanges = respond(
+  Effect.gen(function* () {
+    const service = yield* ReviewService
+    const idClock = yield* IdClock
+    const reviewId = (yield* pathParam('review_id')) as ReviewId
+    const now = yield* idClock.now
+    const actor = yield* authorize()
+    const review = yield* service.requestChanges(reviewId, actor, now)
+    return yield* ok(200)(Review, review)
+  }),
+)
+
 const streamEvents = respond(
   Effect.gen(function* () {
     const params =
@@ -368,6 +412,12 @@ const v1Router = HttpRouter.empty.pipe(
   HttpRouter.post('/v1/artifacts', createArtifact),
   HttpRouter.post('/v1/checkpoints', createCheckpoint),
   HttpRouter.post('/v1/reviews', requestReview),
+  HttpRouter.post('/v1/reviews/:review_id/approve', approveReview),
+  HttpRouter.post('/v1/reviews/:review_id/reject', rejectReview),
+  HttpRouter.post(
+    '/v1/reviews/:review_id/request_changes',
+    requestReviewChanges,
+  ),
   HttpRouter.get('/v1/events/stream', streamEvents),
 )
 

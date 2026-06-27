@@ -149,6 +149,100 @@ describe('POST /rpc', () => {
     expect(event.result.data.message).toBe('Progress from JSON-RPC')
   })
 
+  it('approves a requested review through JSON-RPC', async () => {
+    const handler = makeHandler()
+    const initRes = await handler(
+      rpc({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'session.initialize',
+        params: {
+          worker,
+          permissions: ['work:create', 'work:claim', 'review:create'],
+        },
+      }),
+    )
+    const token = ((await initRes.json()) as { result: { session_id: string } })
+      .result.session_id
+
+    const createRes = await handler(
+      rpc(
+        {
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'work.create',
+          params: { workspace_id: 'workspace_1', title: 'Reviewable work' },
+        },
+        token,
+      ),
+    )
+    const workId = ((await createRes.json()) as { result: { id: string } })
+      .result.id
+
+    await handler(
+      rpc(
+        {
+          jsonrpc: '2.0',
+          id: 'claim',
+          method: 'work.claim',
+          params: { work_id: workId, worker_id: 'agent_claude_code' },
+        },
+        token,
+      ),
+    )
+    await handler(
+      rpc(
+        {
+          jsonrpc: '2.0',
+          id: 'running',
+          method: 'work.update',
+          params: { work_id: workId, state: 'running' },
+        },
+        token,
+      ),
+    )
+
+    const requestRes = await handler(
+      rpc(
+        {
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'review.request',
+          params: {
+            work_id: workId,
+            requested_by: 'agent_claude_code',
+            requirements: ['tests_pass'],
+          },
+        },
+        token,
+      ),
+    )
+    const reviewId = ((await requestRes.json()) as { result: { id: string } })
+      .result.id
+
+    const approveRes = await handler(
+      rpc(
+        {
+          jsonrpc: '2.0',
+          id: 4,
+          method: 'review.approve',
+          params: {
+            review_id: reviewId,
+            met_requirements: ['tests_pass'],
+          },
+        },
+        token,
+      ),
+    )
+
+    expect(approveRes.status).toBe(200)
+    const approved = (await approveRes.json()) as {
+      result: { id: string; state: string }
+    }
+    expect(approved.result.id).toBe(reviewId)
+    expect(approved.result.state).toBe('approved')
+  })
+
   it('returns 204 with no body for a notification (no id)', async () => {
     const handler = makeHandler()
     const res = await handler(

@@ -154,6 +154,78 @@ describe('acpRouter', () => {
     const release = await handler(post('/v1/leases/lease_missing/release'))
     expect(release.status).toBe(404)
   })
+
+  it('approves, rejects, and requests changes for reviews', async () => {
+    const handler = makeHandler()
+    const token = await initSession(handler, [
+      'work:create',
+      'work:claim',
+      'review:create',
+    ])
+    const created = await handler(authedWork(token))
+    const workId = ((await created.json()) as { id: string }).id
+
+    await handler(
+      new Request(`http://acp.test/v1/work/${workId}/claim`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ worker_id: 'agent_claude_code' }),
+      }),
+    )
+    await handler(
+      new Request(`http://acp.test/v1/work/${workId}`, {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ state: 'running' }),
+      }),
+    )
+
+    const requested = await handler(
+      new Request('http://acp.test/v1/reviews', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          work_id: workId,
+          requested_by: 'agent_claude_code',
+          requirements: ['tests_pass'],
+        }),
+      }),
+    )
+    expect(requested.status).toBe(201)
+    const reviewId = ((await requested.json()) as { id: string }).id
+
+    const approved = await handler(
+      new Request(`http://acp.test/v1/reviews/${reviewId}/approve`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ met_requirements: ['tests_pass'] }),
+      }),
+    )
+    expect(approved.status).toBe(200)
+    expect(((await approved.json()) as { state: string }).state).toBe(
+      'approved',
+    )
+
+    const rejected = await handler(post('/v1/reviews/review_missing/reject'))
+    expect(rejected.status).toBe(404)
+
+    const changes = await handler(
+      post('/v1/reviews/review_missing/request_changes'),
+    )
+    expect(changes.status).toBe(404)
+  })
 })
 
 // requireAuth overrides AppLive's config (rightmost merge wins) so authorize sees it.
