@@ -164,3 +164,11 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   bootstrap route that mints the bearer token. Added config and router regression
   tests plus mirrored config/router notes for the runtime switch · 109 tests green · risk LOW ·
   [[ADR-0001-architecture-foundation]]
+- 2026-06-27 · sqlite-storage slice · added [[sqlite-store]] as the second
+  production [[Storage]] adapter using Node 24 `node:sqlite`: `WITHOUT ROWID`
+  keyed/event tables, prepared statements per Layer, WAL + `busy_timeout`, atomic
+  `BEGIN IMMEDIATE` event appends, primary-key query-plan assertions for hot reads,
+  large workspace tail replay, and file-backed reopen persistence tests. App host
+  wiring remains InMemory by default; persistent host selection is the next slice ·
+  118 tests green · risk MEDIUM (experimental Node SQLite API) ·
+  [[ADR-0001-architecture-foundation]]

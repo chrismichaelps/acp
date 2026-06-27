@@ -26,11 +26,12 @@ deep-importing implementation files.
 ```typescript
 export * from './storage.js'
 export * from './in-memory-store.js'
+export * from './sqlite-store.js'
 ```
 
 ### Linkage
 
-- **Requires:** [[storage]], [[in-memory-store]]
+- **Requires:** [[storage]], [[in-memory-store]], [[sqlite-store]]
 - **Consumed by:** storage tests now; future domain services and app wiring later.
 
 ## Algorithm
@@ -41,7 +42,7 @@ No behavior. Re-export-only module enforcing the Export Law from
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT add construction logic here; keep behavior in adapters.
-- ❌ Do NOT make callers import `in-memory-store.ts` directly outside adapter tests or app wiring.
+- ❌ Do NOT make callers import adapter files directly outside adapter tests or app wiring.
 
 ## Depth
 
