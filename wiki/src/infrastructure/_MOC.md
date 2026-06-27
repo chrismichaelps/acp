@@ -16,6 +16,10 @@ construction and hides it behind narrow service tags.
 
 - [[http/_MOC|HTTP MOC]] — Effect Platform REST API declaration and error mapper.
 
+## jsonrpc/
+
+- [[jsonrpc/_MOC|JSON-RPC MOC]] — JSON-RPC 2.0 method normalization core.
+
 ## sse/
 
 - [[sse/_MOC|SSE MOC]] — Server-Sent Events adapter for live event streams.
