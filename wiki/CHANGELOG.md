@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-27 · readme-canonicalization slice · refreshed the public README to
+  match the current host: storage seam with memory/SQLite adapters, local versus
+  required bearer auth, JSON-RPC core versus future runtime hosts, current smoke
+  commands, and expected Node SQLite warning · 130 tests green · risk LOW ·
+  [[ADR-0001-architecture-foundation]]
 - 2026-06-27 · json-rpc-transport-core slice · projected spec §13 JSON-RPC
   methods to code: [[jsonrpc-index]], [[json-rpc]] envelope parsing, closed
   method table, schema-backed params validation, canonical HTTP route mapping,
