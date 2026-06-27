@@ -15,6 +15,8 @@ describe('AppConfig', () => {
     const cfg = run([])
     expect(cfg.port).toBe(4317)
     expect(cfg.logLevel).toBe('info')
+    expect(cfg.storageAdapter).toBe('memory')
+    expect(cfg.sqlitePath).toBe('acp.sqlite')
     expect(Duration.toMillis(cfg.defaultLeaseTtl)).toBe(15 * 60 * 1000)
     expect(cfg.eventRetentionDays).toBe(30)
     expect(cfg.maxArtifactSizeBytes).toBe(16 * 1024 * 1024)
@@ -25,11 +27,15 @@ describe('AppConfig', () => {
     const cfg = run([
       ['ACP_PORT', '8080'],
       ['ACP_LOG_LEVEL', 'debug'],
+      ['ACP_STORAGE_ADAPTER', 'sqlite'],
+      ['ACP_SQLITE_PATH', '/tmp/acp.sqlite'],
       ['ACP_MAX_ARTIFACT_SIZE_MB', '4'],
       ['ACP_REQUIRE_AUTH', 'true'],
     ])
     expect(cfg.port).toBe(8080)
     expect(cfg.logLevel).toBe('debug')
+    expect(cfg.storageAdapter).toBe('sqlite')
+    expect(cfg.sqlitePath).toBe('/tmp/acp.sqlite')
     expect(cfg.maxArtifactSizeBytes).toBe(4 * 1024 * 1024)
     expect(cfg.requireAuth).toBe(true)
   })

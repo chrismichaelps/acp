@@ -10,7 +10,8 @@ Application modules compose runtime Layers for server and CLI entrypoints.
 ## Modules
 
 - [[app-live-index]] — opaque app layer barrel.
-- [[app-live]] — in-memory application Layer composition.
+- [[app-live]] — application Layer composition.
+- [[storage-live]] — config-driven Storage adapter selection.
 
 ## server/
 

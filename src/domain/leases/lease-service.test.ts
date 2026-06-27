@@ -18,6 +18,8 @@ import type { Event } from '../../protocol/schema/index.js'
 const TestConfigLive = Layer.succeed(AppConfigTag, {
   port: 4317,
   logLevel: 'info' as const,
+  storageAdapter: 'memory' as const,
+  sqlitePath: 'acp.sqlite',
   defaultLeaseTtl: Duration.minutes(15),
   eventRetentionDays: 30,
   maxArtifactSizeBytes: 16 * 1024 * 1024,

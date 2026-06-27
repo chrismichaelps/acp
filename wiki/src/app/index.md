@@ -20,11 +20,12 @@ import from `src/app/index.ts` rather than from concrete composition files.
 
 ```typescript
 export * from './app-live.js'
+export * from './storage-live.js'
 ```
 
 ## Algorithm
 
-Re-export [[app-live]].
+Re-export [[app-live]] and [[storage-live]].
 
 ## Negative Logic (Prohibited Paths)
 
