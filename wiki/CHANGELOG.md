@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-27 · websocket-evaluation slice · accepted
+  [[ADR-0002-json-rpc-transport-framing]]: v0.1 JSON-RPC ships over `POST /rpc`
+  and stdio Content-Length framing; WebSocket is deferred until server upgrade,
+  auth, event subscription, heartbeat, backpressure, and disconnect semantics are
+  specified. Updated [[Transport]], [[EventStream]], decisions MOC, and build
+  order · docs-only · risk LOW · [[ADR-0002-json-rpc-transport-framing]]
 - 2026-06-27 · json-rpc-stdio slice · added a stdio JSON-RPC bridge:
   [[stdio-frames]] Content-Length byte codec with partial-frame and UTF-8 tests,
   [[stdio-main]] forwarding complete frames to `POST /rpc`, `ACP_RPC_TOKEN`
