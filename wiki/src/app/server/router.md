@@ -89,14 +89,18 @@ ceremony across twelve endpoints.
   classes (edits already-merged contract + page for no runtime gain at v0.1).
 - **Q:** Where do the `actor`/`createdBy` worker ids come from, since payloads such
   as `CreateWorkPayload` and the `PATCH state` body omit them?
-  **A:** Resolved from the `Authorization: Bearer <session_id>` header via
-  [[session-service]]`.resolveActor`, falling back to a fixed `worker_system` actor
-  when no session is presented (spec §8). *Rationale:* the bearer token is the
-  `session_id` minted at `initialize`; resolving it attributes mutations to the
-  real worker while keeping unauthenticated calls working in a single-host v0.1.
-  *Rejected:* (a) inventing a body field not in the wire schema; (b) hard-failing
-  unauthenticated mutations with `401` — the registry, not the router, should not
-  own that policy yet (see [[session-service#Grill Log]]).
+  **A:** The `authorize(scope?)` helper resolves them from the
+  `Authorization: Bearer <session_id>` header against [[session-service]] (spec §8):
+  no token → `worker_system` (unauthenticated, full access); a token with no
+  matching session, or a session lacking the required scope → `401 unauthorized`;
+  otherwise the session's worker id. Scoped routes pass their spec §8 scope
+  (`createWork`→`work:create`, `listWorkspaces`→`workspace:read`, …); the
+  unlisted mutations (`PATCH state`, `events`, `release`) call `authorize()` with
+  no scope (attribute-only). *Rationale:* attributes mutations to the real worker
+  and enforces declared scopes while keeping the local host usable without a
+  credential store. *Rejected:* (a) inventing a body field not in the wire schema;
+  (b) hard-failing *unauthenticated* mutations with `401` (deferred — see
+  [[session-service#Grill Log]]).
 - **Q:** Identity + clock — a formal seam now?
   **A:** A small [[id-clock]] service (counter + `Clock`), not yet a swappable
   production seam. *Rationale:* services intentionally do not mint ids/timestamps;

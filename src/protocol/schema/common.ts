@@ -98,3 +98,15 @@ export const Resource = Schema.Struct({
   uri: Schema.NonEmptyString,
 })
 export type Resource = typeof Resource.Type
+
+// Permission scopes a session may hold (spec §8). Closed v0.1 vocabulary.
+export const Permission = Schema.Literal(
+  'workspace:read',
+  'work:create',
+  'work:claim',
+  'lease:create',
+  'artifact:create',
+  'checkpoint:create',
+  'review:create',
+)
+export type Permission = typeof Permission.Type

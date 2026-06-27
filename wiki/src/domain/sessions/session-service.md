@@ -18,10 +18,11 @@ aliases: [session-service, SessionService]
 Own the v0.1 session registry: a session is minted at
 `POST /v1/session/initialize` (spec §9) and binds an opaque `SessionId` to the
 [[Worker]] that opened it. Subsequent authenticated requests carry that id as a
-`Authorization: Bearer <session_id>` token (spec §8); `resolveActor` turns the
-token back into the acting `WorkerId` so the transport can attribute mutations to
-a real worker instead of the fallback `worker_system` actor. Persists through
-[[Storage]] with schema-encode on write and schema-decode on read.
+`Authorization: Bearer <session_id>` token (spec §8). The session also stores the
+`permissions` (spec §8 scopes) granted at initialize; `resolveActor` turns a token
+back into the acting `WorkerId`, while [[acp-router]]`.authorize` reads the stored
+session (via `get`) to both attribute the mutation and enforce its required scope.
+Persists through [[Storage]] with schema-encode on write and schema-decode on read.
 
 ## Interface
 
@@ -86,6 +87,25 @@ lookup, not a state machine.
 
 ## Grill Log
 
+- **Q:** Where do permission scopes live — derived from the [[Worker]]
+  `capabilities` booleans, or a separate set?
+  **A:** A separate `permissions: Permission[]` on the session, declared in the
+  `initialize` payload. *Rationale:* spec §8 scopes (`work:create`, …) are an
+  *authorization* vocabulary distinct from §9 `capabilities`, which advertise what
+  a worker *can do* mechanically (`can_edit_files`), not what it is *allowed* to do.
+  Conflating them would force a brittle capability→scope mapping the spec never
+  defines. *Rejected:* deriving scopes from capabilities (semantic mismatch);
+  a global all-workers-all-scopes default (toothless enforcement).
+- **Q:** Should an unauthenticated mutation (no bearer token) be rejected with
+  `401`, per the handoff's "reject instead of `worker_system`"?
+  **A:** No — only *authenticated* requests are scope-enforced; a request with no
+  token still degrades to `worker_system` (full access). *Rationale:* the local
+  reference host has no credential issuance, so hard-requiring auth would make the
+  server unusable out of the box and break every unauthenticated example/test. The
+  enforced contract is "if you present a session, your scopes are checked; an
+  invalid token or a missing scope is `401`." *Rejected:* mandatory auth on all
+  mutations (deferred to a hardened deployment that issues real credentials) — a
+  reversible tightening once credential issuance exists.
 - **Q:** Should the bearer token be a distinct secret (`hdf_xxx` per spec §8)
   rather than the `session_id` itself?
   **A:** No — in v0.1 the `session_id` *is* the token. *Rationale:* the local

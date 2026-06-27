@@ -31,7 +31,8 @@ export const LeasePath: Schema.Struct<{ lease_id: LeaseId }>
 export const EventsStreamParams: Schema.Struct<{ workspace_id: WorkspaceId }>
 export const UpdateWorkStatePayload: Schema.Struct<{ state: WorkState }>
 export const PublishWorkEventPayload: Schema.Struct<{ type: EventType; data: Record<string, unknown> }>
-export const InitializeSessionPayload: Schema.Struct<{ worker: Worker }>
+export const InitializeSessionPayload: Schema.Struct<{ // §8 scopes default to []
+  worker: Worker; permissions: Schema.Array<Permission> }>
 export const InitializeSessionResponse: Schema.Struct<{ // spec §9 host handshake
   session_id: SessionId; protocol_version: "0.1"
   host: { name: string; kind: "local" }
