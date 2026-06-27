@@ -172,3 +172,10 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   wiring remains InMemory by default; persistent host selection is the next slice ·
   118 tests green · risk MEDIUM (experimental Node SQLite API) ·
   [[ADR-0001-architecture-foundation]]
+- 2026-06-27 · storage-selection slice · added [[storage-live]] and app config
+  `ACP_STORAGE_ADAPTER`/`ACP_SQLITE_PATH` so [[app-live]] can choose memory or
+  [[sqlite-store]] without changing domain services. [[http-app]] now exposes
+  `StorageError` as a startup error, and an app-level regression proves
+  [[worker-service]] state persists across two SQLite-backed `AppLive` instances.
+  Memory remains the default to avoid creating local database files unless
+  configured · 119 tests green · risk LOW · [[ADR-0001-architecture-foundation]]

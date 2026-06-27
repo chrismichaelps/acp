@@ -13,9 +13,9 @@ aliases: [app-live, AppLive]
 
 ## Purpose
 
-Compose the in-memory ACP application dependency graph. This module connects
-[[app-config]], [[storage]], [[event-store]], and every domain service into a
-single `AppLive` Layer that server and CLI entrypoints can provide.
+Compose the ACP application dependency graph. This module connects [[app-config]],
+[[storage-live]], [[event-store]], and every domain service into a single
+`AppLive` Layer that server and CLI entrypoints can provide.
 
 ## Interface
 
@@ -36,11 +36,12 @@ export const AppLive: Layer.Layer<
 
 ## Algorithm
 
-Build storage and config first. Provide [[event-store]] from [[in-memory-store]].
-Provide each domain service with the storage/event/config dependencies it needs.
-Provide [[review-service]] from [[work-unit-service]] because review outcomes are
-coupled to WorkUnit state transitions. Merge the resulting services into one
-Layer.
+Build config first, then provide [[storage-live]] from that config so every
+service receives the same selected [[Storage]] adapter. Provide [[event-store]]
+from the selected storage. Provide each domain service with the storage/event/config
+dependencies it needs. Provide [[review-service]] from [[work-unit-service]] because
+review outcomes are coupled to WorkUnit state transitions. Merge the resulting
+services into one Layer.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -48,6 +49,8 @@ Layer.
 - ❌ Do NOT introduce hidden global singletons.
 - ❌ Do NOT read `process.env` directly; configuration flows through
   [[app-config]].
+- ❌ Do NOT import concrete storage adapters here; selection lives in
+  [[storage-live]].
 
 ## Depth
 
@@ -61,6 +64,11 @@ same graph manually.
   **A:** No. Handler/server wiring is a separate transport slice. This module
   composes the dependency graph without opening sockets, so it can be tested
   deterministically.
+- **Q:** Does SQLite become the default app storage now?
+  **A:** No. _Rationale:_ local development and tests stay memory-backed unless
+  `ACP_STORAGE_ADAPTER=sqlite` is set; this slice makes persistence opt-in without
+  changing the existing host behavior. _Rejected:_ silently switching defaults and
+  creating database files for every local test run.
 
 ## Referenced by
 
