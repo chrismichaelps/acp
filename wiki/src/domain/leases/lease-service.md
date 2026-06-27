@@ -62,6 +62,10 @@ export interface LeaseServiceApi {
     actor: WorkerId,
     now: Timestamp,
   ) => Effect<readonly Lease[], StorageError>
+  readonly expireAllDue: (
+    actor: WorkerId,
+    now: Timestamp,
+  ) => Effect<readonly Lease[], StorageError>
 }
 
 export class LeaseService extends Context.Tag('LeaseService')<
@@ -85,12 +89,17 @@ export const LeaseServiceLive: Layer.Layer<
   `{resource.kind, resource.uri}` in the same [[Workspace]] held by another
   [[Worker]].
 - Mutations persist state before emitting the corresponding `lease.*` [[Event]].
+- `expireDue` (one workspace) and `expireAllDue` (every workspace, scanning all
+  stored leases) lapse due active leases to `expired`, each emitting `lease.expired`;
+  the [[sweeper]] calls `expireAllDue` so a lease in an unregistered workspace still
+  lapses.
 
 ### Linkage
 
 - **Requires:** [[storage]], [[event-store]], [[app-config]], [[lease.schema]],
   [[common]], [[protocol-error]]
-- **Consumed by:** future HTTP transport (`/v1/leases`, spec §12) and CLI.
+- **Consumed by:** [[acp-router]] (`/v1/leases`, spec §12), CLI, and the
+  [[sweeper]] (`expireAllDue`).
 
 ## Algorithm
 
