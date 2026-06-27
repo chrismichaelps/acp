@@ -50,6 +50,7 @@ import {
 } from '../../protocol/schema/index.js'
 import type {
   ArtifactId,
+  Capability,
   CheckpointId,
   EventId,
   LeaseId,
@@ -72,6 +73,29 @@ const hostCapabilities = {
   supports_artifacts: true,
   supports_sse: true,
 } as const
+
+const capabilityFlags: readonly (readonly [
+  keyof InitializeSessionPayload['capabilities'],
+  Capability,
+])[] = [
+  ['can_edit_files', 'can_edit_files'],
+  ['can_run_commands', 'can_run_commands'],
+  ['can_create_prs', 'can_create_prs'],
+  ['can_review', 'can_review'],
+  ['supports_checkpoints', 'supports_checkpoints'],
+  ['supports_leases', 'supports_leases'],
+]
+
+const capabilitiesFromHandshake = (
+  payload: InitializeSessionPayload,
+): readonly Capability[] => {
+  if (payload.worker.capabilities.length > 0) {
+    return payload.worker.capabilities
+  }
+  return capabilityFlags.flatMap(([flag, capability]) =>
+    payload.capabilities[flag] ? [capability] : [],
+  )
+}
 
 // Read the bearer token (session id) from the Authorization header, if present.
 const bearerToken = Effect.map(HttpServerRequest.HttpServerRequest, (req) =>
@@ -165,7 +189,10 @@ const initializeSession = respond(
     const payload = yield* HttpServerRequest.schemaBodyJson(
       InitializeSessionPayload,
     )
-    const worker = yield* workers.register(payload.worker)
+    const worker = yield* workers.register({
+      ...payload.worker,
+      capabilities: [...capabilitiesFromHandshake(payload)],
+    })
     const sessionId = (yield* idClock.nextId('session')) as SessionId
     const now = yield* idClock.now
     yield* sessions.create({

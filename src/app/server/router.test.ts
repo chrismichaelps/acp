@@ -43,6 +43,40 @@ describe('acpRouter', () => {
     expect(body.capabilities.supports_sse).toBe(true)
   })
 
+  it('accepts the spec capability-negotiation payload shape', async () => {
+    const handler = makeHandler()
+    const res = await handler(
+      post('/v1/session/initialize', {
+        protocol_version: '0.1',
+        worker: {
+          id: 'agent_openhands',
+          name: 'OpenHands',
+          kind: 'agent',
+          vendor: 'openhands',
+        },
+        capabilities: {
+          can_edit_files: true,
+          can_run_commands: true,
+          can_create_prs: false,
+          can_review: true,
+          supports_checkpoints: true,
+          supports_leases: true,
+        },
+        permissions: ['work:create'],
+      }),
+    )
+
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as {
+      session_id: string
+      protocol_version: string
+      capabilities: { supports_reviews: boolean }
+    }
+    expect(body.session_id).toMatch(/^session_/)
+    expect(body.protocol_version).toBe('0.1')
+    expect(body.capabilities.supports_reviews).toBe(true)
+  })
+
   const initSession = async (
     handler: (req: Request) => Promise<Response>,
     permissions: readonly string[],

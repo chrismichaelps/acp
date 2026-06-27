@@ -8,6 +8,7 @@ import {
 import { Schema } from 'effect'
 import {
   Artifact,
+  Capability,
   Checkpoint,
   ClaimWorkPayload,
   CreateArtifactPayload,
@@ -29,6 +30,8 @@ import {
   Workspace,
   WorkspaceId,
   WorkState,
+  WorkerKind,
+  WorkerStatus,
   WorkUnit,
 } from '../../protocol/schema/index.js'
 
@@ -52,8 +55,49 @@ export const EventsStreamParams = Schema.Struct({
 })
 export type EventsStreamParams = typeof EventsStreamParams.Type
 
+export const ClientCapabilities = Schema.Struct({
+  can_edit_files: Schema.optionalWith(Schema.Boolean, { default: () => false }),
+  can_run_commands: Schema.optionalWith(Schema.Boolean, {
+    default: () => false,
+  }),
+  can_create_prs: Schema.optionalWith(Schema.Boolean, { default: () => false }),
+  can_review: Schema.optionalWith(Schema.Boolean, { default: () => false }),
+  supports_checkpoints: Schema.optionalWith(Schema.Boolean, {
+    default: () => false,
+  }),
+  supports_leases: Schema.optionalWith(Schema.Boolean, {
+    default: () => false,
+  }),
+})
+export type ClientCapabilities = typeof ClientCapabilities.Type
+
+export const InitializeSessionWorker = Schema.Struct({
+  id: Worker.fields.id,
+  name: Worker.fields.name,
+  kind: WorkerKind,
+  vendor: Worker.fields.vendor,
+  status: Schema.optionalWith(WorkerStatus, { default: () => 'online' }),
+  capabilities: Schema.optionalWith(Schema.Array(Capability), {
+    default: () => [],
+  }),
+})
+export type InitializeSessionWorker = typeof InitializeSessionWorker.Type
+
 export const InitializeSessionPayload = Schema.Struct({
-  worker: Worker,
+  protocol_version: Schema.optionalWith(Schema.Literal('0.1'), {
+    default: () => '0.1',
+  }),
+  worker: InitializeSessionWorker,
+  capabilities: Schema.optionalWith(ClientCapabilities, {
+    default: () => ({
+      can_edit_files: false,
+      can_run_commands: false,
+      can_create_prs: false,
+      can_review: false,
+      supports_checkpoints: false,
+      supports_leases: false,
+    }),
+  }),
   permissions: Schema.optionalWith(Schema.Array(Permission), {
     default: () => [],
   }),

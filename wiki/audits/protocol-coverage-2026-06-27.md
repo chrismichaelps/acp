@@ -31,8 +31,11 @@ agent-memory and handoff histories.
 The REST transport covers the v0.1 command surface: session initialize,
 workspace list, work create/claim/update/progress event, lease request/release,
 artifact create, checkpoint create, review request/action, and event subscription
-over SSE. Mandatory-auth mode exists behind `ACP_REQUIRE_AUTH`, with
-`session.initialize` left open as the bootstrap route.
+over SSE. `session.initialize` accepts the draft §9 handshake shape
+(`protocol_version`, worker descriptor, and client capability flags) as well as
+the implementation's earlier full-worker payload. Mandatory-auth mode exists
+behind `ACP_REQUIRE_AUTH`, with `session.initialize` left open as the bootstrap
+route.
 
 JSON-RPC coverage is current for spec §13 plus the REST progress-publication
 parity aliases `work.publish_event`, `review.approve`, `review.reject`, and
@@ -58,11 +61,11 @@ spec vocabulary, but the implementation only creates and removes artifacts, and
 the remove path is currently domain-only rather than exposed through REST or
 JSON-RPC.
 
-Capability negotiation has a shape mismatch. The spec example sends
-`protocol_version` and a `capabilities` object from the worker; the current
-implementation registers the Worker schema and scoped permissions, then returns
-host capabilities. This is deliberate enough to work, but not yet written as a
-compatibility decision.
+Capability negotiation is intentionally permissive. The host returns the spec §9
+response with `protocol_version`, host descriptor, and host capabilities. On
+request, it accepts either the draft capability object or a full internal
+[[Worker]] record; the router normalizes both into the stored worker registry and
+keeps scoped `permissions` as the bearer-session extension from spec §8.
 
 Naming remains historically mixed in `specs.md`: the source draft still says
 Hadoof and uses `hadoof://` in examples, while the implementation and ADR-0001
@@ -71,11 +74,10 @@ ignored and has not been rewritten.
 
 ## Next Slice
 
-Clarify capability negotiation compatibility. The host currently accepts Worker
-schema plus scoped permissions, while the draft example sends
-`protocol_version` and a worker capability object. The next slice should either
-accept the draft shape or record why the implementation's session payload is the
-canonical v0.1 reference shape.
+Close the remaining event-surface mismatch. Worker presence events,
+`workspace.archived`, and artifact update/delete events are named by the draft
+vocabulary, but only the already-backed state transitions should become public
+routes before v0.1 is called transport-complete.
 
 ## Referenced by
 
