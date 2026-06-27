@@ -134,3 +134,14 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   only *authenticated* requests are enforced (unauthenticated still degrades to
   `worker_system`). · 104 tests green · risk LOW ·
   [[ADR-0001-architecture-foundation]]
+- 2026-06-27 · live-boot smoke-test slice · extracted the [[http-app]] seam
+  (`HttpAppLive`: [[acp-router]] served over [[app-live]] + [[id-clock]], socket
+  left as a residual requirement) so [[server-main]] and tests share one
+  composition; [[server-main]] now launches it, [[server-index]] re-exports it.
+  Added an end-to-end live-boot test that binds a real `NodeHttpServer` on an
+  ephemeral port (`port: 0`) and round-trips `initialize` → scoped `createWork`
+  over HTTP, proving the socket boot, bearer-token actor resolution, and spec §8
+  scope enforcement all compose. Grill-resolved: a real ephemeral socket over the
+  already-covered web-handler path, and an import-safe seam over importing
+  [[server-main]] (whose module-scope `runMain` binds 4317 on import). · 105 tests
+  green · risk LOW · [[ADR-0001-architecture-foundation]]

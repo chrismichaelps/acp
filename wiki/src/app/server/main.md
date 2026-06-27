@@ -14,10 +14,11 @@ aliases: [server-main]
 
 ## Purpose
 
-The Node HTTP server entrypoint (spec §21, v0.1 "Local ACP host"). Composes
-[[acp-router]] with [[app-live]] + [[id-clock]] and serves it on a
+The Node HTTP server entrypoint (spec §21, v0.1 "Local ACP host"). Launches the
+[[http-app]] service ([[acp-router]] over [[app-live]] + [[id-clock]]) on a
 `NodeHttpServer` listening on `ACP_PORT`. This is the one place Node Layers are
-wired (Constitution / [[grammar/typescript]]).
+launched (Constitution / [[grammar/typescript]]); the router/app composition
+itself lives in the import-safe [[http-app]] seam so tests can reuse it.
 
 ## Interface
 
@@ -30,16 +31,16 @@ NodeRuntime.runMain(Layer.launch(HttpLive))
 
 ### Linkage
 
-- **Requires:** [[acp-router]], [[app-live]], [[id-clock]], `@effect/platform`
-  `HttpServer`, `@effect/platform-node` `NodeHttpServer`/`NodeRuntime`, `node:http`.
+- **Requires:** [[http-app]], `@effect/platform-node` `NodeHttpServer`/`NodeRuntime`,
+  `node:http`, `effect` `Config`.
 - **Consumed by:** the operator (`node dist/app/server/main.js`).
 
 ## Algorithm
 
 1. Read `ACP_PORT` (`Config`, default 4317).
 2. `NodeHttpServer.layer(() => createServer(), { port })`.
-3. `HttpServer.serve(acpRouter)` providing `AppLive ⊕ IdClockLive` then the server
-   layer; `NodeRuntime.runMain(Layer.launch(...))`.
+3. Provide that socket to [[http-app]] (`HttpAppLive`) and
+   `NodeRuntime.runMain(Layer.launch(...))`.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -49,9 +50,10 @@ NodeRuntime.runMain(Layer.launch(HttpLive))
 
 ## Depth
 
-SHALLOW (0.4) by design — a thin wiring root. Excluded from unit tests; the router
-is tested via a web handler.
+SHALLOW (0.4) by design — a thin launch root (read port, bind socket, launch).
+Excluded from unit tests; the launched composition is covered by the [[http-app]]
+live-boot smoke test, and the router via a web handler.
 
 ## Referenced by
 
-[[server-index]] · [[Transport]] · [[src/_MOC]]
+[[server-index]] · [[http-app]] · [[Transport]] · [[src/_MOC]]
