@@ -18,6 +18,7 @@ describe('AppConfig', () => {
     expect(Duration.toMillis(cfg.defaultLeaseTtl)).toBe(15 * 60 * 1000)
     expect(cfg.eventRetentionDays).toBe(30)
     expect(cfg.maxArtifactSizeBytes).toBe(16 * 1024 * 1024)
+    expect(cfg.requireAuth).toBe(false)
   })
 
   it('reads overrides from the environment', () => {
@@ -25,9 +26,11 @@ describe('AppConfig', () => {
       ['ACP_PORT', '8080'],
       ['ACP_LOG_LEVEL', 'debug'],
       ['ACP_MAX_ARTIFACT_SIZE_MB', '4'],
+      ['ACP_REQUIRE_AUTH', 'true'],
     ])
     expect(cfg.port).toBe(8080)
     expect(cfg.logLevel).toBe('debug')
     expect(cfg.maxArtifactSizeBytes).toBe(4 * 1024 * 1024)
+    expect(cfg.requireAuth).toBe(true)
   })
 })
