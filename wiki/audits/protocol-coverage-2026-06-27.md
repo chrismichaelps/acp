@@ -31,7 +31,9 @@ agent-memory and handoff histories.
 The REST transport covers the v0.1 command surface: session initialize,
 workspace list, work create/claim/update/progress event, lease request/release,
 artifact create, checkpoint create, review request/action, and event subscription
-over SSE. `session.initialize` accepts the draft §9 handshake shape
+over SSE. Artifact deletion is exposed as `DELETE /v1/artifacts/{artifact_id}`
+and emits `artifact.deleted` through the domain service. `session.initialize`
+accepts the draft §9 handshake shape
 (`protocol_version`, worker descriptor, and client capability flags) as well as
 the implementation's earlier full-worker payload. Mandatory-auth mode exists
 behind `ACP_REQUIRE_AUTH`, with `session.initialize` left open as the bootstrap
@@ -57,9 +59,9 @@ The event vocabulary is broader than the service behavior. Worker events are not
 emitted because workers are currently host-scoped registry records, not
 workspace-scoped event actors. `workspace.archived` has no corresponding
 workspace lifecycle field yet. Artifact update/delete events are declared in the
-spec vocabulary, but the implementation only creates and removes artifacts, and
-the remove path is currently domain-only rather than exposed through REST or
-JSON-RPC.
+spec vocabulary; delete is now transport-visible through REST and JSON-RPC, while
+update remains absent because artifacts are immutable after creation in the
+current domain model.
 
 Capability negotiation is intentionally permissive. The host returns the spec §9
 response with `protocol_version`, host descriptor, and host capabilities. On
@@ -75,9 +77,9 @@ ignored and has not been rewritten.
 ## Next Slice
 
 Close the remaining event-surface mismatch. Worker presence events,
-`workspace.archived`, and artifact update/delete events are named by the draft
-vocabulary, but only the already-backed state transitions should become public
-routes before v0.1 is called transport-complete.
+`workspace.archived`, and artifact update events are named by the draft
+vocabulary, but they need domain state decisions before becoming public
+transport routes.
 
 ## Referenced by
 

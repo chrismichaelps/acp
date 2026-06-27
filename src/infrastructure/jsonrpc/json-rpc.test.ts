@@ -203,6 +203,23 @@ describe('JSON-RPC transport mapping', () => {
     })
   })
 
+  it('maps artifact.delete and encodes the artifact id path segment', () => {
+    const command = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_artifact_delete',
+        method: 'artifact.delete',
+        params: { artifact_id: 'artifact/needs encoding' },
+      }),
+    )
+
+    expect(command.request).toEqual({
+      method: 'DELETE',
+      path: '/v1/artifacts/artifact%2Fneeds%20encoding',
+      label: 'artifact.delete',
+    })
+  })
+
   it('maps events.subscribe to the SSE stream route', () => {
     const command = expectRight(
       parseJsonRpcCommand({

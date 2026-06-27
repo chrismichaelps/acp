@@ -35,6 +35,7 @@ export type JsonRpcMethod =
   | 'lease.request'
   | 'lease.release'
   | 'artifact.create'
+  | 'artifact.delete'
   | 'checkpoint.create'
   | 'review.request'
   | 'review.approve'
@@ -43,7 +44,7 @@ export type JsonRpcMethod =
   | 'events.subscribe'
 
 export interface JsonRpcHttpRequest {
-  readonly method: 'GET' | 'POST' | 'PATCH'
+  readonly method: 'DELETE' | 'GET' | 'POST' | 'PATCH'
   readonly path: string
   readonly body?: unknown
   readonly stream?: boolean
@@ -82,8 +83,9 @@ omitted notification id and an explicit `null` id, validate the method against
 the closed spec §13 table, then decode params with the existing protocol schema
 for that operation. Path-bearing methods split resource ids from request bodies:
 `work.claim`, `work.update`, `work.publish_event`, `lease.release`,
-`review.approve`, `review.reject`, and `review.request_changes` URL-encode the
-path segment and leave only operation payload fields in the body.
+`artifact.delete`, `review.approve`, `review.reject`, and
+`review.request_changes` URL-encode the path segment and leave only operation
+payload fields in the body.
 `events.subscribe` maps to the SSE stream route and marks the command as
 stream-capable.
 
