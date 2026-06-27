@@ -99,10 +99,12 @@ describe('JSON-RPC transport mapping', () => {
       path: '/v1/work',
       label: 'work.create',
     })
+    // The body is the validated wire form (serializable onto the HTTP API), not
+    // the decoded Type side — optionals stay as plain JSON, not Option wrappers.
     expect(command.request.body).toMatchObject({
       workspace_id: 'workspace_main',
       title: 'Review lease handling',
-      priority: Option.some('high'),
+      priority: 'high',
     })
   })
 

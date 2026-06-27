@@ -190,3 +190,18 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   [[worker-service]] state persists across two SQLite-backed `AppLive` instances.
   Memory remains the default to avoid creating local database files unless
   configured · 119 tests green · risk LOW · [[ADR-0001-architecture-foundation]]
+- 2026-06-27 · json-rpc-runtime slice · added [[json-rpc-runtime]] (`executeJsonRpc`):
+  executes the [[json-rpc]] canonical commands against the host via an injected,
+  transport-agnostic `JsonRpcDispatch`, folding outcomes into JSON-RPC 2.0
+  responses — request/notification correlation (notifications get no reply even on
+  failure), batch handling (sendable-only, `-32600` for an empty batch), stream
+  rejection (`events.subscribe` → `-32603`, use the SSE route), and HTTP-status →
+  reserved-code mapping (`400`→`-32602`, other non-2xx→`-32603`, ACP error kept in
+  `data`). Fixed a latent [[json-rpc]] bug: full-payload methods now forward the
+  validated **wire** body (`validatedBody`) instead of the decoded Option-wrapped
+  form, which is not serializable onto the HTTP API. Tested with a fake dispatch
+  (folding rules) and the real [[acp-router]] web handler (`session.initialize` →
+  scoped `work.create` round-trip; scope-denied → `-32603`). Grill-resolved: reuse
+  the router via dispatch (no duplicate routing/auth); ship the execution core
+  transport-agnostic before any stdio/WS/`POST /rpc` framing. · 138 tests green ·
+  risk LOW · [[ADR-0001-architecture-foundation]]

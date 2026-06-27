@@ -24,12 +24,13 @@ implementation file.
 
 ```typescript
 export * from './json-rpc.js'
+export * from './json-rpc-runtime.js'
 ```
 
 ### Linkage
 
-- **Requires:** [[json-rpc]]
-- **Consumed by:** future stdio/WebSocket JSON-RPC host adapters.
+- **Requires:** [[json-rpc]], [[json-rpc-runtime]]
+- **Consumed by:** future stdio/WebSocket/`POST /rpc` JSON-RPC host adapters.
 
 ## Algorithm
 

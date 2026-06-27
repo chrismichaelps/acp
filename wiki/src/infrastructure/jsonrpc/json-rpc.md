@@ -68,7 +68,8 @@ export const jsonRpcError: (
 
 - **Requires:** [[acp-http-api]], [[work-unit.schema]], [[lease.schema]],
   [[artifact.schema]], [[checkpoint.schema]], [[review.schema]]
-- **Consumed by:** future JSON-RPC stdio/WebSocket host adapters.
+- **Consumed by:** [[json-rpc-runtime]] (executes the normalized commands), and
+  through it future stdio/WebSocket/`POST /rpc` host adapters.
 
 ## Algorithm
 
@@ -79,6 +80,11 @@ for that operation. Path-bearing methods split resource ids from request bodies:
 `work.claim`, `work.update`, and `lease.release` URL-encode the path segment and
 leave only operation payload fields in the body. `events.subscribe` maps to the
 SSE stream route and marks the command as stream-capable.
+
+Full-payload methods validate params with the schema but forward the **original
+wire JSON** as the request body (`validatedBody`), not the decoded Type side: the
+decoded form wraps optionals in `Option`, which is not serializable back onto the
+HTTP API that [[json-rpc-runtime]] dispatches to.
 
 Response helpers are intentionally small. A command with no id is a JSON-RPC
 notification and produces no success response; method and params failures from
