@@ -70,7 +70,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 6. ✅ HTTP transport (HttpApi) + error mapper — 34 tests green
 7. ✅ SSE event stream — 38 tests green
 8. ✅ AppLive dependency graph + server main + CLI client — 97 tests green
-9. ▶ Persistent storage adapter
+9. ✅ Persistent storage adapter — 118 tests green
+10. ▶ Persistent storage host selection
 
 ## Referenced by
 
