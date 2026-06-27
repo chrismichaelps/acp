@@ -71,7 +71,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 7. ✅ SSE event stream — 38 tests green
 8. ✅ AppLive dependency graph + server main + CLI client — 97 tests green
 9. ✅ Persistent storage adapter — 118 tests green
-10. ▶ Persistent storage host selection
+10. ✅ Persistent storage host selection — 119 tests green
+11. ▶ Protocol spec canonicalization
 
 ## Referenced by
 

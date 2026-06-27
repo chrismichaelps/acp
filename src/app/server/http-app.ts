@@ -1,6 +1,7 @@
 /** @Acp.App.Server.HttpApp — the running ACP host layer (router + sweeper over the app) */
 import { HttpServer } from '@effect/platform'
 import { Layer } from 'effect'
+import type { StorageError } from '../../protocol/errors/protocol-error.js'
 import { AppLive } from '../index.js'
 import { IdClockLive } from './identity.js'
 import { acpRouter } from './router.js'
@@ -17,7 +18,10 @@ import { SweeperLive } from './sweeper.js'
  * test binds an ephemeral port. Keeping this import-safe (no `Layer.launch`) lets
  * tests reuse the exact composition without running a server on import.
  */
-export const HttpAppLive: Layer.Layer<never, never, HttpServer.HttpServer> =
-  Layer.mergeAll(HttpServer.serve(acpRouter), SweeperLive).pipe(
-    Layer.provide(Layer.mergeAll(AppLive, IdClockLive)),
-  )
+export const HttpAppLive: Layer.Layer<
+  never,
+  StorageError,
+  HttpServer.HttpServer
+> = Layer.mergeAll(HttpServer.serve(acpRouter), SweeperLive).pipe(
+  Layer.provide(Layer.mergeAll(AppLive, IdClockLive)),
+)

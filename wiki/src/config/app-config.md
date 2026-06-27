@@ -25,6 +25,8 @@ documented default, exposed as a single `AppConfig` value behind a Layer.
 export interface AppConfig {
   readonly port: number
   readonly logLevel: 'debug' | 'info' | 'warn' | 'error'
+  readonly storageAdapter: 'memory' | 'sqlite'
+  readonly sqlitePath: string
   readonly defaultLeaseTtl: Duration.Duration
   readonly eventRetentionDays: number
   readonly maxArtifactSizeBytes: number
@@ -46,6 +48,8 @@ Each field is a `Config.*` with `Config.withDefault`:
 
 - `ACP_PORT` int → 4317
 - `ACP_LOG_LEVEL` literal → 'info'
+- `ACP_STORAGE_ADAPTER` literal (`memory` | `sqlite`) → 'memory'
+- `ACP_SQLITE_PATH` string → `acp.sqlite`
 - `ACP_DEFAULT_LEASE_TTL` duration → 15 minutes
 - `ACP_EVENT_RETENTION_DAYS` int → 30
 - `ACP_MAX_ARTIFACT_SIZE_MB` int → 16 (stored as bytes)
@@ -61,7 +65,7 @@ converted to a defect, giving `Layer.Layer<AppConfigTag>` (no error param).
 
 ## Negative Logic (Prohibited Paths)
 
-- ❌ Do NOT hardcode a port, TTL, retention window, size limit, or heartbeat anywhere else.
+- ❌ Do NOT hardcode a port, storage path, TTL, retention window, size limit, or heartbeat anywhere else.
 - ❌ Do NOT read `process.env` directly — go through `Config`.
 
 ## Depth
