@@ -26,16 +26,51 @@ const worker = {
 }
 
 describe('acpRouter', () => {
-  it('initializes a session and echoes capabilities', async () => {
+  it('initializes a session, returning a session id and host capabilities', async () => {
     const handler = makeHandler()
     const res = await handler(post('/v1/session/initialize', { worker }))
     expect(res.status).toBe(200)
     const body = (await res.json()) as {
-      worker: { id: string }
-      capabilities: readonly string[]
+      session_id: string
+      protocol_version: string
+      host: { name: string; kind: string }
+      capabilities: { supports_sse: boolean }
     }
-    expect(body.worker.id).toBe('agent_claude_code')
-    expect(body.capabilities).toContain('can_review')
+    expect(body.session_id).toMatch(/^session_/)
+    expect(body.protocol_version).toBe('0.1')
+    expect(body.host.kind).toBe('local')
+    expect(body.capabilities.supports_sse).toBe(true)
+  })
+
+  it('attributes a created work unit to the session worker via bearer token', async () => {
+    const handler = makeHandler()
+    const session = await handler(post('/v1/session/initialize', { worker }))
+    const { session_id } = (await session.json()) as { session_id: string }
+
+    const authed = new Request('http://acp.test/v1/work', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${session_id}`,
+      },
+      body: JSON.stringify({ workspace_id: 'workspace_1', title: 'Fix bug' }),
+    })
+    const res = await handler(authed)
+    expect(res.status).toBe(201)
+    expect(((await res.json()) as { created_by: string }).created_by).toBe(
+      'agent_claude_code',
+    )
+  })
+
+  it('falls back to the system actor when no bearer token is sent', async () => {
+    const handler = makeHandler()
+    const res = await handler(
+      post('/v1/work', { workspace_id: 'workspace_1', title: 'Fix bug' }),
+    )
+    expect(res.status).toBe(201)
+    expect(((await res.json()) as { created_by: string }).created_by).toBe(
+      'worker_system',
+    )
   })
 
   it('lists workspaces (empty by default)', async () => {
