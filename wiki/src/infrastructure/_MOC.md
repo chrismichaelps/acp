@@ -10,7 +10,7 @@ construction and hides it behind narrow service tags.
 
 ## storage/
 
-- [[storage/_MOC|Storage MOC]] — persistence seam interface and in-memory adapter.
+- [[storage/_MOC|Storage MOC]] — persistence seam interface and InMemory/SQLite adapters.
 
 ## http/
 

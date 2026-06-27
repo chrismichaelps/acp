@@ -42,7 +42,7 @@ file has exactly one page here. A source file with no page is UNREGISTERED.
 ## infrastructure/
 
 - [[infrastructure/_MOC|Infrastructure]] — runtime adapters and platform edges.
-- [[storage/_MOC|Storage]] — persistence seam interface, opaque barrel, and InMemory adapter.
+- [[storage/_MOC|Storage]] — persistence seam interface, opaque barrel, and InMemory/SQLite adapters.
 - [[http/_MOC|HTTP]] — Effect Platform REST API declaration and error mapper.
 - [[sse/_MOC|SSE]] — Server-Sent Events adapter for live event streams.
 
