@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-27 · review-action-transport slice · exposed review decisions through
+  REST (`approve`, `reject`, `request_changes`) and JSON-RPC
+  (`review.approve`, `review.reject`, `review.request_changes`) using the bearer
+  session actor, with router, `/rpc`, mapper, and HTTP contract tests · 154 tests
+  green · risk LOW
 - 2026-06-27 · json-rpc-progress-event slice · added `work.publish_event` to
   [[json-rpc]] as the command-parity alias for REST
   `POST /v1/work/{work_id}/events`, including path encoding, schema-backed event

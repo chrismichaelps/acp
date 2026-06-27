@@ -1,6 +1,7 @@
 /** @Acp.Infra.JsonRpc — JSON-RPC 2.0 request normalization */
 import { Data, Either, Option, Schema } from 'effect'
 import {
+  ApproveReviewPayload,
   EventsStreamParams,
   InitializeSessionPayload,
   PublishWorkEventPayload,
@@ -14,6 +15,7 @@ import {
   LeaseId,
   RequestLeasePayload,
   RequestReviewPayload,
+  ReviewId,
   WorkId,
 } from '../../protocol/schema/index.js'
 
@@ -98,6 +100,9 @@ export type JsonRpcMethod =
   | 'artifact.create'
   | 'checkpoint.create'
   | 'review.request'
+  | 'review.approve'
+  | 'review.reject'
+  | 'review.request_changes'
   | 'events.subscribe'
 
 const methodLabels = new Set<string>([
@@ -112,6 +117,9 @@ const methodLabels = new Set<string>([
   'artifact.create',
   'checkpoint.create',
   'review.request',
+  'review.approve',
+  'review.reject',
+  'review.request_changes',
   'events.subscribe',
 ])
 
@@ -374,6 +382,61 @@ const commandFor = (
         id,
         expects_response: expectsResponse,
         request: { method: 'POST', path: '/v1/reviews', body, label: method },
+      }
+    }
+
+    if (method === 'review.approve') {
+      const params = yield* decodeParams(
+        Schema.Struct({
+          review_id: ReviewId,
+          met_requirements: ApproveReviewPayload.fields.met_requirements,
+        }),
+        envelope.params,
+        id,
+      )
+      return {
+        id,
+        expects_response: expectsResponse,
+        request: {
+          method: 'POST',
+          path: `/v1/reviews/${encodeSegment(params.review_id)}/approve`,
+          body: { met_requirements: params.met_requirements },
+          label: method,
+        },
+      }
+    }
+
+    if (method === 'review.reject') {
+      const params = yield* decodeParams(
+        Schema.Struct({ review_id: ReviewId }),
+        envelope.params,
+        id,
+      )
+      return {
+        id,
+        expects_response: expectsResponse,
+        request: {
+          method: 'POST',
+          path: `/v1/reviews/${encodeSegment(params.review_id)}/reject`,
+          label: method,
+        },
+      }
+    }
+
+    if (method === 'review.request_changes') {
+      const params = yield* decodeParams(
+        Schema.Struct({ review_id: ReviewId }),
+        envelope.params,
+        id,
+      )
+      return {
+        id,
+        expects_response: expectsResponse,
+        request: {
+          method: 'POST',
+          path: `/v1/reviews/${encodeSegment(params.review_id)}/request_changes`,
+          label: method,
+        },
       }
     }
 

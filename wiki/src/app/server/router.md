@@ -50,6 +50,9 @@ export const acpRouter: HttpRouter.HttpRouter<
   · `POST /v1/work/:work_id/events`
 - `POST /v1/leases` · `POST /v1/leases/:lease_id/release` (→ 204)
 - `POST /v1/artifacts` · `POST /v1/checkpoints` · `POST /v1/reviews`
+  · `POST /v1/reviews/:review_id/approve`
+  · `POST /v1/reviews/:review_id/reject`
+  · `POST /v1/reviews/:review_id/request_changes`
 - `GET  /v1/events/stream?workspace_id=…` → SSE ([[sse-event-stream]])
 - `POST /rpc` → JSON-RPC 2.0 framing ([[rpc-endpoint]]); the `/v1` routes above are
   built as `v1Router`, and `acpRouter = v1Router + POST /rpc` so JSON-RPC dispatch
@@ -106,11 +109,12 @@ ceremony across twelve endpoints.
   matching session, or a session lacking the required scope → `401 unauthorized`;
   otherwise the session's worker id. Scoped routes pass their spec §8 scope
   (`createWork`→`work:create`, `listWorkspaces`→`workspace:read`, …); the
-  unlisted mutations (`PATCH state`, `events`, `release`) call `authorize()` with
-  no scope (attribute-only). _Rationale:_ attributes mutations to the real worker
-  and enforces declared scopes while keeping the local host usable without a
-  credential store; `requireAuth` is the reversible tightening for a hardened
-  deployment. _Rejected:_ inventing a body field not in the wire schema.
+  unlisted mutations (`PATCH state`, `events`, `release`, review decisions) call
+  `authorize()` with no scope (attribute-only). _Rationale:_ attributes mutations
+  to the real worker and enforces declared scopes while keeping the local host
+  usable without a credential store; `requireAuth` is the reversible tightening
+  for a hardened deployment. _Rejected:_ inventing a body field not in the wire
+  schema.
 - **Q:** When `ACP_REQUIRE_AUTH` is set, does `session/initialize` also require a
   token?
   **A:** No — `initializeSession` never calls `authorize`; it is the one open route

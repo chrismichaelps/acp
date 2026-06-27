@@ -31,6 +31,7 @@ export const LeasePath: Schema.Struct<{ lease_id: LeaseId }>
 export const EventsStreamParams: Schema.Struct<{ workspace_id: WorkspaceId }>
 export const UpdateWorkStatePayload: Schema.Struct<{ state: WorkState }>
 export const PublishWorkEventPayload: Schema.Struct<{ type: EventType; data: Record<string, unknown> }>
+export const ApproveReviewPayload: Schema.Struct<{ met_requirements: string[] }>
 export const InitializeSessionPayload: Schema.Struct<{ // §8 scopes default to []
   worker: Worker; permissions: Schema.Array<Permission> }>
 export const InitializeSessionResponse: Schema.Struct<{ // spec §9 host handshake
@@ -57,6 +58,9 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 - `POST /v1/artifacts`
 - `POST /v1/checkpoints`
 - `POST /v1/reviews`
+- `POST /v1/reviews/{review_id}/approve`
+- `POST /v1/reviews/{review_id}/reject`
+- `POST /v1/reviews/{review_id}/request_changes`
 - `GET /v1/events/stream?workspace_id=...`
 
 ### Linkage
