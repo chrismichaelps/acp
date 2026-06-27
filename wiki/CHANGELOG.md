@@ -131,7 +131,7 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   mutation — no token → `worker_system`, invalid token or missing scope →
   `401 unauthorized` (reusing [[protocol-error]] `UnauthorizedError`). Grill-resolved:
   scopes are a separate authorization set (not derived from §9 capabilities), and
-  only *authenticated* requests are enforced (unauthenticated still degrades to
+  only _authenticated_ requests are enforced (unauthenticated still degrades to
   `worker_system`). · 104 tests green · risk LOW ·
   [[ADR-0001-architecture-foundation]]
 - 2026-06-27 · live-boot smoke-test slice · extracted the [[http-app]] seam
@@ -157,3 +157,10 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   would split-brain the store); lease lapse reuses the existing `lease.expired`
   event, session eviction emits none (host-local auth state). · 107 tests green ·
   risk LOW · [[ADR-0001-architecture-foundation]]
+- 2026-06-27 · mandatory-auth slice · added `ACP_REQUIRE_AUTH` to [[app-config]]
+  and [[acp-router]] authorization policy: default local-host mode still degrades
+  unauthenticated mutations to `worker_system`, while hardened mode rejects missing
+  bearer sessions with `401 unauthorized`; `session/initialize` remains the open
+  bootstrap route that mints the bearer token. Added config and router regression
+  tests plus mirrored config/router notes for the runtime switch · 109 tests green · risk LOW ·
+  [[ADR-0001-architecture-foundation]]

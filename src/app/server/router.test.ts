@@ -1,7 +1,8 @@
 /** @Acp.App.Server.Router.Test — HTTP routes over a web handler */
 import { describe, expect, it } from 'vitest'
 import { HttpApp } from '@effect/platform'
-import { Layer } from 'effect'
+import { Duration, Layer } from 'effect'
+import { AppConfigTag } from '../../config/app-config.js'
 import { AppLive } from '../index.js'
 import { IdClockLive } from './identity.js'
 import { acpRouter } from './router.js'
@@ -152,5 +153,61 @@ describe('acpRouter', () => {
 
     const release = await handler(post('/v1/leases/lease_missing/release'))
     expect(release.status).toBe(404)
+  })
+})
+
+// requireAuth overrides AppLive's config (rightmost merge wins) so authorize sees it.
+const requireAuthConfig = Layer.succeed(AppConfigTag, {
+  port: 4317,
+  logLevel: 'info' as const,
+  defaultLeaseTtl: Duration.minutes(15),
+  eventRetentionDays: 30,
+  maxArtifactSizeBytes: 16 * 1024 * 1024,
+  sseHeartbeat: Duration.seconds(15),
+  sessionTtl: Duration.hours(1),
+  sweepInterval: Duration.seconds(60),
+  requireAuth: true,
+})
+
+describe('acpRouter with ACP_REQUIRE_AUTH', () => {
+  const makeAuthHandler = () =>
+    HttpApp.toWebHandlerLayer(
+      acpRouter,
+      Layer.mergeAll(AppLive, IdClockLive, requireAuthConfig),
+    ).handler
+
+  it('rejects an unauthenticated mutation with 401', async () => {
+    const handler = makeAuthHandler()
+    const res = await handler(
+      post('/v1/work', { workspace_id: 'workspace_1', title: 'Fix bug' }),
+    )
+    expect(res.status).toBe(401)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
+      'unauthorized',
+    )
+  })
+
+  it('still allows session/initialize (the open bootstrap route) and authed work', async () => {
+    const handler = makeAuthHandler()
+    const init = await handler(
+      post('/v1/session/initialize', { worker, permissions: ['work:create'] }),
+    )
+    expect(init.status).toBe(200)
+    const token = ((await init.json()) as { session_id: string }).session_id
+
+    const res = await handler(
+      new Request('http://acp.test/v1/work', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ workspace_id: 'workspace_1', title: 'Fix bug' }),
+      }),
+    )
+    expect(res.status).toBe(201)
+    expect(((await res.json()) as { created_by: string }).created_by).toBe(
+      'agent_claude_code',
+    )
   })
 })

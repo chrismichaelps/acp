@@ -28,9 +28,16 @@ endpoint delegates to [[sse-event-stream]].
 ```typescript
 export const acpRouter: HttpRouter.HttpRouter<
   never,
-  | WorkUnitService | WorkerService | WorkspaceService | LeaseService
-  | ArtifactService | CheckpointService | ReviewService
-  | EventStore | IdClock | AppConfigTag
+  | WorkUnitService
+  | WorkerService
+  | WorkspaceService
+  | LeaseService
+  | ArtifactService
+  | CheckpointService
+  | ReviewService
+  | EventStore
+  | IdClock
+  | AppConfigTag
 >
 ```
 
@@ -79,31 +86,38 @@ ceremony across twelve endpoints.
 ## Grill Log
 
 - **Q:** `HttpApiBuilder` typed errors or a manual `HttpRouter`?
-  **A:** Manual `HttpRouter`. *Rationale:* the merged contract declares one
+  **A:** Manual `HttpRouter`. _Rationale:_ the merged contract declares one
   `ProtocolError` schema across 400/404/409, so typed-error status mapping is
   ambiguous; meanwhile [[http-error-mapper]]'s `toHttpErrorResponse` already returns
   a correct-status `HttpServerResponse` from any domain error, and
   [[sse-event-stream]] already returns a streaming `HttpServerResponse`. A router
   reuses both, gives exact status codes, and leaves the published [[acp-http-api]]
-  contract untouched. *Rejected:* refactor `AcpHttpApi` into per-status wire-error
+  contract untouched. _Rejected:_ refactor `AcpHttpApi` into per-status wire-error
   classes (edits already-merged contract + page for no runtime gain at v0.1).
 - **Q:** Where do the `actor`/`createdBy` worker ids come from, since payloads such
   as `CreateWorkPayload` and the `PATCH state` body omit them?
   **A:** The `authorize(scope?)` helper resolves them from the
   `Authorization: Bearer <session_id>` header against [[session-service]] (spec §8):
-  no token → `worker_system` (unauthenticated, full access); a token with no
+  no token → `worker_system` when [[app-config]] `requireAuth` is false (the default
+  local-host mode), or `401 unauthorized` when `requireAuth` is true; a token with no
   matching session, or a session lacking the required scope → `401 unauthorized`;
   otherwise the session's worker id. Scoped routes pass their spec §8 scope
   (`createWork`→`work:create`, `listWorkspaces`→`workspace:read`, …); the
   unlisted mutations (`PATCH state`, `events`, `release`) call `authorize()` with
-  no scope (attribute-only). *Rationale:* attributes mutations to the real worker
+  no scope (attribute-only). _Rationale:_ attributes mutations to the real worker
   and enforces declared scopes while keeping the local host usable without a
-  credential store. *Rejected:* (a) inventing a body field not in the wire schema;
-  (b) hard-failing *unauthenticated* mutations with `401` (deferred — see
-  [[session-service#Grill Log]]).
+  credential store; `requireAuth` is the reversible tightening for a hardened
+  deployment. _Rejected:_ inventing a body field not in the wire schema.
+- **Q:** When `ACP_REQUIRE_AUTH` is set, does `session/initialize` also require a
+  token?
+  **A:** No — `initializeSession` never calls `authorize`; it is the one open route
+  that _mints_ the first session, so a client can always bootstrap a credential.
+  Only mutations gated by `authorize` reject the empty token. _Rationale:_ a closed
+  `initialize` would be unbootstrappable. _Rejected:_ a separate bootstrap secret at
+  v0.1 (no credential store yet).
 - **Q:** Identity + clock — a formal seam now?
   **A:** A small [[id-clock]] service (counter + `Clock`), not yet a swappable
-  production seam. *Rationale:* services intentionally do not mint ids/timestamps;
+  production seam. _Rationale:_ services intentionally do not mint ids/timestamps;
   the composition root must. A `Ref` counter + `Clock.currentTimeMillis` is
   deterministic and testable. Promote to a seam when a second strategy (UUID,
   snowflake) is real.
