@@ -21,6 +21,10 @@ Application modules compose runtime Layers for server and CLI entrypoints.
 
 - [[cli/_MOC|CLI MOC]] — `acp` command-line client (parser, client, Node main).
 
+## stdio/
+
+- [[stdio/_MOC|Stdio MOC]] — JSON-RPC stdio bridge over `POST /rpc`.
+
 ## Referenced by
 
 [[src/_MOC]]

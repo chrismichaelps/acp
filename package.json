@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "bin": {
-    "acp": "./dist/app/cli/main.js"
+    "acp": "./dist/app/cli/main.js",
+    "acp-jsonrpc-stdio": "./dist/app/stdio/main.js"
   },
   "scripts": {
     "build": "tsc",

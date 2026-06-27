@@ -29,19 +29,18 @@ delegate → encode → error-map boundary is mandatory (spec §16.8).
 
 ## Adapters
 
-| Adapter  | Type       | Path                              | Last verified | Status                      |
-| -------- | ---------- | --------------------------------- | ------------- | --------------------------- |
-| HTTP     | production | @root/src/infrastructure/http/    | 2026-06-26    | API CONTRACT CURRENT        |
-| SSE      | production | @root/src/infrastructure/sse/     | —             | PLANNED (v0.1 stream)       |
-| JSON-RPC | production | @root/src/infrastructure/jsonrpc/ | 2026-06-27    | CORE VERIFIED; HOST PENDING |
+| Adapter  | Type       | Path                                                     | Last verified | Status                       |
+| -------- | ---------- | -------------------------------------------------------- | ------------- | ---------------------------- |
+| HTTP     | production | @root/src/infrastructure/http/                           | 2026-06-26    | API CONTRACT CURRENT         |
+| SSE      | production | @root/src/infrastructure/sse/                            | —             | PLANNED (v0.1 stream)        |
+| JSON-RPC | production | @root/src/infrastructure/jsonrpc/ + @root/src/app/stdio/ | 2026-06-27    | HTTP + STDIO FRAMING CURRENT |
 
 ## Health
 
-DRIFT 0 (HEALTHY). HTTP API declaration and error mapper are code-complete;
-JSON-RPC method normalization is code-complete for spec §13 and tested across
-method routing, params validation, path encoding, stream mapping, and
-notifications. Stdio/WebSocket host execution remains the next JSON-RPC
-deepening.
+DRIFT 0 (HEALTHY). HTTP API declaration, error mapper, `POST /rpc`, JSON-RPC
+method normalization, runtime folding, and stdio Content-Length framing are
+code-complete for the current v0.1 transport surface. WebSocket host execution
+remains speculative.
 
 ## Deepening
 
@@ -51,4 +50,4 @@ declarative API (see [[grammar/typescript]]).
 ## Referenced by
 
 [[Event]] · [[acp-http-api]] · [[http-error-mapper]] · [[json-rpc]] ·
-[[architecture/_MOC]]
+[[stdio-main]] · [[architecture/_MOC]]
