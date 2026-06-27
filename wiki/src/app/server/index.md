@@ -13,21 +13,23 @@ aliases: [server-index]
 
 ## Purpose
 
-Opaque public surface for the HTTP server: re-exports [[acp-router]] and
-[[id-clock]]. Excludes [[server-main]] (a side-effecting entrypoint).
+Opaque public surface for the HTTP server: re-exports [[acp-router]], [[id-clock]],
+and the [[http-app]] service layer. Excludes [[server-main]] (a side-effecting
+entrypoint).
 
 ## Interface
 
 ### Signatures
 
 ```typescript
+export * from './http-app.js'
 export * from './identity.js'
 export * from './router.js'
 ```
 
 ### Linkage
 
-- **Requires:** [[acp-router]], [[id-clock]]
+- **Requires:** [[acp-router]], [[id-clock]], [[http-app]]
 - **Consumed by:** [[server-main]] and server tests.
 
 ## Algorithm
