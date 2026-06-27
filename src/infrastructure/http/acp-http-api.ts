@@ -93,6 +93,11 @@ export const PublishWorkEventPayload = Schema.Struct({
 })
 export type PublishWorkEventPayload = typeof PublishWorkEventPayload.Type
 
+export const ApproveReviewPayload = Schema.Struct({
+  met_requirements: Schema.Array(Schema.String),
+})
+export type ApproveReviewPayload = typeof ApproveReviewPayload.Type
+
 const protocolError = (status: number) =>
   ({ status }) satisfies { readonly status: number }
 
@@ -175,13 +180,40 @@ export const CheckpointGroup = HttpApiGroup.make('checkpoints').add(
     .addError(ProtocolError, protocolError(404)),
 )
 
-export const ReviewGroup = HttpApiGroup.make('reviews').add(
-  HttpApiEndpoint.post('requestReview', '/v1/reviews')
-    .setPayload(RequestReviewPayload)
-    .addSuccess(Review, { status: 201 })
-    .addError(ProtocolError, protocolError(400))
-    .addError(ProtocolError, protocolError(404)),
-)
+export const ReviewGroup = HttpApiGroup.make('reviews')
+  .add(
+    HttpApiEndpoint.post('requestReview', '/v1/reviews')
+      .setPayload(RequestReviewPayload)
+      .addSuccess(Review, { status: 201 })
+      .addError(ProtocolError, protocolError(400))
+      .addError(ProtocolError, protocolError(404)),
+  )
+  .add(
+    HttpApiEndpoint.post('approveReview', '/v1/reviews/:review_id/approve')
+      .setPath(ReviewPath)
+      .setPayload(ApproveReviewPayload)
+      .addSuccess(Review)
+      .addError(ProtocolError, protocolError(400))
+      .addError(ProtocolError, protocolError(404))
+      .addError(ProtocolError, protocolError(409)),
+  )
+  .add(
+    HttpApiEndpoint.post('rejectReview', '/v1/reviews/:review_id/reject')
+      .setPath(ReviewPath)
+      .addSuccess(Review)
+      .addError(ProtocolError, protocolError(404))
+      .addError(ProtocolError, protocolError(409)),
+  )
+  .add(
+    HttpApiEndpoint.post(
+      'requestReviewChanges',
+      '/v1/reviews/:review_id/request_changes',
+    )
+      .setPath(ReviewPath)
+      .addSuccess(Review)
+      .addError(ProtocolError, protocolError(404))
+      .addError(ProtocolError, protocolError(409)),
+  )
 
 export const EventsGroup = HttpApiGroup.make('events').add(
   HttpApiEndpoint.get('streamEvents', '/v1/events/stream')

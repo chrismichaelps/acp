@@ -91,6 +91,24 @@ describe('AcpHttpApi', () => {
         path: '/v1/reviews',
       },
       {
+        group: 'reviews',
+        name: 'approveReview',
+        method: 'POST',
+        path: '/v1/reviews/:review_id/approve',
+      },
+      {
+        group: 'reviews',
+        name: 'rejectReview',
+        method: 'POST',
+        path: '/v1/reviews/:review_id/reject',
+      },
+      {
+        group: 'reviews',
+        name: 'requestReviewChanges',
+        method: 'POST',
+        path: '/v1/reviews/:review_id/request_changes',
+      },
+      {
         group: 'events',
         name: 'streamEvents',
         method: 'GET',
