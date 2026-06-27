@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-27 · json-rpc-stdio slice · added a stdio JSON-RPC bridge:
+  [[stdio-frames]] Content-Length byte codec with partial-frame and UTF-8 tests,
+  [[stdio-main]] forwarding complete frames to `POST /rpc`, `ACP_RPC_TOKEN`
+  bearer forwarding, `acp-jsonrpc-stdio` package binary, stdio MOC, and
+  [[Transport]] seam status update · 149 tests green · risk LOW ·
+  [[ADR-0001-architecture-foundation]]
 - 2026-06-27 · readme-canonicalization slice · refreshed the public README to
   match the current host: storage seam with memory/SQLite adapters, local versus
   required bearer auth, JSON-RPC core versus future runtime hosts, current smoke

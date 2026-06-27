@@ -37,7 +37,9 @@ ACP_BASE_URL=http://localhost:4317 node dist/app/cli/main.js workspace list
 ACP_BASE_URL=http://localhost:4317 node dist/app/cli/main.js work create "Fix login redirect" --workspace workspace_1
 ```
 
-The package exposes an `acp` binary once built and linked or installed from the package. Until package distribution is formalized, direct `node dist/...` entrypoints are the most explicit local smoke path.
+The package exposes an `acp` binary once built and linked or installed from the package. It also exposes `acp-jsonrpc-stdio`, which reads Content-Length framed JSON-RPC messages from stdin, forwards them to the local host's `POST /rpc` endpoint, and writes framed responses to stdout. Until package distribution is formalized, direct `node dist/...` entrypoints are the most explicit local smoke path.
+
+The stdio bridge targets the same `ACP_BASE_URL` and `ACP_PORT` convention as the CLI. If a long-lived stdio integration already has a session id, `ACP_RPC_TOKEN` forwards that value as a bearer token on every `/rpc` call.
 
 The normal verification path is TypeScript typechecking, ESLint, targeted subsystem tests, and the full Vitest suite. The SQLite adapter uses Node's `node:sqlite` module, so current Node releases print an experimental SQLite warning during storage tests; that warning is expected and is not a test failure.
 

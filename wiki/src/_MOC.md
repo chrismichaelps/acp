@@ -26,6 +26,7 @@ file has exactly one page here. A source file with no page is UNREGISTERED.
 ## app/
 
 - [[app/_MOC|App]] — application Layer composition for entrypoints.
+- [[stdio/_MOC|Stdio]] — JSON-RPC Content-Length bridge to the local ACP host.
 
 ## domain/
 
