@@ -26,7 +26,10 @@ import {
 import { workspaceSseResponse } from '../../infrastructure/sse/index.js'
 import { ValidationError } from '../../protocol/errors/protocol-error.js'
 import type { DomainError } from '../../protocol/errors/protocol-error.js'
-import { NotFoundError } from '../../protocol/errors/protocol-error.js'
+import {
+  NotFoundError,
+  UnauthorizedError,
+} from '../../protocol/errors/protocol-error.js'
 import {
   Artifact,
   Checkpoint,
@@ -47,6 +50,7 @@ import type {
   CheckpointId,
   EventId,
   LeaseId,
+  Permission,
   ReviewId,
   SessionId,
   WorkerId,
@@ -77,14 +81,30 @@ const bearerToken = Effect.map(HttpServerRequest.HttpServerRequest, (req) =>
   }),
 )
 
-// Resolve the acting worker from the session token, falling back to systemActor.
-const resolveActor = Effect.gen(function* () {
-  const token = yield* bearerToken
-  if (token === '') return systemActor
-  const sessions = yield* SessionService
-  const actor = yield* sessions.resolveActor(token)
-  return Option.getOrElse(actor, () => systemActor)
-})
+// Resolve the acting worker and enforce the optional required scope (spec §8):
+// - no bearer token → unauthenticated, attributed to systemActor;
+// - token with no matching session → 401 unauthorized;
+// - session missing the required scope → 401 unauthorized;
+// - otherwise → the session's worker id.
+const authorize = (scope?: Permission) =>
+  Effect.gen(function* () {
+    const token = yield* bearerToken
+    if (token === '') return systemActor
+    const sessions = yield* SessionService
+    const session = yield* sessions.get(token as SessionId)
+    return yield* Option.match(session, {
+      onNone: () =>
+        Effect.fail(new UnauthorizedError({ reason: 'invalid session token' })),
+      onSome: (s) =>
+        scope === undefined || s.permissions.includes(scope)
+          ? Effect.succeed(s.worker_id)
+          : Effect.fail(
+              new UnauthorizedError({
+                reason: `session lacks scope: ${scope}`,
+              }),
+            ),
+    })
+  })
 
 const domainTags = new Set<string>([
   'ValidationError',
@@ -141,6 +161,7 @@ const initializeSession = respond(
       id: sessionId,
       worker_id: worker.id,
       created_at: now,
+      permissions: payload.permissions,
     })
     return yield* ok(200)(InitializeSessionResponse, {
       session_id: sessionId,
@@ -154,6 +175,7 @@ const initializeSession = respond(
 const listWorkspaces = respond(
   Effect.gen(function* () {
     const workspaces = yield* WorkspaceService
+    yield* authorize('workspace:read')
     const all = yield* workspaces.list()
     return yield* ok(200)(Schema.Array(Workspace), all)
   }),
@@ -166,7 +188,7 @@ const createWork = respond(
     const payload = yield* HttpServerRequest.schemaBodyJson(CreateWorkPayload)
     const id = (yield* idClock.nextId('work')) as WorkId
     const now = yield* idClock.now
-    const actor = yield* resolveActor
+    const actor = yield* authorize('work:create')
     const work = yield* service.create({
       id,
       payload,
@@ -184,6 +206,7 @@ const claimWork = respond(
     const workId = (yield* pathParam('work_id')) as WorkId
     const payload = yield* HttpServerRequest.schemaBodyJson(ClaimWorkPayload)
     const now = yield* idClock.now
+    yield* authorize('work:claim')
     const work = yield* service.claim(workId, payload.worker_id, now)
     return yield* ok(200)(WorkUnit, work)
   }),
@@ -198,7 +221,7 @@ const updateWorkState = respond(
       UpdateWorkStatePayload,
     )
     const now = yield* idClock.now
-    const actor = yield* resolveActor
+    const actor = yield* authorize()
     const work = yield* service.transition(workId, payload.state, actor, now)
     return yield* ok(200)(WorkUnit, work)
   }),
@@ -221,7 +244,7 @@ const publishWorkEvent = respond(
     })
     const id = (yield* idClock.nextId('event')) as EventId
     const now = yield* idClock.now
-    const actor = yield* resolveActor
+    const actor = yield* authorize()
     const event = yield* events.append({
       id,
       type: payload.type,
@@ -242,6 +265,7 @@ const requestLease = respond(
     const payload = yield* HttpServerRequest.schemaBodyJson(RequestLeasePayload)
     const id = (yield* idClock.nextId('lease')) as LeaseId
     const now = yield* idClock.now
+    yield* authorize('lease:create')
     const lease = yield* service.request({ id, payload, now })
     return yield* ok(201)(Lease, lease)
   }),
@@ -253,7 +277,7 @@ const releaseLease = respond(
     const idClock = yield* IdClock
     const leaseId = (yield* pathParam('lease_id')) as LeaseId
     const now = yield* idClock.now
-    const actor = yield* resolveActor
+    const actor = yield* authorize()
     yield* service.release(leaseId, actor, now)
     return HttpServerResponse.empty({ status: 204 })
   }),
@@ -268,7 +292,7 @@ const createArtifact = respond(
     )
     const id = (yield* idClock.nextId('artifact')) as ArtifactId
     const now = yield* idClock.now
-    const actor = yield* resolveActor
+    const actor = yield* authorize('artifact:create')
     const artifact = yield* service.create({
       id,
       payload,
@@ -288,7 +312,7 @@ const createCheckpoint = respond(
     )
     const id = (yield* idClock.nextId('checkpoint')) as CheckpointId
     const now = yield* idClock.now
-    const actor = yield* resolveActor
+    const actor = yield* authorize('checkpoint:create')
     const checkpoint = yield* service.create({
       id,
       payload,
@@ -307,6 +331,7 @@ const requestReview = respond(
       yield* HttpServerRequest.schemaBodyJson(RequestReviewPayload)
     const id = (yield* idClock.nextId('review')) as ReviewId
     const now = yield* idClock.now
+    yield* authorize('review:create')
     const review = yield* service.request({ id, payload, now })
     return yield* ok(201)(Review, review)
   }),

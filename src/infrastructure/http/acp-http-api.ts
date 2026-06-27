@@ -17,6 +17,7 @@ import {
   EventType,
   Lease,
   LeaseId,
+  Permission,
   ProtocolError,
   RequestLeasePayload,
   RequestReviewPayload,
@@ -53,6 +54,9 @@ export type EventsStreamParams = typeof EventsStreamParams.Type
 
 export const InitializeSessionPayload = Schema.Struct({
   worker: Worker,
+  permissions: Schema.optionalWith(Schema.Array(Permission), {
+    default: () => [],
+  }),
 })
 export type InitializeSessionPayload = typeof InitializeSessionPayload.Type
 
