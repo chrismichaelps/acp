@@ -162,6 +162,18 @@ const decodeParams = <A, I>(
     : Either.left(invalidParams(id, String(decoded.left)))
 }
 
+// Validate params against the schema but forward the original wire JSON as the
+// HTTP body. Decoding yields the Type side (Option-wrapped optionals), which is
+// not serializable back onto the HTTP API; the raw validated params are.
+const validatedBody = <A, I>(
+  schema: Schema.Schema<A, I>,
+  params: Option.Option<unknown>,
+  id: Option.Option<JsonRpcId>,
+): Either.Either<unknown, JsonRpcRequestError> =>
+  Either.map(decodeParams(schema, params, id), () =>
+    Option.getOrUndefined(params),
+  )
+
 const encodeSegment = (value: string): string => encodeURIComponent(value)
 
 const methodNotFound = (method: string, id: Option.Option<JsonRpcId>) =>
@@ -190,7 +202,7 @@ const commandFor = (
     const expectsResponse = Option.isSome(id)
 
     if (method === 'session.initialize') {
-      const body = yield* decodeParams(
+      const body = yield* validatedBody(
         InitializeSessionPayload,
         envelope.params,
         id,
@@ -216,7 +228,7 @@ const commandFor = (
     }
 
     if (method === 'work.create') {
-      const body = yield* decodeParams(CreateWorkPayload, envelope.params, id)
+      const body = yield* validatedBody(CreateWorkPayload, envelope.params, id)
       return {
         id,
         expects_response: expectsResponse,
@@ -267,7 +279,11 @@ const commandFor = (
     }
 
     if (method === 'lease.request') {
-      const body = yield* decodeParams(RequestLeasePayload, envelope.params, id)
+      const body = yield* validatedBody(
+        RequestLeasePayload,
+        envelope.params,
+        id,
+      )
       return {
         id,
         expects_response: expectsResponse,
@@ -293,7 +309,7 @@ const commandFor = (
     }
 
     if (method === 'artifact.create') {
-      const body = yield* decodeParams(
+      const body = yield* validatedBody(
         CreateArtifactPayload,
         envelope.params,
         id,
@@ -306,7 +322,7 @@ const commandFor = (
     }
 
     if (method === 'checkpoint.create') {
-      const body = yield* decodeParams(
+      const body = yield* validatedBody(
         CreateCheckpointPayload,
         envelope.params,
         id,
@@ -324,7 +340,7 @@ const commandFor = (
     }
 
     if (method === 'review.request') {
-      const body = yield* decodeParams(
+      const body = yield* validatedBody(
         RequestReviewPayload,
         envelope.params,
         id,
