@@ -22,13 +22,16 @@ Wire + domain shape of a Session — the record minted at
 ```typescript
 export const Session: Schema.Struct<{
   id: SessionId; worker_id: WorkerId; created_at: Timestamp
+  permissions: Schema.Array<Permission>   // granted scopes (spec §8)
 }>
 export type Session = typeof Session.Type
 ```
 
 ## Algorithm
-Struct over [[ids]] (`SessionId`, `WorkerId`) + [[common]] (`Timestamp`).
-Persisted by [[session-service]] via the `session` collection.
+Struct over [[ids]] (`SessionId`, `WorkerId`) + [[common]] (`Timestamp`,
+`Permission`). `permissions` are the spec §8 scopes the session may exercise;
+[[acp-router]]`.authorize` checks each mutation against them. Persisted by
+[[session-service]] via the `session` collection.
 
 ## Negative Logic (Prohibited Paths)
 - ❌ Do NOT add scopes/expiry here — v0.1 sessions carry no policy (see

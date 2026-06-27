@@ -124,3 +124,13 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   the `session_id` is the v0.1 token (no separate secret), no expiry/scopes yet,
   `resolveActor` returns `Option` so the router owns auth policy · 102 tests green ·
   risk LOW · [[ADR-0001-architecture-foundation]]
+- 2026-06-26 · scoped-auth slice · enforced spec §8 permission scopes: added the
+  closed [[common]] `Permission` vocabulary (7 scopes), `permissions` on
+  [[session.schema]] + the `initialize` payload (default `[]`); [[acp-router]]
+  `resolveActor`→`authorize(scope?)` now resolves the bearer session and gates each
+  mutation — no token → `worker_system`, invalid token or missing scope →
+  `401 unauthorized` (reusing [[protocol-error]] `UnauthorizedError`). Grill-resolved:
+  scopes are a separate authorization set (not derived from §9 capabilities), and
+  only *authenticated* requests are enforced (unauthenticated still degrades to
+  `worker_system`). · 104 tests green · risk LOW ·
+  [[ADR-0001-architecture-foundation]]

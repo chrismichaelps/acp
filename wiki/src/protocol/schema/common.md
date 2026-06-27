@@ -34,6 +34,9 @@ export const ArtifactKind: Schema.Literal<[…11 kinds…]>
 export const ReviewState: Schema.Literal<[…5 states…]>
 export const WorkspaceKind: Schema.Literal<[…6 kinds…]>
 export const Resource: Schema.Struct<{ kind: ResourceKind; uri: NonEmptyString }>
+export const Permission: Schema.Literal<[ // session auth scopes (spec §8)
+  "workspace:read","work:create","work:claim","lease:create",
+  "artifact:create","checkpoint:create","review:create"]>
 ```
 
 ## Algorithm

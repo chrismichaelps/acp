@@ -17,6 +17,7 @@ const decodeSession = () =>
     id: 'session_abc123',
     worker_id: 'agent_claude_code',
     created_at: '2026-06-26T00:00:00.000Z',
+    permissions: ['work:create'],
   })
 
 describe('SessionService', () => {
