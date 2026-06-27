@@ -74,7 +74,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 9. ✅ Persistent storage adapter — 118 tests green
 10. ✅ Persistent storage host selection — 119 tests green
 11. ✅ JSON-RPC transport core — 130 tests green
-12. ▶ Protocol spec canonicalization
+12. ✅ Public README canonicalization — 130 tests green
+13. ▶ JSON-RPC runtime host adapter
 
 ## Referenced by
 
