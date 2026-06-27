@@ -22,6 +22,8 @@ const TestConfigLive = Layer.succeed(AppConfigTag, {
   eventRetentionDays: 30,
   maxArtifactSizeBytes: 16,
   sseHeartbeat: Duration.seconds(15),
+  sessionTtl: Duration.hours(1),
+  sweepInterval: Duration.seconds(60),
 })
 
 const StorageAndEventsLive = Layer.provideMerge(

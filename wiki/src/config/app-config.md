@@ -29,6 +29,8 @@ export interface AppConfig {
   readonly eventRetentionDays: number
   readonly maxArtifactSizeBytes: number
   readonly sseHeartbeat: Duration.Duration
+  readonly sessionTtl: Duration.Duration
+  readonly sweepInterval: Duration.Duration
 }
 export class AppConfigTag extends Context.Tag('AppConfig')<
   AppConfigTag,
@@ -47,6 +49,8 @@ Each field is a `Config.*` with `Config.withDefault`:
 - `ACP_EVENT_RETENTION_DAYS` int → 30
 - `ACP_MAX_ARTIFACT_SIZE_MB` int → 16 (stored as bytes)
 - `ACP_SSE_HEARTBEAT` duration → 15 seconds
+- `ACP_SESSION_TTL` duration → 1 hour (bearer-session lifetime; [[sweeper]] eviction)
+- `ACP_SWEEP_INTERVAL` duration → 60 seconds ([[sweeper]] poll cadence)
   `AppConfigLive = Layer.effect(AppConfigTag, Effect.orDie(<composed Config>))` —
   invalid configuration is fatal at startup, so the `ConfigError` channel is
   converted to a defect, giving `Layer.Layer<AppConfigTag>` (no error param).

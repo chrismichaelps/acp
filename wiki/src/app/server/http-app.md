@@ -14,10 +14,12 @@ aliases: [http-app, http-app-live]
 
 ## Purpose
 
-The ACP HTTP **service** as one import-safe `Layer`: [[acp-router]] served over
-the full in-memory application ([[app-live]]) and id/clock minting ([[id-clock]]).
-It is socket-agnostic — the listening socket is supplied separately so the exact
-same composition runs in two places:
+The running ACP **host** as one import-safe `Layer`: [[acp-router]] served over the
+full in-memory application ([[app-live]]) and id/clock minting ([[id-clock]]),
+**plus the background [[sweeper]] daemon merged over the same shared app** so the
+HTTP router and the TTL eviction loop act on one `Storage` instance. It is
+socket-agnostic — the listening socket is supplied separately so the exact same
+composition runs in two places:
 
 - [[server-main]] binds it to a production `NodeHttpServer` on `ACP_PORT`.
 - the **live-boot smoke test** binds it to an ephemeral OS port (`port: 0`).
@@ -37,18 +39,19 @@ export const HttpAppLive: Layer.Layer<never, never, HttpServer.HttpServer>
 
 ### Linkage
 
-- **Requires:** [[acp-router]], [[app-live]], [[id-clock]], `@effect/platform`
-  `HttpServer`. The residual requirement is `HttpServer.HttpServer` — the socket,
-  provided by whoever launches the layer.
+- **Requires:** [[acp-router]], [[sweeper]], [[app-live]], [[id-clock]],
+  `@effect/platform` `HttpServer`. The residual requirement is
+  `HttpServer.HttpServer` — the socket, provided by whoever launches the layer.
 - **Consumed by:** [[server-main]] (production socket) and `live-boot.test.ts`
   (ephemeral socket). Re-exported by [[server-index]].
 
 ## Algorithm
 
-1. `HttpServer.serve(acpRouter)` — a `Layer` that runs the router as a scoped,
-   forked request loop for the layer's lifetime.
-2. `Layer.provide(AppLive ⊕ IdClockLive)` — satisfies the router's service
-   context, leaving only `HttpServer.HttpServer` outstanding.
+1. `Layer.mergeAll(HttpServer.serve(acpRouter), SweeperLive)` — the router request
+   loop and the [[sweeper]] daemon, both as scoped forked fibers.
+2. `Layer.provide(AppLive ⊕ IdClockLive)` — one memoized app runtime satisfies both
+   the router's and the sweeper's service context (the shared store), leaving only
+   `HttpServer.HttpServer` outstanding.
 
 No behavior of its own; pure composition.
 
