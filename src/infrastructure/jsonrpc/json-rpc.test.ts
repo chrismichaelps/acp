@@ -64,6 +64,58 @@ describe('JSON-RPC transport mapping', () => {
     })
   })
 
+  it('accepts the spec session.initialize capability shape', () => {
+    const command = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_capabilities',
+        method: 'session.initialize',
+        params: {
+          protocol_version: '0.1',
+          worker: {
+            id: 'agent_openhands',
+            name: 'OpenHands',
+            kind: 'agent',
+            vendor: 'openhands',
+          },
+          capabilities: {
+            can_edit_files: true,
+            can_run_commands: true,
+            can_create_prs: false,
+            can_review: true,
+            supports_checkpoints: true,
+            supports_leases: true,
+          },
+          permissions: ['work:create'],
+        },
+      }),
+    )
+
+    expect(command.request).toMatchObject({
+      method: 'POST',
+      path: '/v1/session/initialize',
+      body: {
+        protocol_version: '0.1',
+        worker: {
+          id: 'agent_openhands',
+          name: 'OpenHands',
+          kind: 'agent',
+          vendor: 'openhands',
+        },
+        capabilities: {
+          can_edit_files: true,
+          can_run_commands: true,
+          can_create_prs: false,
+          can_review: true,
+          supports_checkpoints: true,
+          supports_leases: true,
+        },
+        permissions: ['work:create'],
+      },
+      label: 'session.initialize',
+    })
+  })
+
   it('maps workspace.list without a request body', () => {
     const command = expectRight(
       parseJsonRpcCommand({

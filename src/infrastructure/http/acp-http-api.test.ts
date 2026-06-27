@@ -1,7 +1,8 @@
 /** @Acp.Infra.Http.Api.Test — reflected route contract */
 import { describe, expect, it } from 'vitest'
 import { HttpApi } from '@effect/platform'
-import { AcpHttpApi } from './index.js'
+import { Schema } from 'effect'
+import { AcpHttpApi, InitializeSessionPayload } from './index.js'
 
 interface ReflectedEndpoint {
   readonly group: string
@@ -27,6 +28,31 @@ const reflectEndpoints = (): readonly ReflectedEndpoint[] => {
 }
 
 describe('AcpHttpApi', () => {
+  it('accepts the spec capability-negotiation request body', () => {
+    const payload = Schema.decodeUnknownSync(InitializeSessionPayload)({
+      protocol_version: '0.1',
+      worker: {
+        id: 'agent_openhands',
+        name: 'OpenHands',
+        kind: 'agent',
+        vendor: 'openhands',
+      },
+      capabilities: {
+        can_edit_files: true,
+        can_run_commands: true,
+        can_create_prs: false,
+        can_review: true,
+        supports_checkpoints: true,
+        supports_leases: true,
+      },
+      permissions: ['work:create'],
+    })
+
+    expect(payload.worker.status).toBe('online')
+    expect(payload.worker.capabilities).toEqual([])
+    expect(payload.capabilities.can_review).toBe(true)
+  })
+
   it('declares the v0.1 REST routes from spec section 12', () => {
     expect(reflectEndpoints()).toEqual([
       {

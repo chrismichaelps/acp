@@ -91,6 +91,8 @@ Full-payload methods validate params with the schema but forward the **original
 wire JSON** as the request body (`validatedBody`), not the decoded Type side: the
 decoded form wraps optionals in `Option`, which is not serializable back onto the
 HTTP API that [[json-rpc-runtime]] dispatches to.
+This keeps `session.initialize` compatible with both the existing full-worker
+payload and the draft §9 `protocol_version` + client capability object.
 
 Response helpers are intentionally small. A command with no id is a JSON-RPC
 notification and produces no success response; method and params failures from
