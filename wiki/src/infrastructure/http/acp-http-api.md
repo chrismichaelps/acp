@@ -32,7 +32,10 @@ export const EventsStreamParams: Schema.Struct<{ workspace_id: WorkspaceId }>
 export const UpdateWorkStatePayload: Schema.Struct<{ state: WorkState }>
 export const PublishWorkEventPayload: Schema.Struct<{ type: EventType; data: Record<string, unknown> }>
 export const InitializeSessionPayload: Schema.Struct<{ worker: Worker }>
-export const InitializeSessionResponse: Schema.Struct<{ worker: Worker; capabilities: string[] }>
+export const InitializeSessionResponse: Schema.Struct<{ // spec §9 host handshake
+  session_id: SessionId; protocol_version: "0.1"
+  host: { name: string; kind: "local" }
+  capabilities: { supports_events; supports_reviews; supports_artifacts; supports_sse: boolean } }>
 
 export const WorkGroup: HttpApiGroup.HttpApiGroup<'work', ...>
 export const LeaseGroup: HttpApiGroup.HttpApiGroup<'leases', ...>
