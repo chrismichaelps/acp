@@ -75,7 +75,10 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 10. ✅ Persistent storage host selection — 119 tests green
 11. ✅ JSON-RPC transport core — 130 tests green
 12. ✅ Public README canonicalization — 130 tests green
-13. ▶ JSON-RPC runtime host adapter
+13. ✅ JSON-RPC runtime execution core — 138 tests green
+14. ✅ JSON-RPC HTTP `/rpc` framing — 144 tests green
+15. ✅ JSON-RPC stdio framing bridge — 149 tests green
+16. ▶ WebSocket transport evaluation
 
 ## Referenced by
 
