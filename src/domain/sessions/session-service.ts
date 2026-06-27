@@ -1,9 +1,13 @@
 /** @Acp.Domain.Sessions.Service — Session registry + actor resolution */
-import { Context, Effect, Layer, Option, Schema } from 'effect'
+import { Chunk, Context, Duration, Effect, Layer, Option, Schema } from 'effect'
 import { Storage } from '../../infrastructure/storage/index.js'
 import { StorageError } from '../../protocol/errors/protocol-error.js'
 import { Session } from '../../protocol/schema/index.js'
-import type { SessionId, WorkerId } from '../../protocol/schema/index.js'
+import type {
+  SessionId,
+  Timestamp,
+  WorkerId,
+} from '../../protocol/schema/index.js'
 
 export interface SessionServiceApi {
   readonly create: (session: Session) => Effect.Effect<Session, StorageError>
@@ -13,6 +17,11 @@ export interface SessionServiceApi {
   readonly resolveActor: (
     token: string,
   ) => Effect.Effect<Option.Option<WorkerId>, StorageError>
+  readonly list: () => Effect.Effect<readonly Session[], StorageError>
+  readonly evictExpired: (
+    now: Timestamp,
+    ttl: Duration.Duration,
+  ) => Effect.Effect<readonly Session[], StorageError>
 }
 
 export class SessionService extends Context.Tag('SessionService')<
@@ -69,10 +78,30 @@ const make = Effect.gen(function* () {
       Option.map((session) => session.worker_id),
     )
 
+  const list: SessionServiceApi['list'] = () =>
+    Effect.flatMap(storage.list(collection), (stored) =>
+      Effect.forEach(Chunk.toReadonlyArray(stored), decodeStoredSession),
+    )
+
+  const evictExpired: SessionServiceApi['evictExpired'] = (now, ttl) =>
+    Effect.gen(function* () {
+      const ttlMillis = Duration.toMillis(ttl)
+      const expired = (yield* list()).filter(
+        (session) =>
+          Date.parse(session.created_at) + ttlMillis <= Date.parse(now),
+      )
+      yield* Effect.forEach(expired, (session) =>
+        storage.remove(collection, session.id),
+      )
+      return expired
+    })
+
   return {
     create,
     get,
     resolveActor,
+    list,
+    evictExpired,
   } satisfies SessionServiceApi
 })
 

@@ -8,6 +8,8 @@ export interface AppConfig {
   readonly eventRetentionDays: number
   readonly maxArtifactSizeBytes: number
   readonly sseHeartbeat: Duration.Duration
+  readonly sessionTtl: Duration.Duration
+  readonly sweepInterval: Duration.Duration
 }
 
 export class AppConfigTag extends Context.Tag('AppConfig')<
@@ -35,6 +37,12 @@ const load = Effect.gen(function* () {
   const sseHeartbeat = yield* Config.duration('ACP_SSE_HEARTBEAT').pipe(
     Config.withDefault(Duration.seconds(15)),
   )
+  const sessionTtl = yield* Config.duration('ACP_SESSION_TTL').pipe(
+    Config.withDefault(Duration.hours(1)),
+  )
+  const sweepInterval = yield* Config.duration('ACP_SWEEP_INTERVAL').pipe(
+    Config.withDefault(Duration.seconds(60)),
+  )
   return {
     port,
     logLevel,
@@ -42,6 +50,8 @@ const load = Effect.gen(function* () {
     eventRetentionDays,
     maxArtifactSizeBytes: maxArtifactSizeMb * 1024 * 1024,
     sseHeartbeat,
+    sessionTtl,
+    sweepInterval,
   }
 })
 

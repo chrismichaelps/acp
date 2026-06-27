@@ -145,3 +145,15 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   already-covered web-handler path, and an import-safe seam over importing
   [[server-main]] (whose module-scope `runMain` binds 4317 on import). · 105 tests
   green · risk LOW · [[ADR-0001-architecture-foundation]]
+- 2026-06-27 · expiry-sweeper slice · added the background TTL eviction daemon
+  ([[sweeper]]): `sweepOnce` reads `now` from [[id-clock]], evicts sessions older
+  than `config.sessionTtl` via new [[session-service]] `list`/`evictExpired`, and
+  lapses every due active lease via new [[lease-service]] `expireAllDue` (scans all
+  workspaces, emits `lease.expired`). `SweeperLive` `forkScoped`s the loop on
+  `config.sweepInterval`, merged into [[http-app]] over the shared `AppLive` so the
+  router and sweeper evict from one store. Added `ACP_SESSION_TTL` (1h) and
+  `ACP_SWEEP_INTERVAL` (60s) to [[app-config]]. Grill-resolved: poll loop over
+  per-entity timers; forked in the host scope (not a second `AppLive` in main, which
+  would split-brain the store); lease lapse reuses the existing `lease.expired`
+  event, session eviction emits none (host-local auth state). · 107 tests green ·
+  risk LOW · [[ADR-0001-architecture-foundation]]
