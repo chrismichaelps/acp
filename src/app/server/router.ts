@@ -1,5 +1,6 @@
 /** @Acp.App.Server.Router — HttpRouter binding the API contract to services */
 import {
+  Headers,
   HttpRouter,
   HttpServerRequest,
   HttpServerResponse,
@@ -10,6 +11,7 @@ import { CheckpointService } from '../../domain/checkpoints/index.js'
 import { EventStore } from '../../domain/events/index.js'
 import { LeaseService } from '../../domain/leases/index.js'
 import { ReviewService } from '../../domain/reviews/index.js'
+import { SessionService } from '../../domain/sessions/index.js'
 import { WorkUnitService } from '../../domain/work-units/index.js'
 import { WorkerService } from '../../domain/workers/index.js'
 import { WorkspaceService } from '../../domain/workspaces/index.js'
@@ -46,13 +48,43 @@ import type {
   EventId,
   LeaseId,
   ReviewId,
+  SessionId,
   WorkerId,
   WorkId,
 } from '../../protocol/schema/index.js'
 import { IdClock } from './identity.js'
 
-// Unattributed mutations use a fixed system actor until session auth lands.
+// Mutations without a resolvable session fall back to this fixed system actor.
 const systemActor = 'worker_system' as WorkerId
+
+// Static host identity + capabilities advertised at session/initialize (spec §9).
+const host = { name: 'ACP Local', kind: 'local' } as const
+const hostCapabilities = {
+  supports_events: true,
+  supports_reviews: true,
+  supports_artifacts: true,
+  supports_sse: true,
+} as const
+
+// Read the bearer token (session id) from the Authorization header, if present.
+const bearerToken = Effect.map(HttpServerRequest.HttpServerRequest, (req) =>
+  Option.match(Headers.get(req.headers, 'authorization'), {
+    onNone: () => '',
+    onSome: (header) =>
+      header.toLowerCase().startsWith('bearer ')
+        ? header.slice('bearer '.length).trim()
+        : '',
+  }),
+)
+
+// Resolve the acting worker from the session token, falling back to systemActor.
+const resolveActor = Effect.gen(function* () {
+  const token = yield* bearerToken
+  if (token === '') return systemActor
+  const sessions = yield* SessionService
+  const actor = yield* sessions.resolveActor(token)
+  return Option.getOrElse(actor, () => systemActor)
+})
 
 const domainTags = new Set<string>([
   'ValidationError',
@@ -97,13 +129,24 @@ const pathParam = (key: string) =>
 const initializeSession = respond(
   Effect.gen(function* () {
     const workers = yield* WorkerService
+    const sessions = yield* SessionService
+    const idClock = yield* IdClock
     const payload = yield* HttpServerRequest.schemaBodyJson(
       InitializeSessionPayload,
     )
     const worker = yield* workers.register(payload.worker)
+    const sessionId = (yield* idClock.nextId('session')) as SessionId
+    const now = yield* idClock.now
+    yield* sessions.create({
+      id: sessionId,
+      worker_id: worker.id,
+      created_at: now,
+    })
     return yield* ok(200)(InitializeSessionResponse, {
-      worker,
-      capabilities: worker.capabilities,
+      session_id: sessionId,
+      protocol_version: '0.1',
+      host,
+      capabilities: hostCapabilities,
     })
   }),
 )
@@ -123,10 +166,11 @@ const createWork = respond(
     const payload = yield* HttpServerRequest.schemaBodyJson(CreateWorkPayload)
     const id = (yield* idClock.nextId('work')) as WorkId
     const now = yield* idClock.now
+    const actor = yield* resolveActor
     const work = yield* service.create({
       id,
       payload,
-      createdBy: systemActor,
+      createdBy: actor,
       now,
     })
     return yield* ok(201)(WorkUnit, work)
@@ -154,12 +198,8 @@ const updateWorkState = respond(
       UpdateWorkStatePayload,
     )
     const now = yield* idClock.now
-    const work = yield* service.transition(
-      workId,
-      payload.state,
-      systemActor,
-      now,
-    )
+    const actor = yield* resolveActor
+    const work = yield* service.transition(workId, payload.state, actor, now)
     return yield* ok(200)(WorkUnit, work)
   }),
 )
@@ -181,12 +221,13 @@ const publishWorkEvent = respond(
     })
     const id = (yield* idClock.nextId('event')) as EventId
     const now = yield* idClock.now
+    const actor = yield* resolveActor
     const event = yield* events.append({
       id,
       type: payload.type,
       workspace_id: work.workspace_id,
       work_id: Option.some(work.id),
-      actor: systemActor,
+      actor,
       timestamp: now,
       data: payload.data,
     })
@@ -212,7 +253,8 @@ const releaseLease = respond(
     const idClock = yield* IdClock
     const leaseId = (yield* pathParam('lease_id')) as LeaseId
     const now = yield* idClock.now
-    yield* service.release(leaseId, systemActor, now)
+    const actor = yield* resolveActor
+    yield* service.release(leaseId, actor, now)
     return HttpServerResponse.empty({ status: 204 })
   }),
 )
@@ -226,10 +268,11 @@ const createArtifact = respond(
     )
     const id = (yield* idClock.nextId('artifact')) as ArtifactId
     const now = yield* idClock.now
+    const actor = yield* resolveActor
     const artifact = yield* service.create({
       id,
       payload,
-      createdBy: systemActor,
+      createdBy: actor,
       now,
     })
     return yield* ok(201)(Artifact, artifact)
@@ -245,10 +288,11 @@ const createCheckpoint = respond(
     )
     const id = (yield* idClock.nextId('checkpoint')) as CheckpointId
     const now = yield* idClock.now
+    const actor = yield* resolveActor
     const checkpoint = yield* service.create({
       id,
       payload,
-      createdBy: systemActor,
+      createdBy: actor,
       now,
     })
     return yield* ok(201)(Checkpoint, checkpoint)

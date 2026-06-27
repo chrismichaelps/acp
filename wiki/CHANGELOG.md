@@ -115,3 +115,12 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   record, repository layout, and Apache-2.0 licensing; added `build` script for the
   documented `dist/` entrypoints and refreshed the architecture build-order ledger ·
   docs-only risk LOW · [[ADR-0001-architecture-foundation]]
+- 2026-06-26 · session-auth slice · projected session identity + bearer-token actor
+  resolution to code (spec §8/§9): [[session.schema]], [[session-service]]
+  (create, get, total `resolveActor`), sessions MOC; [[acp-router]] now mints a
+  session at `initialize` (returning `session_id` + host capabilities, replacing the
+  worker-echo response) and resolves the `Authorization: Bearer` actor for each
+  mutation, falling back to `worker_system` when unauthenticated. Grill-resolved:
+  the `session_id` is the v0.1 token (no separate secret), no expiry/scopes yet,
+  `resolveActor` returns `Option` so the router owns auth policy · 102 tests green ·
+  risk LOW · [[ADR-0001-architecture-foundation]]
