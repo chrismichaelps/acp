@@ -69,6 +69,10 @@ export interface LeaseServiceApi {
     actor: WorkerId,
     now: Timestamp,
   ) => Effect.Effect<readonly Lease[], StorageError>
+  readonly expireAllDue: (
+    actor: WorkerId,
+    now: Timestamp,
+  ) => Effect.Effect<readonly Lease[], StorageError>
 }
 
 export class LeaseService extends Context.Tag('LeaseService')<
@@ -312,23 +316,33 @@ const make = Effect.gen(function* () {
       transition(lease, 'revoked', actor, now, 'lease.revoked'),
     )
 
+  const expireEach = (
+    leases: readonly Lease[],
+    actor: WorkerId,
+    now: Timestamp,
+  ) =>
+    Effect.forEach(
+      leases.filter(
+        (lease) =>
+          lease.state === 'active' &&
+          Date.parse(lease.expires_at) <= Date.parse(now),
+      ),
+      (lease) =>
+        Effect.gen(function* () {
+          const next: Lease = { ...lease, state: 'expired' }
+          yield* save(next)
+          yield* appendLeaseEvent(next, actor, now, 'lease.expired')
+          return next
+        }),
+    )
+
   const expireDue: LeaseServiceApi['expireDue'] = (workspaceId, actor, now) =>
     Effect.flatMap(list(workspaceId), (leases) =>
-      Effect.forEach(
-        leases.filter(
-          (lease) =>
-            lease.state === 'active' &&
-            Date.parse(lease.expires_at) <= Date.parse(now),
-        ),
-        (lease) =>
-          Effect.gen(function* () {
-            const next: Lease = { ...lease, state: 'expired' }
-            yield* save(next)
-            yield* appendLeaseEvent(next, actor, now, 'lease.expired')
-            return next
-          }),
-      ),
+      expireEach(leases, actor, now),
     )
+
+  const expireAllDue: LeaseServiceApi['expireAllDue'] = (actor, now) =>
+    Effect.flatMap(all(), (leases) => expireEach(leases, actor, now))
 
   return {
     request,
@@ -338,6 +352,7 @@ const make = Effect.gen(function* () {
     release,
     revoke,
     expireDue,
+    expireAllDue,
   } satisfies LeaseServiceApi
 })
 

@@ -37,6 +37,11 @@ export interface SessionServiceApi {
   readonly resolveActor: (
     token: string,
   ) => Effect<Option<WorkerId>, StorageError>
+  readonly list: () => Effect<readonly Session[], StorageError>
+  readonly evictExpired: (
+    now: Timestamp,
+    ttl: Duration,
+  ) => Effect<readonly Session[], StorageError>
 }
 
 export class SessionService extends Context.Tag('SessionService')<
@@ -55,13 +60,16 @@ export const SessionServiceLive: Layer.Layer<SessionService, never, Storage>
 - `resolveActor` is total — an unknown or malformed token yields `Option.none`,
   never an error; the transport decides the fallback ([[acp-router]] uses
   `worker_system`).
-- No expiry in v0.1: sessions live for the process lifetime. A TTL sweeper is a
-  post-v0.1 concern (see Grill Log).
+- `list` decodes every stored session; `evictExpired` removes those whose
+  `created_at + ttl ≤ now` and returns them. Eviction is attribute-only (no
+  `session.*` event — sessions are host-local auth state, not coordination
+  primitives). The TTL and cadence are owned by the [[sweeper]], not this service.
 
 ### Linkage
 
 - **Requires:** [[storage]], [[session.schema]], [[protocol-error]]
-- **Consumed by:** [[acp-router]] (`initializeSession`, actor resolution).
+- **Consumed by:** [[acp-router]] (`initializeSession`, actor resolution) and the
+  [[sweeper]] (`list`, `evictExpired`).
 
 ## Algorithm
 
