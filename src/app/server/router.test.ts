@@ -42,24 +42,50 @@ describe('acpRouter', () => {
     expect(body.capabilities.supports_sse).toBe(true)
   })
 
-  it('attributes a created work unit to the session worker via bearer token', async () => {
-    const handler = makeHandler()
-    const session = await handler(post('/v1/session/initialize', { worker }))
-    const { session_id } = (await session.json()) as { session_id: string }
+  const initSession = async (
+    handler: (req: Request) => Promise<Response>,
+    permissions: readonly string[],
+  ) => {
+    const res = await handler(
+      post('/v1/session/initialize', { worker, permissions }),
+    )
+    return ((await res.json()) as { session_id: string }).session_id
+  }
 
-    const authed = new Request('http://acp.test/v1/work', {
+  const authedWork = (token: string) =>
+    new Request('http://acp.test/v1/work', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        authorization: `Bearer ${session_id}`,
+        authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ workspace_id: 'workspace_1', title: 'Fix bug' }),
     })
-    const res = await handler(authed)
+
+  it('attributes a created work unit to the scoped session worker', async () => {
+    const handler = makeHandler()
+    const token = await initSession(handler, ['work:create'])
+    const res = await handler(authedWork(token))
     expect(res.status).toBe(201)
     expect(((await res.json()) as { created_by: string }).created_by).toBe(
       'agent_claude_code',
     )
+  })
+
+  it('rejects a mutation when the session lacks the required scope (401)', async () => {
+    const handler = makeHandler()
+    const token = await initSession(handler, ['review:create'])
+    const res = await handler(authedWork(token))
+    expect(res.status).toBe(401)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
+      'unauthorized',
+    )
+  })
+
+  it('rejects an unknown bearer token (401)', async () => {
+    const handler = makeHandler()
+    const res = await handler(authedWork('session_does_not_exist'))
+    expect(res.status).toBe(401)
   })
 
   it('falls back to the system actor when no bearer token is sent', async () => {
