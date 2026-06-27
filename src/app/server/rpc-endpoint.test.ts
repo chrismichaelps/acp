@@ -97,6 +97,58 @@ describe('POST /rpc', () => {
     )
   })
 
+  it('publishes work progress through JSON-RPC', async () => {
+    const handler = makeHandler()
+    const initRes = await handler(
+      rpc({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'session.initialize',
+        params: { worker, permissions: ['work:create'] },
+      }),
+    )
+    const token = ((await initRes.json()) as { result: { session_id: string } })
+      .result.session_id
+
+    const createRes = await handler(
+      rpc(
+        {
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'work.create',
+          params: { workspace_id: 'workspace_1', title: 'Publish progress' },
+        },
+        token,
+      ),
+    )
+    const workId = ((await createRes.json()) as { result: { id: string } })
+      .result.id
+
+    const eventRes = await handler(
+      rpc(
+        {
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'work.publish_event',
+          params: {
+            work_id: workId,
+            type: 'work.progressed',
+            data: { message: 'Progress from JSON-RPC' },
+          },
+        },
+        token,
+      ),
+    )
+
+    expect(eventRes.status).toBe(200)
+    const event = (await eventRes.json()) as {
+      result: { type: string; work_id: string; data: { message: string } }
+    }
+    expect(event.result.type).toBe('work.progressed')
+    expect(event.result.work_id).toBe(workId)
+    expect(event.result.data.message).toBe('Progress from JSON-RPC')
+  })
+
   it('returns 204 with no body for a notification (no id)', async () => {
     const handler = makeHandler()
     const res = await handler(
