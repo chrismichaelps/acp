@@ -36,7 +36,8 @@ export const acpRouter: HttpRouter.HttpRouter<
 
 ### Routes (spec §12)
 
-- `POST /v1/session/initialize` → register [[Worker]], echo capabilities
+- `POST /v1/session/initialize` → register [[Worker]], mint a [[session-service]]
+  session, return `session_id` (the v0.1 bearer token) + host capabilities (spec §9)
 - `GET  /v1/workspaces` → list [[Workspace]]s
 - `POST /v1/work` · `POST /v1/work/:work_id/claim` · `PATCH /v1/work/:work_id`
   · `POST /v1/work/:work_id/events`
@@ -88,11 +89,14 @@ ceremony across twelve endpoints.
   classes (edits already-merged contract + page for no runtime gain at v0.1).
 - **Q:** Where do the `actor`/`createdBy` worker ids come from, since payloads such
   as `CreateWorkPayload` and the `PATCH state` body omit them?
-  **A:** A fixed `worker_system` actor for unattributed mutations. *Rationale:*
-  spec §8 bearer-token auth is not wired yet; binding the actor to an authenticated
-  session is its own slice. A constant, clearly-named system actor is the
-  conservative, reversible default for a single-host v0.1. *Rejected:* (a) inventing
-  a body field not in the wire schema; (b) blocking on the auth slice.
+  **A:** Resolved from the `Authorization: Bearer <session_id>` header via
+  [[session-service]]`.resolveActor`, falling back to a fixed `worker_system` actor
+  when no session is presented (spec §8). *Rationale:* the bearer token is the
+  `session_id` minted at `initialize`; resolving it attributes mutations to the
+  real worker while keeping unauthenticated calls working in a single-host v0.1.
+  *Rejected:* (a) inventing a body field not in the wire schema; (b) hard-failing
+  unauthenticated mutations with `401` — the registry, not the router, should not
+  own that policy yet (see [[session-service#Grill Log]]).
 - **Q:** Identity + clock — a formal seam now?
   **A:** A small [[id-clock]] service (counter + `Clock`), not yet a swappable
   production seam. *Rationale:* services intentionally do not mint ids/timestamps;

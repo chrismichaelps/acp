@@ -28,6 +28,10 @@ They depend on seams such as [[Storage]], never on HTTP, JSON-RPC, or Node APIs.
 
 - [[reviews/_MOC|Reviews MOC]] — human-in-the-loop Review gates for WorkUnits.
 
+## sessions/
+
+- [[sessions/_MOC|Sessions MOC]] — Session registry binding bearer tokens to workers (spec §8/§9).
+
 ## work-units/
 
 - [[work-units/_MOC|Work Units MOC]] — WorkUnit lifecycle service and state machine.

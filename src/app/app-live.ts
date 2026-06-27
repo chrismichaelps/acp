@@ -6,6 +6,7 @@ import { CheckpointServiceLive } from '../domain/checkpoints/index.js'
 import { EventStoreLive } from '../domain/events/index.js'
 import { LeaseServiceLive } from '../domain/leases/index.js'
 import { ReviewServiceLive } from '../domain/reviews/index.js'
+import { SessionServiceLive } from '../domain/sessions/index.js'
 import { WorkUnitServiceLive } from '../domain/work-units/index.js'
 import { WorkerServiceLive } from '../domain/workers/index.js'
 import { WorkspaceServiceLive } from '../domain/workspaces/index.js'
@@ -48,6 +49,7 @@ export const AppLive = Layer.mergeAll(
   EventStoreProvidedLive,
   WorkUnitProvidedLive,
   WorkerServiceLive.pipe(Layer.provide(InMemoryStorageLive)),
+  SessionServiceLive.pipe(Layer.provide(InMemoryStorageLive)),
   WorkspaceProvidedLive,
   LeaseProvidedLive,
   ArtifactProvidedLive,

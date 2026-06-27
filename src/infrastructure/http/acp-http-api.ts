@@ -8,7 +8,6 @@ import {
 import { Schema } from 'effect'
 import {
   Artifact,
-  Capability,
   Checkpoint,
   ClaimWorkPayload,
   CreateArtifactPayload,
@@ -23,6 +22,7 @@ import {
   RequestReviewPayload,
   Review,
   ReviewId,
+  SessionId,
   WorkId,
   Worker,
   Workspace,
@@ -56,9 +56,25 @@ export const InitializeSessionPayload = Schema.Struct({
 })
 export type InitializeSessionPayload = typeof InitializeSessionPayload.Type
 
+export const HostDescriptor = Schema.Struct({
+  name: Schema.NonEmptyString,
+  kind: Schema.Literal('local'),
+})
+export type HostDescriptor = typeof HostDescriptor.Type
+
+export const HostCapabilities = Schema.Struct({
+  supports_events: Schema.Boolean,
+  supports_reviews: Schema.Boolean,
+  supports_artifacts: Schema.Boolean,
+  supports_sse: Schema.Boolean,
+})
+export type HostCapabilities = typeof HostCapabilities.Type
+
 export const InitializeSessionResponse = Schema.Struct({
-  worker: Worker,
-  capabilities: Schema.Array(Capability),
+  session_id: SessionId,
+  protocol_version: Schema.Literal('0.1'),
+  host: HostDescriptor,
+  capabilities: HostCapabilities,
 })
 export type InitializeSessionResponse = typeof InitializeSessionResponse.Type
 
