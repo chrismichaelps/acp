@@ -60,6 +60,7 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 ## ADRs
 
 - [[ADR-0001-architecture-foundation]] — ACCEPTED.
+- [[ADR-0002-json-rpc-transport-framing]] — ACCEPTED.
 
 ## Build Order (vertical slices)
 
@@ -78,7 +79,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 13. ✅ JSON-RPC runtime execution core — 138 tests green
 14. ✅ JSON-RPC HTTP `/rpc` framing — 144 tests green
 15. ✅ JSON-RPC stdio framing bridge — 149 tests green
-16. ▶ WebSocket transport evaluation
+16. ✅ WebSocket transport evaluation — deferred by ADR-0002
+17. ▶ Protocol coverage audit
 
 ## Referenced by
 
