@@ -205,3 +205,17 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   the router via dispatch (no duplicate routing/auth); ship the execution core
   transport-agnostic before any stdio/WS/`POST /rpc` framing. · 138 tests green ·
   risk LOW · [[ADR-0001-architecture-foundation]]
+- 2026-06-27 · json-rpc-http slice · added the `POST /rpc` framing ([[rpc-endpoint]]),
+  the first concrete transport over [[json-rpc-runtime]]: reads a JSON-RPC 2.0 payload
+  (single/batch), supplies a `JsonRpcDispatch` that replays each command against the
+  in-process [[acp-router]] (`HttpServerRequest.fromWeb` → run `v1Router` →
+  `HttpServerResponse.toWeb`) in the shared service context, and returns the response
+  JSON (`204` when all notifications, `-32700` for a non-JSON body). Split the router
+  into `v1Router` (the `/v1` REST routes) and `acpRouter = v1Router + POST /rpc` so
+  dispatch never recurses into `/rpc`; made [[json-rpc-runtime]] `executeJsonRpc`/
+  `JsonRpcDispatch` generic over requirements `R` so a dispatch can run in a service
+  context. Tested over the `acpRouter` web handler: round-trip, a `/rpc`-minted session
+  authorizing a direct `/v1` call (proving one shared store), notification `204`, batch
+  folding, unknown-method `-32601`, non-JSON `-32700`. Grill-resolved: replay the shared
+  router (no second `AppLive` split-brain); dispatch into `v1Router` not `acpRouter`
+  (acyclic). · 144 tests green · risk LOW · [[ADR-0001-architecture-foundation]]

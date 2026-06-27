@@ -23,10 +23,10 @@ export interface JsonRpcDispatchResult {
  * stdio adapter would fetch the local server. `token` threads the connection's
  * bearer session onto the request so spec §8 scopes are enforced by the router.
  */
-export type JsonRpcDispatch = (
+export type JsonRpcDispatch<R = never> = (
   request: JsonRpcHttpRequest,
   token: Option.Option<string>,
-) => Effect.Effect<JsonRpcDispatchResult>
+) => Effect.Effect<JsonRpcDispatchResult, never, R>
 
 const isSuccessStatus = (status: number) => status >= 200 && status < 300
 
@@ -68,11 +68,11 @@ const streamRejected = (
     }),
   )
 
-const executeSingle = (
-  dispatch: JsonRpcDispatch,
+const executeSingle = <R>(
+  dispatch: JsonRpcDispatch<R>,
   value: unknown,
   token: Option.Option<string>,
-): Effect.Effect<Option.Option<JsonRpcResponse>> =>
+): Effect.Effect<Option.Option<JsonRpcResponse>, never, R> =>
   Either.match(parseJsonRpcCommand(value), {
     onLeft: (error) => Effect.succeed(jsonRpcError(error)),
     onRight: (command) =>
@@ -94,12 +94,14 @@ const emptyBatchError: JsonRpcResponse = {
  * or `None` when nothing should be replied (a lone notification, or an
  * all-notification batch). An empty batch array is a single `-32600` error.
  */
-export const executeJsonRpc = (
-  dispatch: JsonRpcDispatch,
+export const executeJsonRpc = <R = never>(
+  dispatch: JsonRpcDispatch<R>,
   payload: unknown,
   token: Option.Option<string>,
 ): Effect.Effect<
-  Option.Option<JsonRpcResponse | readonly JsonRpcResponse[]>
+  Option.Option<JsonRpcResponse | readonly JsonRpcResponse[]>,
+  never,
+  R
 > => {
   if (Array.isArray(payload)) {
     if (payload.length === 0) {
