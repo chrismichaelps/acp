@@ -44,6 +44,7 @@ file has exactly one page here. A source file with no page is UNREGISTERED.
 - [[infrastructure/_MOC|Infrastructure]] — runtime adapters and platform edges.
 - [[storage/_MOC|Storage]] — persistence seam interface, opaque barrel, and InMemory/SQLite adapters.
 - [[http/_MOC|HTTP]] — Effect Platform REST API declaration and error mapper.
+- [[jsonrpc/_MOC|JSON-RPC]] — JSON-RPC 2.0 method normalization core.
 - [[sse/_MOC|SSE]] — Server-Sent Events adapter for live event streams.
 
 _(apps added as their slices land)_
