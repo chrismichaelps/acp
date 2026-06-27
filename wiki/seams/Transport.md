@@ -15,10 +15,11 @@ aliases: [Transport, TransportLayer]
 
 ## Classification
 
-CRITICAL — the protocol boundary between [[Worker]] clients and the [[Host]]. One
-production adapter in v0.1 (HTTP + SSE); JSON-RPC is a confirmed v0.2 adapter
-(spec §13, §21). On a core path (all commands cross it), so failure = system
-failure, but variation is still emerging — lifecycle EXPLORATORY.
+CRITICAL — the protocol boundary between [[Worker]] clients and the [[Host]].
+HTTP+SSE, `POST /rpc`, and stdio JSON-RPC are current v0.1 adapters. WebSocket is
+explicitly deferred by [[ADR-0002-json-rpc-transport-framing]]. On a core path
+(all commands cross it), so failure = system failure, but variation is still
+emerging — lifecycle EXPLORATORY.
 
 ## Interface
 
@@ -39,12 +40,14 @@ delegate → encode → error-map boundary is mandatory (spec §16.8).
 
 DRIFT 0 (HEALTHY). HTTP API declaration, error mapper, `POST /rpc`, JSON-RPC
 method normalization, runtime folding, and stdio Content-Length framing are
-code-complete for the current v0.1 transport surface. WebSocket host execution
-remains speculative.
+code-complete for the current v0.1 transport surface. WebSocket host execution is
+deferred by ADR until auth, event subscription, heartbeat, backpressure, and
+server-upgrade semantics are specified.
 
 ## Deepening
 
-ADR: [[ADR-0001-architecture-foundation]]. Built on `@effect/platform` `HttpApi`
+ADR: [[ADR-0001-architecture-foundation]] and
+[[ADR-0002-json-rpc-transport-framing]]. Built on `@effect/platform` `HttpApi`
 declarative API (see [[grammar/typescript]]).
 
 ## Referenced by

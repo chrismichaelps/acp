@@ -16,9 +16,10 @@ aliases: [EventStream, SseEventStream]
 ## Classification
 
 EXPLORATORY — live fan-out of [[Event]]s to subscribed [[Worker]]s. One production
-adapter in v0.1 (Server-Sent Events). WebSocket is speculative (spec §7 mentions it
-but no committed adapter), so the variation is not yet confirmed — keep simple,
-promote to CRITICAL only when a second adapter lands.
+adapter in v0.1 (Server-Sent Events). WebSocket is deferred by
+[[ADR-0002-json-rpc-transport-framing]] because event notification semantics,
+backpressure, heartbeat, and disconnect behavior need a dedicated design before a
+second live adapter lands.
 
 ## Interface
 
@@ -28,10 +29,10 @@ adapter renders the stream into its wire format (SSE `event:`/`data:` frames).
 
 ## Adapters
 
-| Adapter   | Type       | Path                          | Last verified | Status           |
-| --------- | ---------- | ----------------------------- | ------------- | ---------------- |
-| SSE       | production | @root/src/infrastructure/sse/ | 2026-06-26    | CURRENT (v0.1)   |
-| WebSocket | —          | —                             | —             | SPECULATIVE (§7) |
+| Adapter   | Type       | Path                          | Last verified | Status              |
+| --------- | ---------- | ----------------------------- | ------------- | ------------------- |
+| SSE       | production | @root/src/infrastructure/sse/ | 2026-06-26    | CURRENT (v0.1)      |
+| WebSocket | —          | —                             | —             | DEFERRED (ADR-0002) |
 
 ## Health
 
