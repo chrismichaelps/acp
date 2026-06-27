@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-27 · json-rpc-transport-core slice · projected spec §13 JSON-RPC
+  methods to code: [[jsonrpc-index]], [[json-rpc]] envelope parsing, closed
+  method table, schema-backed params validation, canonical HTTP route mapping,
+  path encoding, SSE stream mapping for `events.subscribe`, notification-aware
+  success responses, JSON-RPC error helpers, and JSON-RPC MOC · 130 tests green ·
+  risk LOW · [[ADR-0001-architecture-foundation]]
 - 2026-06-25 · vault · FMCF Mode 1 scaffold: grammar, domain glossary (8),
   [[architecture/LANGUAGE]], seams (Storage/Transport/EventStream), MOCs ·
   risk LOW · [[ADR-0001-architecture-foundation]]

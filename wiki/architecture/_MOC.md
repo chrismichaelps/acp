@@ -18,6 +18,7 @@ ConfigLayer
   ├── WorkUnit / Worker / Workspace / Lease / Artifact / Checkpoint / Review services
   └── TransportLayer (seam)
         ├── HttpApiLayer
+        ├── JsonRpcCore
         └── SseEventStreamLayer
 ```
 
@@ -72,7 +73,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 8. ✅ AppLive dependency graph + server main + CLI client — 97 tests green
 9. ✅ Persistent storage adapter — 118 tests green
 10. ✅ Persistent storage host selection — 119 tests green
-11. ▶ Protocol spec canonicalization
+11. ✅ JSON-RPC transport core — 130 tests green
+12. ▶ Protocol spec canonicalization
 
 ## Referenced by
 
