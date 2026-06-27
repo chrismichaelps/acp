@@ -32,8 +32,11 @@ export const EventsStreamParams: Schema.Struct<{ workspace_id: WorkspaceId }>
 export const UpdateWorkStatePayload: Schema.Struct<{ state: WorkState }>
 export const PublishWorkEventPayload: Schema.Struct<{ type: EventType; data: Record<string, unknown> }>
 export const ApproveReviewPayload: Schema.Struct<{ met_requirements: string[] }>
+export const ClientCapabilities: Schema.Struct<{ // spec §9 worker flags }>
+export const InitializeSessionWorker: Schema.Struct<{ // Worker descriptor, status/capabilities defaulted }>
 export const InitializeSessionPayload: Schema.Struct<{ // §8 scopes default to []
-  worker: Worker; permissions: Schema.Array<Permission> }>
+  protocol_version: "0.1"; worker: InitializeSessionWorker
+  capabilities: ClientCapabilities; permissions: Schema.Array<Permission> }>
 export const InitializeSessionResponse: Schema.Struct<{ // spec §9 host handshake
   session_id: SessionId; protocol_version: "0.1"
   host: { name: string; kind: "local" }
@@ -76,6 +79,12 @@ No runtime behavior. Build groups with `HttpApiGroup.make`, add endpoints with
 `HttpApiEndpoint.get/post/patch`, attach path params with `HttpApiSchema.param`,
 payloads with `setPayload`, query params with `setUrlParams`, and successes/errors
 with `addSuccess`/`addError`.
+
+`InitializeSessionPayload` accepts both the original implementation shape (a full
+[[Worker]] record with `status` and `capabilities`) and the draft spec §9 shape:
+`protocol_version`, a lean worker descriptor, and a top-level client capability
+object. Defaults keep reconnects compact while the router normalizes the decoded
+descriptor back into a canonical [[Worker]] for storage.
 
 ## Negative Logic (Prohibited Paths)
 

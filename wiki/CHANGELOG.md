@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-27 · session-capability-negotiation slice · accepted the draft §9
+  `session.initialize` request shape (`protocol_version`, lean worker descriptor,
+  client capability flags) alongside the existing full-worker payload, normalizing
+  both into the stored [[Worker]] record while preserving scoped session
+  permissions · 157 tests green · risk LOW
 - 2026-06-27 · review-action-transport slice · exposed review decisions through
   REST (`approve`, `reject`, `request_changes`) and JSON-RPC
   (`review.approve`, `review.reject`, `review.request_changes`) using the bearer
