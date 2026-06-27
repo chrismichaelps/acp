@@ -35,26 +35,33 @@ export interface JsonRpcDispatchResult {
 // Executes one canonical command against the host. Injected by each transport:
 // in tests/HTTP it wraps the acpRouter web handler; for stdio it would fetch the
 // local server. `token` threads the connection's bearer session onto the request.
-export type JsonRpcDispatch = (
+// Generic over its requirements R, so a dispatch may run inside a service context
+// (the POST /rpc framing replays the router with R = its services), or be R = never
+// (a fake or a web-handler dispatch).
+export type JsonRpcDispatch<R = never> = (
   request: JsonRpcHttpRequest,
   token: Option.Option<string>,
-) => Effect.Effect<JsonRpcDispatchResult>
+) => Effect.Effect<JsonRpcDispatchResult, never, R>
 
 // Single envelope or a batch array → the response(s) to send, or None when there
 // is nothing to reply (all notifications, or an all-notification batch).
-export const executeJsonRpc: (
-  dispatch: JsonRpcDispatch,
+export const executeJsonRpc: <R = never>(
+  dispatch: JsonRpcDispatch<R>,
   payload: unknown,
   token: Option.Option<string>,
-) => Effect.Effect<Option.Option<JsonRpcResponse | readonly JsonRpcResponse[]>>
+) => Effect.Effect<
+  Option.Option<JsonRpcResponse | readonly JsonRpcResponse[]>,
+  never,
+  R
+>
 ```
 
 ### Linkage
 
 - **Requires:** [[json-rpc]] (`parseJsonRpcCommand`, `jsonRpcSuccess`,
   `jsonRpcError`, `JsonRpcRequestError`), `effect` `Option`/`Either`/`Effect`.
-- **Consumed by:** future stdio / WebSocket / `POST /rpc` host adapters, which
-  supply the `JsonRpcDispatch` and own the byte framing.
+- **Consumed by:** [[rpc-endpoint]] (`POST /rpc`), and future stdio / WebSocket host
+  adapters, which supply the `JsonRpcDispatch` and own the byte framing.
 
 ## Algorithm
 

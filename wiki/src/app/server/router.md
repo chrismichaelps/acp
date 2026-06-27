@@ -51,12 +51,15 @@ export const acpRouter: HttpRouter.HttpRouter<
 - `POST /v1/leases` · `POST /v1/leases/:lease_id/release` (→ 204)
 - `POST /v1/artifacts` · `POST /v1/checkpoints` · `POST /v1/reviews`
 - `GET  /v1/events/stream?workspace_id=…` → SSE ([[sse-event-stream]])
+- `POST /rpc` → JSON-RPC 2.0 framing ([[rpc-endpoint]]); the `/v1` routes above are
+  built as `v1Router`, and `acpRouter = v1Router + POST /rpc` so JSON-RPC dispatch
+  replays into `v1Router` (never into `/rpc`)
 
 ### Linkage
 
 - **Requires:** all domain service barrels, [[event-store]], [[id-clock]],
   [[app-config]], [[acp-http-api]] (payload schemas), [[http-error-mapper]],
-  [[sse-event-stream]]
+  [[sse-event-stream]], [[rpc-endpoint]] (`POST /rpc` handler)
 - **Consumed by:** [[server-main]] (the Node entrypoint).
 
 ## Algorithm

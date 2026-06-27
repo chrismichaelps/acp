@@ -25,6 +25,7 @@ import {
   UpdateWorkStatePayload,
 } from '../../infrastructure/http/index.js'
 import { workspaceSseResponse } from '../../infrastructure/sse/index.js'
+import { makeRpcHandler } from './rpc-endpoint.js'
 import { ValidationError } from '../../protocol/errors/protocol-error.js'
 import type { DomainError } from '../../protocol/errors/protocol-error.js'
 import {
@@ -354,7 +355,8 @@ const streamEvents = respond(
   }),
 )
 
-export const acpRouter = HttpRouter.empty.pipe(
+// The canonical REST surface (spec §12). JSON-RPC dispatch replays against this.
+const v1Router = HttpRouter.empty.pipe(
   HttpRouter.post('/v1/session/initialize', initializeSession),
   HttpRouter.get('/v1/workspaces', listWorkspaces),
   HttpRouter.post('/v1/work', createWork),
@@ -367,4 +369,10 @@ export const acpRouter = HttpRouter.empty.pipe(
   HttpRouter.post('/v1/checkpoints', createCheckpoint),
   HttpRouter.post('/v1/reviews', requestReview),
   HttpRouter.get('/v1/events/stream', streamEvents),
+)
+
+// Add the spec §13 JSON-RPC framing, which dispatches into v1Router in the same
+// service context (one shared store — no second AppLive).
+export const acpRouter = v1Router.pipe(
+  HttpRouter.post('/rpc', makeRpcHandler(v1Router)),
 )
