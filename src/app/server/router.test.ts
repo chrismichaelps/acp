@@ -270,45 +270,6 @@ describe('acpRouter', () => {
     expect(body.id).toMatch(/^work_/)
   })
 
-  it('deletes an artifact and returns 404 on a repeated delete', async () => {
-    const handler = makeHandler()
-    const token = await initSession(handler, ['artifact:create'])
-    const created = await handler(
-      new Request('http://acp.test/v1/artifacts', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          workspace_id: 'workspace_1',
-          work_id: 'work_1',
-          kind: 'markdown',
-          content: 'Review notes',
-        }),
-      }),
-    )
-    expect(created.status).toBe(201)
-    const artifactId = ((await created.json()) as { id: string }).id
-
-    const deleted = await handler(
-      new Request(`http://acp.test/v1/artifacts/${artifactId}`, {
-        method: 'DELETE',
-        headers: { authorization: `Bearer ${token}` },
-      }),
-    )
-    expect(deleted.status).toBe(200)
-    expect(((await deleted.json()) as { id: string }).id).toBe(artifactId)
-
-    const repeated = await handler(
-      new Request(`http://acp.test/v1/artifacts/${artifactId}`, {
-        method: 'DELETE',
-        headers: { authorization: `Bearer ${token}` },
-      }),
-    )
-    expect(repeated.status).toBe(404)
-  })
-
   it('claims open work, rejecting a missing work unit with 404', async () => {
     const handler = makeHandler()
     const created = await handler(

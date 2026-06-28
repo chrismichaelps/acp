@@ -30,6 +30,7 @@ export type JsonRpcMethod =
   | 'lease.request'
   | 'lease.release'
   | 'artifact.create'
+  | 'artifact.update'
   | 'artifact.delete'
   | 'checkpoint.create'
   | 'review.request'

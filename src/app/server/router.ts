@@ -40,6 +40,7 @@ import {
   RequestLeasePayload,
   RequestReviewPayload,
   Review,
+  UpdateArtifactPayload,
   WorkUnit,
   isSupportedProtocolVersion,
 } from '../../protocol/schema/index.js'
@@ -264,6 +265,21 @@ const deleteArtifact = respond(
   }),
 )
 
+const updateArtifact = respond(
+  Effect.gen(function* () {
+    const service = yield* ArtifactService
+    const idClock = yield* IdClock
+    const artifactId = (yield* pathParam('artifact_id')) as ArtifactId
+    const payload = yield* HttpServerRequest.schemaBodyJson(
+      UpdateArtifactPayload,
+    )
+    const now = yield* idClock.now
+    const actor = yield* authorize()
+    const artifact = yield* service.update(artifactId, payload, actor, now)
+    return yield* ok(200)(Artifact, artifact)
+  }),
+)
+
 const createCheckpoint = respond(
   Effect.gen(function* () {
     const service = yield* CheckpointService
@@ -363,6 +379,7 @@ const v1Router = HttpRouter.empty.pipe(
   HttpRouter.post('/v1/leases', requestLease),
   HttpRouter.post('/v1/leases/:lease_id/release', releaseLease),
   HttpRouter.post('/v1/artifacts', createArtifact),
+  HttpRouter.patch('/v1/artifacts/:artifact_id', updateArtifact),
   HttpRouter.del('/v1/artifacts/:artifact_id', deleteArtifact),
   HttpRouter.post('/v1/checkpoints', createCheckpoint),
   HttpRouter.post('/v1/reviews', requestReview),
