@@ -15,10 +15,10 @@ aliases: [json-rpc, json-rpc-transport-core]
 ## Purpose
 
 Normalize JSON-RPC 2.0 envelopes into canonical ACP transport commands. This
-module owns method-name compatibility for spec §13 and validates every params
-object with the same Effect Schema payloads used by the HTTP API. It does not
-execute domain services and does not open a stdio or WebSocket runtime; those
-adapters consume the normalized command surface in a later slice.
+facade owns outer envelope parsing, request id semantics, and success/error
+response helpers. The larger method-to-HTTP route table lives in
+[[json-rpc-command-map]] so this public entry point stays under the spec §16.9
+file-size limit.
 
 ## Interface
 
@@ -71,30 +71,15 @@ export const jsonRpcError: (
 
 ### Linkage
 
-- **Requires:** [[acp-http-api]], [[work-unit.schema]], [[lease.schema]],
-  [[artifact.schema]], [[checkpoint.schema]], [[review.schema]]
+- **Requires:** [[json-rpc-command-map]]
 - **Consumed by:** [[json-rpc-runtime]] (executes the normalized commands), and
   through it future stdio/WebSocket/`POST /rpc` host adapters.
 
 ## Algorithm
 
 Decode the outer envelope as JSON-RPC 2.0, preserve the distinction between an
-omitted notification id and an explicit `null` id, validate the method against
-the closed spec §13 table, then decode params with the existing protocol schema
-for that operation. Path-bearing methods split resource ids from request bodies:
-`work.claim`, `work.update`, `work.publish_event`, `lease.release`,
-`artifact.delete`, `review.approve`, `review.reject`, and
-`review.request_changes` URL-encode the path segment and leave only operation
-payload fields in the body.
-`events.subscribe` maps to the SSE stream route and marks the command as
-stream-capable.
-
-Full-payload methods validate params with the schema but forward the **original
-wire JSON** as the request body (`validatedBody`), not the decoded Type side: the
-decoded form wraps optionals in `Option`, which is not serializable back onto the
-HTTP API that [[json-rpc-runtime]] dispatches to.
-This keeps `session.initialize` compatible with both the existing full-worker
-payload and the draft §9 `protocol_version` + client capability object.
+omitted notification id and an explicit `null` id, then delegate method
+validation and params normalization to [[json-rpc-command-map]].
 
 Response helpers are intentionally small. A command with no id is a JSON-RPC
 notification and produces no success response; method and params failures from
@@ -106,16 +91,17 @@ that executes the command.
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT duplicate router or domain service behavior in this module.
-- ❌ Do NOT accept methods outside the spec §13 table without a spec update.
+- ❌ Do NOT put method mapping logic back in this facade; use
+  [[json-rpc-command-map]].
 - ❌ Do NOT treat omitted `id` and explicit `id: null` as the same request shape.
 - ❌ Do NOT map domain errors here; runtime adapters map execution failures.
 
 ## Depth
 
-MEDIUM (0.7). The module is still an adapter core rather than a live host, but it
-anchors cross-transport method compatibility and schema reuse before stdio or
-WebSocket execution is introduced.
+MEDIUM (0.7). The module is still an adapter core rather than a live host, but
+after the command-map split it has a tighter interface: parse envelope, preserve
+id semantics, delegate command mapping, and fold responses.
 
 ## Referenced by
 
-[[jsonrpc-index]] · [[Transport]] · [[src/_MOC]]
+[[jsonrpc-index]] · [[json-rpc-command-map]] · [[Transport]] · [[src/_MOC]]
