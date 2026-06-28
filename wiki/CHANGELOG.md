@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · cli-parser-dispatch-table slice · refactored [[cli-commands]]
+  from a linear `(group, action)` conditional chain into an additive command
+  handler registry while preserving request mapping, validation, and unknown
+  command errors · 188 tests green · risk LOW
 - 2026-06-28 · readme-current-state-refresh slice · refreshed the public
   README prose for current REST/SSE, `POST /rpc`, stdio JSON-RPC, SQLite,
   scoped mutation permissions, and expanded CLI behavior · docs-only validation ·
