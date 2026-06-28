@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · post-permission-integration-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after permission scope parity and
+  selected public README current-state drift as the next docs slice · docs-only
+  validation · risk LOW
 - 2026-06-28 · permission-scope-parity slice · expanded [[common]] session
   permission scopes and required explicit action scopes in [[acp-router]] for
   backed work, lease, artifact, and review mutations · 188 tests green · risk LOW
