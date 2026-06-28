@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-27 · spec-naming-canonicalization slice · added
+  [[spec-canonicalization]] as the tracked rule for reading the ignored Hadoof-era
+  draft through ACP naming, `ACP_` env vars, and `acp://` URIs without mutating
+  `@root/specs.md` · docs-only validation · risk LOW
 - 2026-06-27 · event-vocabulary-domain-decisions slice · accepted
   [[ADR-0003-event-vocabulary-domain-boundaries]], binding public event emission
   to persisted domain transitions and deferring worker presence, workspace
