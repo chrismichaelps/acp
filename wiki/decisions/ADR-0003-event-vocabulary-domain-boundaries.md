@@ -24,14 +24,11 @@ Most command-backed events now have a domain owner. [[work-unit-service]],
 [[lease-service]], [[artifact-service]], [[checkpoint-service]],
 [[review-service]], and [[workspace-service]] emit their events after state is
 persisted. Transport routes expose the backed command surface, including
-`artifact.deleted` through `DELETE /v1/artifacts/{artifact_id}` and JSON-RPC
-`artifact.delete`.
+artifact update/delete and workspace archive.
 
-The remaining vocabulary is not merely missing transport wiring. Worker presence
-is host-scoped while the current [[Event]] schema is workspace-scoped.
-`workspace.archived` has no lifecycle field or archive marker in
-[[workspace.schema]]. `artifact.updated` has no mutation command; artifacts are
-currently immutable after creation except for removal.
+The remaining vocabulary was not merely missing transport wiring. Worker
+presence is host-scoped while the current [[Event]] schema is workspace-scoped.
+Workspace archive and artifact update now have explicit domain semantics.
 
 ## Decision
 
@@ -40,20 +37,18 @@ transition. Event names that do not yet have a domain representation remain part
 of the draft vocabulary but are not public routes, JSON-RPC methods, or synthetic
 events in the reference host.
 
-Worker presence events are deferred until ACP has a host-level or global event
-scope distinct from workspace logs. The implementation will not invent a
-reserved pseudo-workspace for `worker.online`, `worker.offline`, or
-`worker.status_changed`.
+Worker presence events remain outside workspace logs. The implementation will
+not invent a reserved pseudo-workspace for `worker.online`, `worker.offline`, or
+`worker.status_changed`; [[ADR-0005-worker-presence-scope]] defines the v0.1
+presence rule.
 
-Workspace archive is deferred until the workspace model gains an explicit
-lifecycle representation. The implementation will not model archive as
-`storage.remove`, because that would break event replay and orphan workspace
-history.
+Workspace archive is backed by an explicit `WorkspaceState` lifecycle field. The
+implementation does not model archive as `storage.remove`, because that would
+break event replay and orphan workspace history.
 
-Artifact update is deferred until artifacts have explicit mutation semantics.
-The implementation will not emit `artifact.updated` for metadata replacement or
-content overwrite until the domain defines what may change, what remains
-immutable, and how existing artifact URIs behave.
+Artifact update is backed by explicit mutation semantics. Existing artifact
+identity and URI remain stable while mutable metadata and optional content are
+replaced.
 
 ## Rationale
 
@@ -63,31 +58,31 @@ activity that cannot be reconstructed from domain state. Keeping the event
 surface tied to service-owned mutations preserves the append-only contract and
 keeps [[EventStream]] consumers honest.
 
-Worker presence needs a different scope. A worker registers at
-`session.initialize` before a workspace is necessarily selected, and one worker
-may coordinate across multiple workspaces. Forcing that activity into an
-arbitrary workspace stream would leak host concerns into workspace history.
+Worker presence needs a different scope; [[ADR-0005-worker-presence-scope]]
+accepts the v0.1 rule that presence remains host-scoped registry state rather
+than workspace event history. A worker registers at `session.initialize` before a
+workspace is necessarily selected, and one worker may coordinate across multiple
+workspaces. Forcing that activity into an arbitrary workspace stream would leak
+host concerns into workspace history.
 
 Workspace archive needs a real lifecycle field. Removing the workspace record is
 not archive; it is deletion, and it damages the log boundary that makes
-workspace-scoped replay useful.
+workspace-scoped replay useful. That lifecycle now exists.
 
 Artifact update needs a product decision about mutability. Current artifacts are
 durable outputs with stable `acp://artifacts/{id}` URIs; allowing mutation
 without defining content/version behavior would weaken their evidentiary role.
+That mutability rule now exists.
 
 ## Consequences
 
-The event vocabulary audit can treat these names as domain-design work rather
+The event vocabulary audit can treat unmatched names as domain-design work rather
 than transport gaps. Transport parity should continue only for operations that
 already exist in domain services.
 
-A future worker-presence slice should first decide whether ACP needs a host
-event stream, a workspace-membership event model, or both. A future workspace
-archive slice should add explicit schema and service semantics before transport.
-A future artifact update slice should decide whether updates mutate the existing
-artifact, create a new version, or produce a replacement artifact linked through
-metadata.
+Worker presence has now been resolved for v0.1 by
+[[ADR-0005-worker-presence-scope]]. A future host-presence stream should add a
+new schema and storage/query contract instead of reusing workspace logs.
 
 ## Alternatives
 
@@ -106,10 +101,10 @@ make clients infer semantics that the domain has not promised.
 
 This is a governance decision over existing behavior. It is validated by the
 current service boundaries: workspace events append to workspace logs, worker
-registry has no [[EventStore]] dependency, and artifact removal is already the
-only non-create artifact mutation exposed by the domain.
+registry has no [[EventStore]] dependency, and artifact update/delete are backed
+by [[artifact-service]] mutations.
 
 ## Referenced by
 
 [[Transport]] · [[EventStream]] · [[protocol-coverage-2026-06-27]] ·
-[[architecture/_MOC]]
+[[ADR-0005-worker-presence-scope]] · [[architecture/_MOC]]
