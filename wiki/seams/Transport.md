@@ -17,9 +17,11 @@ aliases: [Transport, TransportLayer]
 
 CRITICAL — the protocol boundary between [[Worker]] clients and the [[Host]].
 HTTP+SSE, `POST /rpc`, and stdio JSON-RPC are current v0.1 adapters. WebSocket is
-explicitly deferred by [[ADR-0002-json-rpc-transport-framing]]. On a core path
-(all commands cross it), so failure = system failure, but variation is still
-emerging — lifecycle EXPLORATORY.
+explicitly deferred by [[ADR-0002-json-rpc-transport-framing]]. Event vocabulary
+that lacks persisted domain state is deferred by
+[[ADR-0003-event-vocabulary-domain-boundaries]]. On a core path (all commands
+cross it), so failure = system failure, but variation is still emerging —
+lifecycle EXPLORATORY.
 
 ## Interface
 
@@ -47,10 +49,12 @@ server-upgrade semantics are specified.
 ## Deepening
 
 ADR: [[ADR-0001-architecture-foundation]] and
-[[ADR-0002-json-rpc-transport-framing]]. Built on `@effect/platform` `HttpApi`
-declarative API (see [[grammar/typescript]]).
+[[ADR-0002-json-rpc-transport-framing]] and
+[[ADR-0003-event-vocabulary-domain-boundaries]]. Built on `@effect/platform`
+`HttpApi` declarative API (see [[grammar/typescript]]).
 
 ## Referenced by
 
 [[Event]] · [[acp-http-api]] · [[http-error-mapper]] · [[json-rpc]] ·
-[[stdio-main]] · [[architecture/_MOC]]
+[[stdio-main]] · [[architecture/_MOC]] ·
+[[ADR-0003-event-vocabulary-domain-boundaries]]
