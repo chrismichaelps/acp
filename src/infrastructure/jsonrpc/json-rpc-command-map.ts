@@ -292,6 +292,7 @@ export const commandFor = (
         Schema.Struct({
           artifact_id: ArtifactId,
           kind: UpdateArtifactPayload.fields.kind,
+          uri: UpdateArtifactPayload.fields.uri,
           media_type: UpdateArtifactPayload.fields.media_type,
           summary: UpdateArtifactPayload.fields.summary,
           content: UpdateArtifactPayload.fields.content,
@@ -307,6 +308,7 @@ export const commandFor = (
           path: `/v1/artifacts/${encodeSegment(params.artifact_id)}`,
           body: {
             kind: params.kind,
+            uri: Option.getOrNull(params.uri),
             media_type: Option.getOrNull(params.media_type),
             summary: Option.getOrNull(params.summary),
             content: Option.getOrNull(params.content),

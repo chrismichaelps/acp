@@ -107,7 +107,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 39. ✅ Public README current-state refresh — transport/auth/CLI prose updated
 40. ✅ CLI parser dispatch table refactor — additive command registry
 41. ✅ Post-parser integration audit — external artifact references selected
-42. ▶ External artifact URI support — schema/service/REST/JSON-RPC/CLI
+42. ✅ External artifact URI support — schema/service/REST/JSON-RPC/CLI
+43. ▶ Re-audit remaining integration gaps after external artifact references
 
 ## Referenced by
 

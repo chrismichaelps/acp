@@ -26,6 +26,10 @@ export const CreateArtifactPayload = Schema.Struct({
   workspace_id: WorkspaceId,
   work_id: WorkId,
   kind: ArtifactKind,
+  uri: Schema.optionalWith(Schema.NonEmptyString, {
+    as: 'Option',
+    nullable: true,
+  }),
   media_type: Schema.optionalWith(Schema.String, {
     as: 'Option',
     nullable: true,
@@ -43,6 +47,7 @@ export type CreateArtifactPayload = typeof CreateArtifactPayload.Type
 
 export const UpdateArtifactPayload = Schema.Struct({
   kind: ArtifactKind,
+  uri: CreateArtifactPayload.fields.uri,
   media_type: Artifact.fields.media_type,
   summary: Artifact.fields.summary,
   content: CreateArtifactPayload.fields.content,

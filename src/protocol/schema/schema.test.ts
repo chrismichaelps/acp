@@ -117,7 +117,7 @@ describe('Workspace / Lease / Event schemas', () => {
       id: 'workspace_123',
       name: 'acme/web',
       kind: 'git_repository',
-      uri: 'git+https://github.com/acme/web.git',
+      uri: 'git+https://example.com/acme/web.git',
       default_branch: 'main',
       metadata: { provider: 'github' },
     })
