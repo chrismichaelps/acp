@@ -71,19 +71,19 @@ request, it accepts either the draft capability object or a full internal
 [[Worker]] record; the router normalizes both into the stored worker registry and
 keeps scoped `permissions` as the bearer-session extension from spec §8.
 
-Naming remains historically mixed in `specs.md`: the source draft still says
-Hadoof and uses `hadoof://` in examples, while the implementation and ADR-0001
-canonically use ACP and `acp://`. The wiki records this, but the draft itself is
-ignored and has not been rewritten.
+Naming remains historically mixed in `specs.md`: the ignored source draft still
+says Hadoof and uses `hadoof://` in examples, while the implementation and
+ADR-0001 canonically use ACP and `acp://`. [[spec-canonicalization]] records the
+tracked interpretation rule so future slices normalize draft vocabulary without
+editing the ignored local file.
 
 ## Next Slice
 
-Close the remaining naming mismatch. The ignored draft spec still uses Hadoof
-and `hadoof://` examples in places, while the tracked implementation, ADR-0001,
-README, and wiki use ACP and `acp://`. The next slice should create a tracked
-canonicalization note or spec mirror rather than editing the ignored local draft
-directly.
+Re-audit the spec implementation surface after the recent transport and decision
+slices. The next slice should identify the highest-value remaining command,
+state, or integration gap instead of relying on the stale gap list in this audit.
 
 ## Referenced by
 
-[[architecture/_MOC]] · [[Transport]] · [[EventStream]]
+[[architecture/_MOC]] · [[Transport]] · [[EventStream]] ·
+[[spec-canonicalization]]
