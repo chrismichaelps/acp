@@ -142,6 +142,12 @@ describe('AcpHttpApi', () => {
         path: '/v1/work/:work_id/artifacts',
       },
       {
+        group: 'work',
+        name: 'listWorkReviews',
+        method: 'GET',
+        path: '/v1/work/:work_id/reviews',
+      },
+      {
         group: 'leases',
         name: 'requestLease',
         method: 'POST',
@@ -170,6 +176,12 @@ describe('AcpHttpApi', () => {
         name: 'deleteArtifact',
         method: 'DELETE',
         path: '/v1/artifacts/:artifact_id',
+      },
+      {
+        group: 'artifacts',
+        name: 'getArtifactContent',
+        method: 'GET',
+        path: '/v1/artifacts/:artifact_id/content',
       },
       {
         group: 'checkpoints',
