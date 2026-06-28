@@ -2,6 +2,9 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · cli-backed-command-parity slice · expanded [[cli-commands]] and
+  [[cli-client]] across backed workspace, artifact, and review action routes,
+  including DELETE support for artifact removal · 187 tests green · risk LOW
 - 2026-06-28 · protocol-audit-refresh slice · added
   [[protocol-implementation-2026-06-28]], refreshed the implementation coverage
   after the latest lifecycle/ADR slices, and selected CLI parity for backed
