@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-27 · workspace-transport-commands slice · exposed backed
+  [[Workspace]] create/update through REST and JSON-RPC, added `workspace:write`,
+  split shared server route helpers into [[route-support]], and moved workspace
+  handlers into [[workspace-routes]] to keep the router under the file-size gate ·
+  focused tests pending · risk LOW
 - 2026-06-27 · protocol-version-handshake slice · accepted
   [[ADR-0004-protocol-version-codecs-generated-client]], added
   [[protocol-version]] as the canonical v0.1 compatibility module, and moved

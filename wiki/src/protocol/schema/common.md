@@ -35,7 +35,7 @@ export const ReviewState: Schema.Literal<[…5 states…]>
 export const WorkspaceKind: Schema.Literal<[…6 kinds…]>
 export const Resource: Schema.Struct<{ kind: ResourceKind; uri: NonEmptyString }>
 export const Permission: Schema.Literal<[ // session auth scopes (spec §8)
-  "workspace:read","work:create","work:claim","lease:create",
+  "workspace:read","workspace:write","work:create","work:claim","lease:create",
   "artifact:create","checkpoint:create","review:create"]>
 ```
 
@@ -58,5 +58,5 @@ duplicated literal lists that would drift out of sync.
 
 ## Referenced by
 
-[[work-unit.schema]] · [[work-unit-service]] · [[worker.schema]] · [[lease.schema]] ·
-[[src/_MOC]]
+[[work-unit.schema]] · [[work-unit-service]] · [[worker.schema]] ·
+[[workspace-routes]] · [[lease.schema]] · [[src/_MOC]]

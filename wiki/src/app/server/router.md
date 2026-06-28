@@ -16,10 +16,9 @@ aliases: [acp-router, server-router]
 ## Purpose
 
 Bind the declarative [[acp-http-api]] contract to the running domain services for
-v0.1. A manual `HttpRouter` decodes each request, mints identity/clock values,
-delegates to the owning service, encodes the success body, and maps every domain
-error to its HTTP status via the existing [[http-error-mapper]]. The SSE stream
-endpoint delegates to [[sse-event-stream]].
+v0.1. A manual `HttpRouter` composes focused route handlers, the SSE stream
+endpoint, and `/rpc` JSON-RPC framing over one shared application graph. Shared
+authorization, success encoding, and error folding live in [[route-support]].
 
 ## Interface
 
@@ -49,6 +48,8 @@ export const acpRouter: HttpRouter.HttpRouter<
   `protocol_version` + client capability handshakes, rejecting unsupported
   versions through [[protocol-version]]
 - `GET  /v1/workspaces` → list [[Workspace]]s
+- `POST /v1/workspaces` · `PATCH /v1/workspaces/:workspace_id` → create/update
+  [[Workspace]]s through [[workspace-routes]]
 - `POST /v1/work` · `POST /v1/work/:work_id/claim` · `PATCH /v1/work/:work_id`
   · `POST /v1/work/:work_id/events`
 - `POST /v1/leases` · `POST /v1/leases/:lease_id/release` (→ 204)
@@ -64,20 +65,18 @@ export const acpRouter: HttpRouter.HttpRouter<
 
 ### Linkage
 
-- **Requires:** all domain service barrels, [[event-store]], [[id-clock]],
-  [[app-config]], [[acp-http-api]] (payload schemas), [[http-error-mapper]],
-  [[sse-event-stream]], [[rpc-endpoint]] (`POST /rpc` handler)
+- **Requires:** domain service barrels used by inline handlers, [[event-store]],
+  [[id-clock]], [[acp-http-api]] (payload schemas), [[route-support]],
+  [[workspace-routes]], [[sse-event-stream]], [[rpc-endpoint]] (`POST /rpc` handler)
 - **Consumed by:** [[server-main]] (the Node entrypoint).
 
 ## Algorithm
 
-Per route: decode body (`HttpServerRequest.schemaBodyJson`) / path
+Per inline route: decode body (`HttpServerRequest.schemaBodyJson`) / path
 (`HttpRouter.params`) / query (`schemaSearchParams`) → mint `id`/`now` from
-[[id-clock]] where the service requires them → delegate → `Schema.encode` the
-success at the declared status → `Effect.catchAll` routes any failure through
-`errorToResponse`: tagged [[protocol-error]] domain errors use
-[[http-error-mapper]]; decode/`ParseError`/`RequestError` collapse to `400`
-validation; anything else is `internal_error` `500` (no internal leak).
+[[id-clock]] where the service requires them → delegate → encode success through
+[[route-support]]. Workspace list/create/update are delegated to
+[[workspace-routes]] to keep this composition module below the file-size gate.
 
 `initializeSession` is the one route with compatibility normalization. The HTTP
 schema accepts the draft spec handshake, where worker capability booleans sit
@@ -103,9 +102,9 @@ artifact maps through the shared domain error path to `404`.
 
 ## Depth
 
-DEEP (0.72). Hides decode/encode plumbing, identity minting, and the total
-error→status mapping behind a single router value. Deleting it scatters HTTP
-ceremony across twelve endpoints.
+DEEP (0.72). Hides route composition, identity minting, and transport adapter
+composition behind a single router value. Deleting it scatters HTTP ceremony and
+`/rpc` replay wiring across multiple entrypoints.
 
 ## Grill Log
 
@@ -149,5 +148,5 @@ ceremony across twelve endpoints.
 
 ## Referenced by
 
-[[server-index]] · [[server-main]] · [[Transport]] · [[protocol-version]] ·
-[[src/_MOC]]
+[[server-index]] · [[server-main]] · [[Transport]] · [[route-support]] ·
+[[workspace-routes]] · [[protocol-version]] · [[src/_MOC]]

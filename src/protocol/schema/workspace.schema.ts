@@ -15,3 +15,17 @@ export const Workspace = Schema.Struct({
   metadata: Schema.Record({ key: Schema.String, value: Schema.String }),
 })
 export type Workspace = typeof Workspace.Type
+
+export const CreateWorkspacePayload = Schema.Struct({
+  name: Workspace.fields.name,
+  kind: WorkspaceKind,
+  uri: Workspace.fields.uri,
+  default_branch: Workspace.fields.default_branch,
+  metadata: Schema.optionalWith(Workspace.fields.metadata, {
+    default: () => ({}),
+  }),
+})
+export type CreateWorkspacePayload = typeof CreateWorkspacePayload.Type
+
+export const UpdateWorkspacePayload = CreateWorkspacePayload
+export type UpdateWorkspacePayload = typeof UpdateWorkspacePayload.Type

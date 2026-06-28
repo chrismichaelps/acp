@@ -15,6 +15,7 @@ import {
   CreateArtifactPayload,
   CreateCheckpointPayload,
   CreateWorkPayload,
+  CreateWorkspacePayload,
   Event,
   EventType,
   Lease,
@@ -26,6 +27,7 @@ import {
   Review,
   ReviewId,
   SessionId,
+  UpdateWorkspacePayload,
   WorkId,
   Worker,
   Workspace,
@@ -61,6 +63,11 @@ export const EventsStreamParams = Schema.Struct({
   workspace_id: WorkspaceId,
 })
 export type EventsStreamParams = typeof EventsStreamParams.Type
+
+export const WorkspacePath = Schema.Struct({
+  workspace_id: HttpApiSchema.param('workspace_id', WorkspaceId),
+})
+export type WorkspacePath = typeof WorkspacePath.Type
 
 export const ClientCapabilities = Schema.Struct({
   can_edit_files: Schema.optionalWith(Schema.Boolean, { default: () => false }),
@@ -160,11 +167,28 @@ export const SessionGroup = HttpApiGroup.make('session').add(
     .addError(ProtocolError, protocolError(401)),
 )
 
-export const WorkspaceGroup = HttpApiGroup.make('workspaces').add(
-  HttpApiEndpoint.get('listWorkspaces', '/v1/workspaces')
-    .addSuccess(Schema.Array(Workspace))
-    .addError(ProtocolError, protocolError(401)),
-)
+export const WorkspaceGroup = HttpApiGroup.make('workspaces')
+  .add(
+    HttpApiEndpoint.get('listWorkspaces', '/v1/workspaces')
+      .addSuccess(Schema.Array(Workspace))
+      .addError(ProtocolError, protocolError(401)),
+  )
+  .add(
+    HttpApiEndpoint.post('createWorkspace', '/v1/workspaces')
+      .setPayload(CreateWorkspacePayload)
+      .addSuccess(Workspace, { status: 201 })
+      .addError(ProtocolError, protocolError(400))
+      .addError(ProtocolError, protocolError(401)),
+  )
+  .add(
+    HttpApiEndpoint.patch('updateWorkspace', '/v1/workspaces/:workspace_id')
+      .setPath(WorkspacePath)
+      .setPayload(UpdateWorkspacePayload)
+      .addSuccess(Workspace)
+      .addError(ProtocolError, protocolError(400))
+      .addError(ProtocolError, protocolError(401))
+      .addError(ProtocolError, protocolError(404)),
+  )
 
 export const WorkGroup = HttpApiGroup.make('work')
   .add(

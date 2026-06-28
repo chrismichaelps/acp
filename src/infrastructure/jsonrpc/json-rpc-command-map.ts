@@ -18,6 +18,9 @@ import {
   RequestReviewPayload,
   ReviewId,
   WorkId,
+  CreateWorkspacePayload,
+  UpdateWorkspacePayload,
+  WorkspaceId,
 } from '../../protocol/schema/index.js'
 
 export const JsonRpcId = Schema.Union(
@@ -39,6 +42,8 @@ export type JsonRpcErrorCode = typeof JsonRpcErrorCode.Type
 export type JsonRpcMethod =
   | 'session.initialize'
   | 'workspace.list'
+  | 'workspace.create'
+  | 'workspace.update'
   | 'work.create'
   | 'work.claim'
   | 'work.update'
@@ -101,6 +106,8 @@ export class JsonRpcRequestError extends Data.TaggedError(
 const methodLabels = new Set<string>([
   'session.initialize',
   'workspace.list',
+  'workspace.create',
+  'workspace.update',
   'work.create',
   'work.claim',
   'work.update',
@@ -203,6 +210,51 @@ export const commandFor = (
         id,
         expects_response: expectsResponse,
         request: { method: 'GET', path: '/v1/workspaces', label: method },
+      }
+    }
+
+    if (method === 'workspace.create') {
+      const body = yield* validatedBody(CreateWorkspacePayload, paramsValue, id)
+      return {
+        id,
+        expects_response: expectsResponse,
+        request: {
+          method: 'POST',
+          path: '/v1/workspaces',
+          body,
+          label: method,
+        },
+      }
+    }
+
+    if (method === 'workspace.update') {
+      const params = yield* decodeParams(
+        Schema.Struct({
+          workspace_id: WorkspaceId,
+          name: UpdateWorkspacePayload.fields.name,
+          kind: UpdateWorkspacePayload.fields.kind,
+          uri: UpdateWorkspacePayload.fields.uri,
+          default_branch: UpdateWorkspacePayload.fields.default_branch,
+          metadata: UpdateWorkspacePayload.fields.metadata,
+        }),
+        paramsValue,
+        id,
+      )
+      return {
+        id,
+        expects_response: expectsResponse,
+        request: {
+          method: 'PATCH',
+          path: `/v1/workspaces/${encodeSegment(params.workspace_id)}`,
+          body: {
+            name: params.name,
+            kind: params.kind,
+            uri: params.uri,
+            default_branch: Option.getOrNull(params.default_branch),
+            metadata: params.metadata,
+          },
+          label: method,
+        },
       }
     }
 
