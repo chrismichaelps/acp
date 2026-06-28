@@ -15,9 +15,11 @@ aliases: [Worker, worker]
 - **Status:** `online · idle · busy · blocked · offline`.
 - **Capabilities:** declared at session initialize (`can_edit_files`, `can_review`,
   `supports_leases`, …) — a [[Worker]] holds a `HashSet` of capability flags.
+- **Presence scope:** status is host-scoped registry state in v0.1, not
+  workspace event history; see [[ADR-0005-worker-presence-scope]].
 - **Trust:** the [[Host]] treats every worker as **untrusted** (spec §19).
 - **Example:** `agent_claude_code` (kind agent, vendor anthropic), status online.
 
 ## Referenced by
 
-[[worker-service]] · [[worker.schema]]
+[[worker-service]] · [[worker.schema]] · [[ADR-0005-worker-presence-scope]]

@@ -76,8 +76,8 @@ export const WorkerServiceLive: Layer.Layer<WorkerService, never, Storage>
 - ❌ Do NOT mutate a worker record outside this service.
 - ❌ Do NOT write raw undecoded objects into the `worker` collection.
 - ❌ Do NOT generate `WorkerId`s here; the caller supplies the identity.
-- ❌ Do NOT emit per-workspace [[Event]]s for worker presence in this slice
-  (see Grill Log) — that belongs to a future host-level event stream.
+- ❌ Do NOT emit per-workspace [[Event]]s for worker presence. Presence is
+  host-scoped registry state in v0.1; see [[ADR-0005-worker-presence-scope]].
 
 ## Depth
 
@@ -98,8 +98,9 @@ would scatter encode/decode plumbing across every transport caller.
   the spec does not describe. _Rejected:_ (a) a reserved `__host__` pseudo-workspace
   (leaks a fake entity into the workspace event log); (b) requiring callers to pass
   a `workspace_id` to `setStatus` (couples host-level presence to a workspace the
-  worker may not be in yet). Presence events are deferred to a future host/global
-  event-stream slice.
+  worker may not be in yet). [[ADR-0005-worker-presence-scope]] closes this for
+  v0.1: status remains registry state until a separate host-presence stream has a
+  concrete integration.
 - **Q:** Is `register` create-only or upsert?
   **A:** Upsert. _Rationale:_ `session/initialize` is re-invoked on every reconnect;
   a returning worker must refresh its capabilities/vendor without a separate update
@@ -121,4 +122,5 @@ session identity are a transport-edge concern (spec §9), not registry state.
 
 ## Referenced by
 
-[[worker-service-index]] · [[Worker]] · [[src/_MOC]]
+[[worker-service-index]] · [[Worker]] · [[ADR-0005-worker-presence-scope]] ·
+[[src/_MOC]]

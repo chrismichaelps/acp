@@ -15,8 +15,8 @@ aliases: [event.schema]
 
 ## Purpose
 
-Wire + domain shape of an [[Event]] — the append-only coordination primitive —
-plus the closed `EventType` vocabulary (spec §10.8, §11).
+Wire + domain shape of an [[Event]] — the append-only workspace coordination
+primitive — plus the closed `EventType` vocabulary (spec §10.8, §11).
 
 ## Interface
 
@@ -36,15 +36,18 @@ export type EventType = typeof EventType.Type
 
 ## Algorithm
 
-Struct over [[ids]] + [[common]]. `type` is the authoritative closed union of all
-protocol event names; `seq` is a monotonic per-workspace sequence for ordered
-replay; `data` is an open payload bag (validated per-type by producing services,
-not here).
+Struct over [[ids]] + [[common]]. `type` is the authoritative closed union of
+draft protocol event names; `workspace_id` and `seq` make persisted records
+workspace-scoped and ordered for replay. `data` is an open payload bag (validated
+per-type by producing services, not here). Worker presence names are reserved in
+the union but not emitted by v0.1 because [[ADR-0005-worker-presence-scope]] keeps
+presence host-scoped.
 
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT emit an `Event` whose `type` is outside the `EventType` union.
 - ❌ Do NOT mutate an event after creation — events are immutable.
+- ❌ Do NOT force host-level worker presence into a fake workspace event.
 
 ## Depth
 
@@ -53,4 +56,4 @@ it scatters string event-name literals across every service.
 
 ## Referenced by
 
-[[EventStream]] · [[Storage]] · [[src/_MOC]]
+[[EventStream]] · [[Storage]] · [[ADR-0005-worker-presence-scope]] · [[src/_MOC]]

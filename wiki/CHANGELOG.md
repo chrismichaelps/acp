@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · worker-presence-event-scope slice · accepted
+  [[ADR-0005-worker-presence-scope]], closing worker presence as host-scoped
+  registry state for v0.1 rather than workspace event history, and refreshed the
+  event/audit wiki graph around that boundary · docs-only validation · risk LOW
 - 2026-06-28 · artifact-update-lifecycle slice · specified [[Artifact]] update
   as stable-identity metadata/content replacement, added `artifact.updated` as a
   backed [[artifact-service]] event, and projected REST/JSON-RPC route mirrors ·

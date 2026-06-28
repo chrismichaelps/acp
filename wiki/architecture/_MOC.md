@@ -62,6 +62,7 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 - [[ADR-0001-architecture-foundation]] — ACCEPTED.
 - [[ADR-0002-json-rpc-transport-framing]] — ACCEPTED.
 - [[ADR-0004-protocol-version-codecs-generated-client]] — ACCEPTED.
+- [[ADR-0005-worker-presence-scope]] — ACCEPTED.
 
 ## Build Order (vertical slices)
 
@@ -97,7 +98,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 30. ✅ Workspace archive lifecycle — persisted state + REST/JSON-RPC command
 31. ✅ JSON-RPC command-map capacity split — support helpers extracted
 32. ✅ Artifact update lifecycle — metadata/content replacement + event
-33. ▶ Worker presence event scope decision
+33. ✅ Worker presence event scope decision — host-scoped registry state
+34. ▶ Refresh protocol implementation audit for next backed gap
 
 ## Referenced by
 

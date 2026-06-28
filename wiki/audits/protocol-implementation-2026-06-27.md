@@ -43,9 +43,10 @@ deferred by [[ADR-0002-json-rpc-transport-framing]].
 The event vocabulary is now governed by
 [[ADR-0003-event-vocabulary-domain-boundaries]]. Public events are emitted only
 from persisted domain transitions. Workspace archive is backed by persisted
-workspace lifecycle state, and artifact update is backed by persisted
-artifact metadata/content replacement. Worker presence remains design work
-because host/global event state is not defined.
+workspace lifecycle state, and artifact update is backed by persisted artifact
+metadata/content replacement. [[ADR-0005-worker-presence-scope]] resolves worker
+presence for v0.1 as host-scoped registry state rather than workspace event
+history.
 
 ## Implementation Standards
 
@@ -85,13 +86,13 @@ isolated in app entrypoints.
 
 ## Next Slice
 
-Continue with the next command/domain gap from the protocol audit. Worker
-presence remains deferred until ACP has host/global event state. Codecs and
-generated clients should only re-enter the queue when a
-concrete boundary or consumer appears; platform-node extraction should wait for
-more than one Node adapter or duplicated platform wiring. The JSON-RPC command
-map has been split into a focused method table plus [[json-rpc-command-support]],
-restoring file-size headroom before future method growth.
+Refresh the protocol audit against the current implementation and choose the next
+backed command/domain gap. Codecs and generated clients should only re-enter the
+queue when a concrete boundary or consumer appears; platform-node extraction
+should wait for more than one Node adapter or duplicated platform wiring. The
+JSON-RPC command map has been split into a focused method table plus
+[[json-rpc-command-support]], restoring file-size headroom before future method
+growth.
 
 ## Referenced by
 
