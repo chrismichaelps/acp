@@ -10,10 +10,11 @@ aliases: [protocol-implementation-2026-06-28, protocol-audit-refresh-2026-06-28]
 ## Scope
 
 This audit refreshes [[protocol-implementation-2026-06-27]] after the workspace
-archive lifecycle, JSON-RPC command-map split, artifact update lifecycle, and
-[[ADR-0005-worker-presence-scope]] slices. It compares the current ACP reference
-host against `@root/specs.md` through [[spec-canonicalization]], then chooses the
-next backed implementation gap.
+archive lifecycle, JSON-RPC command-map split, artifact update lifecycle,
+[[ADR-0005-worker-presence-scope]], CLI parity, permission scope parity, README
+refresh, and CLI parser dispatch-table slices. It compares the current ACP
+reference host against `@root/specs.md` through [[spec-canonicalization]], then
+chooses the next backed implementation gap.
 
 ## Current Coverage
 
@@ -45,7 +46,9 @@ registry state, not workspace event history.
 Implementation standards are covered: Node 24 is pinned, package scripts cover
 lint, format check, typecheck, file-size, and tests, CI runs the same gate on
 pull requests and `main`, and the README describes the current local server,
-SQLite adapter, auth mode, CLI, and stdio bridge.
+SQLite adapter, auth mode, CLI, and stdio bridge. The CLI parser is now
+table-driven, so extending command coverage is an additive handler entry rather
+than another branch in a long dispatch chain.
 
 ## Remaining Gaps
 
@@ -78,12 +81,32 @@ Public documentation drift is now covered. The README describes the implemented
 REST/SSE, `POST /rpc`, stdio JSON-RPC, SQLite durability, local versus required
 auth, scoped mutation permissions, expanded CLI, and WebSocket deferral.
 
+SQLite query shape is not the next bottleneck. [[sqlite-store]] uses `WITHOUT
+ROWID` composite primary-key layouts for keyed collections and per-workspace
+event logs, prepares hot statements once per Layer, and has query-plan coverage
+for collection scans and event tail replay. That is the right baseline for
+thousands of coordination records or agent-memory artifacts before adding
+entity-specific repositories.
+
+The next integration-facing gap is artifact references. [[artifact-service]]
+currently supports host-stored inline content and always mints
+`acp://artifacts/{id}`. That is correct for patches, logs, and markdown captured
+by the local host, but it does not let a worker register an external artifact URI
+for a pull request, commit, CI report, screenshot, or cloud object even though the
+[[Artifact]] record itself already has a required `uri`. External references are
+the smallest useful bridge toward the v0.2 GitHub PR artifact and adapter
+roadmap without introducing GitHub-specific schemas yet.
+
 ## Next Slice
 
-Re-audit remaining integration gaps after the README refresh. Treat generated
-clients, host-level presence streams, WebSocket transport, Git-specific
-extensions, and platform-node extraction as deferred until a concrete consumer or
-duplicated boundary appears.
+Add external artifact URI support to `CreateArtifactPayload` and
+`UpdateArtifactPayload`, then project it through [[artifact-service]], REST,
+JSON-RPC, and [[cli-commands]]. Preserve host-stored `acp://artifacts/{id}` as
+the default when content is supplied without an explicit URI, keep content size
+limits on host-stored content only, and reject payloads that provide neither
+content nor an external URI. Treat generated clients, host-level presence
+streams, WebSocket transport, Git-specific extensions, and platform-node
+extraction as deferred until a concrete consumer or duplicated boundary appears.
 
 ## Referenced by
 
