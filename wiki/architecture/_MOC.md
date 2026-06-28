@@ -104,7 +104,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 36. ✅ Post-CLI integration audit — permission scope parity selected
 37. ✅ Permission scope parity for backed mutations — action scopes enforced
 38. ✅ Post-permission integration audit — README drift selected
-39. ▶ Public README current-state refresh
+39. ✅ Public README current-state refresh — transport/auth/CLI prose updated
+40. ▶ Re-audit remaining integration gaps after README refresh
 
 ## Referenced by
 
