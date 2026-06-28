@@ -192,6 +192,23 @@ describe('JSON-RPC transport mapping', () => {
     })
   })
 
+  it('maps workspace.archive and encodes the workspace id path segment', () => {
+    const command = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_workspace_archive',
+        method: 'workspace.archive',
+        params: { workspace_id: 'workspace/main' },
+      }),
+    )
+
+    expect(command.request).toEqual({
+      method: 'POST',
+      path: '/v1/workspaces/workspace%2Fmain/archive',
+      label: 'workspace.archive',
+    })
+  })
+
   it('maps work.create params through the protocol schema', () => {
     const command = expectRight(
       parseJsonRpcCommand({

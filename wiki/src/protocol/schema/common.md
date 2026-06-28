@@ -33,6 +33,7 @@ export const ResourceKind: Schema.Literal<[…8 kinds…]>
 export const ArtifactKind: Schema.Literal<[…11 kinds…]>
 export const ReviewState: Schema.Literal<[…5 states…]>
 export const WorkspaceKind: Schema.Literal<[…6 kinds…]>
+export const WorkspaceState: Schema.Literal<["active","archived"]>
 export const Resource: Schema.Struct<{ kind: ResourceKind; uri: NonEmptyString }>
 export const Permission: Schema.Literal<[ // session auth scopes (spec §8)
   "workspace:read","workspace:write","work:create","work:claim","lease:create",
@@ -44,7 +45,9 @@ export const Permission: Schema.Literal<[ // session auth scopes (spec §8)
 Each enum is `Schema.Literal(...members)` matching the spec state vocabularies.
 `WorkState` includes `changes_requested` from spec §14's state machine; spec §10.3
 omits it from the prose list, but services follow the transition table. Services
-import these unions, never re-declare them.
+import these unions, never re-declare them. `WorkspaceState` is the persisted
+lifecycle backing for `workspace.archived`: workspaces default to `active` and
+move one-way to `archived`.
 
 ## Negative Logic (Prohibited Paths)
 

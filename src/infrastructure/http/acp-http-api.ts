@@ -189,6 +189,17 @@ export const WorkspaceGroup = HttpApiGroup.make('workspaces')
       .addError(ProtocolError, protocolError(401))
       .addError(ProtocolError, protocolError(404)),
   )
+  .add(
+    HttpApiEndpoint.post(
+      'archiveWorkspace',
+      '/v1/workspaces/:workspace_id/archive',
+    )
+      .setPath(WorkspacePath)
+      .addSuccess(Workspace)
+      .addError(ProtocolError, protocolError(401))
+      .addError(ProtocolError, protocolError(404))
+      .addError(ProtocolError, protocolError(409)),
+  )
 
 export const WorkGroup = HttpApiGroup.make('work')
   .add(

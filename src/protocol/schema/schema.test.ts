@@ -123,6 +123,7 @@ describe('Workspace / Lease / Event schemas', () => {
     })
     expect(Option.getOrNull(ws.default_branch)).toBe('main')
     expect(ws.metadata.provider).toBe('github')
+    expect(ws.state).toBe('active')
   })
 
   it('decodes a lease with a nested resource', () => {

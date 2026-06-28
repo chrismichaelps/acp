@@ -26,6 +26,7 @@ export const Workspace: Schema.Struct<{
   name: NonEmptyString
   kind: WorkspaceKind
   uri: NonEmptyString
+  state: WorkspaceState // defaults to "active"
   default_branch: optionalWith<string, Option>
   metadata: Schema.Record<string, string>
 }>
@@ -43,19 +44,24 @@ export const UpdateWorkspacePayload = CreateWorkspacePayload
 ## Algorithm
 
 Struct over [[ids]] + [[common]] `WorkspaceKind`. `default_branch` is `Option`
-(may be absent for non-Git workspaces). `metadata` is an open string map.
+(may be absent for non-Git workspaces). `state` defaults to `active` for older
+records and create payloads; `metadata` is an open string map.
 `CreateWorkspacePayload` and `UpdateWorkspacePayload` reuse the same public
-fields without `id`; the transport edge mints or reads identity from the route.
+fields without `id` or `state`; the transport edge mints or reads identity from
+the route, and [[workspace-service]] owns archival.
 
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT assume `default_branch` is present — it is `Option` (Git-aware, not Git-dependent).
 - ❌ Do NOT let create/update payloads carry `id`; workspace identity belongs to
   the route/composition boundary.
+- ❌ Do NOT let create/update payloads carry `state`; archive is a domain
+  transition, not a generic field replacement.
 
 ## Depth
 
-MEDIUM (0.55). Data shape; Git-neutrality encoded via optional branch.
+MEDIUM (0.58). Data shape; Git-neutrality is encoded via optional branch, and
+archival now has a persisted lifecycle value instead of a synthetic delete.
 
 ## Referenced by
 

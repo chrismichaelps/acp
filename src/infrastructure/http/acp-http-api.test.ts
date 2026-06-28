@@ -92,6 +92,12 @@ describe('AcpHttpApi', () => {
         method: 'PATCH',
         path: '/v1/workspaces/:workspace_id',
       },
+      {
+        group: 'workspaces',
+        name: 'archiveWorkspace',
+        method: 'POST',
+        path: '/v1/workspaces/:workspace_id/archive',
+      },
       { group: 'work', name: 'createWork', method: 'POST', path: '/v1/work' },
       {
         group: 'work',

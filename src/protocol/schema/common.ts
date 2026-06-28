@@ -93,6 +93,9 @@ export const WorkspaceKind = Schema.Literal(
 )
 export type WorkspaceKind = typeof WorkspaceKind.Type
 
+export const WorkspaceState = Schema.Literal('active', 'archived')
+export type WorkspaceState = typeof WorkspaceState.Type
+
 export const Resource = Schema.Struct({
   kind: ResourceKind,
   uri: Schema.NonEmptyString,

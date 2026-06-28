@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · workspace-archive-lifecycle slice · added persisted
+  [[Workspace]] lifecycle state for `active`/`archived`, specified archive as a
+  one-way [[workspace-service]] transition, and exposed `workspace.archived` through
+  REST/JSON-RPC route mirrors · 171 tests green · risk LOW
 - 2026-06-27 · workspace-transport-commands slice · exposed backed
   [[Workspace]] create/update through REST and JSON-RPC, added `workspace:write`,
   split shared server route helpers into [[route-support]], and moved workspace
