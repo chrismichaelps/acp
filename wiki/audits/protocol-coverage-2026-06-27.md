@@ -82,8 +82,9 @@ editing the ignored local file.
 Re-audit the spec implementation surface after the recent transport and decision
 slices. The next slice should identify the highest-value remaining command,
 state, or integration gap instead of relying on the stale gap list in this audit.
+See [[protocol-implementation-2026-06-27]] for the replacement audit.
 
 ## Referenced by
 
 [[architecture/_MOC]] · [[Transport]] · [[EventStream]] ·
-[[spec-canonicalization]]
+[[spec-canonicalization]] · [[protocol-implementation-2026-06-27]]
