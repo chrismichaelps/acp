@@ -18,6 +18,8 @@ interface Parsed {
   readonly flags: Readonly<Record<string, string>>
 }
 
+type CommandHandler = (parsed: Parsed) => Either.Either<CliRequest, CliError>
+
 const splitArgs = (argv: readonly string[]): Parsed => {
   const positionals: string[] = []
   const flags: Record<string, string> = {}
@@ -97,23 +99,19 @@ const positiveIntegerFlag = (
 const unknown = (argv: readonly string[]): Either.Either<never, CliError> =>
   Either.left(new CliError({ message: `unknown command: ${argv.join(' ')}` }))
 
-export const parseArgs = (
-  argv: readonly string[],
-): Either.Either<CliRequest, CliError> => {
-  const group = argv[0]
-  const action = argv[1]
-  const { positionals, flags } = splitArgs(argv.slice(2))
+const commandKey = (group: string | undefined, action: string | undefined) =>
+  `${group ?? ''} ${action ?? ''}`
 
-  if (group === 'workspace' && action === 'list') {
-    return Either.right({
+const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
+  'workspace list': () =>
+    Either.right({
       method: 'GET',
       path: '/v1/workspaces',
       label: 'workspace list',
-    })
-  }
+    }),
 
-  if (group === 'workspace' && action === 'create') {
-    return Either.gen(function* () {
+  'workspace create': ({ flags }) =>
+    Either.gen(function* () {
       const name = yield* flag(flags, 'name')
       const kind = yield* flag(flags, 'kind')
       const uri = yield* flag(flags, 'uri')
@@ -128,11 +126,10 @@ export const parseArgs = (
         },
         label: 'workspace create',
       }
-    })
-  }
+    }),
 
-  if (group === 'workspace' && action === 'update') {
-    return Either.gen(function* () {
+  'workspace update': ({ positionals, flags }) =>
+    Either.gen(function* () {
       const workspaceId = yield* positional(positionals, 0, 'workspace_id')
       const name = yield* flag(flags, 'name')
       const kind = yield* flag(flags, 'kind')
@@ -148,22 +145,20 @@ export const parseArgs = (
         },
         label: 'workspace update',
       }
-    })
-  }
+    }),
 
-  if (group === 'workspace' && action === 'archive') {
-    return Either.gen(function* () {
+  'workspace archive': ({ positionals }) =>
+    Either.gen(function* () {
       const workspaceId = yield* positional(positionals, 0, 'workspace_id')
       return {
         method: 'POST',
         path: `/v1/workspaces/${encodePathSegment(workspaceId)}/archive`,
         label: 'workspace archive',
       }
-    })
-  }
+    }),
 
-  if (group === 'work' && action === 'create') {
-    return Either.gen(function* () {
+  'work create': ({ positionals, flags }) =>
+    Either.gen(function* () {
       const title = yield* positional(positionals, 0, 'title')
       const workspaceId = yield* flag(flags, 'workspace')
       return {
@@ -177,11 +172,10 @@ export const parseArgs = (
         },
         label: 'work create',
       }
-    })
-  }
+    }),
 
-  if (group === 'work' && action === 'claim') {
-    return Either.gen(function* () {
+  'work claim': ({ positionals, flags }) =>
+    Either.gen(function* () {
       const workId = yield* positional(positionals, 0, 'work_id')
       const worker = yield* flag(flags, 'worker')
       return {
@@ -190,11 +184,10 @@ export const parseArgs = (
         body: { worker_id: worker },
         label: 'work claim',
       }
-    })
-  }
+    }),
 
-  if (group === 'work' && action === 'update') {
-    return Either.gen(function* () {
+  'work update': ({ positionals, flags }) =>
+    Either.gen(function* () {
       const workId = yield* positional(positionals, 0, 'work_id')
       const state = yield* flag(flags, 'state')
       return {
@@ -203,11 +196,10 @@ export const parseArgs = (
         body: { state },
         label: 'work update',
       }
-    })
-  }
+    }),
 
-  if (group === 'lease' && action === 'request') {
-    return Either.gen(function* () {
+  'lease request': ({ flags }) =>
+    Either.gen(function* () {
       const workspaceId = yield* flag(flags, 'workspace')
       const holder = yield* flag(flags, 'holder')
       const kind = yield* flag(flags, 'kind')
@@ -226,22 +218,20 @@ export const parseArgs = (
         },
         label: 'lease request',
       }
-    })
-  }
+    }),
 
-  if (group === 'lease' && action === 'release') {
-    return Either.gen(function* () {
+  'lease release': ({ positionals }) =>
+    Either.gen(function* () {
       const leaseId = yield* positional(positionals, 0, 'lease_id')
       return {
         method: 'POST',
         path: `/v1/leases/${encodePathSegment(leaseId)}/release`,
         label: 'lease release',
       }
-    })
-  }
+    }),
 
-  if (group === 'checkpoint' && action === 'create') {
-    return Either.gen(function* () {
+  'checkpoint create': ({ flags }) =>
+    Either.gen(function* () {
       const workspaceId = yield* flag(flags, 'workspace')
       const workId = yield* flag(flags, 'work')
       const summary = yield* flag(flags, 'summary')
@@ -258,11 +248,10 @@ export const parseArgs = (
         },
         label: 'checkpoint create',
       }
-    })
-  }
+    }),
 
-  if (group === 'artifact' && action === 'create') {
-    return Either.gen(function* () {
+  'artifact create': ({ flags }) =>
+    Either.gen(function* () {
       const workspaceId = yield* flag(flags, 'workspace')
       const workId = yield* flag(flags, 'work')
       const kind = yield* flag(flags, 'kind')
@@ -278,11 +267,10 @@ export const parseArgs = (
         },
         label: 'artifact create',
       }
-    })
-  }
+    }),
 
-  if (group === 'artifact' && action === 'update') {
-    return Either.gen(function* () {
+  'artifact update': ({ positionals, flags }) =>
+    Either.gen(function* () {
       const artifactId = yield* positional(positionals, 0, 'artifact_id')
       const kind = yield* flag(flags, 'kind')
       return {
@@ -296,22 +284,20 @@ export const parseArgs = (
         },
         label: 'artifact update',
       }
-    })
-  }
+    }),
 
-  if (group === 'artifact' && action === 'delete') {
-    return Either.gen(function* () {
+  'artifact delete': ({ positionals }) =>
+    Either.gen(function* () {
       const artifactId = yield* positional(positionals, 0, 'artifact_id')
       return {
         method: 'DELETE',
         path: `/v1/artifacts/${encodePathSegment(artifactId)}`,
         label: 'artifact delete',
       }
-    })
-  }
+    }),
 
-  if (group === 'review' && action === 'request') {
-    return Either.gen(function* () {
+  'review request': ({ flags }) =>
+    Either.gen(function* () {
       const workId = yield* flag(flags, 'work')
       const requestedBy = yield* flag(flags, 'by')
       const reviewer =
@@ -329,11 +315,10 @@ export const parseArgs = (
         },
         label: 'review request',
       }
-    })
-  }
+    }),
 
-  if (group === 'review' && action === 'approve') {
-    return Either.gen(function* () {
+  'review approve': ({ positionals, flags }) =>
+    Either.gen(function* () {
       const reviewId = yield* positional(positionals, 0, 'review_id')
       const metRequirements = yield* csvFlag(flags, 'met')
       return {
@@ -342,33 +327,30 @@ export const parseArgs = (
         body: { met_requirements: metRequirements },
         label: 'review approve',
       }
-    })
-  }
+    }),
 
-  if (group === 'review' && action === 'reject') {
-    return Either.gen(function* () {
+  'review reject': ({ positionals }) =>
+    Either.gen(function* () {
       const reviewId = yield* positional(positionals, 0, 'review_id')
       return {
         method: 'POST',
         path: `/v1/reviews/${encodePathSegment(reviewId)}/reject`,
         label: 'review reject',
       }
-    })
-  }
+    }),
 
-  if (group === 'review' && action === 'request-changes') {
-    return Either.gen(function* () {
+  'review request-changes': ({ positionals }) =>
+    Either.gen(function* () {
       const reviewId = yield* positional(positionals, 0, 'review_id')
       return {
         method: 'POST',
         path: `/v1/reviews/${encodePathSegment(reviewId)}/request_changes`,
         label: 'review request-changes',
       }
-    })
-  }
+    }),
 
-  if (group === 'events' && action === 'stream') {
-    return Either.gen(function* () {
+  'events stream': ({ flags }) =>
+    Either.gen(function* () {
       const workspaceId = yield* flag(flags, 'workspace')
       return {
         method: 'GET',
@@ -376,10 +358,16 @@ export const parseArgs = (
         stream: true,
         label: 'events stream',
       }
-    })
-  }
+    }),
+}
 
-  return unknown(argv)
+export const parseArgs = (
+  argv: readonly string[],
+): Either.Either<CliRequest, CliError> => {
+  const parsed = splitArgs(argv.slice(2))
+  const handler = commandHandlers[commandKey(argv[0], argv[1])]
+
+  return handler === undefined ? unknown(argv) : handler(parsed)
 }
 
 export const usage = `acp — Agent Coordination Protocol CLI

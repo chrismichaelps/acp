@@ -68,12 +68,16 @@ export const parseArgs: (
 
 ## Algorithm
 
-Split `argv` into positionals and `--key value` flags. Switch on
-`(group, action)`; validate required flags (missing → `CliError`) and positive
-integer TTLs; assemble the `CliRequest` with encoded route parameters and query
-values. `--default-branch` and `--media-type` normalize to the schema's
-snake_case JSON fields. `review approve --met` is a comma-separated list that
-becomes `met_requirements`. `events stream` sets `stream: true`.
+Split `argv` into positionals and `--key value` flags, derive the public
+`<group> <action>` command key, and resolve it through a command handler table.
+Each handler receives the parsed positionals and flags, validates its own
+required inputs (missing → `CliError`) and assembles a `CliRequest` with encoded
+route parameters and query values. Unknown keys never fall through a conditional
+chain; they return the same `CliError` as any unsupported command. Numeric lease
+TTLs are validated as positive safe integers before HTTP decoding. `--default-branch`
+and `--media-type` normalize to the schema's snake_case JSON fields.
+`review approve --met` is a comma-separated list that becomes
+`met_requirements`. `events stream` sets `stream: true`.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -83,8 +87,10 @@ becomes `met_requirements`. `events stream` sets `stream: true`.
 
 ## Depth
 
-DEEP (0.7). Hides the whole argv→request mapping behind one pure function with an
-exhaustive command table; trivially testable without a server.
+DEEP (0.7). Hides the whole argv→request mapping behind one pure function and a
+small handler registry; adding a command is an additive table entry instead of a
+new branch in the parser's dispatch path. The parser remains trivially testable
+without a server.
 
 ## Grill Log
 
