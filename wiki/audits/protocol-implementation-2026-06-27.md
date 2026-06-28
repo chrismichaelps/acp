@@ -84,17 +84,13 @@ external SDK consumer or artifact policy exists yet. `src/infrastructure/platfor
 also remains uncreated because current Node-specific wiring is still small and
 isolated in app entrypoints.
 
-## Next Slice
+## Superseded By
 
-Refresh the protocol audit against the current implementation and choose the next
-backed command/domain gap. Codecs and generated clients should only re-enter the
-queue when a concrete boundary or consumer appears; platform-node extraction
-should wait for more than one Node adapter or duplicated platform wiring. The
-JSON-RPC command map has been split into a focused method table plus
-[[json-rpc-command-support]], restoring file-size headroom before future method
-growth.
+[[protocol-implementation-2026-06-28]] refreshes this audit after workspace
+archive, artifact update, JSON-RPC command-map capacity, and worker presence
+scope landed.
 
 ## Referenced by
 
 [[architecture/_MOC]] · [[protocol-coverage-2026-06-27]] ·
-[[spec-canonicalization]]
+[[protocol-implementation-2026-06-28]] · [[spec-canonicalization]]

@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · protocol-audit-refresh slice · added
+  [[protocol-implementation-2026-06-28]], refreshed the implementation coverage
+  after the latest lifecycle/ADR slices, and selected CLI parity for backed
+  commands as the next implementation gap · docs-only validation · risk LOW
 - 2026-06-28 · worker-presence-event-scope slice · accepted
   [[ADR-0005-worker-presence-scope]], closing worker presence as host-scoped
   registry state for v0.1 rather than workspace event history, and refreshed the
