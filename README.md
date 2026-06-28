@@ -2,7 +2,7 @@
 
 Agent Coordination Protocol, or ACP, is a coordination layer for autonomous software workers operating in shared engineering workspaces. The protocol is concerned with state, ownership, recovery, and review. It does not prescribe how an agent reasons, edits files, calls models, or talks to a human; it defines the workspace facts that let independent workers cooperate without relying on conversational memory.
 
-This repository is the TypeScript reference implementation for ACP v0.1. It is intentionally still in development, but it already contains the core host, domain services, storage seam, in-memory and SQLite storage adapters, HTTP transport, Server-Sent Events stream, JSON-RPC method normalization core, and local `acp` command-line client. The implementation is suitable for protocol design work, adapter development, and local integration experiments. It should not yet be treated as a production coordination server.
+This repository is the TypeScript reference implementation for ACP v0.1. It is intentionally still in development, but it already contains the core host, domain services, storage seam, in-memory and SQLite storage adapters, HTTP transport, Server-Sent Events stream, JSON-RPC over `POST /rpc`, a stdio JSON-RPC bridge, and a local `acp` command-line client. The implementation is suitable for protocol design work, adapter development, and local integration experiments. It should not yet be treated as a production coordination server.
 
 ## Current Shape
 
@@ -10,9 +10,9 @@ ACP models a workspace as durable protocol state: workers register, work units m
 
 Storage is selected at the host boundary. The in-memory adapter keeps the default local path simple and deterministic, while the SQLite adapter provides durable state without changing domain behavior. SQLite uses the same storage port as memory, so persistence is an adapter concern rather than a protocol concern. That distinction matters for ACP because agents may hand off thousands of remembered facts, events, checkpoints, artifacts, and lease records over time; the database path has to preserve append order, replay efficiently, and keep queries scoped by workspace and key prefix rather than growing into a conversational-memory dump.
 
-The HTTP server exposes the v0.1 REST surface and an SSE endpoint for workspace-scoped events. Bearer sessions are optional in local mode and can be required with configuration for hardened hosts; `session.initialize` remains the open bootstrap route because it mints the session used by later scoped calls. The CLI is a thin HTTP client of that local host, which means separate invocations share state through the running server instead of rebuilding an isolated application graph per command.
+The HTTP server exposes the v0.1 REST surface and an SSE endpoint for workspace-scoped events. Bearer sessions are optional in local mode and can be required with configuration for hardened hosts; `session.initialize` remains the open bootstrap route because it mints the session used by later scoped calls. When a bearer session is presented, mutation routes enforce scoped permissions for work, leases, artifacts, checkpoints, reviews, and workspace changes, including destructive and review-outcome actions. The CLI is a thin HTTP client of that local host, which means separate invocations share state through the running server instead of rebuilding an isolated application graph per command.
 
-JSON-RPC support currently lives as a transport core rather than a running stdio or WebSocket host. It validates JSON-RPC 2.0 envelopes, maps the spec method names onto the canonical ACP route shape, preserves notification semantics, and reuses the existing Effect Schema payload definitions. Runtime adapters can build on that core without duplicating the router or the domain services.
+JSON-RPC uses the same route-backed command surface as REST. `POST /rpc` executes JSON-RPC 2.0 envelopes against the shared router, preserving request correlation, batch handling, and notification semantics. The `acp-jsonrpc-stdio` bridge reads Content-Length framed messages from stdin and forwards them to that same endpoint, so stdio integrations do not need a separate domain runtime. WebSocket remains deliberately deferred until there is a concrete integration that needs its connection lifecycle and event-subscription semantics.
 
 ## Working Locally
 
@@ -28,9 +28,9 @@ By default the host uses in-memory storage. To use SQLite, set `ACP_STORAGE_ADAP
 ACP_STORAGE_ADAPTER=sqlite ACP_SQLITE_PATH=.acp/acp.sqlite node dist/app/server/main.js
 ```
 
-Local development allows unauthenticated requests unless `ACP_REQUIRE_AUTH=true` is set. With auth required, callers first initialize a session and then pass the returned session id as a bearer token on scoped routes.
+Local development allows unauthenticated requests unless `ACP_REQUIRE_AUTH=true` is set. With auth required, callers first initialize a session and then pass the returned session id as a bearer token on scoped routes. Session permissions are explicit strings such as `work:create`, `artifact:delete`, and `review:approve`; presenting a token without the required scope returns `401 Unauthorized`.
 
-The CLI targets `ACP_BASE_URL` when provided, otherwise it uses `http://localhost:$ACP_PORT`.
+The CLI targets `ACP_BASE_URL` when provided, otherwise it uses `http://localhost:$ACP_PORT`. It covers the local command surface for workspace create/update/archive, work creation and lifecycle updates, lease request/release, artifact create/update/delete, checkpoint creation, review request/actions, and event streaming.
 
 ```bash
 ACP_BASE_URL=http://localhost:4317 node dist/app/cli/main.js workspace list
