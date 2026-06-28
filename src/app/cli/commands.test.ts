@@ -132,6 +132,15 @@ describe('parseArgs', () => {
     expect(req.body).toEqual({ state: 'completed' })
   })
 
+  it('parses work get as a read request', () => {
+    const req = right(['work', 'get', 'work 123/main'])
+    expect(req).toEqual({
+      method: 'GET',
+      path: '/v1/work/work%20123%2Fmain',
+      label: 'work get',
+    })
+  })
+
   it('parses lease request with a nested resource and numeric ttl', () => {
     const req = right([
       'lease',
@@ -202,6 +211,15 @@ describe('parseArgs', () => {
       remaining_steps: [],
       modified_resources: [],
     })
+  })
+
+  it('parses checkpoint list and latest by work', () => {
+    expect(right(['checkpoint', 'list', '--work', 'work 1']).path).toBe(
+      '/v1/work/work%201/checkpoints',
+    )
+    expect(right(['checkpoint', 'latest', '--work', 'work 1']).path).toBe(
+      '/v1/work/work%201/checkpoints/latest',
+    )
   })
 
   it('parses artifact creation with content and summary flags', () => {
@@ -277,6 +295,15 @@ describe('parseArgs', () => {
       media_type: 'text/markdown',
       summary: 'Updated report',
       content: '# Report',
+    })
+  })
+
+  it('parses artifact list by work', () => {
+    const req = right(['artifact', 'list', '--work', 'work 123/main'])
+    expect(req).toEqual({
+      method: 'GET',
+      path: '/v1/work/work%20123%2Fmain/artifacts',
+      label: 'artifact list',
     })
   })
 

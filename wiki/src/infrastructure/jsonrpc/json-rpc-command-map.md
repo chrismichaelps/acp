@@ -20,10 +20,11 @@ payloads used by [[acp-http-api]], splits path identifiers from operation bodies
 URL-encodes path segments through [[json-rpc-command-support]], and returns a
 transport-neutral `JsonRpcCommand`.
 
-The split keeps [[json-rpc]] focused on envelope parsing, [[json-rpc-command-support]]
-focused on reusable JSON-RPC mechanics, and this module focused on the larger ACP
-method table. It exists to satisfy the spec's file-size rule without weakening
-method compatibility tests.
+The split keeps [[json-rpc]] focused on envelope parsing,
+[[json-rpc-command-support]] focused on reusable JSON-RPC mechanics,
+[[json-rpc-resume-commands]] focused on work-scoped read/query commands, and this
+module focused on the larger ACP command table. It exists to satisfy the spec's
+file-size rule without weakening method compatibility tests.
 
 ## Interface
 
@@ -67,7 +68,8 @@ export const commandFor: (
 
 ## Algorithm
 
-Validate the method label against the closed method set. Full-body methods
+Validate the method label against the closed method set. Work-scoped resume
+methods delegate to [[json-rpc-resume-commands]]. Full-body methods
 (`session.initialize`, `workspace.create`, `work.create`, `lease.request`,
 `artifact.create`, `checkpoint.create`, `review.request`) validate params with
 the HTTP payload schema and forward the original JSON body so `Option`-wrapped

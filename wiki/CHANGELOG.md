@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · work-resume-query-endpoints slice · added work-scoped resume
+  reads across [[acp-http-api]], [[resume-routes]], [[json-rpc-resume-commands]],
+  and [[cli-commands]] for current work metadata, checkpoints, latest checkpoint,
+  and artifacts · focused route/JSON-RPC/CLI tests green · risk LOW
 - 2026-06-28 · post-artifact-reference-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after external artifact URI support and
   selected work-centric resume query endpoints for [[WorkUnit]],

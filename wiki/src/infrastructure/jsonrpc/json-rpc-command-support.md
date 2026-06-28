@@ -47,6 +47,10 @@ export const methodNotFound: (method: string, id: Option<JsonRpcId>) => JsonRpcR
 
 ## Algorithm
 
+`JsonRpcMethod` includes both command mutations and work-scoped resume reads:
+`work.get`, `checkpoint.list_for_work`, `checkpoint.latest_for_work`, and
+`artifact.list_for_work`.
+
 `decodeParams` rejects missing params as JSON-RPC `-32602`, decodes present params
 through the supplied Effect Schema, and returns either the typed value or a
 `JsonRpcRequestError` carrying the parse detail. `validatedBody` uses the same

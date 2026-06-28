@@ -29,6 +29,10 @@ import {
   methodNotFound,
   validatedBody,
 } from './json-rpc-command-support.js'
+import {
+  commandForResume,
+  resumeMethodLabels,
+} from './json-rpc-resume-commands.js'
 import type {
   JsonRpcCommand,
   JsonRpcId,
@@ -57,6 +61,7 @@ const methodLabels = new Set<string>([
   'workspace.create',
   'workspace.update',
   'workspace.archive',
+  ...resumeMethodLabels,
   'work.create',
   'work.claim',
   'work.update',
@@ -90,6 +95,15 @@ export const commandFor = (
   Either.gen(function* () {
     const method = yield* toMethod(methodLabel, id)
     const expectsResponse = Option.isSome(id)
+    const resumeCommand = commandForResume(
+      method,
+      paramsValue,
+      id,
+      expectsResponse,
+    )
+    if (Option.isSome(resumeCommand)) {
+      return yield* resumeCommand.value
+    }
 
     if (method === 'session.initialize') {
       const body = yield* validatedBody(
