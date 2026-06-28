@@ -8,6 +8,7 @@ import {
   ArtifactId,
   CreateArtifactPayload,
   Timestamp,
+  UpdateArtifactPayload,
   WorkerId,
   WorkspaceId,
   WorkId,
@@ -181,6 +182,87 @@ describe('ArtifactService', () => {
       otherArtifactId,
       artifactId,
     ])
+  })
+
+  it('updates metadata and content while preserving artifact identity', () => {
+    const result = runSync(
+      Effect.gen(function* () {
+        const artifacts = yield* ArtifactService
+        const events = yield* EventStore
+        const created = yield* artifacts.create(createInput())
+        const updated = yield* artifacts.update(
+          artifactId,
+          Schema.decodeUnknownSync(UpdateArtifactPayload)({
+            kind: 'markdown',
+            media_type: 'text/markdown',
+            summary: 'Updated notes',
+            content: 'updated content',
+          }),
+          actor,
+          later,
+        )
+        const content = yield* artifacts.readContent(artifactId)
+        const log = yield* events.readAfter(workspaceId, 0)
+        return { created, updated, content, log }
+      }),
+    )
+
+    expect(result.updated.id).toBe(result.created.id)
+    expect(result.updated.uri).toBe(result.created.uri)
+    expect(result.updated.created_at).toBe(result.created.created_at)
+    expect(result.updated.created_by).toBe(result.created.created_by)
+    expect(result.updated.kind).toBe('markdown')
+    expect(Option.getOrNull(result.updated.media_type)).toBe('text/markdown')
+    expect(Option.getOrNull(result.updated.summary)).toBe('Updated notes')
+    expect(Option.getOrNull(result.content)).toBe('updated content')
+    expect(
+      Chunk.toReadonlyArray(result.log).map((event: Event) => event.type),
+    ).toEqual(['artifact.created', 'artifact.updated'])
+  })
+
+  it('removes stored content when update omits content', () => {
+    const content = runSync(
+      Effect.gen(function* () {
+        const artifacts = yield* ArtifactService
+        yield* artifacts.create(createInput())
+        yield* artifacts.update(
+          artifactId,
+          Schema.decodeUnknownSync(UpdateArtifactPayload)({
+            kind: 'patch',
+          }),
+          actor,
+          later,
+        )
+        return yield* artifacts.readContent(artifactId)
+      }),
+    )
+
+    expect(Option.isNone(content)).toBe(true)
+  })
+
+  it('rejects updated content larger than the configured artifact limit', () => {
+    const error = runSync(
+      Effect.either(
+        Effect.gen(function* () {
+          const artifacts = yield* ArtifactService
+          yield* artifacts.create(createInput())
+          return yield* artifacts.update(
+            artifactId,
+            Schema.decodeUnknownSync(UpdateArtifactPayload)({
+              kind: 'log',
+              content: 'this content is too large',
+            }),
+            actor,
+            later,
+          )
+        }),
+      ),
+    )
+
+    expect(error._tag).toBe('Left')
+    if (error._tag === 'Left') {
+      expect(error.left._tag).toBe('ValidationError')
+    }
   })
 
   it('removes artifact metadata and content and emits artifact.deleted', () => {

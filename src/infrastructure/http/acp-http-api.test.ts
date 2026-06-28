@@ -137,6 +137,12 @@ describe('AcpHttpApi', () => {
       },
       {
         group: 'artifacts',
+        name: 'updateArtifact',
+        method: 'PATCH',
+        path: '/v1/artifacts/:artifact_id',
+      },
+      {
+        group: 'artifacts',
         name: 'deleteArtifact',
         method: 'DELETE',
         path: '/v1/artifacts/:artifact_id',

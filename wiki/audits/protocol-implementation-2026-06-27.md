@@ -28,7 +28,7 @@ the edge.
 The HTTP surface covers the spec §12 command set plus backed extensions that
 became necessary for parity with implemented domain behavior: workspace
 create/update/archive, work progress event publication, review
-approve/reject/request-changes, and artifact deletion. `session.initialize`
+approve/reject/request-changes, and artifact update/deletion. `session.initialize`
 accepts the draft §9 capability shape and the earlier full-worker shape, then
 returns the spec response with `protocol_version`, host descriptor, host
 capabilities, and bearer session id.
@@ -36,15 +36,16 @@ capabilities, and bearer session id.
 The JSON-RPC surface covers spec §13 and the same backed parity extensions:
 `workspace.create`, `workspace.update`, `workspace.archive`,
 `work.publish_event`, `review.approve`, `review.reject`,
-`review.request_changes`, and `artifact.delete`. JSON-RPC runs through the shared
-mapper/runtime, `POST /rpc`, and stdio Content-Length bridge. WebSocket is
+`review.request_changes`, `artifact.update`, and `artifact.delete`. JSON-RPC runs
+through the shared mapper/runtime, `POST /rpc`, and stdio Content-Length bridge. WebSocket is
 deferred by [[ADR-0002-json-rpc-transport-framing]].
 
 The event vocabulary is now governed by
 [[ADR-0003-event-vocabulary-domain-boundaries]]. Public events are emitted only
 from persisted domain transitions. Workspace archive is backed by persisted
-workspace lifecycle state. Worker presence and artifact update remain design work
-because their domain state is not defined.
+workspace lifecycle state, and artifact update is backed by persisted
+artifact metadata/content replacement. Worker presence remains design work
+because host/global event state is not defined.
 
 ## Implementation Standards
 
@@ -84,9 +85,9 @@ isolated in app entrypoints.
 
 ## Next Slice
 
-Continue with the next command/domain gap from the protocol audit. Artifact
-update and worker presence remain deferred until their persisted domain state is
-defined. Codecs and generated clients should only re-enter the queue when a
+Continue with the next command/domain gap from the protocol audit. Worker
+presence remains deferred until ACP has host/global event state. Codecs and
+generated clients should only re-enter the queue when a
 concrete boundary or consumer appears; platform-node extraction should wait for
 more than one Node adapter or duplicated platform wiring. The JSON-RPC command
 map has been split into a focused method table plus [[json-rpc-command-support]],
