@@ -112,7 +112,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 44. ✅ Work resume query endpoints — work/checkpoints/latest/artifacts over REST/JSON-RPC/CLI
 45. ✅ Effect observability logging — server JSON logs with config-driven level
     and safe annotations
-46. ▶ Re-audit remaining integration gaps after observability
+46. ✅ Post-observability integration audit — review/content resume gap selected
+47. ▶ Work review reads and artifact content read endpoints
 
 ## Referenced by
 

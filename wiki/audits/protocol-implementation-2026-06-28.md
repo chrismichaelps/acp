@@ -12,9 +12,10 @@ aliases: [protocol-implementation-2026-06-28, protocol-audit-refresh-2026-06-28]
 This audit refreshes [[protocol-implementation-2026-06-27]] after the workspace
 archive lifecycle, JSON-RPC command-map split, artifact update lifecycle,
 [[ADR-0005-worker-presence-scope]], CLI parity, permission scope parity, README
-refresh, CLI parser dispatch-table, and external artifact reference slices. It
-compares the current ACP reference host against `@root/specs.md` through
-[[spec-canonicalization]], then chooses the next backed implementation gap.
+refresh, CLI parser dispatch-table, external artifact reference, work resume
+query, and Effect observability logging slices. It compares the current ACP
+reference host against `@root/specs.md` through [[spec-canonicalization]], then
+chooses the next backed implementation gap.
 
 ## Current Coverage
 
@@ -30,14 +31,17 @@ extensions for workspace create/update/archive, work progress publication,
 review approve/reject/request-changes, and artifact update/delete. Artifact
 create/update accepts external URIs for pull request, commit, CI report,
 screenshot, or cloud-object references while preserving host-stored
-`acp://artifacts/{id}` content as the default. The router and the declarative
-[[acp-http-api]] contract are aligned on those endpoints.
+`acp://artifacts/{id}` content as the default. Work-centric resume reads now
+cover `GET /v1/work/{work_id}`, checkpoint lists, latest checkpoint, and artifact
+metadata lists. The router and the declarative [[acp-http-api]] contract are
+aligned on those endpoints.
 
 The JSON-RPC surface covers draft §13 plus the same backed extensions:
 `workspace.create`, `workspace.update`, `workspace.archive`,
 `work.publish_event`, `review.approve`, `review.reject`,
 `review.request_changes`, `artifact.update`, and `artifact.delete`, with
-artifact URI fields flowing through the shared schema. `events.subscribe` maps
+artifact URI fields flowing through the shared schema. Work-centric resume read
+commands are also projected through JSON-RPC and the CLI. `events.subscribe` maps
 to the SSE route. Runtime execution is available through `POST /rpc` and
 `acp-jsonrpc-stdio`; WebSocket remains deferred by
 [[ADR-0002-json-rpc-transport-framing]].
@@ -52,7 +56,10 @@ lint, format check, typecheck, file-size, and tests, CI runs the same gate on
 pull requests and `main`, and the README describes the current local server,
 SQLite adapter, auth mode, CLI, and stdio bridge. The CLI parser is now
 table-driven, so extending command coverage is an additive handler entry rather
-than another branch in a long dispatch chain.
+than another branch in a long dispatch chain. Server logging is now configured
+through Effect's structured logger with `ACP_LOG_LEVEL`, stable service/component
+annotations, and low-cardinality sweeper health logs; CLI and stdio stdout remain
+uncontaminated protocol/user output.
 
 ## Remaining Gaps
 
@@ -98,28 +105,27 @@ record pull requests, commits, CI reports, screenshots, and cloud objects withou
 copying large output into ACP. Empty artifact creates are rejected because they
 do not provide recoverable evidence.
 
-The next integration-facing gap is resumability reads. Domain services already
-own the useful query surface: [[work-unit-service]] can read a work unit by id,
-[[checkpoint-service]] can list checkpoints for work/workspace and return the
-latest checkpoint, [[artifact-service]] can list artifacts for work/workspace and
-read host-stored content, and [[review-service]] can list reviews for work or
-workspace. The transport surface is still mostly mutation-oriented, so a worker
-can publish checkpoints/artifacts but cannot reconstruct a resumable work packet
-through REST, JSON-RPC, or the CLI without tailing the event stream and replaying
-client-side state.
+Work resume query endpoints are now covered for the core packet:
+[[work-unit-service]] current state, [[checkpoint-service]] history/latest, and
+[[artifact-service]] metadata lists are available through REST, JSON-RPC, and the
+CLI. The remaining resumability gap is the review/content edge of that packet.
+[[review-service]] can list reviews by work or workspace, but transport clients
+cannot read a WorkUnit's review gates without replaying event history. Likewise,
+[[artifact-service]] can read host-stored content behind `acp://artifacts/{id}`,
+but transport clients can only see artifact metadata and external URIs. That
+means a resumed worker can discover that a patch/log/checkpoint artifact exists,
+but cannot fetch the host-stored content through the public API.
 
 ## Next Slice
 
-Add resume query endpoints for work-centric handoff: `GET /v1/work/{work_id}`,
-`GET /v1/work/{work_id}/checkpoints`, `GET
-/v1/work/{work_id}/checkpoints/latest`, and `GET
-/v1/work/{work_id}/artifacts`, then project them through [[acp-http-api]],
-[[acp-router]], [[json-rpc-command-map]], and [[cli-commands]]. Keep the first
-slice work-scoped; workspace-wide lists and artifact content reads can follow
-once the work resume packet is externally usable. Treat generated clients,
-host-level presence streams, WebSocket transport, Git-specific extensions, and
-platform-node extraction as deferred until a concrete consumer or duplicated
-boundary appears.
+Add the second resume-read slice: `GET /v1/work/{work_id}/reviews` for current
+review gates and `GET /v1/artifacts/{artifact_id}/content` for host-stored
+artifact content. Project both through [[acp-http-api]], route handlers,
+[[json-rpc-command-map]], and [[cli-commands]]. Keep the scope read-only and
+work/content focused; workspace-wide review/artifact listings, generated
+clients, host-level presence streams, WebSocket transport, Git-specific
+extensions, and platform-node extraction remain deferred until a concrete
+consumer or duplicated boundary appears.
 
 ## Referenced by
 
