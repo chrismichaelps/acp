@@ -24,9 +24,11 @@ import {
 import { workspaceSseResponse } from '../../infrastructure/sse/index.js'
 import {
   getWork,
+  getArtifactContent,
   latestWorkCheckpoint,
   listWorkArtifacts,
   listWorkCheckpoints,
+  listWorkReviews,
 } from './resume-routes.js'
 import { makeRpcHandler } from './rpc-endpoint.js'
 import {
@@ -386,6 +388,7 @@ const workRouter = HttpRouter.empty.pipe(
   HttpRouter.get('/v1/work/:work_id/checkpoints', listWorkCheckpoints),
   HttpRouter.get('/v1/work/:work_id/checkpoints/latest', latestWorkCheckpoint),
   HttpRouter.get('/v1/work/:work_id/artifacts', listWorkArtifacts),
+  HttpRouter.get('/v1/work/:work_id/reviews', listWorkReviews),
   HttpRouter.post('/v1/leases', requestLease),
   HttpRouter.post('/v1/leases/:lease_id/release', releaseLease),
 )
@@ -394,6 +397,7 @@ const commandRouter = workRouter.pipe(
   HttpRouter.post('/v1/artifacts', createArtifact),
   HttpRouter.patch('/v1/artifacts/:artifact_id', updateArtifact),
   HttpRouter.del('/v1/artifacts/:artifact_id', deleteArtifact),
+  HttpRouter.get('/v1/artifacts/:artifact_id/content', getArtifactContent),
   HttpRouter.post('/v1/checkpoints', createCheckpoint),
   HttpRouter.post('/v1/reviews', requestReview),
   HttpRouter.post('/v1/reviews/:review_id/approve', approveReview),

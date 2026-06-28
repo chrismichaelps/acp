@@ -34,6 +34,7 @@ export const WorkspacePath: Schema.Struct<{ workspace_id: WorkspaceId }>
 export const UpdateWorkStatePayload: Schema.Struct<{ state: WorkState }>
 export const PublishWorkEventPayload: Schema.Struct<{ type: EventType; data: Record<string, unknown> }>
 export const ApproveReviewPayload: Schema.Struct<{ met_requirements: string[] }>
+export const ArtifactContentResponse: Schema.Struct<{ content: string }>
 export const ClientCapabilities: Schema.Struct<{ // spec §9 worker flags }>
 export const InitializeSessionWorker: Schema.Struct<{ // Worker descriptor, status/capabilities defaulted }>
 export const InitializeSessionPayload: Schema.Struct<{ // §8 scopes default to []
@@ -65,11 +66,13 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 - `GET /v1/work/{work_id}/checkpoints`
 - `GET /v1/work/{work_id}/checkpoints/latest`
 - `GET /v1/work/{work_id}/artifacts`
+- `GET /v1/work/{work_id}/reviews`
 - `POST /v1/leases`
 - `POST /v1/leases/{lease_id}/release`
 - `POST /v1/artifacts`
 - `PATCH /v1/artifacts/{artifact_id}`
 - `DELETE /v1/artifacts/{artifact_id}`
+- `GET /v1/artifacts/{artifact_id}/content`
 - `POST /v1/checkpoints`
 - `POST /v1/reviews`
 - `POST /v1/reviews/{review_id}/approve`
@@ -108,6 +111,9 @@ Work resume reads are declared as backed extensions because [[work-unit-service]
 [[checkpoint-service]], and [[artifact-service]] already own the domain read
 semantics required for handoff: current work metadata, newest-first checkpoints,
 latest checkpoint, and work artifacts.
+The second resume-read slice adds current review gates and host-stored artifact
+content reads so a worker can reconstruct both the human review state and any
+private patch/log/markdown artifact content.
 
 Workspace create/update/archive are declared as backed extensions beside `GET
 /v1/workspaces`. The [[workspace-service]] owns persisted `workspace.created`,

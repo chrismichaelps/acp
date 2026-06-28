@@ -328,6 +328,16 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
       }
     }),
 
+  'artifact content': ({ positionals }) =>
+    Either.gen(function* () {
+      const artifactId = yield* positional(positionals, 0, 'artifact_id')
+      return {
+        method: 'GET',
+        path: `/v1/artifacts/${encodePathSegment(artifactId)}/content`,
+        label: 'artifact content',
+      }
+    }),
+
   'artifact delete': ({ positionals }) =>
     Either.gen(function* () {
       const artifactId = yield* positional(positionals, 0, 'artifact_id')
@@ -356,6 +366,16 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
           ...reviewer,
         },
         label: 'review request',
+      }
+    }),
+
+  'review list': ({ flags }) =>
+    Either.gen(function* () {
+      const workId = yield* flag(flags, 'work')
+      return {
+        method: 'GET',
+        path: `/v1/work/${encodePathSegment(workId)}/reviews`,
+        label: 'review list',
       }
     }),
 
@@ -430,8 +450,10 @@ export const usage = `acp — Agent Coordination Protocol CLI
   acp artifact create --workspace <id> --work <id> --kind <k> [--uri <u>] [--summary <s>] [--content <c>]
   acp artifact update <artifact_id> --kind <k> [--uri <u>] [--media-type <m>] [--summary <s>] [--content <c>]
   acp artifact list --work <id>
+  acp artifact content <artifact_id>
   acp artifact delete <artifact_id>
   acp review request --work <id> --by <id> [--reviewer <id>]
+  acp review list --work <id>
   acp review approve <review_id> --met <requirement,csv>
   acp review reject <review_id>
   acp review request-changes <review_id>

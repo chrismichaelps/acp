@@ -18,7 +18,9 @@ aliases: [resume-routes, work-resume-routes]
 Expose work-scoped read endpoints for handoff and recovery. These handlers turn
 the existing domain read capabilities into transport responses so a worker can
 reconstruct a [[WorkUnit]]'s current resume packet without replaying the entire
-[[Event]] stream client-side.
+[[Event]] stream client-side. The same module also exposes host-stored artifact
+content by artifact id, because artifact metadata uses `acp://artifacts/{id}` as
+the public handle for private content stored by [[artifact-service]].
 
 ## Interface
 
@@ -27,6 +29,8 @@ export const getWork: HttpRouter handler
 export const listWorkCheckpoints: HttpRouter handler
 export const latestWorkCheckpoint: HttpRouter handler
 export const listWorkArtifacts: HttpRouter handler
+export const listWorkReviews: HttpRouter handler
+export const getArtifactContent: HttpRouter handler
 ```
 
 ### Routes
@@ -35,21 +39,31 @@ export const listWorkArtifacts: HttpRouter handler
 - `GET /v1/work/{work_id}/checkpoints` → newest-first [[Checkpoint]][]
 - `GET /v1/work/{work_id}/checkpoints/latest` → latest [[Checkpoint]]
 - `GET /v1/work/{work_id}/artifacts` → [[Artifact]][]
+- `GET /v1/work/{work_id}/reviews` → [[Review]][]
+- `GET /v1/artifacts/{artifact_id}/content` → `{ content: string }`
 
 ## Algorithm
 
 Each handler reads `work_id`, authorizes `workspace:read`, verifies the
 [[WorkUnit]] exists through [[work-unit-service]], then delegates to the matching
 domain read method and schema-encodes the response. List endpoints return empty
-arrays for existing work with no checkpoints or artifacts. The latest-checkpoint
-endpoint returns `404 not_found` when the work exists but no checkpoint has been
-published.
+arrays for existing work with no checkpoints, artifacts, or reviews. The
+latest-checkpoint endpoint returns `404 not_found` when the work exists but no
+checkpoint has been published.
+
+`getArtifactContent` reads `artifact_id`, authorizes `workspace:read`, verifies
+the [[Artifact]] metadata exists, then returns host-stored content when present.
+External artifact references and deleted/missing artifacts return `404
+not_found`; callers should follow the artifact metadata URI for external
+systems.
 
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT duplicate checkpoint or artifact filtering in the router.
 - ❌ Do NOT expose workspace-wide lists in this first slice; keep the resume packet
   work-scoped.
+- ❌ Do NOT expose artifact content through event payloads or artifact metadata
+  lists.
 - ❌ Do NOT bypass [[route-support]] authorization or error folding.
 
 ## Depth
