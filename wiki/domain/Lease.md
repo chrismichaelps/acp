@@ -15,7 +15,7 @@ aliases: [Lease, lease]
   bounded by `expires_at`.
 - **States:** `active · expired · released · revoked`.
 - **Resource kinds:** `file · directory · branch · worktree · task · service ·
-  database_migration · custom`.
+database_migration · custom`.
 - **TTL:** every lease carries a `Duration` TTL loaded from `ACP_DEFAULT_LEASE_TTL`
   unless overridden per request.
 - **Conflict:** requesting a lease on an actively-leased resource held by another

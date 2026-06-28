@@ -11,6 +11,7 @@ tags: [handoff]
 # Handoff — Scoped Auth Slice (spec §8 permission enforcement)
 
 ## Done
+
 - Closed [[common]] `Permission` vocabulary — the 7 spec §8 scopes
   (`workspace:read`, `work:create`, `work:claim`, `lease:create`,
   `artifact:create`, `checkpoint:create`, `review:create`).
@@ -27,6 +28,7 @@ tags: [handoff]
   scope-denied 401 and unknown-token 401; attribution test now declares its scope).
 
 ## Decided (do not re-litigate)
+
 - **Scopes are a separate authorization set**, declared at `initialize`, not derived
   from §9 `capabilities` (which are mechanical, not permissions).
 - **Only authenticated requests are scope-enforced.** No-token requests still degrade
@@ -37,6 +39,7 @@ tags: [handoff]
   though the router now uses `get` for scope-aware checks.
 
 ## Open / Remaining (post-v0.1)
+
 1. **Mandatory auth + credential issuance**: once the host can mint real tokens,
    flip unauthenticated mutations from `worker_system` to `401`.
 2. **Session/lease expiry sweeper**: TTL eviction fiber.
@@ -45,12 +48,15 @@ tags: [handoff]
 4. **JSON-RPC transport** — **v0.2** per spec §7/§13 (Optional); HTTP+SSE is MVP.
 
 ## Exact next action
+
 DNA Engineer: pick the **live boot smoke test** slice — author a wiki page for a
 test that boots [[server-main]] on an ephemeral port and round-trips
 `initialize` → scoped `createWork`, proving the composition root wires `AppLive`
-+ `IdClock` + router correctly. `grillme`: ephemeral-port bind vs. injected
-`HttpApp` web handler (no socket).
+
+- `IdClock` + router correctly. `grillme`: ephemeral-port bind vs. injected
+  `HttpApp` web handler (no socket).
 
 ## Links
+
 [[session-service]] · [[session.schema]] · [[common]] · [[acp-router]]
 · [[http-error-mapper]] · [[protocol-error]] · [[ADR-0001-architecture-foundation]]

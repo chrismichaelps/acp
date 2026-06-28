@@ -18,7 +18,7 @@ the domain-service contracts (which are ACP-internal). Captured 2026-06-26.
 - **Lifecycle = capability negotiation.** `initialize` exchanges `protocolVersion`,
   `capabilities`, and `clientInfo`/`serverInfo`; the client then sends
   `notifications/initialized`. → Mirrors ACP `POST /v1/session/initialize`
-  ([[acp-http-api]], spec §9). **Takeaway:** the initialize *response* must echo a
+  ([[acp-http-api]], spec §9). **Takeaway:** the initialize _response_ must echo a
   negotiated `protocol_version` and the host's supported capability flags, and an
   incompatible version must terminate the session.
 - **Notifications** are JSON-RPC messages with no `id` and no response — used for

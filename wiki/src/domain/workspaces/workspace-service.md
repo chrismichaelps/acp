@@ -18,7 +18,7 @@ aliases: [workspace-service, WorkspaceService]
 Own the [[Workspace]] registry for v0.1: create a workspace, read a stored
 workspace, list all workspaces, and update a workspace's mutable fields. Persists
 through [[Storage]] (schema-encode on write, schema-decode on read) and emits the
-matching `workspace.*` [[Event]] through [[EventStore]] — a [[Workspace]] *is* the
+matching `workspace.*` [[Event]] through [[EventStore]] — a [[Workspace]] _is_ the
 per-workspace event scope, so its events append to its own log.
 
 ## Interface
@@ -32,9 +32,7 @@ export interface WorkspaceServiceApi {
     actor: WorkerId,
     now: Timestamp,
   ) => Effect<Workspace, StorageError>
-  readonly get: (
-    id: WorkspaceId,
-  ) => Effect<Option<Workspace>, StorageError>
+  readonly get: (id: WorkspaceId) => Effect<Option<Workspace>, StorageError>
   readonly list: () => Effect<readonly Workspace[], StorageError>
   readonly update: (
     workspace: Workspace,
@@ -99,24 +97,24 @@ ordering across every transport caller.
 
 - **Q:** Should workspace mutations emit [[Event]]s, given the [[Worker]] slice
   deferred presence events?
-  **A:** Yes — emit `workspace.created`/`workspace.updated`. *Rationale:* the [[Event]]
-  log is keyed by `workspace_id`, and a [[Workspace]] *is* that scope, so its events
+  **A:** Yes — emit `workspace.created`/`workspace.updated`. _Rationale:_ the [[Event]]
+  log is keyed by `workspace_id`, and a [[Workspace]] _is_ that scope, so its events
   append to its own log with no synthetic entity (unlike a host-scoped [[Worker]]).
-  This matches the [[work-unit-service]] emit-after-persist pattern. *Rejected:* a
+  This matches the [[work-unit-service]] emit-after-persist pattern. _Rejected:_ a
   silent registry (loses the audit trail the protocol's event-sourced model depends
   on, spec §4.6).
 - **Q:** Spec §11 lists `workspace.archived`. Should `archive` ship in this slice?
-  **A:** No — deferred. *Rationale:* the [[Workspace]] schema (spec §10.2) carries no
+  **A:** No — deferred. _Rationale:_ the [[Workspace]] schema (spec §10.2) carries no
   lifecycle/`archived` field, so archival has no persisted representation. Modeling it
   requires either a schema change (add `state`) or a soft-delete convention — a
   design decision worth its own slice rather than inventing a field the spec does not
-  define. *Rejected:* (a) `storage.remove` on archive (orphans the workspace's event
+  define. _Rejected:_ (a) `storage.remove` on archive (orphans the workspace's event
   log and breaks replay); (b) adding an ad-hoc `archived` boolean not in the wire
   schema (silent schema drift).
 - **Q:** Is `update` a full replacement or a field patch?
-  **A:** Full replacement keyed by id. *Rationale:* the caller decodes a complete
+  **A:** Full replacement keyed by id. _Rationale:_ the caller decodes a complete
   `Workspace` at the transport edge; a replacement is the simplest, most reversible
-  contract and avoids a partial-update merge schema this early. *Rejected:* a
+  contract and avoids a partial-update merge schema this early. _Rejected:_ a
   `WorkspacePatch` schema (premature for EXPLORING maturity; add when partial PATCH
   semantics are actually needed).
 

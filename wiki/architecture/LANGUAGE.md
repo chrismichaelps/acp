@@ -6,21 +6,21 @@ aliases: [LANGUAGE, vocabulary]
 
 # Architecture Language (canonical vocabulary)
 
-Grounded in Ousterhout, *A Philosophy of Software Design*. This page prevents
+Grounded in Ousterhout, _A Philosophy of Software Design_. This page prevents
 linguistic drift between human and agent. Every architectural term used in the
 vault must be defined here first.
 
 - **Module** — any unit with an interface and an implementation (function, class,
   service, tier-slice). Scale-agnostic. The unit of a wiki page.
-  *Not:* a file. A file may hold one module; large files are split per the Split Protocol.
+  _Not:_ a file. A file may hold one module; large files are split per the Split Protocol.
 - **Interface** — everything a caller must know to use a module correctly: types,
-  invariants, error modes, ordering, side effects. *Not:* just the type signature.
+  invariants, error modes, ordering, side effects. _Not:_ just the type signature.
 - **Implementation** — the body fulfilling the interface's promises, hidden from callers.
 - **Depth** — ratio of behavior exercised to interface learned. A quality measure,
-  not a size measure. *Deep* = thin surface hiding much; *Shallow* = surface ≈ implementation.
+  not a size measure. _Deep_ = thin surface hiding much; _Shallow_ = surface ≈ implementation.
 - **Seam** — a boundary with at least one swappable adapter behind a stable interface.
   Classified BACKBONE / CRITICAL / EXPLORATORY / INTERNAL by capacity.
-  *Not:* every interface — an INTERNAL boundary inside one subsystem is not a seam.
+  _Not:_ every interface — an INTERNAL boundary inside one subsystem is not a seam.
 - **Adapter** — a concrete implementation behind a seam interface (`production` or `test`).
 - **Locality** — fraction of a module's callers that live inside its own subsystem.
 - **Deepening** — refactoring that increases a module's Depth (hide more behind less).

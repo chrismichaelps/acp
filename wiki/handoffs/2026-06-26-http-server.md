@@ -11,6 +11,7 @@ tags: [handoff]
 # Handoff — HTTP Server Slice
 
 ## Done
+
 - [[acp-router]] `HttpRouter` binds all 12 spec §12 routes to the domain services,
   reusing [[http-error-mapper]] for correct-status errors and [[sse-event-stream]]
   for `GET /v1/events/stream`. [[id-clock]] mints ids/timestamps; [[server-main]] is
@@ -20,6 +21,7 @@ tags: [handoff]
   IdClock, +5 router via `HttpApp.toWebHandlerLayer`).
 
 ## Decided (do not re-litigate)
+
 - **Manual `HttpRouter`, not `HttpApiBuilder`** — reuses the existing correct-status
   `toHttpErrorResponse` and leaves the merged [[acp-http-api]] contract untouched.
   See [[acp-router#Grill Log]].
@@ -32,14 +34,16 @@ tags: [handoff]
   not unit-tested; the router is tested via a web handler.
 
 ## Open / Remaining (v0.1)
+
 1. **CLI entrypoint** (spec §21): `acp init · workspace add · work create · work
-   claim · lease request · checkpoint create · artifact create · review request ·
-   events stream`. Use `@effect/platform` `Command`/`Args`/`Options` over the same
+claim · lease request · checkpoint create · artifact create · review request ·
+events stream`. Use `@effect/platform` `Command`/`Args`/`Options` over the same
    `AppLive`, OR shell out to the HTTP server. This is the **last v0.1 slice**.
 2. Post-v0.1: bearer-token auth + session-bound actor; live boot smoke test;
    lease-expiry sweeper; workspace archival; JSON-RPC transport (v0.2).
 
 ## Exact next action
+
 DNA Engineer: author `wiki/src/app/cli/cli.md` for the CLI slice — a
 `@effect/platform` `Command` tree mapping each subcommand to a domain-service call
 over [[app-live]], printing JSON results. `grillme`: in-process (call services
@@ -47,6 +51,7 @@ directly) vs HTTP client to [[acp-router]]. Then Shadow projects to
 `src/app/cli/`.
 
 ## Links
+
 [[acp-router]] · [[id-clock]] · [[server-main]] · [[app-live]] · [[acp-http-api]]
 · [[http-error-mapper]] · [[sse-event-stream]] · [[grammar/typescript]]
 · [[ADR-0001-architecture-foundation]]

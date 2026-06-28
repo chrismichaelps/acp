@@ -31,9 +31,7 @@ Persists through [[Storage]] with schema-encode on write and schema-decode on re
 ```typescript
 export interface SessionServiceApi {
   readonly create: (session: Session) => Effect<Session, StorageError>
-  readonly get: (
-    sessionId: SessionId,
-  ) => Effect<Option<Session>, StorageError>
+  readonly get: (sessionId: SessionId) => Effect<Option<Session>, StorageError>
   readonly resolveActor: (
     token: string,
   ) => Effect<Option<WorkerId>, StorageError>
@@ -98,34 +96,34 @@ lookup, not a state machine.
 - **Q:** Where do permission scopes live — derived from the [[Worker]]
   `capabilities` booleans, or a separate set?
   **A:** A separate `permissions: Permission[]` on the session, declared in the
-  `initialize` payload. *Rationale:* spec §8 scopes (`work:create`, …) are an
-  *authorization* vocabulary distinct from §9 `capabilities`, which advertise what
-  a worker *can do* mechanically (`can_edit_files`), not what it is *allowed* to do.
+  `initialize` payload. _Rationale:_ spec §8 scopes (`work:create`, …) are an
+  _authorization_ vocabulary distinct from §9 `capabilities`, which advertise what
+  a worker _can do_ mechanically (`can_edit_files`), not what it is _allowed_ to do.
   Conflating them would force a brittle capability→scope mapping the spec never
-  defines. *Rejected:* deriving scopes from capabilities (semantic mismatch);
+  defines. _Rejected:_ deriving scopes from capabilities (semantic mismatch);
   a global all-workers-all-scopes default (toothless enforcement).
 - **Q:** Should an unauthenticated mutation (no bearer token) be rejected with
   `401`, per the handoff's "reject instead of `worker_system`"?
-  **A:** No — only *authenticated* requests are scope-enforced; a request with no
-  token still degrades to `worker_system` (full access). *Rationale:* the local
+  **A:** No — only _authenticated_ requests are scope-enforced; a request with no
+  token still degrades to `worker_system` (full access). _Rationale:_ the local
   reference host has no credential issuance, so hard-requiring auth would make the
   server unusable out of the box and break every unauthenticated example/test. The
   enforced contract is "if you present a session, your scopes are checked; an
-  invalid token or a missing scope is `401`." *Rejected:* mandatory auth on all
+  invalid token or a missing scope is `401`." _Rejected:_ mandatory auth on all
   mutations (deferred to a hardened deployment that issues real credentials) — a
   reversible tightening once credential issuance exists.
 - **Q:** Should the bearer token be a distinct secret (`hdf_xxx` per spec §8)
   rather than the `session_id` itself?
-  **A:** No — in v0.1 the `session_id` *is* the token. *Rationale:* the local
+  **A:** No — in v0.1 the `session_id` _is_ the token. _Rationale:_ the local
   reference host has no credential store; minting a separate opaque secret adds a
   second identifier with no extra security at the trust boundary (a single local
-  process). *Rejected:* a separate `token` column (premature — real secret
+  process). _Rejected:_ a separate `token` column (premature — real secret
   management, rotation, and hashing belong to a hardened auth slice, not the
   reference implementation).
 - **Q:** Should sessions expire?
-  **A:** Not in this slice. *Rationale:* there is no clock-driven sweeper yet and
+  **A:** Not in this slice. _Rationale:_ there is no clock-driven sweeper yet and
   no reconnect semantics in v0.1; an unbounded in-memory map is acceptable for a
-  single-process reference host. *Rejected:* eager TTL (needs a background fiber
+  single-process reference host. _Rejected:_ eager TTL (needs a background fiber
   and an eviction policy the spec does not define) — deferred to a post-v0.1
   lease-expiry/session-sweeper slice.
 - **Q:** Why does `resolveActor` return `Option` instead of failing with an
