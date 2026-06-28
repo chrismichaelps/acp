@@ -1,6 +1,6 @@
 /** @Acp.Infra.JsonRpc.ResumeCommands — work-scoped read method mappings */
 import { Either, Option, Schema } from 'effect'
-import { WorkId } from '../../protocol/schema/index.js'
+import { ArtifactId, WorkId } from '../../protocol/schema/index.js'
 import { decodeParams, encodeSegment } from './json-rpc-command-support.js'
 import type {
   JsonRpcCommand,
@@ -14,9 +14,12 @@ export const resumeMethodLabels = [
   'checkpoint.list_for_work',
   'checkpoint.latest_for_work',
   'artifact.list_for_work',
+  'artifact.read_content',
+  'review.list_for_work',
 ] as const
 
 const WorkResumeParams = Schema.Struct({ work_id: WorkId })
+const ArtifactContentParams = Schema.Struct({ artifact_id: ArtifactId })
 
 const command = (
   id: Option.Option<JsonRpcId>,
@@ -82,6 +85,34 @@ export const commandForResume = (
           expectsResponse,
           method,
           `/v1/work/${encodeSegment(params.work_id)}/artifacts`,
+        ),
+      ),
+    )
+  }
+
+  if (method === 'artifact.read_content') {
+    return Option.some(
+      Either.map(
+        decodeParams(ArtifactContentParams, paramsValue, id),
+        (params) =>
+          command(
+            id,
+            expectsResponse,
+            method,
+            `/v1/artifacts/${encodeSegment(params.artifact_id)}/content`,
+          ),
+      ),
+    )
+  }
+
+  if (method === 'review.list_for_work') {
+    return Option.some(
+      Either.map(decodeParams(WorkResumeParams, paramsValue, id), (params) =>
+        command(
+          id,
+          expectsResponse,
+          method,
+          `/v1/work/${encodeSegment(params.work_id)}/reviews`,
         ),
       ),
     )

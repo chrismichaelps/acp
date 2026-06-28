@@ -67,5 +67,35 @@ describe('JSON-RPC resume command mapping', () => {
       path: '/v1/work/work%2Fneeds%20encoding/artifacts',
       label: 'artifact.list_for_work',
     })
+
+    const reviews = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_review_list',
+        method: 'review.list_for_work',
+        params: { work_id: 'work/needs encoding' },
+      }),
+    )
+    expect(reviews.request).toEqual({
+      method: 'GET',
+      path: '/v1/work/work%2Fneeds%20encoding/reviews',
+      label: 'review.list_for_work',
+    })
+  })
+
+  it('maps artifact content reads and encodes the artifact id path segment', () => {
+    const content = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_artifact_content',
+        method: 'artifact.read_content',
+        params: { artifact_id: 'artifact/needs encoding' },
+      }),
+    )
+    expect(content.request).toEqual({
+      method: 'GET',
+      path: '/v1/artifacts/artifact%2Fneeds%20encoding/content',
+      label: 'artifact.read_content',
+    })
   })
 })

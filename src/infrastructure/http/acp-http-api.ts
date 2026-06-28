@@ -157,6 +157,11 @@ export const ApproveReviewPayload = Schema.Struct({
 })
 export type ApproveReviewPayload = typeof ApproveReviewPayload.Type
 
+export const ArtifactContentResponse = Schema.Struct({
+  content: Schema.String,
+})
+export type ArtifactContentResponse = typeof ArtifactContentResponse.Type
+
 const protocolError = (status: number) =>
   ({ status }) satisfies { readonly status: number }
 
@@ -266,6 +271,13 @@ export const WorkGroup = HttpApiGroup.make('work')
       .addError(ProtocolError, protocolError(401))
       .addError(ProtocolError, protocolError(404)),
   )
+  .add(
+    HttpApiEndpoint.get('listWorkReviews', '/v1/work/:work_id/reviews')
+      .setPath(WorkPath)
+      .addSuccess(Schema.Array(Review))
+      .addError(ProtocolError, protocolError(401))
+      .addError(ProtocolError, protocolError(404)),
+  )
 
 export const LeaseGroup = HttpApiGroup.make('leases')
   .add(
@@ -303,6 +315,16 @@ export const ArtifactGroup = HttpApiGroup.make('artifacts')
     HttpApiEndpoint.del('deleteArtifact', '/v1/artifacts/:artifact_id')
       .setPath(ArtifactPath)
       .addSuccess(Artifact)
+      .addError(ProtocolError, protocolError(404)),
+  )
+  .add(
+    HttpApiEndpoint.get(
+      'getArtifactContent',
+      '/v1/artifacts/:artifact_id/content',
+    )
+      .setPath(ArtifactPath)
+      .addSuccess(ArtifactContentResponse)
+      .addError(ProtocolError, protocolError(401))
       .addError(ProtocolError, protocolError(404)),
   )
 
