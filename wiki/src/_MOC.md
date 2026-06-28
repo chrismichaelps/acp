@@ -15,6 +15,11 @@ file has exactly one page here. A source file with no page is UNREGISTERED.
 - [[worker.schema]] · [[workspace.schema]] · [[work-unit.schema]] · [[lease.schema]]
   · [[artifact.schema]] · [[checkpoint.schema]] · [[review.schema]] · [[event.schema]]
 
+## protocol/
+
+- [[protocol-version]] — canonical ACP version constant, supported-version schema,
+  and handshake compatibility predicate.
+
 ## protocol/errors/
 
 - [[protocol-error]] — tagged domain error families + protocol error code mapping.

@@ -34,6 +34,7 @@ import {
   UnauthorizedError,
 } from '../../protocol/errors/protocol-error.js'
 import {
+  ACP_PROTOCOL_VERSION,
   Artifact,
   Checkpoint,
   ClaimWorkPayload,
@@ -47,6 +48,7 @@ import {
   Review,
   Workspace,
   WorkUnit,
+  isSupportedProtocolVersion,
 } from '../../protocol/schema/index.js'
 import type {
   ArtifactId,
@@ -189,6 +191,13 @@ const initializeSession = respond(
     const payload = yield* HttpServerRequest.schemaBodyJson(
       InitializeSessionPayload,
     )
+    if (!isSupportedProtocolVersion(payload.protocol_version)) {
+      return yield* Effect.fail(
+        new ValidationError({
+          issues: [`unsupported protocol_version: ${payload.protocol_version}`],
+        }),
+      )
+    }
     const worker = yield* workers.register({
       ...payload.worker,
       capabilities: [...capabilitiesFromHandshake(payload)],
@@ -203,7 +212,7 @@ const initializeSession = respond(
     })
     return yield* ok(200)(InitializeSessionResponse, {
       session_id: sessionId,
-      protocol_version: '0.1',
+      protocol_version: ACP_PROTOCOL_VERSION,
       host,
       capabilities: hostCapabilities,
     })

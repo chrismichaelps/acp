@@ -61,6 +61,7 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 
 - [[ADR-0001-architecture-foundation]] — ACCEPTED.
 - [[ADR-0002-json-rpc-transport-framing]] — ACCEPTED.
+- [[ADR-0004-protocol-version-codecs-generated-client]] — ACCEPTED.
 
 ## Build Order (vertical slices)
 
@@ -91,7 +92,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 25. ✅ JSON-RPC module split + file-size gate — 160 tests green
 26. ✅ CI gate for lint/typecheck/file-size/tests — workflow added
 27. ✅ Formatting drift cleanup — repo-wide format check green
-28. ▶ Protocol version/codecs/generated-client decision
+28. ✅ Protocol version/codecs/generated-client decision — explicit handshake module
+29. ▶ Next command/domain gap from protocol audit
 
 ## Referenced by
 

@@ -12,6 +12,9 @@ tags: [moc, adr]
 - [[ADR-0003-event-vocabulary-domain-boundaries]] — ACCEPTED — only
   persisted domain transitions emit public v0.1 events; worker presence,
   workspace archive, and artifact update need domain state before transport.
+- [[ADR-0004-protocol-version-codecs-generated-client]] — ACCEPTED — centralize
+  protocol-version negotiation now; defer standalone codecs and generated
+  clients until a concrete boundary or consumer exists.
 
 ## Referenced by
 

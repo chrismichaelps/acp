@@ -25,6 +25,7 @@ import `from "../protocol/schema/index.js"` rather than reaching into individual
 export * from './ids.js'
 export * from './common.js'
 export * from './worker.schema.js' // …and the rest
+export * from '../version.js'
 ```
 
 ## Negative Logic (Prohibited Paths)
@@ -37,4 +38,4 @@ MEDIUM (0.5). Pure aggregation; centralizes the public schema surface.
 
 ## Referenced by
 
-[[src/_MOC]]
+[[protocol-version]] · [[src/_MOC]]

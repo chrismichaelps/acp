@@ -70,19 +70,21 @@ to `main`. It runs Node 24 with the lockfile-backed pnpm setup, then enforces
 lint, format check, typecheck, file-size, and tests. The previous repo-wide
 formatting drift has been normalized in a dedicated mechanical cleanup.
 
-Some draft folder names and optional implementation folders remain intentionally
-uncreated. There is no `src/protocol/version.ts`, `src/protocol/codecs`, or
-`src/infrastructure/platform-node` folder yet because version negotiation,
-external codecs, and platform-specific seams are still represented by smaller
-current modules. These are not blocking v0.1 behavior, but they should be
-revisited when generated clients or multiple platform adapters appear.
+Version negotiation now has an explicit [[protocol-version]] module and
+[[ADR-0004-protocol-version-codecs-generated-client]] records why standalone
+codecs and generated clients remain deferred. There is still no
+`src/protocol/codecs` folder because no public route exposes Effect collections
+outside schema-owned JSON boundaries, and no generated-client output because no
+external SDK consumer or artifact policy exists yet. `src/infrastructure/platform-node`
+also remains uncreated because current Node-specific wiring is still small and
+isolated in app entrypoints.
 
 ## Next Slice
 
-Revisit the remaining optional implementation folders and generated-client
-surface. The next slice should decide whether `src/protocol/version.ts`,
-`src/protocol/codecs`, or generated OpenAPI/client output is the highest-value
-next step now that local and CI gates are in place.
+Continue with the next command/domain gap from the protocol audit. Codecs and
+generated clients should only re-enter the queue when a concrete boundary or
+consumer appears; platform-node extraction should wait for more than one Node
+adapter or duplicated platform wiring.
 
 ## Referenced by
 

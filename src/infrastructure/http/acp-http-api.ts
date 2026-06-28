@@ -34,6 +34,7 @@ import {
   WorkerKind,
   WorkerStatus,
   WorkUnit,
+  ACP_PROTOCOL_VERSION,
 } from '../../protocol/schema/index.js'
 
 export const WorkPath = Schema.Struct({
@@ -90,8 +91,8 @@ export const InitializeSessionWorker = Schema.Struct({
 export type InitializeSessionWorker = typeof InitializeSessionWorker.Type
 
 export const InitializeSessionPayload = Schema.Struct({
-  protocol_version: Schema.optionalWith(Schema.Literal('0.1'), {
-    default: () => '0.1',
+  protocol_version: Schema.optionalWith(Schema.String, {
+    default: () => ACP_PROTOCOL_VERSION,
   }),
   worker: InitializeSessionWorker,
   capabilities: Schema.optionalWith(ClientCapabilities, {
@@ -126,7 +127,7 @@ export type HostCapabilities = typeof HostCapabilities.Type
 
 export const InitializeSessionResponse = Schema.Struct({
   session_id: SessionId,
-  protocol_version: Schema.Literal('0.1'),
+  protocol_version: Schema.Literal(ACP_PROTOCOL_VERSION),
   host: HostDescriptor,
   capabilities: HostCapabilities,
 })
