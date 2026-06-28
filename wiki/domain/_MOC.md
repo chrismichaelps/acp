@@ -18,4 +18,5 @@ must resolve to a page here (Constitution Invariant 4).
 - [[Event]] — an immutable append-only record; the coordination primitive.
 
 ## Referenced by
+
 [[00-INDEX]]

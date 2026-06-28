@@ -11,6 +11,7 @@ tags: [handoff]
 # Handoff — Live-Boot Smoke Test Slice (real-socket composition root)
 
 ## Done
+
 - Extracted the [[http-app]] seam: `HttpAppLive` =
   `HttpServer.serve(acpRouter)` provided with `AppLive ⊕ IdClockLive`, leaving the
   listening socket (`HttpServer.HttpServer`) as its only residual requirement.
@@ -29,6 +30,7 @@ tags: [handoff]
   21 test files).
 
 ## Decided (do not re-litigate)
+
 - **Real ephemeral socket, not a web handler.** The web-handler path is already
   covered by `router.test.ts`; the live-boot test's value is the actual TCP boot.
   `port: 0` avoids `4317` contention and concurrent-run collisions.
@@ -39,6 +41,7 @@ tags: [handoff]
   unique, and that is covered transitively by booting `HttpAppLive`.
 
 ## Open / Remaining (post-v0.1)
+
 1. **Session/lease expiry sweeper**: TTL eviction fiber (sessions + leases);
    currently `session_id` is a non-expiring bearer token and leases never lapse.
 2. **Mandatory auth + credential issuance**: once the host can mint real tokens,
@@ -46,6 +49,7 @@ tags: [handoff]
 3. **JSON-RPC transport** — **v0.2** per spec §7/§13 (Optional); HTTP+SSE is MVP.
 
 ## Exact next action
+
 DNA Engineer: pick the **session/lease expiry sweeper** slice. Author a wiki page
 for a TTL eviction fiber (a scoped background `Effect` forked at composition root)
 that evicts expired [[session.schema]] sessions and lapses overdue [[Lease]]s,
@@ -55,5 +59,6 @@ scope so it lives exactly as long as the server, vs. a separate layer); and whet
 lease expiry emits a `lease.released`-style event through [[event-store]].
 
 ## Links
+
 [[http-app]] · [[server-main]] · [[server-index]] · [[acp-router]] · [[app-live]]
 · [[id-clock]] · [[session-service]] · [[Transport]] · [[ADR-0001-architecture-foundation]]

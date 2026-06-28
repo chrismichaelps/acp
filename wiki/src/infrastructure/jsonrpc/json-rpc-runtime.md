@@ -103,24 +103,24 @@ in-process dispatch over the [[acp-router]] web handler (a JSON-RPC
 - **Q:** Execute by re-entering an HTTP web handler, or dispatch straight to the
   services?
   **A:** Re-enter via an injected `JsonRpcDispatch` that, in practice, calls the
-  [[acp-router]] web handler. *Rationale:* the core already lowers each method to a
+  [[acp-router]] web handler. _Rationale:_ the core already lowers each method to a
   `{method, path, body}` HTTP shape; reusing the router means JSON-RPC inherits
   routing, bearer auth, scope enforcement, encoding, and the total error→status
-  map for free — exactly what [[json-rpc]] forbids duplicating. *Rejected:* a second
+  map for free — exactly what [[json-rpc]] forbids duplicating. _Rejected:_ a second
   method→service dispatch table (drifts from the router; re-implements auth).
 - **Q:** stdio, WebSocket, or an HTTP `/rpc` route for this slice?
   **A:** None yet — ship the transport-agnostic execution core first, parameterized
-  by `JsonRpcDispatch`. *Rationale:* correlation/notification/batch/error rules are
+  by `JsonRpcDispatch`. _Rationale:_ correlation/notification/batch/error rules are
   identical across framings; isolating them keeps each future transport a thin I/O
   shell and makes the rules testable in-process without spawning a stdio child or a
-  socket. *Rejected:* coupling execution to one framing now (forces a rewrite when
+  socket. _Rejected:_ coupling execution to one framing now (forces a rewrite when
   the second transport lands).
 - **Q:** How do JSON-RPC error codes map to ACP domain errors?
   **A:** `400 → -32602`, every other non-2xx `→ -32603`, with the structured ACP
-  error body preserved in the JSON-RPC `error.data`. *Rationale:* the existing
+  error body preserved in the JSON-RPC `error.data`. _Rationale:_ the existing
   `JsonRpcErrorCode` is the closed JSON-RPC reserved set; collapsing into it while
   carrying the ACP error in `data` keeps fidelity without inventing codes.
-  *Rejected:* application codes in `-32000..-32099` (would widen the schema for no
+  _Rejected:_ application codes in `-32000..-32099` (would widen the schema for no
   client gain at v0.2).
 
 ## Referenced by

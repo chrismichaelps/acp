@@ -11,6 +11,7 @@ tags: [handoff]
 # Handoff — Workspace Service Slice
 
 ## Done
+
 - [[worker-service]] slice (prior): Worker registry behind [[Storage]].
 - **Naming fix:** `HadoofHttpApi`/`hadoof-http-api` → `AcpHttpApi`/`acp-http-api`
   (`HttpApi.make('acp')`) per [[ADR-0001-architecture-foundation]]; mirror page
@@ -24,6 +25,7 @@ tags: [handoff]
   pass (was 44; +5 Workspace tests).
 
 ## Decided (do not re-litigate)
+
 - A [[Workspace]] **is** the per-workspace [[Event]] scope, so it emits its own
   events (no synthetic entity, unlike the host-scoped [[Worker]]).
 - `workspace.archived` is **deferred**: the wire schema (spec §10.2) has no
@@ -33,6 +35,7 @@ tags: [handoff]
   otherwise); `create` is the only new-id path. Caller supplies identity.
 
 ## Open / Remaining (next slices, in order)
+
 1. Domain services still to project: **Lease**, Artifact, Checkpoint, Review.
    - Lease is the richest: `LeaseConflictError` path (spec §10.4, §12.7) + TTL/expiry
      (`ACP_DEFAULT_LEASE_TTL` from [[app-config]]). It will need a clock/now input
@@ -43,6 +46,7 @@ tags: [handoff]
    archival lifecycle.
 
 ## Exact next action
+
 DNA Engineer: author `wiki/src/domain/leases/lease-service.md` for the Lease slice
 per [[Lease]], spec §10.4 (object), §12.7–12.8 (request/release), §11 Lease Events.
 Run `grillme` on: conflict semantics (one active lease per resource_uri per
@@ -51,5 +55,6 @@ is expiry lazy-on-read or does it need a sweeper?), and renew/revoke paths. Then
 Shadow projects to `src/domain/leases/lease-service.ts`.
 
 ## Links
+
 [[workspace-service]] · [[Workspace]] · [[Lease]] · [[Storage]] · [[EventStore]]
 · [[acp-http-api]] · [[grammar/typescript]] · [[ADR-0001-architecture-foundation]]

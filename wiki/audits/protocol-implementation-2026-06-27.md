@@ -67,9 +67,8 @@ split into a 111-line facade plus a 427-line [[json-rpc-command-map]] module.
 
 The repository now has a GitHub Actions CI workflow for pull requests and pushes
 to `main`. It runs Node 24 with the lockfile-backed pnpm setup, then enforces
-lint, typecheck, file-size, and tests. Repo-wide `format:check` is intentionally
-not in CI yet because there is pre-existing formatting drift in untouched wiki
-and lock files.
+lint, format check, typecheck, file-size, and tests. The previous repo-wide
+formatting drift has been normalized in a dedicated mechanical cleanup.
 
 Some draft folder names and optional implementation folders remain intentionally
 uncreated. There is no `src/protocol/version.ts`, `src/protocol/codecs`, or
@@ -80,10 +79,10 @@ revisited when generated clients or multiple platform adapters appear.
 
 ## Next Slice
 
-Decide how to handle repo-wide formatting drift before enabling `format:check`
-in CI. The next slice should either isolate a formatting-only PR for the existing
-wiki/lockfile drift or record why format enforcement remains touched-file only
-until a larger documentation cleanup.
+Revisit the remaining optional implementation folders and generated-client
+surface. The next slice should decide whether `src/protocol/version.ts`,
+`src/protocol/codecs`, or generated OpenAPI/client output is the highest-value
+next step now that local and CI gates are in place.
 
 ## Referenced by
 
