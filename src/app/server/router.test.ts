@@ -77,6 +77,25 @@ describe('acpRouter', () => {
     expect(body.capabilities.supports_reviews).toBe(true)
   })
 
+  it('rejects an unsupported protocol version during session initialization', async () => {
+    const handler = makeHandler()
+    const res = await handler(
+      post('/v1/session/initialize', {
+        protocol_version: '0.2',
+        worker: {
+          id: 'agent_future',
+          name: 'Future Agent',
+          kind: 'agent',
+        },
+      }),
+    )
+
+    expect(res.status).toBe(400)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
+      'invalid_request',
+    )
+  })
+
   const initSession = async (
     handler: (req: Request) => Promise<Response>,
     permissions: readonly string[],

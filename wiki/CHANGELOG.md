@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-27 · protocol-version-handshake slice · accepted
+  [[ADR-0004-protocol-version-codecs-generated-client]], added
+  [[protocol-version]] as the canonical v0.1 compatibility module, and moved
+  unsupported session versions into explicit handshake validation while deferring
+  standalone codecs/generated clients until a real boundary or consumer exists ·
+  focused tests pending · risk LOW
 - 2026-06-27 · format-drift-cleanup slice · normalized the pre-existing
   repo-wide Prettier drift across the lockfile and older wiki pages, then enabled
   `pnpm format:check` in CI beside lint, typecheck, file-size, and tests ·
