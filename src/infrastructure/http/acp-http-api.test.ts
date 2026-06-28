@@ -53,6 +53,19 @@ describe('AcpHttpApi', () => {
     expect(payload.capabilities.can_review).toBe(true)
   })
 
+  it('keeps protocol version compatibility as runtime negotiation', () => {
+    const payload = Schema.decodeUnknownSync(InitializeSessionPayload)({
+      protocol_version: '0.2',
+      worker: {
+        id: 'agent_future',
+        name: 'Future Agent',
+        kind: 'agent',
+      },
+    })
+
+    expect(payload.protocol_version).toBe('0.2')
+  })
+
   it('declares the v0.1 REST routes from spec section 12', () => {
     expect(reflectEndpoints()).toEqual([
       {

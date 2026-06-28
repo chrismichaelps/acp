@@ -36,7 +36,7 @@ export const ApproveReviewPayload: Schema.Struct<{ met_requirements: string[] }>
 export const ClientCapabilities: Schema.Struct<{ // spec §9 worker flags }>
 export const InitializeSessionWorker: Schema.Struct<{ // Worker descriptor, status/capabilities defaulted }>
 export const InitializeSessionPayload: Schema.Struct<{ // §8 scopes default to []
-  protocol_version: "0.1"; worker: InitializeSessionWorker
+  protocol_version: string; worker: InitializeSessionWorker
   capabilities: ClientCapabilities; permissions: Schema.Array<Permission> }>
 export const InitializeSessionResponse: Schema.Struct<{ // spec §9 host handshake
   session_id: SessionId; protocol_version: "0.1"
@@ -86,7 +86,10 @@ with `addSuccess`/`addError`.
 [[Worker]] record with `status` and `capabilities`) and the draft spec §9 shape:
 `protocol_version`, a lean worker descriptor, and a top-level client capability
 object. Defaults keep reconnects compact while the router normalizes the decoded
-descriptor back into a canonical [[Worker]] for storage.
+descriptor back into a canonical [[Worker]] for storage. The request schema keeps
+the client version as a string; [[protocol-version]] owns the supported-version
+predicate so the router can reject incompatible versions as explicit handshake
+validation rather than generic decode failure.
 
 Artifact deletion is declared as `DELETE /v1/artifacts/{artifact_id}` because the
 domain [[artifact-service]] already owns removal and emits `artifact.deleted`;
@@ -105,4 +108,4 @@ route drift between server handlers, generated clients, and tests.
 
 ## Referenced by
 
-[[http-index]] · [[Transport]] · [[src/_MOC]]
+[[http-index]] · [[Transport]] · [[protocol-version]] · [[src/_MOC]]

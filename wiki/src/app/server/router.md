@@ -46,7 +46,8 @@ export const acpRouter: HttpRouter.HttpRouter<
 - `POST /v1/session/initialize` → register [[Worker]], mint a [[session-service]]
   session, return `session_id` (the v0.1 bearer token) + host capabilities (spec
   §9); accepts both full internal [[Worker]] records and draft §9
-  `protocol_version` + client capability handshakes
+  `protocol_version` + client capability handshakes, rejecting unsupported
+  versions through [[protocol-version]]
 - `GET  /v1/workspaces` → list [[Workspace]]s
 - `POST /v1/work` · `POST /v1/work/:work_id/claim` · `PATCH /v1/work/:work_id`
   · `POST /v1/work/:work_id/events`
@@ -80,10 +81,13 @@ validation; anything else is `internal_error` `500` (no internal leak).
 
 `initializeSession` is the one route with compatibility normalization. The HTTP
 schema accepts the draft spec handshake, where worker capability booleans sit
-beside a lean worker descriptor. The router derives the stored [[Worker]]
-capability array from those booleans when the worker record did not already
-carry capabilities, defaults missing worker status to `online`, and preserves
-`permissions` as the host's bearer-scope extension.
+beside a lean worker descriptor. The router first checks `protocol_version`
+against [[protocol-version]] and rejects unsupported client versions as
+`invalid_request`; successful responses echo the canonical
+`ACP_PROTOCOL_VERSION`. It then derives the stored [[Worker]] capability array
+from those booleans when the worker record did not already carry capabilities,
+defaults missing worker status to `online`, and preserves `permissions` as the
+host's bearer-scope extension.
 
 `deleteArtifact` delegates to [[artifact-service]] `remove`, returns the deleted
 metadata at `200`, and lets the service emit `artifact.deleted`. A missing
@@ -145,4 +149,5 @@ ceremony across twelve endpoints.
 
 ## Referenced by
 
-[[server-index]] · [[server-main]] · [[Transport]] · [[src/_MOC]]
+[[server-index]] · [[server-main]] · [[Transport]] · [[protocol-version]] ·
+[[src/_MOC]]
