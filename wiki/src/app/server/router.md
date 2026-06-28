@@ -89,11 +89,13 @@ from those booleans when the worker record did not already carry capabilities,
 defaults missing worker status to `online`, and preserves `permissions` as the
 host's bearer-scope extension.
 
-`updateArtifact` delegates to [[artifact-service]] `update`, returns the updated
-metadata at `200`, and lets the service emit `artifact.updated`. `deleteArtifact`
-delegates to [[artifact-service]] `remove`, returns the deleted metadata at `200`,
-and lets the service emit `artifact.deleted`. A missing artifact maps through the
-shared domain error path to `404`.
+`createArtifact` and `updateArtifact` decode the shared artifact payload schemas,
+including optional external `uri`, and delegate URI/content ownership to
+[[artifact-service]]. `updateArtifact` returns the updated metadata at `200` and
+lets the service emit `artifact.updated`. `deleteArtifact` delegates to
+[[artifact-service]] `remove`, returns the deleted metadata at `200`, and lets the
+service emit `artifact.deleted`. A missing artifact maps through the shared domain
+error path to `404`.
 
 Backed mutations require their matching session scope when a bearer token is
 present: work update/event publication, lease release, artifact update/delete,

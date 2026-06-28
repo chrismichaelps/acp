@@ -178,7 +178,7 @@ describe('acpRouter', () => {
         body: JSON.stringify({
           name: 'acme/web',
           kind: 'git_repository',
-          uri: 'git+https://github.com/acme/web.git',
+          uri: 'git+https://example.com/acme/web.git',
           default_branch: 'main',
           metadata: { provider: 'github' },
         }),
@@ -199,7 +199,7 @@ describe('acpRouter', () => {
         body: JSON.stringify({
           name: 'acme/web-renamed',
           kind: 'git_repository',
-          uri: 'git+https://github.com/acme/web.git',
+          uri: 'git+https://example.com/acme/web.git',
           metadata: { provider: 'github' },
         }),
       }),
@@ -223,7 +223,7 @@ describe('acpRouter', () => {
         body: JSON.stringify({
           name: 'acme/web',
           kind: 'git_repository',
-          uri: 'git+https://github.com/acme/web.git',
+          uri: 'git+https://example.com/acme/web.git',
           metadata: { provider: 'github' },
         }),
       }),
@@ -251,7 +251,7 @@ describe('acpRouter', () => {
         body: JSON.stringify({
           name: 'acme/web-renamed',
           kind: 'git_repository',
-          uri: 'git+https://github.com/acme/web.git',
+          uri: 'git+https://example.com/acme/web.git',
           metadata: { provider: 'github' },
         }),
       }),

@@ -96,28 +96,61 @@ describe('ArtifactService', () => {
     ).toEqual(['artifact.created'])
   })
 
-  it('allows metadata-only artifacts without content', () => {
+  it('creates an external artifact reference without storing private content', () => {
     const result = runSync(
       Effect.gen(function* () {
         const artifacts = yield* ArtifactService
+        const events = yield* EventStore
         const created = yield* artifacts.create(
           createInput(
             otherArtifactId,
             Schema.decodeUnknownSync(CreateArtifactPayload)({
               workspace_id: workspaceId,
               work_id: workId,
-              kind: 'log',
-              summary: 'Test output',
+              kind: 'pull_request',
+              uri: 'https://example.com/acp/artifacts/pull-42',
+              summary: 'Review PR',
             }),
           ),
         )
         const content = yield* artifacts.readContent(otherArtifactId)
-        return { created, content }
+        const log = yield* events.readAfter(workspaceId, 0)
+        return { created, content, log }
       }),
     )
 
-    expect(result.created.kind).toBe('log')
+    expect(result.created.uri).toBe('https://example.com/acp/artifacts/pull-42')
+    expect(result.created.kind).toBe('pull_request')
     expect(Option.isNone(result.content)).toBe(true)
+    expect(Chunk.toReadonlyArray(result.log)[0]?.data).toMatchObject({
+      uri: 'https://example.com/acp/artifacts/pull-42',
+    })
+  })
+
+  it('rejects artifact creates without content or an external uri', () => {
+    const error = runSync(
+      Effect.either(
+        Effect.gen(function* () {
+          const artifacts = yield* ArtifactService
+          return yield* artifacts.create(
+            createInput(
+              otherArtifactId,
+              Schema.decodeUnknownSync(CreateArtifactPayload)({
+                workspace_id: workspaceId,
+                work_id: workId,
+                kind: 'log',
+                summary: 'Test output',
+              }),
+            ),
+          )
+        }),
+      ),
+    )
+
+    expect(error._tag).toBe('Left')
+    if (error._tag === 'Left') {
+      expect(error.left._tag).toBe('ValidationError')
+    }
   })
 
   it('rejects content larger than the configured artifact limit', () => {
@@ -158,6 +191,7 @@ describe('ArtifactService', () => {
               workspace_id: workspaceId,
               work_id: otherWorkId,
               kind: 'log',
+              uri: 'https://ci.example.test/logs/1',
             }),
           ),
         )
@@ -168,6 +202,7 @@ describe('ArtifactService', () => {
               workspace_id: otherWorkspaceId,
               work_id: otherWorkId,
               kind: 'markdown',
+              uri: 'https://ci.example.test/notes/1',
             }),
           ),
         )
@@ -220,7 +255,7 @@ describe('ArtifactService', () => {
     ).toEqual(['artifact.created', 'artifact.updated'])
   })
 
-  it('removes stored content when update omits content', () => {
+  it('preserves stored content when update changes metadata only', () => {
     const content = runSync(
       Effect.gen(function* () {
         const artifacts = yield* ArtifactService
@@ -237,7 +272,64 @@ describe('ArtifactService', () => {
       }),
     )
 
-    expect(Option.isNone(content)).toBe(true)
+    expect(Option.getOrNull(content)).toBe('diff --git a')
+  })
+
+  it('switches an artifact to an external uri and clears stored content', () => {
+    const result = runSync(
+      Effect.gen(function* () {
+        const artifacts = yield* ArtifactService
+        yield* artifacts.create(createInput())
+        const updated = yield* artifacts.update(
+          artifactId,
+          Schema.decodeUnknownSync(UpdateArtifactPayload)({
+            kind: 'pull_request',
+            uri: 'https://example.com/acp/artifacts/pull-42',
+            summary: 'Ready for review',
+          }),
+          actor,
+          later,
+        )
+        const content = yield* artifacts.readContent(artifactId)
+        return { updated, content }
+      }),
+    )
+
+    expect(result.updated.uri).toBe('https://example.com/acp/artifacts/pull-42')
+    expect(Option.isNone(result.content)).toBe(true)
+  })
+
+  it('switches an external artifact back to host-stored content', () => {
+    const result = runSync(
+      Effect.gen(function* () {
+        const artifacts = yield* ArtifactService
+        yield* artifacts.create(
+          createInput(
+            artifactId,
+            Schema.decodeUnknownSync(CreateArtifactPayload)({
+              workspace_id: workspaceId,
+              work_id: workId,
+              kind: 'pull_request',
+              uri: 'https://example.com/acp/artifacts/pull-42',
+            }),
+          ),
+        )
+        const updated = yield* artifacts.update(
+          artifactId,
+          Schema.decodeUnknownSync(UpdateArtifactPayload)({
+            kind: 'markdown',
+            content: 'local notes',
+          }),
+          actor,
+          later,
+        )
+        const content = yield* artifacts.readContent(artifactId)
+        return { updated, content }
+      }),
+    )
+
+    expect(result.updated.uri).toBe('acp://artifacts/artifact_patch')
+    expect(Option.getOrNull(result.content)).toBe('local notes')
   })
 
   it('rejects updated content larger than the configured artifact limit', () => {

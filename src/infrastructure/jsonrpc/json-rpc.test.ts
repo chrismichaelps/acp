@@ -141,7 +141,7 @@ describe('JSON-RPC transport mapping', () => {
         params: {
           name: 'acme/web',
           kind: 'git_repository',
-          uri: 'git+https://github.com/acme/web.git',
+          uri: 'git+https://example.com/acme/web.git',
           default_branch: 'main',
           metadata: { provider: 'github' },
         },
@@ -155,7 +155,7 @@ describe('JSON-RPC transport mapping', () => {
       body: {
         name: 'acme/web',
         kind: 'git_repository',
-        uri: 'git+https://github.com/acme/web.git',
+        uri: 'git+https://example.com/acme/web.git',
         default_branch: 'main',
         metadata: { provider: 'github' },
       },
@@ -172,7 +172,7 @@ describe('JSON-RPC transport mapping', () => {
           workspace_id: 'workspace/main',
           name: 'acme/web-renamed',
           kind: 'git_repository',
-          uri: 'git+https://github.com/acme/web.git',
+          uri: 'git+https://example.com/acme/web.git',
           metadata: { provider: 'github' },
         },
       }),
@@ -185,7 +185,7 @@ describe('JSON-RPC transport mapping', () => {
       body: {
         name: 'acme/web-renamed',
         kind: 'git_repository',
-        uri: 'git+https://github.com/acme/web.git',
+        uri: 'git+https://example.com/acme/web.git',
         default_branch: null,
         metadata: { provider: 'github' },
       },
@@ -306,6 +306,7 @@ describe('JSON-RPC transport mapping', () => {
         params: {
           artifact_id: 'artifact/needs encoding',
           kind: 'markdown',
+          uri: 'https://example.com/acp/artifacts/pull-42',
           summary: 'Updated notes',
           content: 'Updated content',
         },
@@ -317,6 +318,7 @@ describe('JSON-RPC transport mapping', () => {
       path: '/v1/artifacts/artifact%2Fneeds%20encoding',
       body: {
         kind: 'markdown',
+        uri: 'https://example.com/acp/artifacts/pull-42',
         media_type: null,
         summary: 'Updated notes',
         content: 'Updated content',

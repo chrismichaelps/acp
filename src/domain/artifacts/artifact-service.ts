@@ -80,7 +80,7 @@ const decodeStoredArtifact = (value: unknown) =>
     ),
   )
 
-const artifactUri = (id: ArtifactId) => `acp://artifacts/${id}`
+const hostArtifactUri = (id: ArtifactId) => `acp://artifacts/${id}`
 
 const byteLength = (value: string) => new TextEncoder().encode(value).byteLength
 
@@ -165,16 +165,56 @@ const make = Effect.gen(function* () {
       },
     })
 
+  const requireArtifactEvidence = (
+    content: Option.Option<string>,
+    uri: Option.Option<string>,
+  ) =>
+    Option.isNone(content) && Option.isNone(uri)
+      ? Effect.fail(
+          new ValidationError({
+            issues: ['artifact requires content or uri'],
+          }),
+        )
+      : Effect.void
+
   const storeContent = (id: ArtifactId, content: Option.Option<string>) =>
     Option.match(content, {
       onNone: () => Effect.void,
       onSome: (value) => storage.put(contentCollection, id, value),
     })
 
-  const replaceContent = (id: ArtifactId, content: Option.Option<string>) =>
-    Option.match(content, {
-      onNone: () => storage.remove(contentCollection, id),
-      onSome: (value) => storage.put(contentCollection, id, value),
+  const artifactUriForCreate = (
+    id: ArtifactId,
+    uri: Option.Option<string>,
+  ): string =>
+    Option.match(uri, {
+      onNone: () => hostArtifactUri(id),
+      onSome: (value) => value,
+    })
+
+  const artifactUriForUpdate = (
+    artifact: Artifact,
+    uri: Option.Option<string>,
+    content: Option.Option<string>,
+  ): string =>
+    Option.match(uri, {
+      onNone: () =>
+        Option.isSome(content) ? hostArtifactUri(artifact.id) : artifact.uri,
+      onSome: (value) => value,
+    })
+
+  const applyContentUpdate = (
+    id: ArtifactId,
+    uri: Option.Option<string>,
+    content: Option.Option<string>,
+  ) =>
+    Option.match(uri, {
+      onNone: () =>
+        Option.match(content, {
+          onNone: () => Effect.void,
+          onSome: (value) => storage.put(contentCollection, id, value),
+        }),
+      onSome: () => storage.remove(contentCollection, id),
     })
 
   const get: ArtifactServiceApi['get'] = (artifactId) =>
@@ -225,16 +265,21 @@ const make = Effect.gen(function* () {
       workspace_id: input.payload.workspace_id,
       created_by: input.createdBy,
       kind: input.payload.kind,
-      uri: artifactUri(input.id),
+      uri: artifactUriForCreate(input.id, input.payload.uri),
       media_type: input.payload.media_type,
       summary: input.payload.summary,
       created_at: input.now,
     }
 
     return Effect.gen(function* () {
-      yield* validateContentSize(input.payload.content)
+      yield* requireArtifactEvidence(input.payload.content, input.payload.uri)
+      if (Option.isNone(input.payload.uri)) {
+        yield* validateContentSize(input.payload.content)
+      }
       yield* save(artifact)
-      yield* storeContent(input.id, input.payload.content)
+      if (Option.isNone(input.payload.uri)) {
+        yield* storeContent(input.id, input.payload.content)
+      }
       yield* appendArtifactEvent(
         artifact,
         input.createdBy,
@@ -274,15 +319,18 @@ const make = Effect.gen(function* () {
   ) =>
     Effect.flatMap(requireArtifact(artifactId), (artifact) =>
       Effect.gen(function* () {
-        yield* validateContentSize(payload.content)
         const updated: Artifact = {
           ...artifact,
           kind: payload.kind,
+          uri: artifactUriForUpdate(artifact, payload.uri, payload.content),
           media_type: payload.media_type,
           summary: payload.summary,
         }
+        if (Option.isNone(payload.uri)) {
+          yield* validateContentSize(payload.content)
+        }
         yield* save(updated)
-        yield* replaceContent(artifactId, payload.content)
+        yield* applyContentUpdate(artifactId, payload.uri, payload.content)
         yield* appendArtifactEvent(updated, actor, now, 'artifact.updated')
         return updated
       }),
