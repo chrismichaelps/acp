@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-27 · event-vocabulary-domain-decisions slice · accepted
+  [[ADR-0003-event-vocabulary-domain-boundaries]], binding public event emission
+  to persisted domain transitions and deferring worker presence, workspace
+  archive, and artifact update until their domain models exist · docs-only
+  validation · risk LOW
 - 2026-06-27 · artifact-delete-transport slice · exposed backed artifact removal
   through `DELETE /v1/artifacts/{artifact_id}` and JSON-RPC `artifact.delete`,
   preserving `artifact.deleted` event emission in [[artifact-service]] and leaving

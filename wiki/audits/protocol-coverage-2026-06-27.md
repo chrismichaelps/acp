@@ -61,7 +61,9 @@ workspace-scoped event actors. `workspace.archived` has no corresponding
 workspace lifecycle field yet. Artifact update/delete events are declared in the
 spec vocabulary; delete is now transport-visible through REST and JSON-RPC, while
 update remains absent because artifacts are immutable after creation in the
-current domain model.
+current domain model. [[ADR-0003-event-vocabulary-domain-boundaries]] records
+that public v0.1 events must be backed by persisted domain transitions rather
+than synthetic transport notifications.
 
 Capability negotiation is intentionally permissive. The host returns the spec §9
 response with `protocol_version`, host descriptor, and host capabilities. On
@@ -76,10 +78,11 @@ ignored and has not been rewritten.
 
 ## Next Slice
 
-Close the remaining event-surface mismatch. Worker presence events,
-`workspace.archived`, and artifact update events are named by the draft
-vocabulary, but they need domain state decisions before becoming public
-transport routes.
+Close the remaining naming mismatch. The ignored draft spec still uses Hadoof
+and `hadoof://` examples in places, while the tracked implementation, ADR-0001,
+README, and wiki use ACP and `acp://`. The next slice should create a tracked
+canonicalization note or spec mirror rather than editing the ignored local draft
+directly.
 
 ## Referenced by
 

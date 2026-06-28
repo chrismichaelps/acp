@@ -19,7 +19,9 @@ EXPLORATORY — live fan-out of [[Event]]s to subscribed [[Worker]]s. One produc
 adapter in v0.1 (Server-Sent Events). WebSocket is deferred by
 [[ADR-0002-json-rpc-transport-framing]] because event notification semantics,
 backpressure, heartbeat, and disconnect behavior need a dedicated design before a
-second live adapter lands.
+second live adapter lands. Host/global worker presence is deferred by
+[[ADR-0003-event-vocabulary-domain-boundaries]] until ACP has an event scope
+outside workspace logs.
 
 ## Interface
 
@@ -42,9 +44,11 @@ Handler/server route wiring remains in the HTTP server slice.
 
 ## Deepening
 
-ADR: [[ADR-0001-architecture-foundation]]. Heartbeat interval from
+ADR: [[ADR-0001-architecture-foundation]] and
+[[ADR-0003-event-vocabulary-domain-boundaries]]. Heartbeat interval from
 `ACP_SSE_HEARTBEAT`.
 
 ## Referenced by
 
-[[Event]] · [[event-store]] · [[sse-event-stream]] · [[architecture/_MOC]]
+[[Event]] · [[event-store]] · [[sse-event-stream]] · [[architecture/_MOC]] ·
+[[ADR-0003-event-vocabulary-domain-boundaries]]
