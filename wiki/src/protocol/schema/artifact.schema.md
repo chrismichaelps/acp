@@ -37,12 +37,14 @@ export const CreateArtifactPayload: Schema.Struct<{
   workspace_id
   work_id
   kind
+  uri?: optionalWith<NonEmptyString, Option>
   media_type?
   summary?
   content?: optionalWith<string, Option>
 }>
 export const UpdateArtifactPayload: Schema.Struct<{
   kind
+  uri?: optionalWith<NonEmptyString, Option>
   media_type?
   summary?
   content?: optionalWith<string, Option>
@@ -52,17 +54,22 @@ export type Artifact = typeof Artifact.Type
 
 ## Algorithm
 
-Struct over [[ids]] + [[common]] `ArtifactKind`. `content` (inline body) is optional;
-host stores it under the stable artifact URI (`acp://artifacts/{id}`).
-`UpdateArtifactPayload` intentionally omits identity, workspace, work, URI,
-creator, and timestamp; an update replaces mutable metadata/content for the
-existing artifact while preserving its durable identity.
+Struct over [[ids]] + [[common]] `ArtifactKind`. `content` (inline body) is
+optional; when no explicit `uri` is provided, the host stores content under the
+stable artifact URI (`acp://artifacts/{id}`). `uri` is optional so workers can
+register external artifacts such as pull requests, commits, CI reports, and
+screenshots without copying the content into ACP. `UpdateArtifactPayload`
+intentionally omits identity, workspace, work, creator, and timestamp; an update
+replaces mutable metadata/content/URI for the existing artifact while preserving
+its durable identity.
 
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT accept `content` larger than `ACP_MAX_ARTIFACT_SIZE` — reject at the service.
-- ❌ Do NOT let update payloads change `id`, `workspace_id`, `work_id`, `uri`,
+- ❌ Do NOT let update payloads change `id`, `workspace_id`, `work_id`,
   `created_by`, or `created_at`.
+- ❌ Do NOT require external integrations to inline large artifacts when a stable
+  URI can represent the produced artifact.
 
 ## Depth
 

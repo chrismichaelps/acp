@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · external-artifact-references slice · added optional external
+  artifact `uri` support across [[artifact.schema]], [[artifact-service]],
+  [[acp-router]], [[json-rpc-command-map]], and [[cli-commands]], preserving
+  host-stored `acp://artifacts/{id}` content as the default and rejecting empty
+  artifact creates · 194 tests green · risk LOW
 - 2026-06-28 · post-parser-integration-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after the CLI parser dispatch-table
   refactor, confirmed SQLite hot paths already use composite primary-key query

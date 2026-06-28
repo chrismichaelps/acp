@@ -40,26 +40,26 @@ export const parseArgs: (
 
 ### Commands (spec §21)
 
-| Argv                                                                          | → request                               |
-| ----------------------------------------------------------------------------- | --------------------------------------- |
-| `workspace list`                                                              | `GET /v1/workspaces`                    |
-| `workspace create --name --kind --uri [--default-branch]`                     | `POST /v1/workspaces`                   |
-| `workspace update <workspace_id> --name --kind --uri [--default-branch]`      | `PATCH /v1/workspaces/<id>`             |
-| `workspace archive <workspace_id>`                                            | `POST /v1/workspaces/<id>/archive`      |
-| `work create <title> --workspace <id> [--priority] [--description]`           | `POST /v1/work`                         |
-| `work claim <work_id> --worker <id>`                                          | `POST /v1/work/<id>/claim`              |
-| `work update <work_id> --state <s>`                                           | `PATCH /v1/work/<id>`                   |
-| `lease request --workspace --holder --kind --uri [--ttl]`                     | `POST /v1/leases`                       |
-| `lease release <lease_id>`                                                    | `POST /v1/leases/<id>/release`          |
-| `checkpoint create --workspace --work --summary`                              | `POST /v1/checkpoints`                  |
-| `artifact create --workspace --work --kind [--summary] [--content]`           | `POST /v1/artifacts`                    |
-| `artifact update <artifact_id> --kind [--media-type] [--summary] [--content]` | `PATCH /v1/artifacts/<id>`              |
-| `artifact delete <artifact_id>`                                               | `DELETE /v1/artifacts/<id>`             |
-| `review request --work --by [--reviewer]`                                     | `POST /v1/reviews`                      |
-| `review approve <review_id> --met <csv>`                                      | `POST /v1/reviews/<id>/approve`         |
-| `review reject <review_id>`                                                   | `POST /v1/reviews/<id>/reject`          |
-| `review request-changes <review_id>`                                          | `POST /v1/reviews/<id>/request_changes` |
-| `events stream --workspace <id>`                                              | `GET /v1/events/stream?workspace_id=`   |
+| Argv                                                                                  | → request                               |
+| ------------------------------------------------------------------------------------- | --------------------------------------- |
+| `workspace list`                                                                      | `GET /v1/workspaces`                    |
+| `workspace create --name --kind --uri [--default-branch]`                             | `POST /v1/workspaces`                   |
+| `workspace update <workspace_id> --name --kind --uri [--default-branch]`              | `PATCH /v1/workspaces/<id>`             |
+| `workspace archive <workspace_id>`                                                    | `POST /v1/workspaces/<id>/archive`      |
+| `work create <title> --workspace <id> [--priority] [--description]`                   | `POST /v1/work`                         |
+| `work claim <work_id> --worker <id>`                                                  | `POST /v1/work/<id>/claim`              |
+| `work update <work_id> --state <s>`                                                   | `PATCH /v1/work/<id>`                   |
+| `lease request --workspace --holder --kind --uri [--ttl]`                             | `POST /v1/leases`                       |
+| `lease release <lease_id>`                                                            | `POST /v1/leases/<id>/release`          |
+| `checkpoint create --workspace --work --summary`                                      | `POST /v1/checkpoints`                  |
+| `artifact create --workspace --work --kind [--uri] [--summary] [--content]`           | `POST /v1/artifacts`                    |
+| `artifact update <artifact_id> --kind [--uri] [--media-type] [--summary] [--content]` | `PATCH /v1/artifacts/<id>`              |
+| `artifact delete <artifact_id>`                                                       | `DELETE /v1/artifacts/<id>`             |
+| `review request --work --by [--reviewer]`                                             | `POST /v1/reviews`                      |
+| `review approve <review_id> --met <csv>`                                              | `POST /v1/reviews/<id>/approve`         |
+| `review reject <review_id>`                                                           | `POST /v1/reviews/<id>/reject`          |
+| `review request-changes <review_id>`                                                  | `POST /v1/reviews/<id>/request_changes` |
+| `events stream --workspace <id>`                                                      | `GET /v1/events/stream?workspace_id=`   |
 
 ### Linkage
 
@@ -74,9 +74,11 @@ Each handler receives the parsed positionals and flags, validates its own
 required inputs (missing → `CliError`) and assembles a `CliRequest` with encoded
 route parameters and query values. Unknown keys never fall through a conditional
 chain; they return the same `CliError` as any unsupported command. Numeric lease
-TTLs are validated as positive safe integers before HTTP decoding. `--default-branch`
-and `--media-type` normalize to the schema's snake_case JSON fields.
-`review approve --met` is a comma-separated list that becomes
+TTLs are validated as positive safe integers before HTTP decoding.
+`--default-branch` and `--media-type` normalize to the schema's snake_case JSON
+fields. Artifact create/update forward optional `--uri` so the CLI can register
+external pull request, commit, report, or screenshot artifacts without inline
+content. `review approve --met` is a comma-separated list that becomes
 `met_requirements`. `events stream` sets `stream: true`.
 
 ## Negative Logic (Prohibited Paths)

@@ -30,7 +30,7 @@ describe('parseArgs', () => {
       '--kind',
       'git_repository',
       '--uri',
-      'git+https://github.com/acme/web.git',
+      'git+https://example.com/acme/web.git',
       '--default-branch',
       'main',
     ])
@@ -39,7 +39,7 @@ describe('parseArgs', () => {
     expect(req.body).toEqual({
       name: 'acme/web',
       kind: 'git_repository',
-      uri: 'git+https://github.com/acme/web.git',
+      uri: 'git+https://example.com/acme/web.git',
       default_branch: 'main',
     })
   })
@@ -51,7 +51,7 @@ describe('parseArgs', () => {
       '--name',
       'acme/web',
       '--uri',
-      'git+https://github.com/acme/web.git',
+      'git+https://example.com/acme/web.git',
     ])
     expect(Either.isLeft(parsed)).toBe(true)
     if (Either.isLeft(parsed)) {
@@ -229,6 +229,30 @@ describe('parseArgs', () => {
     })
   })
 
+  it('parses artifact creation with an external uri', () => {
+    const req = right([
+      'artifact',
+      'create',
+      '--workspace',
+      'workspace_1',
+      '--work',
+      'work_123',
+      '--kind',
+      'pull_request',
+      '--uri',
+      'https://example.com/acp/artifacts/pull-42',
+      '--summary',
+      'Review PR',
+    ])
+    expect(req.body).toEqual({
+      workspace_id: 'workspace_1',
+      work_id: 'work_123',
+      kind: 'pull_request',
+      uri: 'https://example.com/acp/artifacts/pull-42',
+      summary: 'Review PR',
+    })
+  })
+
   it('parses artifact update with metadata and content fields', () => {
     const req = right([
       'artifact',
@@ -236,6 +260,8 @@ describe('parseArgs', () => {
       'artifact_123',
       '--kind',
       'report',
+      '--uri',
+      'https://ci.example.test/reports/123',
       '--media-type',
       'text/markdown',
       '--summary',
@@ -247,6 +273,7 @@ describe('parseArgs', () => {
     expect(req.path).toBe('/v1/artifacts/artifact_123')
     expect(req.body).toEqual({
       kind: 'report',
+      uri: 'https://ci.example.test/reports/123',
       media_type: 'text/markdown',
       summary: 'Updated report',
       content: '# Report',

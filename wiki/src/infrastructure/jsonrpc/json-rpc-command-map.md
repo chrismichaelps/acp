@@ -75,7 +75,10 @@ decoded values do not leak back onto the wire. Path-bearing methods such as
 `workspace.update`, `workspace.archive`, `artifact.update`, `work.claim`, and
 `lease.release` decode resource identifiers and operation fields, encode path segments with
 `encodeURIComponent`, and build the exact REST route used by the HTTP transport.
-`events.subscribe` builds the SSE route and marks the command as stream-capable.
+`artifact.create` and `artifact.update` carry optional external artifact `uri`
+values through the shared schema, letting JSON-RPC register PR/commit/report
+artifacts without inlining content. `events.subscribe` builds the SSE route and
+marks the command as stream-capable.
 
 Unknown method labels fail as JSON-RPC `-32601`. Missing or invalid params fail
 as `-32602`, with response suppression for notifications handled later by

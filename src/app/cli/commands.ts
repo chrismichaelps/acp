@@ -262,6 +262,7 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
           workspace_id: workspaceId,
           work_id: workId,
           kind,
+          ...optional(flags, 'uri'),
           ...optional(flags, 'summary'),
           ...optional(flags, 'content'),
         },
@@ -278,6 +279,7 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
         path: `/v1/artifacts/${encodePathSegment(artifactId)}`,
         body: {
           kind,
+          ...optional(flags, 'uri'),
           ...optionalAs(flags, 'media-type', 'media_type'),
           ...optional(flags, 'summary'),
           ...optional(flags, 'content'),
@@ -382,8 +384,8 @@ export const usage = `acp — Agent Coordination Protocol CLI
   acp lease request --workspace <id> --holder <id> --kind <k> --uri <u> [--ttl <n>]
   acp lease release <lease_id>
   acp checkpoint create --workspace <id> --work <id> --summary <s>
-  acp artifact create --workspace <id> --work <id> --kind <k> [--summary <s>] [--content <c>]
-  acp artifact update <artifact_id> --kind <k> [--media-type <m>] [--summary <s>] [--content <c>]
+  acp artifact create --workspace <id> --work <id> --kind <k> [--uri <u>] [--summary <s>] [--content <c>]
+  acp artifact update <artifact_id> --kind <k> [--uri <u>] [--media-type <m>] [--summary <s>] [--content <c>]
   acp artifact delete <artifact_id>
   acp review request --work <id> --by <id> [--reviewer <id>]
   acp review approve <review_id> --met <requirement,csv>

@@ -48,6 +48,59 @@ const createArtifact = (token: string) =>
   })
 
 describe('artifact routes', () => {
+  it('creates an external artifact reference', async () => {
+    const handler = makeHandler()
+    const token = await initSession(handler, ['artifact:create'])
+
+    const created = await handler(
+      new Request('http://acp.test/v1/artifacts', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          workspace_id: 'workspace_1',
+          work_id: 'work_1',
+          kind: 'pull_request',
+          uri: 'https://example.com/acp/artifacts/pull-42',
+          summary: 'Ready for review',
+        }),
+      }),
+    )
+
+    expect(created.status).toBe(201)
+    expect(
+      (await created.json()) as { uri: string; kind: string },
+    ).toMatchObject({
+      kind: 'pull_request',
+      uri: 'https://example.com/acp/artifacts/pull-42',
+    })
+  })
+
+  it('rejects artifact creates without content or uri', async () => {
+    const handler = makeHandler()
+    const token = await initSession(handler, ['artifact:create'])
+
+    const created = await handler(
+      new Request('http://acp.test/v1/artifacts', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          workspace_id: 'workspace_1',
+          work_id: 'work_1',
+          kind: 'markdown',
+          summary: 'No evidence yet',
+        }),
+      }),
+    )
+
+    expect(created.status).toBe(400)
+  })
+
   it('updates an artifact and preserves its identity fields', async () => {
     const handler = makeHandler()
     const token = await initSession(handler, [
