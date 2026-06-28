@@ -11,6 +11,7 @@ tags: [handoff]
 # Handoff — JSON-RPC HTTP Endpoint Slice (`POST /rpc`, spec §13)
 
 ## Done
+
 - New [[rpc-endpoint]] (`src/app/server/rpc-endpoint.ts`): `makeRpcHandler(routerApp)`
   is the `POST /rpc` handler. It reads the bearer token + JSON body (single/batch),
   runs `executeJsonRpc` with a `dispatchVia(routerApp)` that replays each command
@@ -31,6 +32,7 @@ tags: [handoff]
   -32700).
 
 ## Decided (do not re-litigate)
+
 - **Replay the shared router via `dispatchVia`**, not `toWebHandlerLayer` — the latter
   builds a second `AppLive`/store; `/rpc` and `/v1` must share one store.
 - **`acpRouter = v1Router + /rpc`; dispatch targets `v1Router`** — clean acyclic shape.
@@ -40,6 +42,7 @@ tags: [handoff]
   `GET /v1/events/stream`.
 
 ## Open / Remaining
+
 1. **CLI `--rpc` mode (optional):** [[cli-client]] could POST `/rpc` instead of REST —
    low value (the REST client already works); skip unless asked.
 2. **stdio JSON-RPC framing (optional):** a Node entrypoint reading `Content-Length`
@@ -49,6 +52,7 @@ tags: [handoff]
    would round out the transport docs.
 
 ## Exact next action
+
 DNA Engineer: the JSON-RPC transport is functionally complete for v0.2 over HTTP. Pick
 the **README `POST /rpc` documentation** slice (small, doc-only): add a curl example
 of a `session.initialize` then an authed `work.create` over `/rpc`, and note the
@@ -57,5 +61,6 @@ whether to also document batch semantics and the SSE-vs-`events.subscribe` split
 Defer stdio framing unless a non-HTTP host is explicitly requested.
 
 ## Links
+
 [[rpc-endpoint]] · [[json-rpc-runtime]] · [[json-rpc]] · [[acp-router]] · [[http-app]]
 · [[Transport]] · [[ADR-0001-architecture-foundation]]

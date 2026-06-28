@@ -1,10 +1,10 @@
 ---
 type: module
-path: "@root/src/protocol/schema/event.schema.ts"
+path: '@root/src/protocol/schema/event.schema.ts'
 fidelity: Active
-domain: "[[Event]]"
-grammar: "[[grammar/typescript]]"
-seam: "[[EventStream]]"
+domain: '[[Event]]'
+grammar: '[[grammar/typescript]]'
+seam: '[[EventStream]]'
 depth_score: 0.72
 depth_status: DEEP
 tags: [module, deep]
@@ -14,11 +14,14 @@ aliases: [event.schema]
 # Event Schema
 
 ## Purpose
+
 Wire + domain shape of an [[Event]] — the append-only coordination primitive —
 plus the closed `EventType` vocabulary (spec §10.8, §11).
 
 ## Interface
+
 ### Signatures
+
 ```typescript
 export const EventType: Schema.Literal<[ // all spec §11 types
   "worker.online", … "review.changes_requested" ]>
@@ -32,18 +35,22 @@ export type EventType = typeof EventType.Type
 ```
 
 ## Algorithm
+
 Struct over [[ids]] + [[common]]. `type` is the authoritative closed union of all
 protocol event names; `seq` is a monotonic per-workspace sequence for ordered
 replay; `data` is an open payload bag (validated per-type by producing services,
 not here).
 
 ## Negative Logic (Prohibited Paths)
+
 - ❌ Do NOT emit an `Event` whose `type` is outside the `EventType` union.
 - ❌ Do NOT mutate an event after creation — events are immutable.
 
 ## Depth
+
 DEEP (0.72). The single `EventType` union governs the whole event system; deleting
 it scatters string event-name literals across every service.
 
 ## Referenced by
+
 [[EventStream]] · [[Storage]] · [[src/_MOC]]

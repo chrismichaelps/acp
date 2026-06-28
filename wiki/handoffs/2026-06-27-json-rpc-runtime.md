@@ -11,12 +11,14 @@ tags: [handoff]
 # Handoff — JSON-RPC Execution Runtime Slice (spec §13)
 
 ## Context
+
 Picked up after a burst of direct-to-`main` commits (mandatory-auth, sqlite
 adapter, storage selection, **json-rpc mapping core**) landed without handoffs.
-The json-rpc *core* ([[json-rpc]]) only normalized envelopes into canonical
+The json-rpc _core_ ([[json-rpc]]) only normalized envelopes into canonical
 commands and explicitly deferred execution to "a later slice". This is that slice.
 
 ## Done
+
 - New [[json-rpc-runtime]] (`src/infrastructure/jsonrpc/json-rpc-runtime.ts`):
   `executeJsonRpc(dispatch, payload, token)` executes [[json-rpc]] commands via an
   injected, transport-agnostic `JsonRpcDispatch` and folds results into JSON-RPC
@@ -39,6 +41,7 @@ commands and explicitly deferred execution to "a later slice". This is that slic
   6 folding-rule + 2 live-router; one core assertion corrected).
 
 ## Decided (do not re-litigate)
+
 - **Execute by reusing [[acp-router]] through `JsonRpcDispatch`**, not a second
   method→service table — JSON-RPC inherits routing, bearer auth, §8 scopes,
   encoding, and the error→status map for free (what [[json-rpc]] forbids duplicating).
@@ -51,6 +54,7 @@ commands and explicitly deferred execution to "a later slice". This is that slic
   error in `data` — no `-32000..-32099` application codes at v0.2.
 
 ## Open / Remaining
+
 1. **A concrete JSON-RPC framing** that supplies a real `JsonRpcDispatch` and owns
    byte I/O. Two candidates: a `POST /rpc` HTTP route (single + batch) mounted
    beside [[acp-router]] in [[http-app]], or a stdio loop (LSP/MCP-style) reading
@@ -60,6 +64,7 @@ commands and explicitly deferred execution to "a later slice". This is that slic
    WS/stdio framing could deliver SSE-equivalent notifications later.
 
 ## Exact next action
+
 DNA Engineer: pick the **`POST /rpc` HTTP framing** slice. Author a wiki page for a
 route (or sibling router merged in [[http-app]]) that reads the JSON body, supplies
 a `JsonRpcDispatch` backed by the in-process [[acp-router]] web handler, forwards
@@ -69,5 +74,6 @@ obtains the router web handler without a second `AppLive` (split-brain — see
 [[sweeper#Grill Log]] / [[http-app]]); and batch `Content-Type`/response-shape rules.
 
 ## Links
+
 [[json-rpc-runtime]] · [[json-rpc]] · [[acp-router]] · [[http-app]] · [[jsonrpc-index]]
 · [[Transport]] · [[ADR-0001-architecture-foundation]]

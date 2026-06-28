@@ -28,9 +28,7 @@ raw JSON inside the service.
 ```typescript
 export interface WorkerServiceApi {
   readonly register: (worker: Worker) => Effect<Worker, StorageError>
-  readonly get: (
-    workerId: WorkerId,
-  ) => Effect<Option<Worker>, StorageError>
+  readonly get: (workerId: WorkerId) => Effect<Option<Worker>, StorageError>
   readonly list: () => Effect<readonly Worker[], StorageError>
   readonly setStatus: (
     workerId: WorkerId,
@@ -93,26 +91,26 @@ would scatter encode/decode plumbing across every transport caller.
 - **Q:** Worker presence events (`worker.online`, `worker.status_changed`) are
   listed in spec §11. Should `register`/`setStatus` emit them through
   [[EventStore]]?
-  **A:** No — not in this slice. *Rationale:* the [[Event]] schema requires a
+  **A:** No — not in this slice. _Rationale:_ the [[Event]] schema requires a
   `workspace_id` and [[EventStore]] appends to a per-workspace log, but a
   [[Worker]] is host-scoped (registered at `session/initialize`, before any
   workspace context). Emitting would force a synthetic workspace — inventing logic
-  the spec does not describe. *Rejected:* (a) a reserved `__host__` pseudo-workspace
+  the spec does not describe. _Rejected:_ (a) a reserved `__host__` pseudo-workspace
   (leaks a fake entity into the workspace event log); (b) requiring callers to pass
   a `workspace_id` to `setStatus` (couples host-level presence to a workspace the
   worker may not be in yet). Presence events are deferred to a future host/global
   event-stream slice.
 - **Q:** Is `register` create-only or upsert?
-  **A:** Upsert. *Rationale:* `session/initialize` is re-invoked on every reconnect;
+  **A:** Upsert. _Rationale:_ `session/initialize` is re-invoked on every reconnect;
   a returning worker must refresh its capabilities/vendor without a separate update
-  path. *Rejected:* failing on duplicate id (forces callers to branch on first-vs-
+  path. _Rejected:_ failing on duplicate id (forces callers to branch on first-vs-
   subsequent connect — worse UX, leaks connection lifecycle into the registry).
 - **Q:** Does `setStatus` validate status transitions (like the WorkUnit state
   machine)?
-  **A:** No — any `WorkerStatus` is reachable from any other. *Rationale:* presence
+  **A:** No — any `WorkerStatus` is reachable from any other. _Rationale:_ presence
   is not a lifecycle; a worker may flip `online → offline → busy` in any order and
   the closed `WorkerStatus` vocabulary already constrains the value space.
-  *Rejected:* a presence state machine (over-engineering for a value with no
+  _Rejected:_ a presence state machine (over-engineering for a value with no
   invariant ordering).
 
 ## Variants

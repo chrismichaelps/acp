@@ -61,6 +61,7 @@ export const SweeperLive: Layer.Layer<
 ## Algorithm
 
 `sweepOnce`:
+
 1. `now ← IdClock.now`.
 2. `evictedSessions ← SessionService.evictExpired(now, config.sessionTtl)`.
 3. `expiredLeases ← LeaseService.expireAllDue(systemActor, now)` — lapses every
@@ -89,23 +90,23 @@ like other composition-root wiring ([[server-main]]).
 ## Grill Log
 
 - **Q:** Wall-clock `Effect.sleep` poll loop or per-entity scheduled expiry?
-  **A:** A poll loop (`sleep sweepInterval` → `sweepOnce`). *Rationale:* the store
+  **A:** A poll loop (`sleep sweepInterval` → `sweepOnce`). _Rationale:_ the store
   is in-memory and small; a single periodic scan is simpler and has no per-entity
   timer bookkeeping to leak. Expiry precision is bounded by `sweepInterval`
-  (default 60s), which is fine for credential/lease hygiene. *Rejected:* a timer
+  (default 60s), which is fine for credential/lease hygiene. _Rejected:_ a timer
   wheel / per-lease scheduled fiber (needless complexity at v0.1 scale).
 - **Q:** Where is the daemon forked?
   **A:** `forkScoped` inside `SweeperLive`, merged into [[http-app]] over the
   shared app runtime — so it lives exactly as long as the host and shares the one
-  `Storage` instance. *Rationale:* a separately-provided sweeper would operate on a
-  *different* in-memory store than the router and silently never see its sessions
-  or leases. *Rejected:* forking in [[server-main]] beside a second `AppLive`
+  `Storage` instance. _Rationale:_ a separately-provided sweeper would operate on a
+  _different_ in-memory store than the router and silently never see its sessions
+  or leases. _Rejected:_ forking in [[server-main]] beside a second `AppLive`
   provision (the split-brain bug above).
 - **Q:** Does lease expiry emit an event?
   **A:** Yes — reuses [[lease-service]]'s existing `lease.expired` emission through
   [[event-store]], so SSE subscribers observe lapses. Session eviction emits no
   event (sessions are host-local auth state, not a workspace coordination
-  primitive). *Rejected:* a new `session.expired` event type (no subscriber need).
+  primitive). _Rejected:_ a new `session.expired` event type (no subscriber need).
 
 ## Referenced by
 

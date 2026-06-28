@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-27 · format-drift-cleanup slice · normalized the pre-existing
+  repo-wide Prettier drift across the lockfile and older wiki pages, then enabled
+  `pnpm format:check` in CI beside lint, typecheck, file-size, and tests ·
+  repo-wide format check green · risk LOW (mechanical)
 - 2026-06-27 · ci-local-validation-gates slice · added GitHub Actions CI for
   Node 24 pull requests and `main` pushes, running lint, typecheck,
   `check:file-size`, and tests through the lockfile-backed pnpm setup · local
