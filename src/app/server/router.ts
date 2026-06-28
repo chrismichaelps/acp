@@ -1,12 +1,10 @@
 /** @Acp.App.Server.Router — HttpRouter binding the API contract to services */
 import {
-  Headers,
   HttpRouter,
   HttpServerRequest,
   HttpServerResponse,
 } from '@effect/platform'
-import { Effect, Option, Schema } from 'effect'
-import { AppConfigTag } from '../../config/app-config.js'
+import { Effect, Option } from 'effect'
 import { ArtifactService } from '../../domain/artifacts/index.js'
 import { CheckpointService } from '../../domain/checkpoints/index.js'
 import { EventStore } from '../../domain/events/index.js'
@@ -15,8 +13,6 @@ import { ReviewService } from '../../domain/reviews/index.js'
 import { SessionService } from '../../domain/sessions/index.js'
 import { WorkUnitService } from '../../domain/work-units/index.js'
 import { WorkerService } from '../../domain/workers/index.js'
-import { WorkspaceService } from '../../domain/workspaces/index.js'
-import { toHttpErrorResponse } from '../../infrastructure/http/index.js'
 import {
   ApproveReviewPayload,
   EventsStreamParams,
@@ -27,11 +23,9 @@ import {
 } from '../../infrastructure/http/index.js'
 import { workspaceSseResponse } from '../../infrastructure/sse/index.js'
 import { makeRpcHandler } from './rpc-endpoint.js'
-import { ValidationError } from '../../protocol/errors/protocol-error.js'
-import type { DomainError } from '../../protocol/errors/protocol-error.js'
 import {
   NotFoundError,
-  UnauthorizedError,
+  ValidationError,
 } from '../../protocol/errors/protocol-error.js'
 import {
   ACP_PROTOCOL_VERSION,
@@ -46,7 +40,6 @@ import {
   RequestLeasePayload,
   RequestReviewPayload,
   Review,
-  Workspace,
   WorkUnit,
   isSupportedProtocolVersion,
 } from '../../protocol/schema/index.js'
@@ -56,16 +49,17 @@ import type {
   CheckpointId,
   EventId,
   LeaseId,
-  Permission,
   ReviewId,
   SessionId,
-  WorkerId,
   WorkId,
 } from '../../protocol/schema/index.js'
 import { IdClock } from './identity.js'
-
-// Mutations without a resolvable session fall back to this fixed system actor.
-const systemActor = 'worker_system' as WorkerId
+import { authorize, ok, pathParam, respond } from './route-support.js'
+import {
+  createWorkspace,
+  listWorkspaces,
+  updateWorkspace,
+} from './workspace-routes.js'
 
 // Static host identity + capabilities advertised at session/initialize (spec §9).
 const host = { name: 'ACP Local', kind: 'local' } as const
@@ -98,90 +92,6 @@ const capabilitiesFromHandshake = (
     payload.capabilities[flag] ? [capability] : [],
   )
 }
-
-// Read the bearer token (session id) from the Authorization header, if present.
-const bearerToken = Effect.map(HttpServerRequest.HttpServerRequest, (req) =>
-  Option.match(Headers.get(req.headers, 'authorization'), {
-    onNone: () => '',
-    onSome: (header) =>
-      header.toLowerCase().startsWith('bearer ')
-        ? header.slice('bearer '.length).trim()
-        : '',
-  }),
-)
-
-// Resolve the acting worker and enforce the optional required scope (spec §8):
-// - no bearer token → systemActor, unless AppConfig.requireAuth → 401 unauthorized;
-// - token with no matching session → 401 unauthorized;
-// - session missing the required scope → 401 unauthorized;
-// - otherwise → the session's worker id.
-const authorize = (scope?: Permission) =>
-  Effect.gen(function* () {
-    const token = yield* bearerToken
-    if (token === '') {
-      const config = yield* AppConfigTag
-      if (config.requireAuth) {
-        return yield* Effect.fail(
-          new UnauthorizedError({ reason: 'authentication required' }),
-        )
-      }
-      return systemActor
-    }
-    const sessions = yield* SessionService
-    const session = yield* sessions.get(token as SessionId)
-    return yield* Option.match(session, {
-      onNone: () =>
-        Effect.fail(new UnauthorizedError({ reason: 'invalid session token' })),
-      onSome: (s) =>
-        scope === undefined || s.permissions.includes(scope)
-          ? Effect.succeed(s.worker_id)
-          : Effect.fail(
-              new UnauthorizedError({
-                reason: `session lacks scope: ${scope}`,
-              }),
-            ),
-    })
-  })
-
-const domainTags = new Set<string>([
-  'ValidationError',
-  'NotFoundError',
-  'LeaseConflictError',
-  'InvalidStateTransitionError',
-  'UnauthorizedError',
-  'UnsupportedCapabilityError',
-  'StorageError',
-])
-
-const errorToResponse = (
-  error: unknown,
-): HttpServerResponse.HttpServerResponse => {
-  const tag = (error as { readonly _tag?: string })._tag
-  if (tag !== undefined && domainTags.has(tag)) {
-    return toHttpErrorResponse(error as DomainError)
-  }
-  if (tag === 'ParseError' || tag === 'RequestError') {
-    return toHttpErrorResponse(new ValidationError({ issues: [String(error)] }))
-  }
-  return HttpServerResponse.unsafeJson(
-    { error: { code: 'internal_error', message: 'Internal error.' } },
-    { status: 500 },
-  )
-}
-
-const respond = <E, R>(
-  effect: Effect.Effect<HttpServerResponse.HttpServerResponse, E, R>,
-) => Effect.catchAll(effect, (error) => Effect.succeed(errorToResponse(error)))
-
-const ok =
-  (status: number) =>
-  <A, I>(schema: Schema.Schema<A, I>, value: A) =>
-    Effect.map(Schema.encode(schema)(value), (encoded) =>
-      HttpServerResponse.unsafeJson(encoded, { status }),
-    )
-
-const pathParam = (key: string) =>
-  Effect.map(HttpRouter.params, (params) => params[key] ?? '')
 
 const initializeSession = respond(
   Effect.gen(function* () {
@@ -216,15 +126,6 @@ const initializeSession = respond(
       host,
       capabilities: hostCapabilities,
     })
-  }),
-)
-
-const listWorkspaces = respond(
-  Effect.gen(function* () {
-    const workspaces = yield* WorkspaceService
-    yield* authorize('workspace:read')
-    const all = yield* workspaces.list()
-    return yield* ok(200)(Schema.Array(Workspace), all)
   }),
 )
 
@@ -451,6 +352,8 @@ const streamEvents = respond(
 const v1Router = HttpRouter.empty.pipe(
   HttpRouter.post('/v1/session/initialize', initializeSession),
   HttpRouter.get('/v1/workspaces', listWorkspaces),
+  HttpRouter.post('/v1/workspaces', createWorkspace),
+  HttpRouter.patch('/v1/workspaces/:workspace_id', updateWorkspace),
   HttpRouter.post('/v1/work', createWork),
   HttpRouter.post('/v1/work/:work_id/claim', claimWork),
   HttpRouter.patch('/v1/work/:work_id', updateWorkState),

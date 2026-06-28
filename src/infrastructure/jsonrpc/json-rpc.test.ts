@@ -132,6 +132,66 @@ describe('JSON-RPC transport mapping', () => {
     })
   })
 
+  it('maps workspace.create params through the protocol schema', () => {
+    const command = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_workspace_create',
+        method: 'workspace.create',
+        params: {
+          name: 'acme/web',
+          kind: 'git_repository',
+          uri: 'git+https://github.com/acme/web.git',
+          default_branch: 'main',
+          metadata: { provider: 'github' },
+        },
+      }),
+    )
+
+    expect(command.request).toMatchObject({
+      method: 'POST',
+      path: '/v1/workspaces',
+      label: 'workspace.create',
+      body: {
+        name: 'acme/web',
+        kind: 'git_repository',
+        uri: 'git+https://github.com/acme/web.git',
+        default_branch: 'main',
+        metadata: { provider: 'github' },
+      },
+    })
+  })
+
+  it('maps workspace.update and encodes the workspace id path segment', () => {
+    const command = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_workspace_update',
+        method: 'workspace.update',
+        params: {
+          workspace_id: 'workspace/main',
+          name: 'acme/web-renamed',
+          kind: 'git_repository',
+          uri: 'git+https://github.com/acme/web.git',
+          metadata: { provider: 'github' },
+        },
+      }),
+    )
+
+    expect(command.request).toEqual({
+      method: 'PATCH',
+      path: '/v1/workspaces/workspace%2Fmain',
+      label: 'workspace.update',
+      body: {
+        name: 'acme/web-renamed',
+        kind: 'git_repository',
+        uri: 'git+https://github.com/acme/web.git',
+        default_branch: null,
+        metadata: { provider: 'github' },
+      },
+    })
+  })
+
   it('maps work.create params through the protocol schema', () => {
     const command = expectRight(
       parseJsonRpcCommand({

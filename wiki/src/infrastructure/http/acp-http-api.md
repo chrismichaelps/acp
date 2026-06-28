@@ -30,6 +30,7 @@ export const WorkPath: Schema.Struct<{ work_id: WorkId }>
 export const LeasePath: Schema.Struct<{ lease_id: LeaseId }>
 export const ArtifactPath: Schema.Struct<{ artifact_id: ArtifactId }>
 export const EventsStreamParams: Schema.Struct<{ workspace_id: WorkspaceId }>
+export const WorkspacePath: Schema.Struct<{ workspace_id: WorkspaceId }>
 export const UpdateWorkStatePayload: Schema.Struct<{ state: WorkState }>
 export const PublishWorkEventPayload: Schema.Struct<{ type: EventType; data: Record<string, unknown> }>
 export const ApproveReviewPayload: Schema.Struct<{ met_requirements: string[] }>
@@ -53,6 +54,8 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 
 - `POST /v1/session/initialize`
 - `GET /v1/workspaces`
+- `POST /v1/workspaces`
+- `PATCH /v1/workspaces/{workspace_id}`
 - `POST /v1/work`
 - `POST /v1/work/{work_id}/claim`
 - `PATCH /v1/work/{work_id}`
@@ -95,6 +98,12 @@ Artifact deletion is declared as `DELETE /v1/artifacts/{artifact_id}` because th
 domain [[artifact-service]] already owns removal and emits `artifact.deleted`;
 update remains intentionally absent until artifact mutation exists in the domain.
 
+Workspace create/update are declared as backed extensions beside `GET
+/v1/workspaces`. The [[workspace-service]] already owns persisted
+`workspace.created` and `workspace.updated` events, so the transport exposes
+`POST /v1/workspaces` and `PATCH /v1/workspaces/{workspace_id}` while archive
+remains deferred until the schema has lifecycle state.
+
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT implement business logic here.
@@ -108,4 +117,5 @@ route drift between server handlers, generated clients, and tests.
 
 ## Referenced by
 
-[[http-index]] · [[Transport]] · [[protocol-version]] · [[src/_MOC]]
+[[http-index]] · [[Transport]] · [[workspace-routes]] · [[protocol-version]] ·
+[[src/_MOC]]

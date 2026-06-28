@@ -67,7 +67,8 @@ export const WorkspaceServiceLive: Layer.Layer<
 
 - **Requires:** [[storage]], [[event-store]], [[workspace.schema]], [[common]],
   [[protocol-error]]
-- **Consumed by:** future HTTP transport (`GET /v1/workspaces`, spec §12.2) and CLI.
+- **Consumed by:** [[workspace-routes]] (`GET`/`POST`/`PATCH /v1/workspaces`) and
+  future CLI workspace commands.
 
 ## Algorithm
 

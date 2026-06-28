@@ -26,14 +26,16 @@ swappable [[Storage]], an append-only [[event-store]], and transport adapters at
 the edge.
 
 The HTTP surface covers the spec §12 command set plus backed extensions that
-became necessary for parity with implemented domain behavior: work progress
-event publication, review approve/reject/request-changes, and artifact deletion.
-`session.initialize` accepts the draft §9 capability shape and the earlier
-full-worker shape, then returns the spec response with `protocol_version`, host
-descriptor, host capabilities, and bearer session id.
+became necessary for parity with implemented domain behavior: workspace
+create/update, work progress event publication, review
+approve/reject/request-changes, and artifact deletion. `session.initialize`
+accepts the draft §9 capability shape and the earlier full-worker shape, then
+returns the spec response with `protocol_version`, host descriptor, host
+capabilities, and bearer session id.
 
 The JSON-RPC surface covers spec §13 and the same backed parity extensions:
-`work.publish_event`, `review.approve`, `review.reject`,
+`workspace.create`, `workspace.update`, `work.publish_event`, `review.approve`,
+`review.reject`,
 `review.request_changes`, and `artifact.delete`. JSON-RPC runs through the shared
 mapper/runtime, `POST /rpc`, and stdio Content-Length bridge. WebSocket is
 deferred by [[ADR-0002-json-rpc-transport-framing]].
@@ -81,10 +83,11 @@ isolated in app entrypoints.
 
 ## Next Slice
 
-Continue with the next command/domain gap from the protocol audit. Codecs and
-generated clients should only re-enter the queue when a concrete boundary or
-consumer appears; platform-node extraction should wait for more than one Node
-adapter or duplicated platform wiring.
+Continue with the next command/domain gap from the protocol audit. Workspace
+archive and artifact update remain deferred until their persisted domain state is
+defined. Codecs and generated clients should only re-enter the queue when a
+concrete boundary or consumer appears; platform-node extraction should wait for
+more than one Node adapter or duplicated platform wiring.
 
 ## Referenced by
 

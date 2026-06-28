@@ -93,7 +93,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 26. ✅ CI gate for lint/typecheck/file-size/tests — workflow added
 27. ✅ Formatting drift cleanup — repo-wide format check green
 28. ✅ Protocol version/codecs/generated-client decision — explicit handshake module
-29. ▶ Next command/domain gap from protocol audit
+29. ✅ Workspace mutation transport commands — REST + JSON-RPC backed by domain events
+30. ▶ Next command/domain gap from protocol audit
 
 ## Referenced by
 
