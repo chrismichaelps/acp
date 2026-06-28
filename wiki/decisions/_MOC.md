@@ -9,6 +9,9 @@ tags: [moc, adr]
   storage/transport seams, schema-first.
 - [[ADR-0002-json-rpc-transport-framing]] — ACCEPTED — JSON-RPC ships over
   `POST /rpc` and stdio; WebSocket is deferred.
+- [[ADR-0003-event-vocabulary-domain-boundaries]] — ACCEPTED — only
+  persisted domain transitions emit public v0.1 events; worker presence,
+  workspace archive, and artifact update need domain state before transport.
 
 ## Referenced by
 

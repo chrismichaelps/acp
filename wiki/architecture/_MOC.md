@@ -85,7 +85,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 19. ✅ Review action transport routes — 154 tests green
 20. ✅ Capability negotiation compatibility — 157 tests green
 21. ✅ Artifact delete transport route — focused gate green
-22. ▶ Event vocabulary domain decisions
+22. ✅ Event vocabulary domain decisions — ADR-0003 accepted
+23. ▶ Spec naming canonicalization note
 
 ## Referenced by
 
