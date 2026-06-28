@@ -310,7 +310,9 @@ describe('acpRouter', () => {
     const token = await initSession(handler, [
       'work:create',
       'work:claim',
+      'work:update',
       'review:create',
+      'review:approve',
     ])
     const created = await handler(authedWork(token))
     const workId = ((await created.json()) as { id: string }).id
@@ -375,6 +377,67 @@ describe('acpRouter', () => {
       post('/v1/reviews/review_missing/request_changes'),
     )
     expect(changes.status).toBe(404)
+  })
+
+  it('rejects review actions when the session lacks the action scope', async () => {
+    const handler = makeHandler()
+    const token = await initSession(handler, [
+      'work:create',
+      'work:claim',
+      'work:update',
+      'review:create',
+    ])
+    const created = await handler(authedWork(token))
+    const workId = ((await created.json()) as { id: string }).id
+    await handler(
+      new Request(`http://acp.test/v1/work/${workId}/claim`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ worker_id: 'agent_claude_code' }),
+      }),
+    )
+    await handler(
+      new Request(`http://acp.test/v1/work/${workId}`, {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ state: 'running' }),
+      }),
+    )
+    const requested = await handler(
+      new Request('http://acp.test/v1/reviews', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          work_id: workId,
+          requested_by: 'agent_claude_code',
+          requirements: ['tests_pass'],
+        }),
+      }),
+    )
+    const reviewId = ((await requested.json()) as { id: string }).id
+    const approved = await handler(
+      new Request(`http://acp.test/v1/reviews/${reviewId}/approve`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ met_requirements: ['tests_pass'] }),
+      }),
+    )
+    expect(approved.status).toBe(401)
+    expect(
+      ((await approved.json()) as { error: { code: string } }).error.code,
+    ).toBe('unauthorized')
   })
 })
 

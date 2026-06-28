@@ -50,7 +50,10 @@ const createArtifact = (token: string) =>
 describe('artifact routes', () => {
   it('updates an artifact and preserves its identity fields', async () => {
     const handler = makeHandler()
-    const token = await initSession(handler, ['artifact:create'])
+    const token = await initSession(handler, [
+      'artifact:create',
+      'artifact:update',
+    ])
     const created = await handler(createArtifact(token))
     const artifact = (await created.json()) as {
       id: string
@@ -93,7 +96,10 @@ describe('artifact routes', () => {
 
   it('deletes an artifact and returns 404 on a repeated delete', async () => {
     const handler = makeHandler()
-    const token = await initSession(handler, ['artifact:create'])
+    const token = await initSession(handler, [
+      'artifact:create',
+      'artifact:delete',
+    ])
     const created = await handler(createArtifact(token))
     expect(created.status).toBe(201)
     const artifactId = ((await created.json()) as { id: string }).id

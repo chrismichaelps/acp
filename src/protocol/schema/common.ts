@@ -108,9 +108,17 @@ export const Permission = Schema.Literal(
   'workspace:write',
   'work:create',
   'work:claim',
+  'work:update',
+  'work:publish_event',
   'lease:create',
+  'lease:release',
   'artifact:create',
+  'artifact:update',
+  'artifact:delete',
   'checkpoint:create',
   'review:create',
+  'review:approve',
+  'review:reject',
+  'review:request_changes',
 )
 export type Permission = typeof Permission.Type

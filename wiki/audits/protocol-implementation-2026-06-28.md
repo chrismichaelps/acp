@@ -59,16 +59,11 @@ The CLI gap was integration-facing rather than domain-facing. Closing it did not
 require new protocol state, storage shape, or event semantics, only an expanded
 argv-to-route projection, usage text, and parser/client tests.
 
-The next concrete gap is permission-scope parity. The command surface now
-includes backed artifact mutation and review action routes, but [[common]] still
-defines only the original create/read/write-era session scopes:
-`workspace:read`, `workspace:write`, `work:create`, `work:claim`,
-`lease:create`, `artifact:create`, `checkpoint:create`, and `review:create`.
-Routes such as artifact update/delete and review approve/reject/request-changes
-currently resolve an actor through [[acp-router]] `authorize()` without requiring
-a matching action scope. The spec's security section calls out explicit
-permission for destructive actions, so the reference host should make those
-mutations scope-addressable before adding more integrations.
+Permission-scope parity is now covered. [[common]] includes dedicated action
+scopes for backed work updates/events, lease release, artifact update/delete, and
+review approve/reject/request-changes, and [[acp-router]] requires them when a
+bearer session is presented. The local no-token `worker_system` fallback remains
+unchanged for development mode.
 
 Standalone protocol codecs and generated clients remain deferred by
 [[ADR-0004-protocol-version-codecs-generated-client]]. They should re-enter the
@@ -81,13 +76,10 @@ schema and storage/query contract before any host-presence feed is implemented.
 
 ## Next Slice
 
-Implement permission-scope parity for the backed mutation surface. Extend
-[[common]] `Permission` with action scopes for work updates/events, lease
-release, artifact update/delete, and review actions; update session/router wiki
-mirrors before code; require those scopes in [[acp-router]] while preserving the
-local no-token `worker_system` fallback; and add route tests that prove scoped
-sessions can perform the mutations while sessions missing the new scopes receive
-`401 unauthorized`.
+Re-audit remaining integration gaps after permission-scope parity. Treat
+generated clients, host-level presence streams, WebSocket transport, and
+platform-node extraction as deferred until a concrete consumer or duplicated
+boundary appears.
 
 ## Referenced by
 
