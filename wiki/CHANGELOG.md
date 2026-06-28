@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · post-parser-integration-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after the CLI parser dispatch-table
+  refactor, confirmed SQLite hot paths already use composite primary-key query
+  shapes for large local coordination state, and selected external artifact URI
+  support as the next integration slice · docs-only validation · risk LOW
 - 2026-06-28 · cli-parser-dispatch-table slice · refactored [[cli-commands]]
   from a linear `(group, action)` conditional chain into an additive command
   handler registry while preserving request mapping, validation, and unknown
