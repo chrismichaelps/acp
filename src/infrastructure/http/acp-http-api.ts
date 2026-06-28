@@ -211,6 +211,13 @@ export const WorkGroup = HttpApiGroup.make('work')
       .addError(ProtocolError, protocolError(401)),
   )
   .add(
+    HttpApiEndpoint.get('getWork', '/v1/work/:work_id')
+      .setPath(WorkPath)
+      .addSuccess(WorkUnit)
+      .addError(ProtocolError, protocolError(401))
+      .addError(ProtocolError, protocolError(404)),
+  )
+  .add(
     HttpApiEndpoint.post('claimWork', '/v1/work/:work_id/claim')
       .setPath(WorkPath)
       .setPayload(ClaimWorkPayload)
@@ -233,6 +240,30 @@ export const WorkGroup = HttpApiGroup.make('work')
       .setPayload(PublishWorkEventPayload)
       .addSuccess(Event, { status: 201 })
       .addError(ProtocolError, protocolError(400))
+      .addError(ProtocolError, protocolError(404)),
+  )
+  .add(
+    HttpApiEndpoint.get('listWorkCheckpoints', '/v1/work/:work_id/checkpoints')
+      .setPath(WorkPath)
+      .addSuccess(Schema.Array(Checkpoint))
+      .addError(ProtocolError, protocolError(401))
+      .addError(ProtocolError, protocolError(404)),
+  )
+  .add(
+    HttpApiEndpoint.get(
+      'latestWorkCheckpoint',
+      '/v1/work/:work_id/checkpoints/latest',
+    )
+      .setPath(WorkPath)
+      .addSuccess(Checkpoint)
+      .addError(ProtocolError, protocolError(401))
+      .addError(ProtocolError, protocolError(404)),
+  )
+  .add(
+    HttpApiEndpoint.get('listWorkArtifacts', '/v1/work/:work_id/artifacts')
+      .setPath(WorkPath)
+      .addSuccess(Schema.Array(Artifact))
+      .addError(ProtocolError, protocolError(401))
       .addError(ProtocolError, protocolError(404)),
   )
 

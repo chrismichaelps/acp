@@ -101,6 +101,12 @@ describe('AcpHttpApi', () => {
       { group: 'work', name: 'createWork', method: 'POST', path: '/v1/work' },
       {
         group: 'work',
+        name: 'getWork',
+        method: 'GET',
+        path: '/v1/work/:work_id',
+      },
+      {
+        group: 'work',
         name: 'claimWork',
         method: 'POST',
         path: '/v1/work/:work_id/claim',
@@ -116,6 +122,24 @@ describe('AcpHttpApi', () => {
         name: 'publishWorkEvent',
         method: 'POST',
         path: '/v1/work/:work_id/events',
+      },
+      {
+        group: 'work',
+        name: 'listWorkCheckpoints',
+        method: 'GET',
+        path: '/v1/work/:work_id/checkpoints',
+      },
+      {
+        group: 'work',
+        name: 'latestWorkCheckpoint',
+        method: 'GET',
+        path: '/v1/work/:work_id/checkpoints/latest',
+      },
+      {
+        group: 'work',
+        name: 'listWorkArtifacts',
+        method: 'GET',
+        path: '/v1/work/:work_id/artifacts',
       },
       {
         group: 'leases',

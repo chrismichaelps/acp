@@ -22,6 +22,12 @@ import {
   UpdateWorkStatePayload,
 } from '../../infrastructure/http/index.js'
 import { workspaceSseResponse } from '../../infrastructure/sse/index.js'
+import {
+  getWork,
+  latestWorkCheckpoint,
+  listWorkArtifacts,
+  listWorkCheckpoints,
+} from './resume-routes.js'
 import { makeRpcHandler } from './rpc-endpoint.js'
 import {
   NotFoundError,
@@ -366,24 +372,34 @@ const streamEvents = respond(
 )
 
 // The canonical REST surface (spec §12). JSON-RPC dispatch replays against this.
-const v1Router = HttpRouter.empty.pipe(
+const workRouter = HttpRouter.empty.pipe(
   HttpRouter.post('/v1/session/initialize', initializeSession),
   HttpRouter.get('/v1/workspaces', listWorkspaces),
   HttpRouter.post('/v1/workspaces', createWorkspace),
   HttpRouter.patch('/v1/workspaces/:workspace_id', updateWorkspace),
   HttpRouter.post('/v1/workspaces/:workspace_id/archive', archiveWorkspace),
   HttpRouter.post('/v1/work', createWork),
+  HttpRouter.get('/v1/work/:work_id', getWork),
   HttpRouter.post('/v1/work/:work_id/claim', claimWork),
   HttpRouter.patch('/v1/work/:work_id', updateWorkState),
   HttpRouter.post('/v1/work/:work_id/events', publishWorkEvent),
+  HttpRouter.get('/v1/work/:work_id/checkpoints', listWorkCheckpoints),
+  HttpRouter.get('/v1/work/:work_id/checkpoints/latest', latestWorkCheckpoint),
+  HttpRouter.get('/v1/work/:work_id/artifacts', listWorkArtifacts),
   HttpRouter.post('/v1/leases', requestLease),
   HttpRouter.post('/v1/leases/:lease_id/release', releaseLease),
+)
+
+const commandRouter = workRouter.pipe(
   HttpRouter.post('/v1/artifacts', createArtifact),
   HttpRouter.patch('/v1/artifacts/:artifact_id', updateArtifact),
   HttpRouter.del('/v1/artifacts/:artifact_id', deleteArtifact),
   HttpRouter.post('/v1/checkpoints', createCheckpoint),
   HttpRouter.post('/v1/reviews', requestReview),
   HttpRouter.post('/v1/reviews/:review_id/approve', approveReview),
+)
+
+const v1Router = commandRouter.pipe(
   HttpRouter.post('/v1/reviews/:review_id/reject', rejectReview),
   HttpRouter.post(
     '/v1/reviews/:review_id/request_changes',
