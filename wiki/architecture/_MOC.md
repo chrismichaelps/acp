@@ -101,7 +101,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 33. ✅ Worker presence event scope decision — host-scoped registry state
 34. ✅ Protocol implementation audit refresh — CLI parity gap selected
 35. ✅ CLI parity for backed commands — local command coverage
-36. ▶ Re-audit remaining integration gaps after CLI parity
+36. ✅ Post-CLI integration audit — permission scope parity selected
+37. ▶ Permission scope parity for backed mutations
 
 ## Referenced by
 
