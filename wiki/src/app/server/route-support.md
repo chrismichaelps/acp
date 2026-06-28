@@ -55,6 +55,8 @@ export const pathParam: (
 `authorize` reads the bearer token from `Authorization`, validates it through
 [[session-service]], and enforces the requested scope when supplied. Missing
 tokens fall back to `worker_system` only when `ACP_REQUIRE_AUTH` is false.
+Action scopes are closed in [[common]], so callers cannot invent route-local
+permission strings.
 
 `respond` catches every route failure and folds tagged domain errors through
 [[http-error-mapper]], parse/request failures into `invalid_request`, and unknown

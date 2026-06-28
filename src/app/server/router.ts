@@ -171,7 +171,7 @@ const updateWorkState = respond(
       UpdateWorkStatePayload,
     )
     const now = yield* idClock.now
-    const actor = yield* authorize()
+    const actor = yield* authorize('work:update')
     const work = yield* service.transition(workId, payload.state, actor, now)
     return yield* ok(200)(WorkUnit, work)
   }),
@@ -194,7 +194,7 @@ const publishWorkEvent = respond(
     })
     const id = (yield* idClock.nextId('event')) as EventId
     const now = yield* idClock.now
-    const actor = yield* authorize()
+    const actor = yield* authorize('work:publish_event')
     const event = yield* events.append({
       id,
       type: payload.type,
@@ -227,7 +227,7 @@ const releaseLease = respond(
     const idClock = yield* IdClock
     const leaseId = (yield* pathParam('lease_id')) as LeaseId
     const now = yield* idClock.now
-    const actor = yield* authorize()
+    const actor = yield* authorize('lease:release')
     yield* service.release(leaseId, actor, now)
     return HttpServerResponse.empty({ status: 204 })
   }),
@@ -259,7 +259,7 @@ const deleteArtifact = respond(
     const idClock = yield* IdClock
     const artifactId = (yield* pathParam('artifact_id')) as ArtifactId
     const now = yield* idClock.now
-    const actor = yield* authorize()
+    const actor = yield* authorize('artifact:delete')
     const artifact = yield* service.remove(artifactId, actor, now)
     return yield* ok(200)(Artifact, artifact)
   }),
@@ -274,7 +274,7 @@ const updateArtifact = respond(
       UpdateArtifactPayload,
     )
     const now = yield* idClock.now
-    const actor = yield* authorize()
+    const actor = yield* authorize('artifact:update')
     const artifact = yield* service.update(artifactId, payload, actor, now)
     return yield* ok(200)(Artifact, artifact)
   }),
@@ -322,7 +322,7 @@ const approveReview = respond(
     const payload =
       yield* HttpServerRequest.schemaBodyJson(ApproveReviewPayload)
     const now = yield* idClock.now
-    const actor = yield* authorize()
+    const actor = yield* authorize('review:approve')
     const review = yield* service.approve(
       reviewId,
       actor,
@@ -339,7 +339,7 @@ const rejectReview = respond(
     const idClock = yield* IdClock
     const reviewId = (yield* pathParam('review_id')) as ReviewId
     const now = yield* idClock.now
-    const actor = yield* authorize()
+    const actor = yield* authorize('review:reject')
     const review = yield* service.reject(reviewId, actor, now)
     return yield* ok(200)(Review, review)
   }),
@@ -351,7 +351,7 @@ const requestReviewChanges = respond(
     const idClock = yield* IdClock
     const reviewId = (yield* pathParam('review_id')) as ReviewId
     const now = yield* idClock.now
-    const actor = yield* authorize()
+    const actor = yield* authorize('review:request_changes')
     const review = yield* service.requestChanges(reviewId, actor, now)
     return yield* ok(200)(Review, review)
   }),

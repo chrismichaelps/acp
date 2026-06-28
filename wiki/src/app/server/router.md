@@ -95,6 +95,12 @@ delegates to [[artifact-service]] `remove`, returns the deleted metadata at `200
 and lets the service emit `artifact.deleted`. A missing artifact maps through the
 shared domain error path to `404`.
 
+Backed mutations require their matching session scope when a bearer token is
+present: work update/event publication, lease release, artifact update/delete,
+and review approve/reject/request-changes each call [[route-support]] `authorize`
+with the specific action scope. Missing tokens still follow the local-host
+`worker_system` fallback unless `ACP_REQUIRE_AUTH=true`.
+
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT put business logic in handlers — decode → delegate → encode only.

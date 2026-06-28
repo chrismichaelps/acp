@@ -102,6 +102,12 @@ lookup, not a state machine.
   Conflating them would force a brittle capability→scope mapping the spec never
   defines. _Rejected:_ deriving scopes from capabilities (semantic mismatch);
   a global all-workers-all-scopes default (toothless enforcement).
+- **Q:** Should action routes added after the first command surface share broad
+  create scopes?
+  **A:** No. _Rationale:_ the spec's security guidance calls for explicit
+  permission on destructive actions, and review outcomes are separate authority
+  from creating a review request. [[common]] carries dedicated action scopes while
+  the local no-token fallback remains unchanged for development.
 - **Q:** Should an unauthenticated mutation (no bearer token) be rejected with
   `401`, per the handoff's "reject instead of `worker_system`"?
   **A:** No — only _authenticated_ requests are scope-enforced; a request with no
