@@ -58,9 +58,13 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 - `PATCH /v1/workspaces/{workspace_id}`
 - `POST /v1/workspaces/{workspace_id}/archive`
 - `POST /v1/work`
+- `GET /v1/work/{work_id}`
 - `POST /v1/work/{work_id}/claim`
 - `PATCH /v1/work/{work_id}`
 - `POST /v1/work/{work_id}/events`
+- `GET /v1/work/{work_id}/checkpoints`
+- `GET /v1/work/{work_id}/checkpoints/latest`
+- `GET /v1/work/{work_id}/artifacts`
 - `POST /v1/leases`
 - `POST /v1/leases/{lease_id}/release`
 - `POST /v1/artifacts`
@@ -99,6 +103,11 @@ validation rather than generic decode failure.
 Artifact update/delete are declared as backed extensions because the domain
 [[artifact-service]] owns mutation/removal and emits `artifact.updated` and
 `artifact.deleted`.
+
+Work resume reads are declared as backed extensions because [[work-unit-service]],
+[[checkpoint-service]], and [[artifact-service]] already own the domain read
+semantics required for handoff: current work metadata, newest-first checkpoints,
+latest checkpoint, and work artifacts.
 
 Workspace create/update/archive are declared as backed extensions beside `GET
 /v1/workspaces`. The [[workspace-service]] owns persisted `workspace.created`,

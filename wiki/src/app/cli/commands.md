@@ -47,13 +47,17 @@ export const parseArgs: (
 | `workspace update <workspace_id> --name --kind --uri [--default-branch]`              | `PATCH /v1/workspaces/<id>`             |
 | `workspace archive <workspace_id>`                                                    | `POST /v1/workspaces/<id>/archive`      |
 | `work create <title> --workspace <id> [--priority] [--description]`                   | `POST /v1/work`                         |
+| `work get <work_id>`                                                                  | `GET /v1/work/<id>`                     |
 | `work claim <work_id> --worker <id>`                                                  | `POST /v1/work/<id>/claim`              |
 | `work update <work_id> --state <s>`                                                   | `PATCH /v1/work/<id>`                   |
 | `lease request --workspace --holder --kind --uri [--ttl]`                             | `POST /v1/leases`                       |
 | `lease release <lease_id>`                                                            | `POST /v1/leases/<id>/release`          |
 | `checkpoint create --workspace --work --summary`                                      | `POST /v1/checkpoints`                  |
+| `checkpoint list --work <id>`                                                         | `GET /v1/work/<id>/checkpoints`         |
+| `checkpoint latest --work <id>`                                                       | `GET /v1/work/<id>/checkpoints/latest`  |
 | `artifact create --workspace --work --kind [--uri] [--summary] [--content]`           | `POST /v1/artifacts`                    |
 | `artifact update <artifact_id> --kind [--uri] [--media-type] [--summary] [--content]` | `PATCH /v1/artifacts/<id>`              |
+| `artifact list --work <id>`                                                           | `GET /v1/work/<id>/artifacts`           |
 | `artifact delete <artifact_id>`                                                       | `DELETE /v1/artifacts/<id>`             |
 | `review request --work --by [--reviewer]`                                             | `POST /v1/reviews`                      |
 | `review approve <review_id> --met <csv>`                                              | `POST /v1/reviews/<id>/approve`         |
@@ -78,8 +82,10 @@ TTLs are validated as positive safe integers before HTTP decoding.
 `--default-branch` and `--media-type` normalize to the schema's snake_case JSON
 fields. Artifact create/update forward optional `--uri` so the CLI can register
 external pull request, commit, report, or screenshot artifacts without inline
-content. `review approve --met` is a comma-separated list that becomes
-`met_requirements`. `events stream` sets `stream: true`.
+content. Work resume reads map `work get`, `checkpoint list/latest --work`, and
+`artifact list --work` onto the work-scoped read endpoints. `review approve
+--met` is a comma-separated list that becomes `met_requirements`. `events stream`
+sets `stream: true`.
 
 ## Negative Logic (Prohibited Paths)
 

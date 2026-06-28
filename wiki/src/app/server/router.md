@@ -50,8 +50,12 @@ export const acpRouter: HttpRouter.HttpRouter<
 - `GET  /v1/workspaces` → list [[Workspace]]s
 - `POST /v1/workspaces` · `PATCH /v1/workspaces/:workspace_id` → create/update
   [[Workspace]]s through [[workspace-routes]]
-- `POST /v1/work` · `POST /v1/work/:work_id/claim` · `PATCH /v1/work/:work_id`
+- `POST /v1/work` · `GET /v1/work/:work_id`
+  · `POST /v1/work/:work_id/claim` · `PATCH /v1/work/:work_id`
   · `POST /v1/work/:work_id/events`
+  · `GET /v1/work/:work_id/checkpoints`
+  · `GET /v1/work/:work_id/checkpoints/latest`
+  · `GET /v1/work/:work_id/artifacts`
 - `POST /v1/leases` · `POST /v1/leases/:lease_id/release` (→ 204)
 - `POST /v1/artifacts` · `PATCH /v1/artifacts/:artifact_id`
   · `DELETE /v1/artifacts/:artifact_id`
@@ -68,7 +72,8 @@ export const acpRouter: HttpRouter.HttpRouter<
 
 - **Requires:** domain service barrels used by inline handlers, [[event-store]],
   [[id-clock]], [[acp-http-api]] (payload schemas), [[route-support]],
-  [[workspace-routes]], [[sse-event-stream]], [[rpc-endpoint]] (`POST /rpc` handler)
+  [[workspace-routes]], [[resume-routes]], [[sse-event-stream]], [[rpc-endpoint]]
+  (`POST /rpc` handler)
 - **Consumed by:** [[server-main]] (the Node entrypoint).
 
 ## Algorithm
@@ -78,6 +83,7 @@ Per inline route: decode body (`HttpServerRequest.schemaBodyJson`) / path
 [[id-clock]] where the service requires them → delegate → encode success through
 [[route-support]]. Workspace list/create/update are delegated to
 [[workspace-routes]] to keep this composition module below the file-size gate.
+Work-scoped resume reads are delegated to [[resume-routes]] for the same reason.
 
 `initializeSession` is the one route with compatibility normalization. The HTTP
 schema accepts the draft spec handshake, where worker capability booleans sit
