@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-27 · fresh-protocol-implementation-audit slice · added
+  [[protocol-implementation-2026-06-27]], replacing the stale gap list with a
+  current audit that names the JSON-RPC file-size violation and missing
+  `check:file-size` gate as the next implementation target · docs-only validation
+  · risk LOW
 - 2026-06-27 · spec-naming-canonicalization slice · added
   [[spec-canonicalization]] as the tracked rule for reading the ignored Hadoof-era
   draft through ACP naming, `ACP_` env vars, and `acp://` URIs without mutating
