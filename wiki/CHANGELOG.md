@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · review-resume-content-reads slice · projected work review reads
+  and host-stored artifact content reads through [[resume-routes]],
+  [[acp-http-api]], [[json-rpc-resume-commands]], and [[cli-commands]] so resume
+  clients can fetch review gates and private artifact content without replaying
+  events · 208 tests green · risk LOW
 - 2026-06-28 · post-observability-integration-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after work resume reads and Effect
   logging, selecting work review reads plus host-stored artifact content reads

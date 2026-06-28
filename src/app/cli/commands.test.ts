@@ -307,6 +307,15 @@ describe('parseArgs', () => {
     })
   })
 
+  it('parses artifact content with an encoded path and GET method', () => {
+    const req = right(['artifact', 'content', 'artifact 123/main'])
+    expect(req).toEqual({
+      method: 'GET',
+      path: '/v1/artifacts/artifact%20123%2Fmain/content',
+      label: 'artifact content',
+    })
+  })
+
   it('parses artifact delete with an encoded path and DELETE method', () => {
     const req = right(['artifact', 'delete', 'artifact 1/old'])
     expect(req.method).toBe('DELETE')
@@ -331,6 +340,15 @@ describe('parseArgs', () => {
       requested_by: 'agent_x',
       requirements: [],
       reviewer: 'human_chris',
+    })
+  })
+
+  it('parses review list by work', () => {
+    const req = right(['review', 'list', '--work', 'work 123/main'])
+    expect(req).toEqual({
+      method: 'GET',
+      path: '/v1/work/work%20123%2Fmain/reviews',
+      label: 'review list',
     })
   })
 

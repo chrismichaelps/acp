@@ -58,8 +58,10 @@ export const parseArgs: (
 | `artifact create --workspace --work --kind [--uri] [--summary] [--content]`           | `POST /v1/artifacts`                    |
 | `artifact update <artifact_id> --kind [--uri] [--media-type] [--summary] [--content]` | `PATCH /v1/artifacts/<id>`              |
 | `artifact list --work <id>`                                                           | `GET /v1/work/<id>/artifacts`           |
+| `artifact content <artifact_id>`                                                      | `GET /v1/artifacts/<id>/content`        |
 | `artifact delete <artifact_id>`                                                       | `DELETE /v1/artifacts/<id>`             |
 | `review request --work --by [--reviewer]`                                             | `POST /v1/reviews`                      |
+| `review list --work <id>`                                                             | `GET /v1/work/<id>/reviews`             |
 | `review approve <review_id> --met <csv>`                                              | `POST /v1/reviews/<id>/approve`         |
 | `review reject <review_id>`                                                           | `POST /v1/reviews/<id>/reject`          |
 | `review request-changes <review_id>`                                                  | `POST /v1/reviews/<id>/request_changes` |
@@ -82,10 +84,10 @@ TTLs are validated as positive safe integers before HTTP decoding.
 `--default-branch` and `--media-type` normalize to the schema's snake_case JSON
 fields. Artifact create/update forward optional `--uri` so the CLI can register
 external pull request, commit, report, or screenshot artifacts without inline
-content. Work resume reads map `work get`, `checkpoint list/latest --work`, and
-`artifact list --work` onto the work-scoped read endpoints. `review approve
---met` is a comma-separated list that becomes `met_requirements`. `events stream`
-sets `stream: true`.
+content. Work resume reads map `work get`, `checkpoint list/latest --work`,
+`artifact list --work`, `artifact content <id>`, and `review list --work` onto
+the read endpoints. `review approve --met` is a comma-separated list that becomes
+`met_requirements`. `events stream` sets `stream: true`.
 
 ## Negative Logic (Prohibited Paths)
 

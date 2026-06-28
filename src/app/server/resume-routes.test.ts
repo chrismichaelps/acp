@@ -55,6 +55,7 @@ describe('resume routes', () => {
       'work:create',
       'checkpoint:create',
       'artifact:create',
+      'review:create',
     ])
 
     const createdWork = await handler(
@@ -96,6 +97,22 @@ describe('resume routes', () => {
         kind: 'pull_request',
         uri: 'https://example.com/acp/artifacts/pr-7',
         summary: 'Review PR',
+      }),
+    )
+    const storedArtifact = await handler(
+      authedJson(token, '/v1/artifacts', {
+        workspace_id: work.workspace_id,
+        work_id: work.id,
+        kind: 'markdown',
+        content: 'Resume notes',
+      }),
+    )
+    const artifact = (await storedArtifact.json()) as { id: string }
+    await handler(
+      authedJson(token, '/v1/reviews', {
+        work_id: work.id,
+        requested_by: worker.id,
+        requirements: ['diff_review'],
       }),
     )
 
@@ -143,9 +160,36 @@ describe('resume routes', () => {
       }),
     )
     expect(artifacts.status).toBe(200)
-    expect((await artifacts.json()) as { uri: string }[]).toMatchObject([
-      { uri: 'https://example.com/acp/artifacts/pr-7' },
+    expect(
+      ((await artifacts.json()) as { uri: string }[]).map(
+        (listed) => listed.uri,
+      ),
+    ).toEqual([
+      'https://example.com/acp/artifacts/pr-7',
+      `acp://artifacts/${artifact.id}`,
     ])
+
+    const reviews = await handler(
+      new Request(`http://acp.test/v1/work/${work.id}/reviews`, {
+        method: 'GET',
+        headers: { authorization: `Bearer ${token}` },
+      }),
+    )
+    expect(reviews.status).toBe(200)
+    expect(
+      (await reviews.json()) as { requirements: string[] }[],
+    ).toMatchObject([{ requirements: ['diff_review'] }])
+
+    const content = await handler(
+      new Request(`http://acp.test/v1/artifacts/${artifact.id}/content`, {
+        method: 'GET',
+        headers: { authorization: `Bearer ${token}` },
+      }),
+    )
+    expect(content.status).toBe(200)
+    expect((await content.json()) as { content: string }).toEqual({
+      content: 'Resume notes',
+    })
   })
 
   it('enforces workspace:read for bearer-authenticated resume reads', async () => {
@@ -186,5 +230,41 @@ describe('resume routes', () => {
       }),
     )
     expect(latest.status).toBe(404)
+  })
+
+  it('returns 404 for external artifact content', async () => {
+    const handler = makeHandler()
+    const token = await initSession(handler, [
+      'workspace:read',
+      'work:create',
+      'artifact:create',
+    ])
+    const createdWork = await handler(
+      authedJson(token, '/v1/work', {
+        workspace_id: 'workspace_1',
+        title: 'External artifact',
+      }),
+    )
+    const work = (await createdWork.json()) as {
+      id: string
+      workspace_id: string
+    }
+    const createdArtifact = await handler(
+      authedJson(token, '/v1/artifacts', {
+        workspace_id: work.workspace_id,
+        work_id: work.id,
+        kind: 'pull_request',
+        uri: 'https://example.com/acp/pull/9',
+      }),
+    )
+    const artifact = (await createdArtifact.json()) as { id: string }
+
+    const content = await handler(
+      new Request(`http://acp.test/v1/artifacts/${artifact.id}/content`, {
+        method: 'GET',
+        headers: { authorization: `Bearer ${token}` },
+      }),
+    )
+    expect(content.status).toBe(404)
   })
 })

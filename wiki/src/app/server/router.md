@@ -56,9 +56,11 @@ export const acpRouter: HttpRouter.HttpRouter<
   · `GET /v1/work/:work_id/checkpoints`
   · `GET /v1/work/:work_id/checkpoints/latest`
   · `GET /v1/work/:work_id/artifacts`
+  · `GET /v1/work/:work_id/reviews`
 - `POST /v1/leases` · `POST /v1/leases/:lease_id/release` (→ 204)
 - `POST /v1/artifacts` · `PATCH /v1/artifacts/:artifact_id`
   · `DELETE /v1/artifacts/:artifact_id`
+  · `GET /v1/artifacts/:artifact_id/content`
   · `POST /v1/checkpoints` · `POST /v1/reviews`
   · `POST /v1/reviews/:review_id/approve`
   · `POST /v1/reviews/:review_id/reject`
@@ -84,6 +86,8 @@ Per inline route: decode body (`HttpServerRequest.schemaBodyJson`) / path
 [[route-support]]. Workspace list/create/update are delegated to
 [[workspace-routes]] to keep this composition module below the file-size gate.
 Work-scoped resume reads are delegated to [[resume-routes]] for the same reason.
+Those reads include current work, checkpoint history/latest, artifact metadata,
+review gates, and host-stored artifact content.
 
 `initializeSession` is the one route with compatibility normalization. The HTTP
 schema accepts the draft spec handshake, where worker capability booleans sit
