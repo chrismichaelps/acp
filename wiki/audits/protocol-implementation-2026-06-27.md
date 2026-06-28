@@ -59,16 +59,17 @@ even where the ignored draft still shows early folder names.
 
 ## Gaps
 
-The file-size rule is the highest-value implementation gap. Spec §16.9 sets a
-500-line ceiling and recommends a `check:file-size` gate. The repo currently has
-no such script, and `src/infrastructure/jsonrpc/json-rpc.ts` is 522 lines. That
-file is a natural split candidate because it owns envelope types, method
-normalization, command mapping, and response helpers in one module.
+The file-size rule is now enforced locally. Spec §16.9 sets a 500-line ceiling
+and recommends a `check:file-size` gate; this repo now has `npm`/package script
+coverage through `check:file-size`, backed by `scripts/check-file-size.mjs`.
+The previous oversized `src/infrastructure/jsonrpc/json-rpc.ts` module has been
+split into a 111-line facade plus a 427-line [[json-rpc-command-map]] module.
 
 The repository does not yet have CI enforcing the local gates. `.github/` only
 contains funding metadata, while spec §16.10 expects linting and formatting to
-be enforced in CI. The local scripts exist; a future CI slice can wire them once
-the file-size gate is available.
+be enforced in CI. The local scripts now exist for build, lint, format check,
+typecheck, test, and file-size enforcement; a CI slice can wire them without
+adding new package-management behavior.
 
 Some draft folder names and optional implementation folders remain intentionally
 uncreated. There is no `src/protocol/version.ts`, `src/protocol/codecs`, or
@@ -79,11 +80,10 @@ revisited when generated clients or multiple platform adapters appear.
 
 ## Next Slice
 
-Add a file-size enforcement gate and split `src/infrastructure/jsonrpc/json-rpc.ts`
-below 500 lines. The likely split is to keep the public parser/response API in
-`json-rpc.ts` and move method-to-HTTP command mapping into a focused sibling
-module with its own wiki mirror and tests. After that, wire `check:file-size`
-into `package.json` and the validation docs.
+Add CI enforcement for the existing local gates. The next slice should create a
+GitHub Actions workflow for Node 24 that runs lint, typecheck, file-size, and
+tests without performing package installation churn beyond the lockfile-backed
+setup the repo already uses.
 
 ## Referenced by
 

@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-27 · json-rpc-command-map split · moved JSON-RPC method-to-HTTP command
+  mapping into [[json-rpc-command-map]], reduced [[json-rpc]] to the public
+  envelope/response facade, and added `check:file-size` via
+  `scripts/check-file-size.mjs` · 160 tests green · risk LOW
 - 2026-06-27 · fresh-protocol-implementation-audit slice · added
   [[protocol-implementation-2026-06-27]], replacing the stale gap list with a
   current audit that names the JSON-RPC file-size violation and missing
