@@ -32,6 +32,12 @@ export const sweepOnce: Effect.Effect<
   const now = yield* idClock.now
   const evictedSessions = yield* sessions.evictExpired(now, config.sessionTtl)
   const expiredLeases = yield* leases.expireAllDue(systemActor, now)
+  yield* Effect.logDebug('sweep completed').pipe(
+    Effect.annotateLogs({
+      evictedSessions: evictedSessions.length,
+      expiredLeases: expiredLeases.length,
+    }),
+  )
 
   return { evictedSessions, expiredLeases }
 })
@@ -51,7 +57,10 @@ export const SweeperLive: Layer.Layer<
     const config = yield* AppConfigTag
     const tick = sweepOnce.pipe(
       Effect.catchAllCause((cause) =>
-        Effect.logError('sweep failed', cause).pipe(Effect.as(undefined)),
+        Effect.logError('sweep failed', cause).pipe(
+          Effect.annotateLogs({ component: 'sweeper' }),
+          Effect.as(undefined),
+        ),
       ),
     )
     yield* Effect.forkScoped(

@@ -69,7 +69,9 @@ export const SweeperLive: Layer.Layer<
 
 `SweeperLive` (`Layer.scopedDiscard`): `forkScoped` a loop that sleeps
 `config.sweepInterval`, runs `sweepOnce`, and swallows+logs any failure cause so a
-single bad sweep never kills the daemon.
+single bad sweep never kills the daemon. Successful sweeps log at debug level
+with counts for evicted sessions and expired leases; failures log at error level
+inside the server's [[app-logging]] annotations.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -79,6 +81,8 @@ single bad sweep never kills the daemon.
 - ❌ Do NOT mint ids/timestamps here — `now` comes from [[id-clock]].
 - ❌ Do NOT enumerate workspaces to find leases — [[lease-service]] `expireAllDue`
   scans all leases directly, so a lease in an unregistered workspace still lapses.
+- ❌ Do NOT log session tokens, lease resource URIs, or raw worker details from the
+  sweep result; counts are enough for daemon health.
 
 ## Depth
 

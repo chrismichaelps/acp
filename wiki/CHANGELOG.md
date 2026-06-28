@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · effect-observability-logging slice · added [[app-logging]] as the
+  Effect JSON logger boundary for [[server-main]], with `ACP_LOG_LEVEL` mapped to
+  Effect runtime levels, server annotations/spans, and sweeper health counts
+  while preserving CLI/stdio stdout contracts · 204 tests green · risk LOW
 - 2026-06-28 · work-resume-query-endpoints slice · added work-scoped resume
   reads across [[acp-http-api]], [[resume-routes]], [[json-rpc-resume-commands]],
   and [[cli-commands]] for current work metadata, checkpoints, latest checkpoint,

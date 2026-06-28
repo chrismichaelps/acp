@@ -22,9 +22,11 @@ documented default, exposed as a single `AppConfig` value behind a Layer.
 ### Signatures
 
 ```typescript
+export type AppLogLevel = 'debug' | 'info' | 'warn' | 'error'
+
 export interface AppConfig {
   readonly port: number
-  readonly logLevel: 'debug' | 'info' | 'warn' | 'error'
+  readonly logLevel: AppLogLevel
   readonly storageAdapter: 'memory' | 'sqlite'
   readonly sqlitePath: string
   readonly defaultLeaseTtl: Duration.Duration
@@ -47,7 +49,8 @@ export const AppConfigLive: Layer.Layer<AppConfigTag>
 Each field is a `Config.*` with `Config.withDefault`:
 
 - `ACP_PORT` int → 4317
-- `ACP_LOG_LEVEL` literal → 'info'
+- `ACP_LOG_LEVEL` literal → 'info' ([[app-logging]] maps it to Effect
+  `LogLevel`)
 - `ACP_STORAGE_ADAPTER` literal (`memory` | `sqlite`) → 'memory'
 - `ACP_SQLITE_PATH` string → `acp.sqlite`
 - `ACP_DEFAULT_LEASE_TTL` duration → 15 minutes
@@ -67,6 +70,8 @@ converted to a defect, giving `Layer.Layer<AppConfigTag>` (no error param).
 
 - ❌ Do NOT hardcode a port, storage path, TTL, retention window, size limit, or heartbeat anywhere else.
 - ❌ Do NOT read `process.env` directly — go through `Config`.
+- ❌ Do NOT duplicate the log-level literal set outside [[app-config]] /
+  [[app-logging]].
 
 ## Depth
 
@@ -75,4 +80,5 @@ deleting it scatters `process.env` reads and magic numbers across the codebase.
 
 ## Referenced by
 
-[[lease.schema]] · [[sse-event-stream]] · [[architecture/_MOC]] · [[src/_MOC]]
+[[lease.schema]] · [[sse-event-stream]] · [[app-logging]] ·
+[[architecture/_MOC]] · [[src/_MOC]]
