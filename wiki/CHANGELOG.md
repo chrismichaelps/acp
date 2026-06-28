@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · post-observability-integration-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after work resume reads and Effect
+  logging, selecting work review reads plus host-stored artifact content reads
+  as the next public resumability gap · docs-only validation · risk LOW
 - 2026-06-28 · effect-observability-logging slice · added [[app-logging]] as the
   Effect JSON logger boundary for [[server-main]], with `ACP_LOG_LEVEL` mapped to
   Effect runtime levels, server annotations/spans, and sweeper health counts
