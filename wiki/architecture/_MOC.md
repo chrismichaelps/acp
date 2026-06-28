@@ -102,7 +102,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 34. ✅ Protocol implementation audit refresh — CLI parity gap selected
 35. ✅ CLI parity for backed commands — local command coverage
 36. ✅ Post-CLI integration audit — permission scope parity selected
-37. ▶ Permission scope parity for backed mutations
+37. ✅ Permission scope parity for backed mutations — action scopes enforced
+38. ▶ Re-audit remaining integration gaps after permission scopes
 
 ## Referenced by
 

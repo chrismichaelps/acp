@@ -104,7 +104,7 @@ describe('POST /rpc', () => {
         jsonrpc: '2.0',
         id: 1,
         method: 'session.initialize',
-        params: { worker, permissions: ['work:create'] },
+        params: { worker, permissions: ['work:create', 'work:publish_event'] },
       }),
     )
     const token = ((await initRes.json()) as { result: { session_id: string } })
@@ -158,7 +158,13 @@ describe('POST /rpc', () => {
         method: 'session.initialize',
         params: {
           worker,
-          permissions: ['work:create', 'work:claim', 'review:create'],
+          permissions: [
+            'work:create',
+            'work:claim',
+            'work:update',
+            'review:create',
+            'review:approve',
+          ],
         },
       }),
     )
@@ -250,7 +256,10 @@ describe('POST /rpc', () => {
         jsonrpc: '2.0',
         id: 1,
         method: 'session.initialize',
-        params: { worker, permissions: ['artifact:create'] },
+        params: {
+          worker,
+          permissions: ['artifact:create', 'artifact:delete'],
+        },
       }),
     )
     const token = ((await initRes.json()) as { result: { session_id: string } })
