@@ -108,7 +108,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 40. ✅ CLI parser dispatch table refactor — additive command registry
 41. ✅ Post-parser integration audit — external artifact references selected
 42. ✅ External artifact URI support — schema/service/REST/JSON-RPC/CLI
-43. ▶ Re-audit remaining integration gaps after external artifact references
+43. ✅ Post-artifact integration audit — work resume queries selected
+44. ▶ Work resume query endpoints — work/checkpoints/latest/artifacts over REST/JSON-RPC/CLI
 
 ## Referenced by
 

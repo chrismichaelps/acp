@@ -12,9 +12,9 @@ aliases: [protocol-implementation-2026-06-28, protocol-audit-refresh-2026-06-28]
 This audit refreshes [[protocol-implementation-2026-06-27]] after the workspace
 archive lifecycle, JSON-RPC command-map split, artifact update lifecycle,
 [[ADR-0005-worker-presence-scope]], CLI parity, permission scope parity, README
-refresh, and CLI parser dispatch-table slices. It compares the current ACP
-reference host against `@root/specs.md` through [[spec-canonicalization]], then
-chooses the next backed implementation gap.
+refresh, CLI parser dispatch-table, and external artifact reference slices. It
+compares the current ACP reference host against `@root/specs.md` through
+[[spec-canonicalization]], then chooses the next backed implementation gap.
 
 ## Current Coverage
 
@@ -27,15 +27,19 @@ transport adapters.
 
 The REST surface now covers the draft §12 command set plus backed reference-host
 extensions for workspace create/update/archive, work progress publication,
-review approve/reject/request-changes, and artifact update/delete. The router and
-the declarative [[acp-http-api]] contract are aligned on those endpoints.
+review approve/reject/request-changes, and artifact update/delete. Artifact
+create/update accepts external URIs for pull request, commit, CI report,
+screenshot, or cloud-object references while preserving host-stored
+`acp://artifacts/{id}` content as the default. The router and the declarative
+[[acp-http-api]] contract are aligned on those endpoints.
 
 The JSON-RPC surface covers draft §13 plus the same backed extensions:
 `workspace.create`, `workspace.update`, `workspace.archive`,
 `work.publish_event`, `review.approve`, `review.reject`,
-`review.request_changes`, `artifact.update`, and `artifact.delete`.
-`events.subscribe` maps to the SSE route. Runtime execution is available through
-`POST /rpc` and `acp-jsonrpc-stdio`; WebSocket remains deferred by
+`review.request_changes`, `artifact.update`, and `artifact.delete`, with
+artifact URI fields flowing through the shared schema. `events.subscribe` maps
+to the SSE route. Runtime execution is available through `POST /rpc` and
+`acp-jsonrpc-stdio`; WebSocket remains deferred by
 [[ADR-0002-json-rpc-transport-framing]].
 
 The event vocabulary boundary is settled for v0.1. Workspace archive and
@@ -88,25 +92,34 @@ for collection scans and event tail replay. That is the right baseline for
 thousands of coordination records or agent-memory artifacts before adding
 entity-specific repositories.
 
-The next integration-facing gap is artifact references. [[artifact-service]]
-currently supports host-stored inline content and always mints
-`acp://artifacts/{id}`. That is correct for patches, logs, and markdown captured
-by the local host, but it does not let a worker register an external artifact URI
-for a pull request, commit, CI report, screenshot, or cloud object even though the
-[[Artifact]] record itself already has a required `uri`. External references are
-the smallest useful bridge toward the v0.2 GitHub PR artifact and adapter
-roadmap without introducing GitHub-specific schemas yet.
+External artifact references are now covered. [[artifact-service]] supports both
+host-stored inline content and explicit external `uri` references, so workers can
+record pull requests, commits, CI reports, screenshots, and cloud objects without
+copying large output into ACP. Empty artifact creates are rejected because they
+do not provide recoverable evidence.
+
+The next integration-facing gap is resumability reads. Domain services already
+own the useful query surface: [[work-unit-service]] can read a work unit by id,
+[[checkpoint-service]] can list checkpoints for work/workspace and return the
+latest checkpoint, [[artifact-service]] can list artifacts for work/workspace and
+read host-stored content, and [[review-service]] can list reviews for work or
+workspace. The transport surface is still mostly mutation-oriented, so a worker
+can publish checkpoints/artifacts but cannot reconstruct a resumable work packet
+through REST, JSON-RPC, or the CLI without tailing the event stream and replaying
+client-side state.
 
 ## Next Slice
 
-Add external artifact URI support to `CreateArtifactPayload` and
-`UpdateArtifactPayload`, then project it through [[artifact-service]], REST,
-JSON-RPC, and [[cli-commands]]. Preserve host-stored `acp://artifacts/{id}` as
-the default when content is supplied without an explicit URI, keep content size
-limits on host-stored content only, and reject payloads that provide neither
-content nor an external URI. Treat generated clients, host-level presence
-streams, WebSocket transport, Git-specific extensions, and platform-node
-extraction as deferred until a concrete consumer or duplicated boundary appears.
+Add resume query endpoints for work-centric handoff: `GET /v1/work/{work_id}`,
+`GET /v1/work/{work_id}/checkpoints`, `GET
+/v1/work/{work_id}/checkpoints/latest`, and `GET
+/v1/work/{work_id}/artifacts`, then project them through [[acp-http-api]],
+[[acp-router]], [[json-rpc-command-map]], and [[cli-commands]]. Keep the first
+slice work-scoped; workspace-wide lists and artifact content reads can follow
+once the work resume packet is externally usable. Treat generated clients,
+host-level presence streams, WebSocket transport, Git-specific extensions, and
+platform-node extraction as deferred until a concrete consumer or duplicated
+boundary appears.
 
 ## Referenced by
 
