@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · post-artifact-reference-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after external artifact URI support and
+  selected work-centric resume query endpoints for [[WorkUnit]],
+  [[Checkpoint]], and [[Artifact]] as the next integration slice · docs-only
+  validation · risk LOW
 - 2026-06-28 · external-artifact-references slice · added optional external
   artifact `uri` support across [[artifact.schema]], [[artifact-service]],
   [[acp-router]], [[json-rpc-command-map]], and [[cli-commands]], preserving
