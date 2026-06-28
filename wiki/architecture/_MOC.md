@@ -86,7 +86,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 20. ✅ Capability negotiation compatibility — 157 tests green
 21. ✅ Artifact delete transport route — focused gate green
 22. ✅ Event vocabulary domain decisions — ADR-0003 accepted
-23. ▶ Spec naming canonicalization note
+23. ✅ Spec naming canonicalization note — tracked interpretation rule
+24. ▶ Fresh protocol implementation audit
 
 ## Referenced by
 
