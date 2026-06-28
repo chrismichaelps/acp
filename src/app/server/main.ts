@@ -2,6 +2,7 @@
 import { createServer } from 'node:http'
 import { NodeHttpServer, NodeRuntime } from '@effect/platform-node'
 import { Config, Effect, Layer } from 'effect'
+import { withAcpJsonLogging } from '../logging.js'
 import { HttpAppLive } from './http-app.js'
 
 const ServerLive = Layer.unwrapEffect(
@@ -11,4 +12,8 @@ const ServerLive = Layer.unwrapEffect(
   ),
 )
 
-NodeRuntime.runMain(Layer.launch(HttpAppLive.pipe(Layer.provide(ServerLive))))
+NodeRuntime.runMain(
+  Layer.launch(HttpAppLive.pipe(Layer.provide(ServerLive))).pipe(
+    withAcpJsonLogging('server'),
+  ),
+)

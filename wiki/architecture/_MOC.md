@@ -110,7 +110,9 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 42. ✅ External artifact URI support — schema/service/REST/JSON-RPC/CLI
 43. ✅ Post-artifact integration audit — work resume queries selected
 44. ✅ Work resume query endpoints — work/checkpoints/latest/artifacts over REST/JSON-RPC/CLI
-45. ▶ Re-audit remaining integration gaps after resume reads
+45. ✅ Effect observability logging — server JSON logs with config-driven level
+    and safe annotations
+46. ▶ Re-audit remaining integration gaps after observability
 
 ## Referenced by
 

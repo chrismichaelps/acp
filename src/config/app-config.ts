@@ -1,9 +1,11 @@
 /** @Acp.Config.App — typed, defaulted runtime configuration */
 import { Config, Context, Duration, Effect, Layer } from 'effect'
 
+export type AppLogLevel = 'debug' | 'info' | 'warn' | 'error'
+
 export interface AppConfig {
   readonly port: number
-  readonly logLevel: 'debug' | 'info' | 'warn' | 'error'
+  readonly logLevel: AppLogLevel
   readonly storageAdapter: 'memory' | 'sqlite'
   readonly sqlitePath: string
   readonly defaultLeaseTtl: Duration.Duration
@@ -15,6 +17,13 @@ export interface AppConfig {
   readonly requireAuth: boolean
 }
 
+export const appLogLevelConfig: Config.Config<AppLogLevel> = Config.literal(
+  'debug',
+  'info',
+  'warn',
+  'error',
+)('ACP_LOG_LEVEL').pipe(Config.withDefault('info' as const))
+
 export class AppConfigTag extends Context.Tag('AppConfig')<
   AppConfigTag,
   AppConfig
@@ -22,12 +31,7 @@ export class AppConfigTag extends Context.Tag('AppConfig')<
 
 const load = Effect.gen(function* () {
   const port = yield* Config.integer('ACP_PORT').pipe(Config.withDefault(4317))
-  const logLevel = yield* Config.literal(
-    'debug',
-    'info',
-    'warn',
-    'error',
-  )('ACP_LOG_LEVEL').pipe(Config.withDefault('info' as const))
+  const logLevel = yield* appLogLevelConfig
   const storageAdapter = yield* Config.literal(
     'memory',
     'sqlite',
