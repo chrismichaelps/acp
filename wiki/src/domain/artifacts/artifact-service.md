@@ -18,8 +18,9 @@ aliases: [artifact-service, ArtifactService]
 Own [[Artifact]] metadata and optional host-stored content for v0.1. An Artifact
 is the durable evidence produced by a [[Worker]] under a [[WorkUnit]]. The service
 persists metadata through [[Storage]], stores inline payload content in a private
-content collection, enforces [[app-config]] `maxArtifactSizeBytes`, and emits
-`artifact.*` [[Event]] records through [[EventStore]].
+content collection, updates mutable artifact metadata/content, enforces
+[[app-config]] `maxArtifactSizeBytes`, and emits `artifact.*` [[Event]] records
+through [[EventStore]].
 
 ## Interface
 
@@ -52,6 +53,12 @@ export interface ArtifactServiceApi {
     actor: WorkerId,
     now: Timestamp,
   ) => Effect<Artifact, NotFoundError | StorageError>
+  readonly update: (
+    artifactId: ArtifactId,
+    payload: UpdateArtifactPayload,
+    actor: WorkerId,
+    now: Timestamp,
+  ) => Effect<Artifact, ValidationError | NotFoundError | StorageError>
 }
 
 export const ArtifactServiceLive: Layer.Layer<
@@ -69,6 +76,9 @@ export const ArtifactServiceLive: Layer.Layer<
   slice treats creates as host-stored artifacts with `acp://artifacts/{id}`.
 - Content is optional. Metadata-only artifacts are valid and still receive a URI.
 - Content is never copied into event data; events carry id, kind, and URI only.
+- `update` preserves `id`, `workspace_id`, `work_id`, `uri`, `created_by`, and
+  `created_at`; it replaces `kind`, `media_type`, `summary`, and optional private
+  content, then emits `artifact.updated`.
 - `remove` deletes metadata and private content, then emits `artifact.deleted`.
 
 ## Algorithm
@@ -81,7 +91,11 @@ export const ArtifactServiceLive: Layer.Layer<
    stored value is not a string.
 4. `listForWork` and `listForWorkspace` decode the artifact collection and filter
    by work or workspace.
-5. `remove` requires an existing Artifact, removes metadata and content, emits
+5. `update` requires an existing Artifact, validates optional replacement content
+   size, saves the metadata replacement with stable identity fields, replaces or
+   removes private content according to the payload, emits `artifact.updated`, and
+   returns the updated metadata.
+6. `remove` requires an existing Artifact, removes metadata and content, emits
    `artifact.deleted`, and returns the removed metadata.
 
 ## Negative Logic (Prohibited Paths)
@@ -90,6 +104,8 @@ export const ArtifactServiceLive: Layer.Layer<
 - ❌ Do NOT expose artifact content in the event log.
 - ❌ Do NOT invent external URI support until the payload schema carries a URI.
 - ❌ Do NOT mutate artifacts outside this service.
+- ❌ Do NOT treat update as delete-plus-create; `artifact.updated` preserves the
+  artifact id and URI.
 
 ## Depth
 
@@ -107,6 +123,13 @@ domain surface.
   **A:** No. The event log is audit metadata, not a content store. Events carry
   stable identity and kind while content remains in the private artifact content
   collection.
+- **Q:** Does `artifact.updated` create a new version or mutate the existing
+  artifact?
+  **A:** Mutate the existing artifact metadata/content while preserving id and URI.
+  _Rationale:_ v0.1 has no version schema or artifact lineage model; preserving
+  identity gives clients a simple correction path without inventing version
+  semantics. _Rejected:_ delete-plus-create (loses continuity and contradicts the
+  event name); versioned artifacts (larger domain model for a later slice).
 
 ## Referenced by
 

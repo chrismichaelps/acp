@@ -96,7 +96,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 29. ✅ Workspace mutation transport commands — REST + JSON-RPC backed by domain events
 30. ✅ Workspace archive lifecycle — persisted state + REST/JSON-RPC command
 31. ✅ JSON-RPC command-map capacity split — support helpers extracted
-32. ▶ Next command/domain gap from protocol audit
+32. ✅ Artifact update lifecycle — metadata/content replacement + event
+33. ▶ Worker presence event scope decision
 
 ## Referenced by
 

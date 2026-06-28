@@ -64,6 +64,7 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 - `POST /v1/leases`
 - `POST /v1/leases/{lease_id}/release`
 - `POST /v1/artifacts`
+- `PATCH /v1/artifacts/{artifact_id}`
 - `DELETE /v1/artifacts/{artifact_id}`
 - `POST /v1/checkpoints`
 - `POST /v1/reviews`
@@ -95,9 +96,9 @@ the client version as a string; [[protocol-version]] owns the supported-version
 predicate so the router can reject incompatible versions as explicit handshake
 validation rather than generic decode failure.
 
-Artifact deletion is declared as `DELETE /v1/artifacts/{artifact_id}` because the
-domain [[artifact-service]] already owns removal and emits `artifact.deleted`;
-update remains intentionally absent until artifact mutation exists in the domain.
+Artifact update/delete are declared as backed extensions because the domain
+[[artifact-service]] owns mutation/removal and emits `artifact.updated` and
+`artifact.deleted`.
 
 Workspace create/update/archive are declared as backed extensions beside `GET
 /v1/workspaces`. The [[workspace-service]] owns persisted `workspace.created`,

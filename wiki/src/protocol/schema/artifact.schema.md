@@ -14,7 +14,8 @@ aliases: [artifact.schema]
 
 ## Purpose
 
-Wire + domain shape of an [[Artifact]] and the `CreateArtifact` payload (spec §10.5, §12.9).
+Wire + domain shape of an [[Artifact]] plus create/update payloads (spec §10.5,
+§12.9, and the `artifact.updated` event vocabulary).
 
 ## Interface
 
@@ -40,17 +41,28 @@ export const CreateArtifactPayload: Schema.Struct<{
   summary?
   content?: optionalWith<string, Option>
 }>
+export const UpdateArtifactPayload: Schema.Struct<{
+  kind
+  media_type?
+  summary?
+  content?: optionalWith<string, Option>
+}>
 export type Artifact = typeof Artifact.Type
 ```
 
 ## Algorithm
 
 Struct over [[ids]] + [[common]] `ArtifactKind`. `content` (inline body) is optional;
-host either stores it (`acp://artifacts/{id}`) or keeps the external `uri`.
+host stores it under the stable artifact URI (`acp://artifacts/{id}`).
+`UpdateArtifactPayload` intentionally omits identity, workspace, work, URI,
+creator, and timestamp; an update replaces mutable metadata/content for the
+existing artifact while preserving its durable identity.
 
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT accept `content` larger than `ACP_MAX_ARTIFACT_SIZE` — reject at the service.
+- ❌ Do NOT let update payloads change `id`, `workspace_id`, `work_id`, `uri`,
+  `created_by`, or `created_at`.
 
 ## Depth
 

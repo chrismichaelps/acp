@@ -27,6 +27,7 @@ import {
   Review,
   ReviewId,
   SessionId,
+  UpdateArtifactPayload,
   UpdateWorkspacePayload,
   WorkId,
   Worker,
@@ -256,6 +257,15 @@ export const ArtifactGroup = HttpApiGroup.make('artifacts')
       .setPayload(CreateArtifactPayload)
       .addSuccess(Artifact, { status: 201 })
       .addError(ProtocolError, protocolError(400))
+      .addError(ProtocolError, protocolError(404)),
+  )
+  .add(
+    HttpApiEndpoint.patch('updateArtifact', '/v1/artifacts/:artifact_id')
+      .setPath(ArtifactPath)
+      .setPayload(UpdateArtifactPayload)
+      .addSuccess(Artifact)
+      .addError(ProtocolError, protocolError(400))
+      .addError(ProtocolError, protocolError(401))
       .addError(ProtocolError, protocolError(404)),
   )
   .add(

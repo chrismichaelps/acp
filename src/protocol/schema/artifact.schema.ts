@@ -40,3 +40,11 @@ export const CreateArtifactPayload = Schema.Struct({
   }),
 })
 export type CreateArtifactPayload = typeof CreateArtifactPayload.Type
+
+export const UpdateArtifactPayload = Schema.Struct({
+  kind: ArtifactKind,
+  media_type: Artifact.fields.media_type,
+  summary: Artifact.fields.summary,
+  content: CreateArtifactPayload.fields.content,
+})
+export type UpdateArtifactPayload = typeof UpdateArtifactPayload.Type

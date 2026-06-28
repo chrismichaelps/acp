@@ -72,8 +72,8 @@ Validate the method label against the closed method set. Full-body methods
 `artifact.create`, `checkpoint.create`, `review.request`) validate params with
 the HTTP payload schema and forward the original JSON body so `Option`-wrapped
 decoded values do not leak back onto the wire. Path-bearing methods such as
-`workspace.update`, `workspace.archive`, `work.claim`, and `lease.release` decode
-resource identifiers and operation fields, encode path segments with
+`workspace.update`, `workspace.archive`, `artifact.update`, `work.claim`, and
+`lease.release` decode resource identifiers and operation fields, encode path segments with
 `encodeURIComponent`, and build the exact REST route used by the HTTP transport.
 `events.subscribe` builds the SSE route and marks the command as stream-capable.
 

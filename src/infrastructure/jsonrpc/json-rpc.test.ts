@@ -297,6 +297,34 @@ describe('JSON-RPC transport mapping', () => {
     })
   })
 
+  it('maps artifact.update and encodes the artifact id path segment', () => {
+    const command = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_artifact_update',
+        method: 'artifact.update',
+        params: {
+          artifact_id: 'artifact/needs encoding',
+          kind: 'markdown',
+          summary: 'Updated notes',
+          content: 'Updated content',
+        },
+      }),
+    )
+
+    expect(command.request).toEqual({
+      method: 'PATCH',
+      path: '/v1/artifacts/artifact%2Fneeds%20encoding',
+      body: {
+        kind: 'markdown',
+        media_type: null,
+        summary: 'Updated notes',
+        content: 'Updated content',
+      },
+      label: 'artifact.update',
+    })
+  })
+
   it('maps events.subscribe to the SSE stream route', () => {
     const command = expectRight(
       parseJsonRpcCommand({

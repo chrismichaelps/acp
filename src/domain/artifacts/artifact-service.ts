@@ -14,6 +14,7 @@ import type {
   CreateArtifactPayload,
   EventType,
   Timestamp,
+  UpdateArtifactPayload,
   WorkerId,
   WorkspaceId,
   WorkId,
@@ -52,6 +53,12 @@ export interface ArtifactServiceApi {
     actor: WorkerId,
     now: Timestamp,
   ) => Effect.Effect<Artifact, NotFoundError | StorageError>
+  readonly update: (
+    artifactId: ArtifactId,
+    payload: UpdateArtifactPayload,
+    actor: WorkerId,
+    now: Timestamp,
+  ) => Effect.Effect<Artifact, ValidationError | NotFoundError | StorageError>
 }
 
 export class ArtifactService extends Context.Tag('ArtifactService')<
@@ -164,6 +171,12 @@ const make = Effect.gen(function* () {
       onSome: (value) => storage.put(contentCollection, id, value),
     })
 
+  const replaceContent = (id: ArtifactId, content: Option.Option<string>) =>
+    Option.match(content, {
+      onNone: () => storage.remove(contentCollection, id),
+      onSome: (value) => storage.put(contentCollection, id, value),
+    })
+
   const get: ArtifactServiceApi['get'] = (artifactId) =>
     Effect.flatMap(storage.get(collection, artifactId), (stored) =>
       Option.match(stored, {
@@ -253,6 +266,28 @@ const make = Effect.gen(function* () {
       }),
     )
 
+  const update: ArtifactServiceApi['update'] = (
+    artifactId,
+    payload,
+    actor,
+    now,
+  ) =>
+    Effect.flatMap(requireArtifact(artifactId), (artifact) =>
+      Effect.gen(function* () {
+        yield* validateContentSize(payload.content)
+        const updated: Artifact = {
+          ...artifact,
+          kind: payload.kind,
+          media_type: payload.media_type,
+          summary: payload.summary,
+        }
+        yield* save(updated)
+        yield* replaceContent(artifactId, payload.content)
+        yield* appendArtifactEvent(updated, actor, now, 'artifact.updated')
+        return updated
+      }),
+    )
+
   return {
     create,
     get,
@@ -260,6 +295,7 @@ const make = Effect.gen(function* () {
     listForWork,
     listForWorkspace,
     remove,
+    update,
   } satisfies ArtifactServiceApi
 })
 

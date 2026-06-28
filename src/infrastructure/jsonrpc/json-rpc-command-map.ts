@@ -17,6 +17,7 @@ import {
   RequestLeasePayload,
   RequestReviewPayload,
   ReviewId,
+  UpdateArtifactPayload,
   WorkId,
   CreateWorkspacePayload,
   UpdateWorkspacePayload,
@@ -63,6 +64,7 @@ const methodLabels = new Set<string>([
   'lease.request',
   'lease.release',
   'artifact.create',
+  'artifact.update',
   'artifact.delete',
   'checkpoint.create',
   'review.request',
@@ -282,6 +284,35 @@ export const commandFor = (
         id,
         expects_response: expectsResponse,
         request: { method: 'POST', path: '/v1/artifacts', body, label: method },
+      }
+    }
+
+    if (method === 'artifact.update') {
+      const params = yield* decodeParams(
+        Schema.Struct({
+          artifact_id: ArtifactId,
+          kind: UpdateArtifactPayload.fields.kind,
+          media_type: UpdateArtifactPayload.fields.media_type,
+          summary: UpdateArtifactPayload.fields.summary,
+          content: UpdateArtifactPayload.fields.content,
+        }),
+        paramsValue,
+        id,
+      )
+      return {
+        id,
+        expects_response: expectsResponse,
+        request: {
+          method: 'PATCH',
+          path: `/v1/artifacts/${encodeSegment(params.artifact_id)}`,
+          body: {
+            kind: params.kind,
+            media_type: Option.getOrNull(params.media_type),
+            summary: Option.getOrNull(params.summary),
+            content: Option.getOrNull(params.content),
+          },
+          label: method,
+        },
       }
     }
 
