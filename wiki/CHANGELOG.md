@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-27 · ci-local-validation-gates slice · added GitHub Actions CI for
+  Node 24 pull requests and `main` pushes, running lint, typecheck,
+  `check:file-size`, and tests through the lockfile-backed pnpm setup · local
+  workflow syntax/readability validation · risk LOW
 - 2026-06-27 · json-rpc-command-map split · moved JSON-RPC method-to-HTTP command
   mapping into [[json-rpc-command-map]], reduced [[json-rpc]] to the public
   envelope/response facade, and added `check:file-size` via
