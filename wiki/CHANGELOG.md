@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · readme-current-state-refresh slice · refreshed the public
+  README prose for current REST/SSE, `POST /rpc`, stdio JSON-RPC, SQLite,
+  scoped mutation permissions, and expanded CLI behavior · docs-only validation ·
+  risk LOW
 - 2026-06-28 · post-permission-integration-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after permission scope parity and
   selected public README current-state drift as the next docs slice · docs-only
