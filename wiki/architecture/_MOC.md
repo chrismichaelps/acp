@@ -99,7 +99,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 31. ✅ JSON-RPC command-map capacity split — support helpers extracted
 32. ✅ Artifact update lifecycle — metadata/content replacement + event
 33. ✅ Worker presence event scope decision — host-scoped registry state
-34. ▶ Refresh protocol implementation audit for next backed gap
+34. ✅ Protocol implementation audit refresh — CLI parity gap selected
+35. ▶ CLI parity for backed commands
 
 ## Referenced by
 
