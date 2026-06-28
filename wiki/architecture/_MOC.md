@@ -89,7 +89,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 23. ✅ Spec naming canonicalization note — tracked interpretation rule
 24. ✅ Fresh protocol implementation audit — file-size gate identified
 25. ✅ JSON-RPC module split + file-size gate — 160 tests green
-26. ▶ CI gate for lint/typecheck/file-size/tests
+26. ✅ CI gate for lint/typecheck/file-size/tests — workflow added
+27. ▶ Formatting drift decision
 
 ## Referenced by
 
