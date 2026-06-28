@@ -17,12 +17,13 @@ aliases: [json-rpc-command-map]
 Own the closed mapping from JSON-RPC method labels to canonical ACP HTTP
 commands. This module validates each method's params with the same Effect Schema
 payloads used by [[acp-http-api]], splits path identifiers from operation bodies,
-URL-encodes path segments, and returns a transport-neutral
-`JsonRpcCommand`.
+URL-encodes path segments through [[json-rpc-command-support]], and returns a
+transport-neutral `JsonRpcCommand`.
 
-The split keeps [[json-rpc]] focused on envelope parsing and response helpers
-while this module carries the larger method table. It exists to satisfy the
-spec's file-size rule without weakening method compatibility tests.
+The split keeps [[json-rpc]] focused on envelope parsing, [[json-rpc-command-support]]
+focused on reusable JSON-RPC mechanics, and this module focused on the larger ACP
+method table. It exists to satisfy the spec's file-size rule without weakening
+method compatibility tests.
 
 ## Interface
 
@@ -59,8 +60,9 @@ export const commandFor: (
 
 ### Linkage
 
-- **Requires:** [[acp-http-api]], [[work-unit.schema]], [[lease.schema]],
-  [[artifact.schema]], [[checkpoint.schema]], [[review.schema]]
+- **Requires:** [[json-rpc-command-support]], [[acp-http-api]],
+  [[work-unit.schema]], [[lease.schema]], [[artifact.schema]],
+  [[checkpoint.schema]], [[review.schema]]
 - **Consumed by:** [[json-rpc]] facade.
 
 ## Algorithm

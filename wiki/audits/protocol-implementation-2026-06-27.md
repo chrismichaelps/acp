@@ -89,9 +89,8 @@ update and worker presence remain deferred until their persisted domain state is
 defined. Codecs and generated clients should only re-enter the queue when a
 concrete boundary or consumer appears; platform-node extraction should wait for
 more than one Node adapter or duplicated platform wiring. The JSON-RPC command
-map is still under the 500-line gate after workspace archive, but it is close
-enough that the next JSON-RPC-facing slice should split it by capability before
-adding more method growth.
+map has been split into a focused method table plus [[json-rpc-command-support]],
+restoring file-size headroom before future method growth.
 
 ## Referenced by
 

@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · json-rpc-command-map-capacity slice · extracted
+  [[json-rpc-command-support]] for shared JSON-RPC ids, errors, response shapes,
+  param decoding, raw-body validation, and path encoding; [[json-rpc-command-map]]
+  is back under the file-size headroom before more method growth · focused tests
+  green · risk LOW
 - 2026-06-28 · workspace-archive-lifecycle slice · added persisted
   [[Workspace]] lifecycle state for `active`/`archived`, specified archive as a
   one-way [[workspace-service]] transition, and exposed `workspace.archived` through
