@@ -56,6 +56,7 @@ import type {
 import { IdClock } from './identity.js'
 import { authorize, ok, pathParam, respond } from './route-support.js'
 import {
+  archiveWorkspace,
   createWorkspace,
   listWorkspaces,
   updateWorkspace,
@@ -354,6 +355,7 @@ const v1Router = HttpRouter.empty.pipe(
   HttpRouter.get('/v1/workspaces', listWorkspaces),
   HttpRouter.post('/v1/workspaces', createWorkspace),
   HttpRouter.patch('/v1/workspaces/:workspace_id', updateWorkspace),
+  HttpRouter.post('/v1/workspaces/:workspace_id/archive', archiveWorkspace),
   HttpRouter.post('/v1/work', createWork),
   HttpRouter.post('/v1/work/:work_id/claim', claimWork),
   HttpRouter.patch('/v1/work/:work_id', updateWorkState),

@@ -210,6 +210,55 @@ describe('acpRouter', () => {
     )
   })
 
+  it('archives a workspace and rejects a later update', async () => {
+    const handler = makeHandler()
+    const token = await initSession(handler, ['workspace:write'])
+    const created = await handler(
+      new Request('http://acp.test/v1/workspaces', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: 'acme/web',
+          kind: 'git_repository',
+          uri: 'git+https://github.com/acme/web.git',
+          metadata: { provider: 'github' },
+        }),
+      }),
+    )
+    const workspace = (await created.json()) as { id: string }
+
+    const archived = await handler(
+      new Request(`http://acp.test/v1/workspaces/${workspace.id}/archive`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${token}` },
+      }),
+    )
+    expect(archived.status).toBe(200)
+    expect(((await archived.json()) as { state: string }).state).toBe(
+      'archived',
+    )
+
+    const updated = await handler(
+      new Request(`http://acp.test/v1/workspaces/${workspace.id}`, {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: 'acme/web-renamed',
+          kind: 'git_repository',
+          uri: 'git+https://github.com/acme/web.git',
+          metadata: { provider: 'github' },
+        }),
+      }),
+    )
+    expect(updated.status).toBe(409)
+  })
+
   it('creates a work unit as open (201)', async () => {
     const handler = makeHandler()
     const res = await handler(

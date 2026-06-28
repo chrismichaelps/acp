@@ -30,7 +30,11 @@ export const createWorkspace = respond(
     const id = (yield* idClock.nextId('workspace')) as WorkspaceId
     const now = yield* idClock.now
     const actor = yield* authorize('workspace:write')
-    const workspace = yield* workspaces.create({ id, ...payload }, actor, now)
+    const workspace = yield* workspaces.create(
+      { id, state: 'active', ...payload },
+      actor,
+      now,
+    )
     return yield* ok(201)(Workspace, workspace)
   }),
 )
@@ -46,10 +50,22 @@ export const updateWorkspace = respond(
     const now = yield* idClock.now
     const actor = yield* authorize('workspace:write')
     const workspace = yield* workspaces.update(
-      { id: workspaceId, ...payload },
+      { id: workspaceId, state: 'active', ...payload },
       actor,
       now,
     )
+    return yield* ok(200)(Workspace, workspace)
+  }),
+)
+
+export const archiveWorkspace = respond(
+  Effect.gen(function* () {
+    const workspaces = yield* WorkspaceService
+    const idClock = yield* IdClock
+    const workspaceId = (yield* pathParam('workspace_id')) as WorkspaceId
+    const now = yield* idClock.now
+    const actor = yield* authorize('workspace:write')
+    const workspace = yield* workspaces.archive(workspaceId, actor, now)
     return yield* ok(200)(Workspace, workspace)
   }),
 )
