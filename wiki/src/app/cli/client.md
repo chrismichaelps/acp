@@ -41,8 +41,9 @@ export const runCliRequest: (
 
 ## Algorithm
 
-Build a `GET`/`POST`/`PATCH` `HttpClientRequest` for `${baseUrl}${path}`, attach a
-JSON body when present, `execute`, read the response text, return
+Build a `GET`/`POST`/`PATCH`/`DELETE` `HttpClientRequest` for
+`${baseUrl}${path}`, attach a JSON body when present, `execute`, read the
+response text, return
 `{ status, body }`. Streaming (`events stream`) is handled by [[cli-main]].
 
 ## Negative Logic (Prohibited Paths)

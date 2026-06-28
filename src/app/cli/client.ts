@@ -17,7 +17,9 @@ export const runCliRequest = (request: CliRequest, baseUrl: string) =>
         ? HttpClientRequest.get(url)
         : request.method === 'PATCH'
           ? HttpClientRequest.patch(url)
-          : HttpClientRequest.post(url)
+          : request.method === 'DELETE'
+            ? HttpClientRequest.del(url)
+            : HttpClientRequest.post(url)
     const httpRequest =
       request.body === undefined
         ? base
