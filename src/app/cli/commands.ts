@@ -2,7 +2,7 @@
 import { Data, Either } from 'effect'
 
 export interface CliRequest {
-  readonly method: 'GET' | 'POST' | 'PATCH'
+  readonly method: 'GET' | 'POST' | 'PATCH' | 'DELETE'
   readonly path: string
   readonly body?: Record<string, unknown>
   readonly stream?: boolean
@@ -63,6 +63,24 @@ const optional = (
 ): Record<string, string> =>
   key in flags && flags[key] !== 'true' ? { [key]: flags[key] } : {}
 
+const optionalAs = (
+  flags: Readonly<Record<string, string>>,
+  key: string,
+  field: string,
+): Record<string, string> =>
+  key in flags && flags[key] !== 'true' ? { [field]: flags[key] } : {}
+
+const csvFlag = (
+  flags: Readonly<Record<string, string>>,
+  key: string,
+): Either.Either<readonly string[], CliError> =>
+  Either.map(flag(flags, key), (value) =>
+    value
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item) => item !== ''),
+  )
+
 const encodePathSegment = (value: string): string => encodeURIComponent(value)
 
 const positiveIntegerFlag = (
@@ -91,6 +109,56 @@ export const parseArgs = (
       method: 'GET',
       path: '/v1/workspaces',
       label: 'workspace list',
+    })
+  }
+
+  if (group === 'workspace' && action === 'create') {
+    return Either.gen(function* () {
+      const name = yield* flag(flags, 'name')
+      const kind = yield* flag(flags, 'kind')
+      const uri = yield* flag(flags, 'uri')
+      return {
+        method: 'POST',
+        path: '/v1/workspaces',
+        body: {
+          name,
+          kind,
+          uri,
+          ...optionalAs(flags, 'default-branch', 'default_branch'),
+        },
+        label: 'workspace create',
+      }
+    })
+  }
+
+  if (group === 'workspace' && action === 'update') {
+    return Either.gen(function* () {
+      const workspaceId = yield* positional(positionals, 0, 'workspace_id')
+      const name = yield* flag(flags, 'name')
+      const kind = yield* flag(flags, 'kind')
+      const uri = yield* flag(flags, 'uri')
+      return {
+        method: 'PATCH',
+        path: `/v1/workspaces/${encodePathSegment(workspaceId)}`,
+        body: {
+          name,
+          kind,
+          uri,
+          ...optionalAs(flags, 'default-branch', 'default_branch'),
+        },
+        label: 'workspace update',
+      }
+    })
+  }
+
+  if (group === 'workspace' && action === 'archive') {
+    return Either.gen(function* () {
+      const workspaceId = yield* positional(positionals, 0, 'workspace_id')
+      return {
+        method: 'POST',
+        path: `/v1/workspaces/${encodePathSegment(workspaceId)}/archive`,
+        label: 'workspace archive',
+      }
     })
   }
 
@@ -213,6 +281,35 @@ export const parseArgs = (
     })
   }
 
+  if (group === 'artifact' && action === 'update') {
+    return Either.gen(function* () {
+      const artifactId = yield* positional(positionals, 0, 'artifact_id')
+      const kind = yield* flag(flags, 'kind')
+      return {
+        method: 'PATCH',
+        path: `/v1/artifacts/${encodePathSegment(artifactId)}`,
+        body: {
+          kind,
+          ...optionalAs(flags, 'media-type', 'media_type'),
+          ...optional(flags, 'summary'),
+          ...optional(flags, 'content'),
+        },
+        label: 'artifact update',
+      }
+    })
+  }
+
+  if (group === 'artifact' && action === 'delete') {
+    return Either.gen(function* () {
+      const artifactId = yield* positional(positionals, 0, 'artifact_id')
+      return {
+        method: 'DELETE',
+        path: `/v1/artifacts/${encodePathSegment(artifactId)}`,
+        label: 'artifact delete',
+      }
+    })
+  }
+
   if (group === 'review' && action === 'request') {
     return Either.gen(function* () {
       const workId = yield* flag(flags, 'work')
@@ -235,6 +332,41 @@ export const parseArgs = (
     })
   }
 
+  if (group === 'review' && action === 'approve') {
+    return Either.gen(function* () {
+      const reviewId = yield* positional(positionals, 0, 'review_id')
+      const metRequirements = yield* csvFlag(flags, 'met')
+      return {
+        method: 'POST',
+        path: `/v1/reviews/${encodePathSegment(reviewId)}/approve`,
+        body: { met_requirements: metRequirements },
+        label: 'review approve',
+      }
+    })
+  }
+
+  if (group === 'review' && action === 'reject') {
+    return Either.gen(function* () {
+      const reviewId = yield* positional(positionals, 0, 'review_id')
+      return {
+        method: 'POST',
+        path: `/v1/reviews/${encodePathSegment(reviewId)}/reject`,
+        label: 'review reject',
+      }
+    })
+  }
+
+  if (group === 'review' && action === 'request-changes') {
+    return Either.gen(function* () {
+      const reviewId = yield* positional(positionals, 0, 'review_id')
+      return {
+        method: 'POST',
+        path: `/v1/reviews/${encodePathSegment(reviewId)}/request_changes`,
+        label: 'review request-changes',
+      }
+    })
+  }
+
   if (group === 'events' && action === 'stream') {
     return Either.gen(function* () {
       const workspaceId = yield* flag(flags, 'workspace')
@@ -253,6 +385,9 @@ export const parseArgs = (
 export const usage = `acp — Agent Coordination Protocol CLI
 
   acp workspace list
+  acp workspace create --name <n> --kind <k> --uri <u> [--default-branch <b>]
+  acp workspace update <workspace_id> --name <n> --kind <k> --uri <u> [--default-branch <b>]
+  acp workspace archive <workspace_id>
   acp work create <title> --workspace <id> [--priority <p>] [--description <d>]
   acp work claim <work_id> --worker <id>
   acp work update <work_id> --state <state>
@@ -260,7 +395,12 @@ export const usage = `acp — Agent Coordination Protocol CLI
   acp lease release <lease_id>
   acp checkpoint create --workspace <id> --work <id> --summary <s>
   acp artifact create --workspace <id> --work <id> --kind <k> [--summary <s>] [--content <c>]
+  acp artifact update <artifact_id> --kind <k> [--media-type <m>] [--summary <s>] [--content <c>]
+  acp artifact delete <artifact_id>
   acp review request --work <id> --by <id> [--reviewer <id>]
+  acp review approve <review_id> --met <requirement,csv>
+  acp review reject <review_id>
+  acp review request-changes <review_id>
   acp events stream --workspace <id>
 
 Targets ACP_BASE_URL (default http://localhost:$ACP_PORT).`

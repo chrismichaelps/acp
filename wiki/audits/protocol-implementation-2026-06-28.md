@@ -49,19 +49,15 @@ SQLite adapter, auth mode, CLI, and stdio bridge.
 
 ## Remaining Gaps
 
-The largest concrete gap is local CLI parity. [[cli-commands]] still exposes the
-older command set: workspace list, work create/claim/update, lease
-request/release, checkpoint create, artifact create, review request, and event
-stream. It cannot invoke backed routes added after the first CLI slice:
-workspace create/update/archive, artifact update/delete, or review
-approve/reject/request-changes. The [[cli-client]] also only supports `GET`,
-`POST`, and `PATCH`, so artifact deletion cannot be projected until the client
-accepts `DELETE`.
+The largest concrete gap was local CLI parity. [[cli-commands]] now exposes the
+backed workspace create/update/archive, artifact update/delete, and review
+approve/reject/request-changes routes in addition to the older command set. The
+[[cli-client]] supports `DELETE`, so artifact removal is available from the local
+shell path.
 
-The CLI gap is integration-facing rather than domain-facing. Server and JSON-RPC
-clients can already reach the new behavior; local shell users cannot. Closing it
-does not require new protocol state, storage shape, or event semantics, only an
-expanded argv-to-route projection, usage text, and parser/client tests.
+The CLI gap was integration-facing rather than domain-facing. Closing it did not
+require new protocol state, storage shape, or event semantics, only an expanded
+argv-to-route projection, usage text, and parser/client tests.
 
 Standalone protocol codecs and generated clients remain deferred by
 [[ADR-0004-protocol-version-codecs-generated-client]]. They should re-enter the
@@ -74,12 +70,9 @@ schema and storage/query contract before any host-presence feed is implemented.
 
 ## Next Slice
 
-Implement CLI parity for the backed command surface. Add argv mappings for
-workspace create/update/archive, artifact update/delete, and review
-approve/reject/request-changes; extend [[cli-client]] to support `DELETE`; update
-[[cli-commands]] and [[cli-client]] mirrors before code; cover success, required
-flag, path encoding, and delete-method regressions in CLI tests. Keep the slice
-transport-only: no domain, storage, or server route changes should be necessary.
+Re-audit remaining integration gaps after CLI parity. Treat generated clients,
+host-level presence streams, WebSocket transport, and platform-node extraction as
+deferred until a concrete consumer or duplicated boundary appears.
 
 ## Referenced by
 

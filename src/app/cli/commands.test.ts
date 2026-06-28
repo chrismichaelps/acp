@@ -21,6 +21,72 @@ describe('parseArgs', () => {
     })
   })
 
+  it('parses workspace create with optional default branch', () => {
+    const req = right([
+      'workspace',
+      'create',
+      '--name',
+      'acme/web',
+      '--kind',
+      'git_repository',
+      '--uri',
+      'git+https://github.com/acme/web.git',
+      '--default-branch',
+      'main',
+    ])
+    expect(req.method).toBe('POST')
+    expect(req.path).toBe('/v1/workspaces')
+    expect(req.body).toEqual({
+      name: 'acme/web',
+      kind: 'git_repository',
+      uri: 'git+https://github.com/acme/web.git',
+      default_branch: 'main',
+    })
+  })
+
+  it('fails workspace create when a required flag is missing', () => {
+    const parsed = parseArgs([
+      'workspace',
+      'create',
+      '--name',
+      'acme/web',
+      '--uri',
+      'git+https://github.com/acme/web.git',
+    ])
+    expect(Either.isLeft(parsed)).toBe(true)
+    if (Either.isLeft(parsed)) {
+      expect(parsed.left.message).toContain('--kind')
+    }
+  })
+
+  it('parses workspace update and encodes the workspace id', () => {
+    const req = right([
+      'workspace',
+      'update',
+      'workspace 1/main',
+      '--name',
+      'acme/web',
+      '--kind',
+      'git_repository',
+      '--uri',
+      'file:///repo',
+    ])
+    expect(req.method).toBe('PATCH')
+    expect(req.path).toBe('/v1/workspaces/workspace%201%2Fmain')
+    expect(req.body).toEqual({
+      name: 'acme/web',
+      kind: 'git_repository',
+      uri: 'file:///repo',
+    })
+  })
+
+  it('parses workspace archive without a body', () => {
+    const req = right(['workspace', 'archive', 'workspace_123'])
+    expect(req.method).toBe('POST')
+    expect(req.path).toBe('/v1/workspaces/workspace_123/archive')
+    expect(req.body).toBeUndefined()
+  })
+
   it('parses work create with required workspace and optional flags', () => {
     const req = right([
       'work',
@@ -163,6 +229,37 @@ describe('parseArgs', () => {
     })
   })
 
+  it('parses artifact update with metadata and content fields', () => {
+    const req = right([
+      'artifact',
+      'update',
+      'artifact_123',
+      '--kind',
+      'report',
+      '--media-type',
+      'text/markdown',
+      '--summary',
+      'Updated report',
+      '--content',
+      '# Report',
+    ])
+    expect(req.method).toBe('PATCH')
+    expect(req.path).toBe('/v1/artifacts/artifact_123')
+    expect(req.body).toEqual({
+      kind: 'report',
+      media_type: 'text/markdown',
+      summary: 'Updated report',
+      content: '# Report',
+    })
+  })
+
+  it('parses artifact delete with an encoded path and DELETE method', () => {
+    const req = right(['artifact', 'delete', 'artifact 1/old'])
+    expect(req.method).toBe('DELETE')
+    expect(req.path).toBe('/v1/artifacts/artifact%201%2Fold')
+    expect(req.body).toBeUndefined()
+  })
+
   it('parses review requests with an optional reviewer', () => {
     const req = right([
       'review',
@@ -181,6 +278,40 @@ describe('parseArgs', () => {
       requirements: [],
       reviewer: 'human_chris',
     })
+  })
+
+  it('parses review approve with comma-separated met requirements', () => {
+    const req = right([
+      'review',
+      'approve',
+      'review_123',
+      '--met',
+      'tests_pass, diff_review',
+    ])
+    expect(req.path).toBe('/v1/reviews/review_123/approve')
+    expect(req.body).toEqual({
+      met_requirements: ['tests_pass', 'diff_review'],
+    })
+  })
+
+  it('fails review approve when --met is missing', () => {
+    const parsed = parseArgs(['review', 'approve', 'review_123'])
+    expect(Either.isLeft(parsed)).toBe(true)
+    if (Either.isLeft(parsed)) {
+      expect(parsed.left.message).toContain('--met')
+    }
+  })
+
+  it('parses review reject without a body', () => {
+    const req = right(['review', 'reject', 'review_123'])
+    expect(req.path).toBe('/v1/reviews/review_123/reject')
+    expect(req.body).toBeUndefined()
+  })
+
+  it('parses review request-changes without a body', () => {
+    const req = right(['review', 'request-changes', 'review 123/main'])
+    expect(req.path).toBe('/v1/reviews/review%20123%2Fmain/request_changes')
+    expect(req.body).toBeUndefined()
   })
 
   it('marks events stream as streaming with the workspace query', () => {
