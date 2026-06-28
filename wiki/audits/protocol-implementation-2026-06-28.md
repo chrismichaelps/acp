@@ -74,12 +74,21 @@ Node-specific wiring is still small and isolated in app entrypoints.
 Host-level worker presence streams remain out of scope. ADR-0005 requires a new
 schema and storage/query contract before any host-presence feed is implemented.
 
+The remaining immediate drift is public documentation. The README already has
+the senior-level structure the project needs, but its JSON-RPC paragraph still
+describes JSON-RPC as a transport core rather than a running stdio host. That is
+now stale: `POST /rpc` and `acp-jsonrpc-stdio` are implemented, while WebSocket
+alone remains deferred by ADR-0002. The README should also briefly reflect the
+expanded CLI and action-scope enforcement so external readers see the current
+reference-host shape without reading the full wiki.
+
 ## Next Slice
 
-Re-audit remaining integration gaps after permission-scope parity. Treat
-generated clients, host-level presence streams, WebSocket transport, and
-platform-node extraction as deferred until a concrete consumer or duplicated
-boundary appears.
+Refresh the public README against the current reference host. Keep it prose-led
+and senior in tone; avoid tutorial sprawl and generative-AI explanation. The
+README should describe REST/SSE, `POST /rpc`, stdio JSON-RPC, SQLite durability,
+local versus required auth, scoped mutation permissions, and the expanded CLI.
+Do not introduce new code in that slice.
 
 ## Referenced by
 
