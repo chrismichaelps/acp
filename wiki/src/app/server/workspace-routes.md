@@ -17,8 +17,8 @@ aliases: [workspace-routes]
 
 Own the HTTP handlers for workspace listing and backed workspace mutations. The
 domain [[workspace-service]] already persists `workspace.created` and
-`workspace.updated` events; this module exposes that behavior to clients without
-adding archive semantics that the [[Workspace]] schema still does not model.
+`workspace.updated` events and now owns the `workspace.archived` lifecycle
+transition; this module exposes those backed behaviors to clients.
 
 ## Interface
 
@@ -51,6 +51,17 @@ export const updateWorkspace: Effect<
   | HttpServerRequest
   | HttpRouter.RouteContext
 >
+export const archiveWorkspace: Effect<
+  HttpServerResponse,
+  never,
+  | WorkspaceService
+  | EventStore
+  | IdClock
+  | AppConfigTag
+  | SessionService
+  | HttpServerRequest
+  | HttpRouter.RouteContext
+>
 ```
 
 ### Routes
@@ -58,6 +69,7 @@ export const updateWorkspace: Effect<
 - `GET /v1/workspaces` → `workspace:read`
 - `POST /v1/workspaces` → `workspace:write`, mints a `WorkspaceId`
 - `PATCH /v1/workspaces/{workspace_id}` → `workspace:write`, full replacement by id
+- `POST /v1/workspaces/{workspace_id}/archive` → `workspace:write`, one-way archive
 
 ### Linkage
 
@@ -73,14 +85,15 @@ decodes [[workspace.schema|CreateWorkspacePayload]], mints a `workspace_*` id an
 timestamp, resolves the actor through `workspace:write`, and delegates to service
 `create`. `updateWorkspace` decodes [[workspace.schema|UpdateWorkspacePayload]],
 takes the id from the path, resolves the actor through `workspace:write`, and
-delegates to service `update`.
+delegates to service `update`. `archiveWorkspace` takes the id from the path,
+resolves the actor through `workspace:write`, and delegates to service `archive`.
 
 ## Negative Logic (Prohibited Paths)
 
-- ❌ Do NOT implement `workspace.archived` here; archive still lacks persisted state.
 - ❌ Do NOT let clients supply a new workspace id on create; the composition root
   mints it.
 - ❌ Do NOT duplicate event emission; [[workspace-service]] owns persisted events.
+- ❌ Do NOT archive by deleting the workspace record.
 
 ## Depth
 

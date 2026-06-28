@@ -44,6 +44,7 @@ export type JsonRpcMethod =
   | 'workspace.list'
   | 'workspace.create'
   | 'workspace.update'
+  | 'workspace.archive'
   | 'work.create'
   | 'work.claim'
   | 'work.update'
@@ -108,6 +109,7 @@ const methodLabels = new Set<string>([
   'workspace.list',
   'workspace.create',
   'workspace.update',
+  'workspace.archive',
   'work.create',
   'work.claim',
   'work.update',
@@ -253,6 +255,23 @@ export const commandFor = (
             default_branch: Option.getOrNull(params.default_branch),
             metadata: params.metadata,
           },
+          label: method,
+        },
+      }
+    }
+
+    if (method === 'workspace.archive') {
+      const params = yield* decodeParams(
+        Schema.Struct({ workspace_id: WorkspaceId }),
+        paramsValue,
+        id,
+      )
+      return {
+        id,
+        expects_response: expectsResponse,
+        request: {
+          method: 'POST',
+          path: `/v1/workspaces/${encodeSegment(params.workspace_id)}/archive`,
           label: method,
         },
       }

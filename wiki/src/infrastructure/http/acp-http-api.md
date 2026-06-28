@@ -56,6 +56,7 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 - `GET /v1/workspaces`
 - `POST /v1/workspaces`
 - `PATCH /v1/workspaces/{workspace_id}`
+- `POST /v1/workspaces/{workspace_id}/archive`
 - `POST /v1/work`
 - `POST /v1/work/{work_id}/claim`
 - `PATCH /v1/work/{work_id}`
@@ -98,11 +99,11 @@ Artifact deletion is declared as `DELETE /v1/artifacts/{artifact_id}` because th
 domain [[artifact-service]] already owns removal and emits `artifact.deleted`;
 update remains intentionally absent until artifact mutation exists in the domain.
 
-Workspace create/update are declared as backed extensions beside `GET
-/v1/workspaces`. The [[workspace-service]] already owns persisted
-`workspace.created` and `workspace.updated` events, so the transport exposes
-`POST /v1/workspaces` and `PATCH /v1/workspaces/{workspace_id}` while archive
-remains deferred until the schema has lifecycle state.
+Workspace create/update/archive are declared as backed extensions beside `GET
+/v1/workspaces`. The [[workspace-service]] owns persisted `workspace.created`,
+`workspace.updated`, and `workspace.archived` events, so the transport exposes
+`POST /v1/workspaces`, `PATCH /v1/workspaces/{workspace_id}`, and
+`POST /v1/workspaces/{workspace_id}/archive`.
 
 ## Negative Logic (Prohibited Paths)
 

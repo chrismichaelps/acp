@@ -94,7 +94,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 27. ✅ Formatting drift cleanup — repo-wide format check green
 28. ✅ Protocol version/codecs/generated-client decision — explicit handshake module
 29. ✅ Workspace mutation transport commands — REST + JSON-RPC backed by domain events
-30. ▶ Next command/domain gap from protocol audit
+30. ✅ Workspace archive lifecycle — persisted state + REST/JSON-RPC command
+31. ▶ JSON-RPC command-map capacity split before further method growth
 
 ## Referenced by
 

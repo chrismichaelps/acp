@@ -52,6 +52,7 @@ describe('WorkspaceService', () => {
     )
 
     expect(Option.getOrNull(result.stored)).toEqual(result.created)
+    expect(result.created.state).toBe('active')
     expect(
       Chunk.toReadonlyArray(result.log).map((event: Event) => event.type),
     ).toEqual(['workspace.created'])
@@ -101,6 +102,48 @@ describe('WorkspaceService', () => {
     expect(
       Chunk.toReadonlyArray(result.log).map((event: Event) => event.type),
     ).toEqual(['workspace.created', 'workspace.updated'])
+  })
+
+  it('archives a workspace and emits workspace.archived', () => {
+    const result = runSync(
+      Effect.gen(function* () {
+        const workspaces = yield* WorkspaceService
+        const events = yield* EventStore
+        yield* workspaces.create(decodeWorkspace('acme/web'), actor, now)
+        const archived = yield* workspaces.archive(workspaceId, actor, later)
+        const stored = yield* workspaces.get(workspaceId)
+        const log = yield* events.readAfter('workspace_123', 0)
+        return { archived, stored, log }
+      }),
+    )
+
+    expect(result.archived.state).toBe('archived')
+    expect(Option.getOrNull(result.stored)?.state).toBe('archived')
+    expect(
+      Chunk.toReadonlyArray(result.log).map((event: Event) => event.type),
+    ).toEqual(['workspace.created', 'workspace.archived'])
+  })
+
+  it('rejects updates after archive', () => {
+    const error = runSync(
+      Effect.either(
+        Effect.gen(function* () {
+          const workspaces = yield* WorkspaceService
+          yield* workspaces.create(decodeWorkspace('acme/web'), actor, now)
+          yield* workspaces.archive(workspaceId, actor, later)
+          return yield* workspaces.update(
+            decodeWorkspace('acme/web-renamed'),
+            actor,
+            later,
+          )
+        }),
+      ),
+    )
+
+    expect(error._tag).toBe('Left')
+    if (error._tag === 'Left') {
+      expect(error.left._tag).toBe('InvalidStateTransitionError')
+    }
   })
 
   it('returns Option.none for an unknown workspace', () => {

@@ -1,13 +1,14 @@
 /** @Acp.Protocol.Workspace — wire + domain shape of a Workspace */
 import { Schema } from 'effect'
 import { WorkspaceId } from './ids.js'
-import { WorkspaceKind } from './common.js'
+import { WorkspaceKind, WorkspaceState } from './common.js'
 
 export const Workspace = Schema.Struct({
   id: WorkspaceId,
   name: Schema.NonEmptyString,
   kind: WorkspaceKind,
   uri: Schema.NonEmptyString,
+  state: Schema.optionalWith(WorkspaceState, { default: () => 'active' }),
   default_branch: Schema.optionalWith(Schema.String, {
     as: 'Option',
     nullable: true,

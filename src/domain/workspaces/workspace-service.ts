@@ -3,6 +3,7 @@ import { Chunk, Context, Effect, Layer, Option, Schema } from 'effect'
 import { EventStore } from '../events/index.js'
 import { Storage } from '../../infrastructure/storage/index.js'
 import {
+  InvalidStateTransitionError,
   NotFoundError,
   StorageError,
 } from '../../protocol/errors/protocol-error.js'
@@ -28,7 +29,18 @@ export interface WorkspaceServiceApi {
     workspace: Workspace,
     actor: WorkerId,
     now: Timestamp,
-  ) => Effect.Effect<Workspace, NotFoundError | StorageError>
+  ) => Effect.Effect<
+    Workspace,
+    InvalidStateTransitionError | NotFoundError | StorageError
+  >
+  readonly archive: (
+    id: WorkspaceId,
+    actor: WorkerId,
+    now: Timestamp,
+  ) => Effect.Effect<
+    Workspace,
+    InvalidStateTransitionError | NotFoundError | StorageError
+  >
 }
 
 export class WorkspaceService extends Context.Tag('WorkspaceService')<
@@ -137,11 +149,38 @@ const make = Effect.gen(function* () {
     )
 
   const update: WorkspaceServiceApi['update'] = (workspace, actor, now) =>
-    Effect.flatMap(requireWorkspace(workspace.id), () =>
+    Effect.flatMap(requireWorkspace(workspace.id), (existing) =>
       Effect.gen(function* () {
-        yield* save(workspace)
-        yield* appendWorkspaceEvent(workspace, actor, now, 'workspace.updated')
-        return workspace
+        if (existing.state === 'archived') {
+          return yield* Effect.fail(
+            new InvalidStateTransitionError({
+              from: 'archived',
+              to: 'active',
+            }),
+          )
+        }
+        const updated = { ...workspace, state: 'active' as const }
+        yield* save(updated)
+        yield* appendWorkspaceEvent(updated, actor, now, 'workspace.updated')
+        return updated
+      }),
+    )
+
+  const archive: WorkspaceServiceApi['archive'] = (id, actor, now) =>
+    Effect.flatMap(requireWorkspace(id), (workspace) =>
+      Effect.gen(function* () {
+        if (workspace.state === 'archived') {
+          return yield* Effect.fail(
+            new InvalidStateTransitionError({
+              from: 'archived',
+              to: 'archived',
+            }),
+          )
+        }
+        const archived = { ...workspace, state: 'archived' as const }
+        yield* save(archived)
+        yield* appendWorkspaceEvent(archived, actor, now, 'workspace.archived')
+        return archived
       }),
     )
 
@@ -150,6 +189,7 @@ const make = Effect.gen(function* () {
     get,
     list,
     update,
+    archive,
   } satisfies WorkspaceServiceApi
 })
 

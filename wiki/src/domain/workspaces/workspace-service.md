@@ -16,10 +16,11 @@ aliases: [workspace-service, WorkspaceService]
 ## Purpose
 
 Own the [[Workspace]] registry for v0.1: create a workspace, read a stored
-workspace, list all workspaces, and update a workspace's mutable fields. Persists
-through [[Storage]] (schema-encode on write, schema-decode on read) and emits the
-matching `workspace.*` [[Event]] through [[EventStore]] — a [[Workspace]] _is_ the
-per-workspace event scope, so its events append to its own log.
+workspace, list all workspaces, update active workspace metadata, and archive a
+workspace. Persists through [[Storage]] (schema-encode on write, schema-decode on
+read) and emits the matching `workspace.*` [[Event]] through [[EventStore]] — a
+[[Workspace]] _is_ the per-workspace event scope, so its events append to its own
+log.
 
 ## Interface
 
@@ -38,7 +39,18 @@ export interface WorkspaceServiceApi {
     workspace: Workspace,
     actor: WorkerId,
     now: Timestamp,
-  ) => Effect<Workspace, NotFoundError | StorageError>
+  ) => Effect<
+    Workspace,
+    NotFoundError | InvalidStateTransitionError | StorageError
+  >
+  readonly archive: (
+    id: WorkspaceId,
+    actor: WorkerId,
+    now: Timestamp,
+  ) => Effect<
+    Workspace,
+    NotFoundError | InvalidStateTransitionError | StorageError
+  >
 }
 
 export class WorkspaceService extends Context.Tag('WorkspaceService')<
@@ -57,8 +69,10 @@ export const WorkspaceServiceLive: Layer.Layer<
 - The caller supplies the full `Workspace` value (id, kind, uri); this service does
   not mint identifiers (consistent with [[work-unit-service]] and [[worker-service]]
   — no ID/clock seams yet).
-- `update` targets an **existing** workspace (`NotFoundError` otherwise) and replaces
-  its mutable fields; `create` is the only path that introduces a new id.
+- `update` targets an **existing active** workspace (`NotFoundError` otherwise) and
+  replaces its mutable fields; `create` is the only path that introduces a new id.
+- `archive` is a one-way lifecycle transition from `active` to `archived` and emits
+  `workspace.archived` after persistence.
 - Records are schema-encoded before storage and schema-decoded after reads so
   `Option` fields never leak as raw JSON inside the service.
 - Each mutation emits its `workspace.*` event **after** the state is persisted.
@@ -77,8 +91,12 @@ export const WorkspaceServiceLive: Layer.Layer<
 2. `get` loads the record; `Option.none` for absence, otherwise decodes.
 3. `list` reads the whole `workspace` collection and decodes every record into a
    plain `readonly Workspace[]` (the JSON edge — arrays are allowed here).
-4. `update` loads the workspace (or fails `NotFoundError`), saves the replacement,
-   emits `workspace.updated`, and returns it.
+4. `update` loads the workspace (or fails `NotFoundError`), rejects archived
+   workspaces with `InvalidStateTransitionError`, saves the replacement as
+   `active`, emits `workspace.updated`, and returns it.
+5. `archive` loads the workspace, rejects an already archived workspace with
+   `InvalidStateTransitionError`, saves the record with `state: archived`, emits
+   `workspace.archived`, and returns it.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -86,12 +104,13 @@ export const WorkspaceServiceLive: Layer.Layer<
 - ❌ Do NOT write raw undecoded objects into the `workspace` collection.
 - ❌ Do NOT emit an event before its state change is persisted.
 - ❌ Do NOT generate `WorkspaceId`s here; the caller supplies the identity.
+- ❌ Do NOT physically remove an archived workspace; archive must preserve replay.
 
 ## Depth
 
 DEEP (0.70). The service hides storage collection naming, schema encode/decode
 drift protection, missing-workspace handling, and per-workspace event emission
-behind four methods. Deleting it would scatter encode/decode plumbing and event
+behind five methods. Deleting it would scatter encode/decode plumbing and event
 ordering across every transport caller.
 
 ## Grill Log
@@ -104,20 +123,24 @@ ordering across every transport caller.
   This matches the [[work-unit-service]] emit-after-persist pattern. _Rejected:_ a
   silent registry (loses the audit trail the protocol's event-sourced model depends
   on, spec §4.6).
-- **Q:** Spec §11 lists `workspace.archived`. Should `archive` ship in this slice?
-  **A:** No — deferred. _Rationale:_ the [[Workspace]] schema (spec §10.2) carries no
-  lifecycle/`archived` field, so archival has no persisted representation. Modeling it
-  requires either a schema change (add `state`) or a soft-delete convention — a
-  design decision worth its own slice rather than inventing a field the spec does not
-  define. _Rejected:_ (a) `storage.remove` on archive (orphans the workspace's event
-  log and breaks replay); (b) adding an ad-hoc `archived` boolean not in the wire
-  schema (silent schema drift).
+- **Q:** Spec §11 lists `workspace.archived`. What persisted representation should
+  back it?
+  **A:** Add a small [[common|WorkspaceState]] lifecycle with `active` and `archived`.
+  _Rationale:_ archive is neither deletion nor metadata replacement; a state field
+  preserves workspace history and lets replay show why no further mutations should
+  occur. _Rejected:_ physical `storage.remove` (breaks replay); ad-hoc metadata flag
+  (untyped and invisible to clients); soft-delete timestamp (more policy than v0.1
+  needs).
 - **Q:** Is `update` a full replacement or a field patch?
   **A:** Full replacement keyed by id. _Rationale:_ the caller decodes a complete
   `Workspace` at the transport edge; a replacement is the simplest, most reversible
   contract and avoids a partial-update merge schema this early. _Rejected:_ a
   `WorkspacePatch` schema (premature for EXPLORING maturity; add when partial PATCH
   semantics are actually needed).
+- **Q:** Should archived workspaces be hidden from `list`?
+  **A:** No — list returns all workspace records with their lifecycle state. _Rationale:_
+  archival is audit state, not disappearance; clients can filter. _Rejected:_ hiding
+  archives by default (surprising for recovery and replay).
 
 ## Variants
 
