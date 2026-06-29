@@ -449,6 +449,12 @@ describe('parseArgs', () => {
     expect(req.body).toBeUndefined()
   })
 
+  it('parses review cancel without a body', () => {
+    const req = right(['review', 'cancel', 'review 123/main'])
+    expect(req.path).toBe('/v1/reviews/review%20123%2Fmain/cancel')
+    expect(req.body).toBeUndefined()
+  })
+
   it('marks events stream as streaming with the workspace query', () => {
     const req = right(['events', 'stream', '--workspace', 'workspace 1'])
     expect(req.stream).toBe(true)

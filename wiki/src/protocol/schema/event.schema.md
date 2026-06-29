@@ -24,7 +24,7 @@ primitive — plus the closed `EventType` vocabulary (spec §10.8, §11).
 
 ```typescript
 export const EventType: Schema.Literal<[ // all spec §11 types
-  "worker.online", … "review.changes_requested" ]>
+  "worker.online", … "review.cancelled" ]>
 export const Event: Schema.Struct<{
   id: EventId; type: EventType; workspace_id: WorkspaceId
   work_id: optionalWith<WorkId, Option>; actor: WorkerId
@@ -42,6 +42,11 @@ workspace-scoped and ordered for replay. `data` is an open payload bag (validate
 per-type by producing services, not here). Worker presence names are reserved in
 the union but not emitted by v0.1 because [[ADR-0005-worker-presence-scope]] keeps
 presence host-scoped.
+
+Review events include the full requested-review lifecycle. `review.cancelled` is
+the withdrawal signal for an outstanding review gate; it must not be collapsed
+into `review.rejected`, because rejection is an explicit reviewer outcome while
+cancellation means the gate itself was withdrawn.
 
 ## Negative Logic (Prohibited Paths)
 

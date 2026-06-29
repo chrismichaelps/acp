@@ -18,7 +18,9 @@ aliases: [work-unit-service, WorkUnitService]
 Own the [[WorkUnit]] lifecycle for v0.1: create work, read stored work, list work
 inside a [[Workspace]], claim open work, validate state transitions, persist
 updates through [[Storage]], and emit state-change [[Event]]s through
-[[EventStore]].
+[[EventStore]]. Review cancellation can withdraw a `needs_review` gate and return
+the WorkUnit to `running`; explicit review outcomes still terminate the gate as
+approved, rejected, or changes requested.
 
 ## Interface
 
@@ -105,13 +107,16 @@ open -> claimed | cancelled
 claimed -> running | cancelled
 running -> blocked | needs_review | cancelled
 blocked -> running
-needs_review -> approved | rejected | changes_requested
+needs_review -> running | approved | rejected | changes_requested
 changes_requested -> running
 approved -> completed
 ```
 
 `changes_requested` is included in [[common]] `WorkState` because spec §14 includes
 the transition path even though spec §10.3 omitted it from the prose list.
+`needs_review -> running` is reserved for [[review-service]] cancellation; the
+transition emits `work.unblocked` because the review gate has been withdrawn
+without creating a reviewer outcome.
 
 ## Negative Logic (Prohibited Paths)
 

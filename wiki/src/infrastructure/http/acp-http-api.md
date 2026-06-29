@@ -29,8 +29,6 @@ wiring land in a later slice.
 export const WorkPath: Schema.Struct<{ work_id: WorkId }>
 export const LeasePath: Schema.Struct<{ lease_id: LeaseId }>
 export const ArtifactPath: Schema.Struct<{ artifact_id: ArtifactId }>
-export const EventsReplayParams: Schema.Struct<{ workspace_id: WorkspaceId; after_seq: number }>
-export const EventsStreamParams: Schema.Struct<{ workspace_id: WorkspaceId }>
 export const WorkspacePath: Schema.Struct<{ workspace_id: WorkspaceId }>
 export const WorkerPath: Schema.Struct<{ worker_id: WorkerId }>
 export const UpdateWorkStatePayload: Schema.Struct<{ state: WorkState }>
@@ -51,7 +49,7 @@ export const InitializeSessionResponse: Schema.Struct<{ // spec §9 host handsha
 export const WorkGroup: HttpApiGroup.HttpApiGroup<'work', ...>
 export const WorkerGroup: HttpApiGroup.HttpApiGroup<'workers', ...>
 export const LeaseGroup: HttpApiGroup.HttpApiGroup<'leases', ...>
-export const EventsGroup: HttpApiGroup.HttpApiGroup<'events', ...>
+export { EventsGroup } from './acp-http-api-events.js'
 export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 ```
 
@@ -90,6 +88,7 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 - `POST /v1/reviews/{review_id}/approve`
 - `POST /v1/reviews/{review_id}/reject`
 - `POST /v1/reviews/{review_id}/request_changes`
+- `POST /v1/reviews/{review_id}/cancel`
 - `GET /v1/events?workspace_id=...&after_seq=...`
 - `GET /v1/events/stream?workspace_id=...`
 
@@ -151,9 +150,14 @@ Worker reads are declared as host-scoped presence extensions over
 adding worker presence events to the workspace event log.
 
 Event replay reads are declared as backed recovery extensions over
-[[event-store]] `readAfter`. The query shape mirrors the storage scan key:
-workspace id plus a non-negative sequence cursor. Live SSE remains on
-`/v1/events/stream`.
+[[event-store]] `readAfter` through [[acp-http-api-events]]. The query shape
+mirrors the storage scan key: workspace id plus a non-negative sequence cursor.
+Live SSE remains on `/v1/events/stream`.
+
+Review cancellation is declared beside the existing review outcome routes as
+`POST /v1/reviews/{review_id}/cancel`. It is a withdrawal command, not a
+rejection alias, and is backed by [[review-service]] `cancel` plus
+`review.cancelled`.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -168,5 +172,5 @@ route drift between server handlers, generated clients, and tests.
 
 ## Referenced by
 
-[[http-index]] · [[Transport]] · [[workspace-routes]] · [[event-routes]] ·
-[[protocol-version]] · [[src/_MOC]]
+[[http-index]] · [[acp-http-api-events]] · [[Transport]] · [[workspace-routes]]
+· [[event-routes]] · [[protocol-version]] · [[src/_MOC]]

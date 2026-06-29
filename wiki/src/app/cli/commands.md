@@ -70,6 +70,7 @@ export const parseArgs: (
 | `review approve <review_id> --met <csv>`                                              | `POST /v1/reviews/<id>/approve`                   |
 | `review reject <review_id>`                                                           | `POST /v1/reviews/<id>/reject`                    |
 | `review request-changes <review_id>`                                                  | `POST /v1/reviews/<id>/request_changes`           |
+| `review cancel <review_id>`                                                           | `POST /v1/reviews/<id>/cancel`                    |
 | `events list --workspace <id> [--after <seq>]`                                        | `GET /v1/events?workspace_id=&after_seq=`         |
 | `events stream --workspace <id>`                                                      | `GET /v1/events/stream?workspace_id=`             |
 
@@ -99,8 +100,9 @@ the read endpoints.
 `checkpoint list`, `artifact list`, and `review list` also accept `--workspace`
 for workspace-level aggregate resume reads. `events list` maps to the JSON replay
 route with an optional non-negative `--after` cursor. `review approve --met` is a
-comma-separated list that becomes `met_requirements`. `events stream` sets
-`stream: true`.
+comma-separated list that becomes `met_requirements`. `review cancel` maps to the
+dedicated review cancellation route so withdrawal is not expressed as rejection.
+`events stream` sets `stream: true`.
 
 ## Negative Logic (Prohibited Paths)
 

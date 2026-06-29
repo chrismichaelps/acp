@@ -65,7 +65,12 @@ const allowedTransitions: Record<WorkState, ReadonlySet<WorkState>> = {
   claimed: new Set(['running', 'cancelled']),
   running: new Set(['blocked', 'needs_review', 'cancelled']),
   blocked: new Set(['running']),
-  needs_review: new Set(['approved', 'rejected', 'changes_requested']),
+  needs_review: new Set([
+    'running',
+    'approved',
+    'rejected',
+    'changes_requested',
+  ]),
   changes_requested: new Set(['running']),
   approved: new Set(['completed']),
   rejected: new Set(),
