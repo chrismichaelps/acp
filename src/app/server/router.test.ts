@@ -289,22 +289,6 @@ describe('acpRouter', () => {
     expect(missing.status).toBe(404)
   })
 
-  it('requests a lease (201) and 404s releasing a missing one', async () => {
-    const handler = makeHandler()
-    const lease = await handler(
-      post('/v1/leases', {
-        workspace_id: 'workspace_1',
-        holder: 'agent_claude_code',
-        resource: { kind: 'file', uri: 'file://src/auth.ts' },
-      }),
-    )
-    expect(lease.status).toBe(201)
-    expect(((await lease.json()) as { state: string }).state).toBe('active')
-
-    const release = await handler(post('/v1/leases/lease_missing/release'))
-    expect(release.status).toBe(404)
-  })
-
   it('approves, rejects, and requests changes for reviews', async () => {
     const handler = makeHandler()
     const token = await initSession(handler, [

@@ -109,6 +109,15 @@ const positiveIntegerFlag = (
     : Either.left(new CliError({ message: `invalid --${key}: ${raw}` }))
 }
 
+const leaseStateCommand =
+  (action: 'release' | 'revoke'): CommandHandler =>
+  ({ positionals }) =>
+    Either.map(positional(positionals, 0, 'lease_id'), (leaseId) => ({
+      method: 'POST' as const,
+      path: `/v1/leases/${encodePathSegment(leaseId)}/${action}`,
+      label: `lease ${action}`,
+    }))
+
 const unknown = (argv: readonly string[]): Either.Either<never, CliError> =>
   Either.left(new CliError({ message: `unknown command: ${argv.join(' ')}` }))
 
@@ -253,15 +262,24 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
       }
     }),
 
-  'lease release': ({ positionals }) =>
+  'lease release': leaseStateCommand('release'),
+
+  'lease renew': ({ positionals, flags }) =>
     Either.gen(function* () {
       const leaseId = yield* positional(positionals, 0, 'lease_id')
+      const body =
+        'ttl' in flags
+          ? { ttl_seconds: yield* positiveIntegerFlag(flags, 'ttl') }
+          : {}
       return {
         method: 'POST',
-        path: `/v1/leases/${encodePathSegment(leaseId)}/release`,
-        label: 'lease release',
+        path: `/v1/leases/${encodePathSegment(leaseId)}/renew`,
+        body,
+        label: 'lease renew',
       }
     }),
+
+  'lease revoke': leaseStateCommand('revoke'),
 
   'checkpoint create': ({ flags }) =>
     Either.gen(function* () {
@@ -454,33 +472,3 @@ export const parseArgs = (
 
   return handler === undefined ? unknown(argv) : handler(parsed)
 }
-
-export const usage = `acp — Agent Coordination Protocol CLI
-
-  acp workspace list
-  acp workspace create --name <n> --kind <k> --uri <u> [--default-branch <b>]
-  acp workspace update <workspace_id> --name <n> --kind <k> --uri <u> [--default-branch <b>]
-  acp workspace archive <workspace_id>
-  acp work create <title> --workspace <id> [--priority <p>] [--description <d>]
-  acp work list --workspace <id>
-  acp work get <work_id>
-  acp work claim <work_id> --worker <id>
-  acp work update <work_id> --state <state>
-  acp lease request --workspace <id> --holder <id> --kind <k> --uri <u> [--ttl <n>]
-  acp lease release <lease_id>
-  acp checkpoint create --workspace <id> --work <id> --summary <s>
-  acp checkpoint list --work <id>|--workspace <id>
-  acp checkpoint latest --work <id>
-  acp artifact create --workspace <id> --work <id> --kind <k> [--uri <u>] [--summary <s>] [--content <c>]
-  acp artifact update <artifact_id> --kind <k> [--uri <u>] [--media-type <m>] [--summary <s>] [--content <c>]
-  acp artifact list --work <id>|--workspace <id>
-  acp artifact content <artifact_id>
-  acp artifact delete <artifact_id>
-  acp review request --work <id> --by <id> [--reviewer <id>]
-  acp review list --work <id>|--workspace <id>
-  acp review approve <review_id> --met <requirement,csv>
-  acp review reject <review_id>
-  acp review request-changes <review_id>
-  acp events stream --workspace <id>
-
-Targets ACP_BASE_URL (default http://localhost:$ACP_PORT).`

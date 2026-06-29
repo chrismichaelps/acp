@@ -75,8 +75,10 @@ methods delegate to [[json-rpc-resume-commands]]. Full-body methods
 the HTTP payload schema and forward the original JSON body so `Option`-wrapped
 decoded values do not leak back onto the wire. Path-bearing methods such as
 `workspace.update`, `workspace.archive`, `artifact.update`, `work.claim`, and
-`lease.release` decode resource identifiers and operation fields, encode path segments with
-`encodeURIComponent`, and build the exact REST route used by the HTTP transport.
+lease lifecycle actions decode resource identifiers and operation fields, encode
+path segments with `encodeURIComponent`, and build the exact REST route used by
+the HTTP transport. `lease.renew` forwards an optional positive `ttl_seconds`
+body; `lease.release` and `lease.revoke` carry only the lease id in the path.
 `artifact.create` and `artifact.update` carry optional external artifact `uri`
 values through the shared schema, letting JSON-RPC register PR/commit/report
 artifacts without inlining content. `events.subscribe` builds the SSE route and

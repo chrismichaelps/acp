@@ -35,6 +35,7 @@ export const UpdateWorkStatePayload: Schema.Struct<{ state: WorkState }>
 export const PublishWorkEventPayload: Schema.Struct<{ type: EventType; data: Record<string, unknown> }>
 export const ApproveReviewPayload: Schema.Struct<{ met_requirements: string[] }>
 export const ArtifactContentResponse: Schema.Struct<{ content: string }>
+export const RenewLeasePayload: Schema.Struct<{ ttl_seconds?: Positive }>
 export const ClientCapabilities: Schema.Struct<{ // spec §9 worker flags }>
 export const InitializeSessionWorker: Schema.Struct<{ // Worker descriptor, status/capabilities defaulted }>
 export const InitializeSessionPayload: Schema.Struct<{ // §8 scopes default to []
@@ -72,7 +73,9 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 - `GET /v1/work/{work_id}/artifacts`
 - `GET /v1/work/{work_id}/reviews`
 - `POST /v1/leases`
+- `POST /v1/leases/{lease_id}/renew`
 - `POST /v1/leases/{lease_id}/release`
+- `POST /v1/leases/{lease_id}/revoke`
 - `POST /v1/artifacts`
 - `PATCH /v1/artifacts/{artifact_id}`
 - `DELETE /v1/artifacts/{artifact_id}`
@@ -131,6 +134,11 @@ Workspace aggregate resume reads are backed extensions over
 [[checkpoint-service]], [[artifact-service]], and [[review-service]]
 `listForWorkspace`, giving dashboards and supervising agents a workspace-level
 view of resumability evidence without iterating every WorkUnit id.
+
+Lease renew/revoke are declared as backed lifecycle extensions because
+[[lease-service]] already owns `renew`/`revoke` state transitions and emits
+`lease.renewed`/`lease.revoked`. `RenewLeasePayload` accepts an optional positive
+TTL override; omitting it delegates to the host default lease TTL.
 
 ## Negative Logic (Prohibited Paths)
 

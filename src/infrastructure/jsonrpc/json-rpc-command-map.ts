@@ -5,6 +5,7 @@ import {
   EventsStreamParams,
   InitializeSessionPayload,
   PublishWorkEventPayload,
+  RenewLeasePayload,
   UpdateWorkStatePayload,
 } from '../http/index.js'
 import {
@@ -67,7 +68,9 @@ const methodLabels = new Set<string>([
   'work.update',
   'work.publish_event',
   'lease.request',
+  'lease.renew',
   'lease.release',
+  'lease.revoke',
   'artifact.create',
   'artifact.update',
   'artifact.delete',
@@ -287,6 +290,48 @@ export const commandFor = (
         request: {
           method: 'POST',
           path: `/v1/leases/${encodeSegment(params.lease_id)}/release`,
+          label: method,
+        },
+      }
+    }
+
+    if (method === 'lease.renew') {
+      const params = yield* decodeParams(
+        Schema.Struct({
+          lease_id: LeaseId,
+          ttl_seconds: RenewLeasePayload.fields.ttl_seconds,
+        }),
+        paramsValue,
+        id,
+      )
+      const ttl = Option.match(params.ttl_seconds, {
+        onNone: () => ({}),
+        onSome: (ttl_seconds) => ({ ttl_seconds }),
+      })
+      return {
+        id,
+        expects_response: expectsResponse,
+        request: {
+          method: 'POST',
+          path: `/v1/leases/${encodeSegment(params.lease_id)}/renew`,
+          body: ttl,
+          label: method,
+        },
+      }
+    }
+
+    if (method === 'lease.revoke') {
+      const params = yield* decodeParams(
+        Schema.Struct({ lease_id: LeaseId }),
+        paramsValue,
+        id,
+      )
+      return {
+        id,
+        expects_response: expectsResponse,
+        request: {
+          method: 'POST',
+          path: `/v1/leases/${encodeSegment(params.lease_id)}/revoke`,
           label: method,
         },
       }
