@@ -24,12 +24,13 @@ inline.
 
 ```typescript
 export * from './node-http-server.js'
+export * from './node-process-io.js'
 ```
 
 ### Linkage
 
-- **Requires:** [[node-http-server]]
-- **Consumed by:** [[server-main]] and real-socket server tests.
+- **Requires:** [[node-http-server]], [[node-process-io]]
+- **Consumed by:** [[server-main]], [[cli-main]], [[stdio-main]], and real-socket server tests.
 
 ## Algorithm
 

@@ -1,14 +1,14 @@
 /** @Acp.App.Cli.Main — acp command-line entrypoint */
-import process from 'node:process'
 import { HttpClient, HttpClientRequest } from '@effect/platform'
 import { NodeHttpClient, NodeRuntime } from '@effect/platform-node'
 import { Config, Console, Effect, Either, Stream } from 'effect'
+import { nodeArgv } from '../../infrastructure/platform-node/index.js'
 import { runCliRequest } from './client.js'
 import { CliError, parseArgs } from './commands.js'
 import { usage } from './usage.js'
 
 const program = Effect.gen(function* () {
-  const parsed = parseArgs(process.argv.slice(2))
+  const parsed = parseArgs(nodeArgv())
   if (Either.isLeft(parsed)) {
     yield* Console.error(parsed.left.message)
     yield* Console.error(usage)

@@ -15,7 +15,8 @@ aliases: [cli-main]
 ## Purpose
 
 The packaged `acp` CLI entrypoint (`package.json` `bin` →
-`dist/app/cli/main.js`). Parses `process.argv` via [[cli-commands]], sends the
+`dist/app/cli/main.js`). Reads argv through [[node-process-io]], parses it via
+[[cli-commands]], sends the
 request through [[cli-client]] against `ACP_BASE_URL` (default
 `http://localhost:${ACP_PORT}`), prints [[cli-usage]] on parse failures, and
 prints the JSON result.
@@ -32,14 +33,13 @@ NodeRuntime.runMain(program)
 ### Linkage
 
 - **Requires:** [[cli-commands]], [[cli-client]], [[cli-usage]],
-  `@effect/platform-node`
-  `NodeHttpClient`/`NodeRuntime`, `node:process`.
+  [[node-process-io]], `@effect/platform-node` `NodeHttpClient`/`NodeRuntime`.
 - **Consumed by:** the operator (`acp <command>` after build/install, or
   `node dist/app/cli/main.js <command>` in local smoke tests).
 
 ## Algorithm
 
-1. `parseArgs(process.argv.slice(2))` → `CliRequest` or print [[cli-usage]] and
+1. `parseArgs(nodeArgv())` → `CliRequest` or print [[cli-usage]] and
    exit non-zero on `CliError`.
 2. For `stream`, open the SSE endpoint and print frames; otherwise `runCliRequest`
    and print `{ status, body }`.
