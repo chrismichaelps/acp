@@ -16,8 +16,9 @@ refresh, CLI parser dispatch-table, external artifact reference, work resume
 query, Effect observability logging, and second resume-read slices. It compares
 the current ACP reference host against `@root/specs.md` through
 [[spec-canonicalization]], then chooses the next backed implementation gap. This
-revision follows the lease lifecycle transport parity slice and selects public
-README drift as the next small docs correction.
+revision follows the README lease refresh and WebSocket transport slice, closing
+the stale WebSocket deferral and selecting host-scoped worker presence as the
+next protocol gap.
 
 ## Current Coverage
 
@@ -54,8 +55,10 @@ Work-centric resume read commands, review-list reads, artifact-content reads,
 workspace work-index reads, and workspace aggregate resume reads are also
 projected through JSON-RPC and the CLI. `events.subscribe` maps to the SSE
 route. Runtime execution is available through `POST /rpc` and
-`acp-jsonrpc-stdio`; WebSocket remains deferred by
-[[ADR-0002-json-rpc-transport-framing]].
+`acp-jsonrpc-stdio`. `GET /rpc` now upgrades to a WebSocket and frames the same
+JSON-RPC request/response surface over text messages, reusing the in-process
+router through [[rpc-socket]] and [[rpc-endpoint]]. JSON-RPC event subscription
+remains deferred; live event delivery stays on SSE.
 
 The event vocabulary boundary is settled for v0.1. Workspace archive and
 artifact update/delete are backed by persisted domain mutations.
@@ -96,13 +99,15 @@ queue only when an external SDK or public artifact policy exists. A
 `src/infrastructure/platform-node` extraction also remains premature because
 Node-specific wiring is still small and isolated in app entrypoints.
 
-Host-level worker presence streams remain out of scope. ADR-0005 requires a new
-schema and storage/query contract before any host-presence feed is implemented.
+Host-level worker presence streams remain out of scope for the current code.
+ADR-0005 requires a new schema and storage/query contract before any
+host-presence feed is implemented.
 
-Public documentation drift is open again. The README describes the implemented
-REST/SSE, `POST /rpc`, stdio JSON-RPC, SQLite durability, local versus required
-auth, scoped mutation permissions, expanded CLI, and WebSocket deferral, but it
-does not yet mention lease renew/revoke or the latest CLI usage split.
+Public documentation drift is covered again. The README describes the
+implemented REST/SSE, `POST /rpc`, stdio JSON-RPC, `GET /rpc` WebSocket
+request/response framing, SQLite durability, local versus required auth, scoped
+mutation permissions, expanded CLI, lease renew/revoke, and WebSocket event
+subscription deferral.
 
 SQLite query shape is not the next bottleneck. [[sqlite-store]] uses `WITHOUT
 ROWID` composite primary-key layouts for keyed collections and per-workspace
@@ -135,17 +140,22 @@ and `lease:revoke` scopes. Long-running workers can extend advisory claims
 through ACP, and supervising systems can revoke stale or unsafe leases before TTL
 expiry.
 
+WebSocket request/response transport is now covered. [[rpc-socket]] mounts
+`GET /rpc` beside `POST /rpc`, authenticates the socket with the handshake bearer
+header or `?token=` fallback, and processes each text frame as a JSON-RPC single
+request or batch. This closes the request/response part of
+[[ADR-0002-json-rpc-transport-framing]] while leaving event subscription on SSE.
+
 ## Next Slice
 
-The public README now names the lease renew/revoke routes, the `lease.renew`/
-`lease.revoke` JSON-RPC methods, the `lease renew`/`lease revoke` CLI commands,
-and the dedicated `lease:renew`/`lease:revoke` scopes, so the documented surface
-matches the implemented transport parity. No backed-command coverage gap remains
-for v0.2: every domain mutation and resume read is reachable over REST,
-JSON-RPC, and the CLI. Generated clients, host-level presence streams, WebSocket
-transport, Git-specific extensions, and platform-node extraction remain deferred
-until a concrete consumer or duplicated boundary appears; revisit those only when
-such a consumer materializes.
+Define and implement host-scoped worker presence reads before emitting any
+presence events into workspace logs. ADR-0005 already rejects workspace-scoped
+presence; the next slice should add a host-level presence model that lets clients
+inspect current worker status without replaying workspace event streams. Keep it
+separate from `EventStore` unless a future audit proves append-only host events
+are needed. Generated clients, Git-specific extensions, and platform-node
+extraction remain deferred until a concrete consumer or duplicated boundary
+appears.
 
 ## Referenced by
 

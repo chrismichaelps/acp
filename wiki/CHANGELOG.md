@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · post-websocket-integration-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after README lease refresh and
+  [[rpc-socket]], closing stale WebSocket deferral language and selecting
+  host-scoped worker presence reads as the next protocol gap · docs-only
+  validation · risk LOW
 - 2026-06-29 · websocket-transport slice · added [[rpc-socket]] mounting a
   `GET /rpc` WebSocket upgrade beside `POST /rpc`, reusing the in-process router
   via the shared `dispatchVia` ([[rpc-endpoint]]) so WebSocket, HTTP, and REST
