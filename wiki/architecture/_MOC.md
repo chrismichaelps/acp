@@ -81,7 +81,7 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 13. ✅ JSON-RPC runtime execution core — 138 tests green
 14. ✅ JSON-RPC HTTP `/rpc` framing — 144 tests green
 15. ✅ JSON-RPC stdio framing bridge — 149 tests green
-16. ✅ WebSocket transport evaluation — deferred by ADR-0002
+16. ✅ WebSocket transport evaluation — HTTP/stdio first, later upgraded by slice 56
 17. ✅ Protocol coverage audit — command parity gaps identified
 18. ✅ JSON-RPC progress event method — 151 tests green
 19. ✅ Review action transport routes — 154 tests green
@@ -121,7 +121,9 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 52. ✅ Re-audit remaining integration gaps after workspace aggregate reads
 53. ✅ Lease renew/revoke transport parity
 54. ✅ Re-audit remaining integration gaps after lease lifecycle parity
-55. ▶ Public README refresh after lease lifecycle parity
+55. ✅ Public README refresh after lease lifecycle parity
+56. ✅ WebSocket JSON-RPC request/response transport
+57. ▶ Host-scoped worker presence reads
 
 ## Referenced by
 
