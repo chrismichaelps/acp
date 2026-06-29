@@ -106,14 +106,16 @@ requires them when a bearer session is presented. The local no-token
 
 Standalone protocol codecs and generated clients remain deferred by
 [[ADR-0004-protocol-version-codecs-generated-client]]. They should re-enter the
-queue only when an external SDK or public artifact policy exists. A
-The `src/infrastructure/platform-node` boundary is now concrete enough to enter
-the queue. The app graph is stable, WebSocket/live boot are covered by real
-socket tests, and `src/app/server/main.ts` still constructs the Node HTTP server
-directly. SQLite remains an infrastructure storage adapter, and test-only temp
-filesystem imports are not the first concern; the smallest useful extraction is
-the reusable Node HTTP server Layer used by the server entrypoint and real-socket
-tests.
+queue only when an external SDK or public artifact policy exists.
+
+The first `src/infrastructure/platform-node` boundary is now covered.
+[[node-http-server]] owns Node HTTP socket construction, [[server-main]] provides
+that Layer to [[http-app]], and real-socket tests use the same factory with
+`port: 0`. The next concrete platform-node gap is process IO: [[cli-main]] and
+[[stdio-main]] still import `node:process` directly for argv/stdin/stdout access.
+That is narrower and more actionable than generated clients or Git-specific
+workflow semantics, and it aligns with the spec rule that Node-specific
+implementations live under `src/infrastructure/platform-node`.
 
 Host-level worker presence streams remain out of scope for the current code.
 ADR-0005 requires a new schema and storage/query contract before any
@@ -187,14 +189,14 @@ stream.
 
 ## Next Slice
 
-Extract the Node HTTP server Layer into `src/infrastructure/platform-node` before
-adding another protocol feature. The slice should create a focused
-platform-node module for the `NodeHttpServer.layer(() => createServer(), { port })`
-construction, mirror it in `wiki/src/infrastructure/platform-node`, and update
-`server-main`, live boot, and WebSocket tests to consume that boundary. Generated
-clients, Git-specific workflow extensions, host-presence streams, and broader
-Node filesystem/command adapters remain deferred until a concrete consumer or
-duplicated boundary appears.
+Extract process IO access into `src/infrastructure/platform-node` before adding
+another protocol feature. The slice should create a focused module for `argv`,
+stdin async chunks, and stdout writes, mirror it in
+`wiki/src/infrastructure/platform-node`, and update [[cli-main]] and
+[[stdio-main]] to consume that adapter while preserving CLI JSON output and
+stdio Content-Length framing. Generated clients, Git-specific workflow
+extensions, host-presence streams, and broader filesystem/command adapters remain
+deferred until a concrete consumer or duplicated boundary appears.
 
 ## Referenced by
 

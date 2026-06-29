@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · post-platform-node-integration-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after [[node-http-server]], closing the
+  Node HTTP socket boundary gap and selecting process IO extraction for
+  [[cli-main]] and [[stdio-main]] as the next platform-node slice · docs-only
+  validation · risk LOW
 - 2026-06-29 · platform-node-http-server-layer slice · added
   [[node-http-server]] and [[platform-node-index]] so the Node HTTP socket Layer
   lives under `src/infrastructure/platform-node`; [[server-main]] now launches
