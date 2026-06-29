@@ -17,8 +17,8 @@ query, Effect observability logging, and second resume-read slices. It compares
 the current ACP reference host against `@root/specs.md` through
 [[spec-canonicalization]], then chooses the next backed implementation gap. This
 revision follows the README lease refresh and WebSocket transport slice, closing
-the stale WebSocket deferral and selecting host-scoped worker presence as the
-next protocol gap.
+the stale WebSocket deferral, host-scoped worker presence reads, and the next
+live-transport integration gap.
 
 ## Current Coverage
 
@@ -63,7 +63,10 @@ remains deferred; live event delivery stays on SSE.
 The event vocabulary boundary is settled for v0.1. Workspace archive and
 artifact update/delete are backed by persisted domain mutations.
 [[ADR-0005-worker-presence-scope]] classifies worker presence as host-scoped
-registry state, not workspace event history.
+registry state, not workspace event history. Current worker records are now
+readable through REST, JSON-RPC, and the CLI with a dedicated `worker:read`
+scope, preserving that boundary while giving clients a supported presence
+inspection path.
 
 Implementation standards are covered: Node 24 is pinned, package scripts cover
 lint, format check, typecheck, file-size, and tests, CI runs the same gate on
@@ -101,13 +104,15 @@ Node-specific wiring is still small and isolated in app entrypoints.
 
 Host-level worker presence streams remain out of scope for the current code.
 ADR-0005 requires a new schema and storage/query contract before any
-host-presence feed is implemented.
+host-presence feed is implemented. Presence reads are covered by
+[[worker-routes]], `worker.list`, `worker.get`, and the local CLI, so a live
+presence feed is no longer needed merely to inspect current status.
 
 Public documentation drift is covered again. The README describes the
 implemented REST/SSE, `POST /rpc`, stdio JSON-RPC, `GET /rpc` WebSocket
 request/response framing, SQLite durability, local versus required auth, scoped
-mutation permissions, expanded CLI, lease renew/revoke, and WebSocket event
-subscription deferral.
+mutation permissions, worker registry reads, expanded CLI, lease renew/revoke,
+and WebSocket event subscription deferral.
 
 SQLite query shape is not the next bottleneck. [[sqlite-store]] uses `WITHOUT
 ROWID` composite primary-key layouts for keyed collections and per-workspace
@@ -146,14 +151,24 @@ header or `?token=` fallback, and processes each text frame as a JSON-RPC single
 request or batch. This closes the request/response part of
 [[ADR-0002-json-rpc-transport-framing]] while leaving event subscription on SSE.
 
+Host-scoped worker presence reads are now covered. [[worker-routes]] exposes the
+current registry through `GET /v1/workers` and `GET /v1/workers/{worker_id}`;
+[[json-rpc-worker-commands]] maps `worker.list` and `worker.get` to those routes;
+and [[cli-commands]] exposes the same inspection path locally. The slice keeps
+presence out of workspace [[Event]] logs and avoids a premature host-presence
+stream.
+
 ## Next Slice
 
-Define and implement host-scoped worker presence reads before emitting any
-presence events into workspace logs. ADR-0005 already rejects workspace-scoped
-presence; the next slice should add a host-level presence model that lets clients
-inspect current worker status without replaying workspace event streams. Keep it
-separate from `EventStore` unless a future audit proves append-only host events
-are needed. Generated clients, Git-specific extensions, and platform-node
+Define JSON-RPC event subscription semantics over the existing WebSocket
+transport before adding another live adapter. The current mapper can translate
+`events.subscribe` into the SSE route, but [[json-rpc-runtime]] rejects streaming
+commands because request/response JSON-RPC cannot carry an SSE body. The next
+slice should decide whether WebSocket `events.subscribe` emits JSON-RPC
+notifications, how unsubscribe/disconnect and heartbeat behavior work, and how
+backpressure stays bounded. If that design remains too wide for v0.1, record the
+deferral explicitly and keep SSE as the sole live event channel. Generated
+clients, Git-specific extensions, host-presence streams, and platform-node
 extraction remain deferred until a concrete consumer or duplicated boundary
 appears.
 
