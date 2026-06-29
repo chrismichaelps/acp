@@ -104,6 +104,7 @@ export type Resource = typeof Resource.Type
 
 // Permission scopes a session may hold (spec §8). Closed v0.1 vocabulary.
 export const Permission = Schema.Literal(
+  'worker:read',
   'workspace:read',
   'workspace:write',
   'work:create',

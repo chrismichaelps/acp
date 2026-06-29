@@ -13,6 +13,19 @@ const right = (argv: readonly string[]): CliRequest => {
 }
 
 describe('parseArgs', () => {
+  it('parses worker list and get', () => {
+    expect(right(['worker', 'list'])).toEqual({
+      method: 'GET',
+      path: '/v1/workers',
+      label: 'worker list',
+    })
+    expect(right(['worker', 'get', 'worker 1/main'])).toEqual({
+      method: 'GET',
+      path: '/v1/workers/worker%201%2Fmain',
+      label: 'worker get',
+    })
+  })
+
   it('parses workspace list', () => {
     expect(right(['workspace', 'list'])).toEqual({
       method: 'GET',

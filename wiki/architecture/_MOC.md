@@ -123,7 +123,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 54. ✅ Re-audit remaining integration gaps after lease lifecycle parity
 55. ✅ Public README refresh after lease lifecycle parity
 56. ✅ WebSocket JSON-RPC request/response transport
-57. ▶ Host-scoped worker presence reads
+57. ✅ Host-scoped worker presence reads
+58. ▶ Re-audit remaining integration gaps after worker presence reads
 
 ## Referenced by
 

@@ -35,12 +35,15 @@ ACP v0.1 treats worker presence as host-scoped registry state, not as
 workspace-scoped event history. `worker.online`, `worker.offline`, and
 `worker.status_changed` remain vocabulary reserved by the draft, but the
 reference implementation does not emit them through [[EventStore]], expose
-transport commands for them, or synthesize a pseudo-workspace to carry them.
+workspace-scoped transport commands for them, or synthesize a pseudo-workspace
+to carry them.
 
 `session.initialize` continues to register or refresh the [[Worker]] record.
 `WorkerService.setStatus` remains the local domain operation for status mutation.
-If a future integration needs live host presence, ACP must add a distinct
-host-event or presence-feed model instead of reusing the workspace event log.
+Host-scoped read routes may expose current registry state through
+[[worker-routes]]. If a future integration needs live host presence, ACP must add
+a distinct host-event or presence-feed model instead of reusing the workspace
+event log.
 
 ## Rationale
 

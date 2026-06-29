@@ -19,6 +19,8 @@ export type JsonRpcErrorCode = typeof JsonRpcErrorCode.Type
 
 export type JsonRpcMethod =
   | 'session.initialize'
+  | 'worker.list'
+  | 'worker.get'
   | 'workspace.list'
   | 'workspace.create'
   | 'workspace.update'

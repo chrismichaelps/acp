@@ -5,7 +5,6 @@ import {
   EventsStreamParams,
   InitializeSessionPayload,
   PublishWorkEventPayload,
-  RenewLeasePayload,
   UpdateWorkStatePayload,
 } from '../http/index.js'
 import {
@@ -14,8 +13,6 @@ import {
   CreateArtifactPayload,
   CreateCheckpointPayload,
   CreateWorkPayload,
-  LeaseId,
-  RequestLeasePayload,
   RequestReviewPayload,
   ReviewId,
   UpdateArtifactPayload,
@@ -34,6 +31,14 @@ import {
   commandForResume,
   resumeMethodLabels,
 } from './json-rpc-resume-commands.js'
+import {
+  commandForWorker,
+  workerMethodLabels,
+} from './json-rpc-worker-commands.js'
+import {
+  commandForLease,
+  leaseMethodLabels,
+} from './json-rpc-lease-commands.js'
 import type {
   JsonRpcCommand,
   JsonRpcId,
@@ -58,6 +63,7 @@ export type {
 
 const methodLabels = new Set<string>([
   'session.initialize',
+  ...workerMethodLabels,
   'workspace.list',
   'workspace.create',
   'workspace.update',
@@ -67,10 +73,7 @@ const methodLabels = new Set<string>([
   'work.claim',
   'work.update',
   'work.publish_event',
-  'lease.request',
-  'lease.renew',
-  'lease.release',
-  'lease.revoke',
+  ...leaseMethodLabels,
   'artifact.create',
   'artifact.update',
   'artifact.delete',
@@ -106,6 +109,24 @@ export const commandFor = (
     )
     if (Option.isSome(resumeCommand)) {
       return yield* resumeCommand.value
+    }
+    const workerCommand = commandForWorker(
+      method,
+      paramsValue,
+      id,
+      expectsResponse,
+    )
+    if (Option.isSome(workerCommand)) {
+      return yield* workerCommand.value
+    }
+    const leaseCommand = commandForLease(
+      method,
+      paramsValue,
+      id,
+      expectsResponse,
+    )
+    if (Option.isSome(leaseCommand)) {
+      return yield* leaseCommand.value
     }
 
     if (method === 'session.initialize') {
@@ -264,74 +285,6 @@ export const commandFor = (
           method: 'POST',
           path: `/v1/work/${encodeSegment(params.work_id)}/events`,
           body: { type: params.type, data: params.data },
-          label: method,
-        },
-      }
-    }
-
-    if (method === 'lease.request') {
-      const body = yield* validatedBody(RequestLeasePayload, paramsValue, id)
-      return {
-        id,
-        expects_response: expectsResponse,
-        request: { method: 'POST', path: '/v1/leases', body, label: method },
-      }
-    }
-
-    if (method === 'lease.release') {
-      const params = yield* decodeParams(
-        Schema.Struct({ lease_id: LeaseId }),
-        paramsValue,
-        id,
-      )
-      return {
-        id,
-        expects_response: expectsResponse,
-        request: {
-          method: 'POST',
-          path: `/v1/leases/${encodeSegment(params.lease_id)}/release`,
-          label: method,
-        },
-      }
-    }
-
-    if (method === 'lease.renew') {
-      const params = yield* decodeParams(
-        Schema.Struct({
-          lease_id: LeaseId,
-          ttl_seconds: RenewLeasePayload.fields.ttl_seconds,
-        }),
-        paramsValue,
-        id,
-      )
-      const ttl = Option.match(params.ttl_seconds, {
-        onNone: () => ({}),
-        onSome: (ttl_seconds) => ({ ttl_seconds }),
-      })
-      return {
-        id,
-        expects_response: expectsResponse,
-        request: {
-          method: 'POST',
-          path: `/v1/leases/${encodeSegment(params.lease_id)}/renew`,
-          body: ttl,
-          label: method,
-        },
-      }
-    }
-
-    if (method === 'lease.revoke') {
-      const params = yield* decodeParams(
-        Schema.Struct({ lease_id: LeaseId }),
-        paramsValue,
-        id,
-      )
-      return {
-        id,
-        expects_response: expectsResponse,
-        request: {
-          method: 'POST',
-          path: `/v1/leases/${encodeSegment(params.lease_id)}/revoke`,
           label: method,
         },
       }

@@ -58,7 +58,8 @@ export const WorkerServiceLive: Layer.Layer<WorkerService, never, Storage>
 ### Linkage
 
 - **Requires:** [[storage]], [[worker.schema]], [[common]], [[protocol-error]]
-- **Consumed by:** future HTTP session-initialize transport and CLI client.
+- **Consumed by:** [[acp-router]] session initialization, [[worker-routes]], and
+  CLI/JSON-RPC worker read projections.
 
 ## Algorithm
 
@@ -99,8 +100,9 @@ would scatter encode/decode plumbing across every transport caller.
   (leaks a fake entity into the workspace event log); (b) requiring callers to pass
   a `workspace_id` to `setStatus` (couples host-level presence to a workspace the
   worker may not be in yet). [[ADR-0005-worker-presence-scope]] closes this for
-  v0.1: status remains registry state until a separate host-presence stream has a
-  concrete integration.
+  v0.1: status remains registry state. Host-scoped read routes may expose current
+  registry state, but live presence events require a separate host-presence stream
+  with its own schema and replay policy.
 - **Q:** Is `register` create-only or upsert?
   **A:** Upsert. _Rationale:_ `session/initialize` is re-invoked on every reconnect;
   a returning worker must refresh its capabilities/vendor without a separate update
@@ -122,5 +124,5 @@ session identity are a transport-edge concern (spec §9), not registry state.
 
 ## Referenced by
 
-[[worker-service-index]] · [[Worker]] · [[ADR-0005-worker-presence-scope]] ·
-[[src/_MOC]]
+[[worker-service-index]] · [[Worker]] · [[worker-routes]] ·
+[[ADR-0005-worker-presence-scope]] · [[src/_MOC]]
