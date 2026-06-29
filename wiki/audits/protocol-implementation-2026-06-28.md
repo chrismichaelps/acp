@@ -194,14 +194,19 @@ renew/release/revoke, artifact mutation, checkpoint creation, and review
 approve/reject/request_changes/cancel. The same section now uses ACP bearer
 token naming instead of the stale pre-canonicalization placeholder.
 
-The remaining spec drift is late-document status language. The Reference MVP
-Roadmap still places JSON-RPC transport and the permission model in later
-milestones even though JSON-RPC is implemented over HTTP POST, stdio, and
-WebSocket, and the permission vocabulary is part of v0.1. The Open Questions
-section also still asks whether JSON-RPC should exist as the MCP-like default
-transport even though the implemented reference position is multi-transport:
-HTTP/SSE remains the recommended MVP path, while JSON-RPC is available for
-stdio/WebSocket clients.
+Late-document roadmap status is now covered. The Reference MVP Roadmap places
+JSON-RPC over HTTP POST, stdio, and WebSocket plus the closed bearer-session
+permission model in v0.1, leaving Git worktree integration, GitHub PR
+artifacts, agent adapters, desktop UI, cloud sync, organization workspaces,
+SDKs, and public adapter registry as future milestones. The JSON-RPC open
+question now asks about default recommendation rather than basic existence.
+
+The remaining spec drift is the rest of the Open Questions list. It still asks
+whether leases should be advisory or enforced even though the reference host
+treats leases as advisory claims with renew/release/revoke lifecycle controls.
+It also asks whether artifacts should be stored by the host or referenced
+externally even though the current Artifact schema and service support both:
+host-stored `acp://artifacts/{id}` content and explicit external URI references.
 
 Host-scoped worker presence reads are now covered. [[worker-routes]] exposes the
 current registry through `GET /v1/workers` and `GET /v1/workers/{worker_id}`;
@@ -212,15 +217,14 @@ stream.
 
 ## Next Slice
 
-Refresh the tracked draft spec's Reference MVP Roadmap and Open Questions before
-adding another protocol feature. The slice should move implemented JSON-RPC and
-the permission model into the current v0.1 reference surface, keep Git worktree
-integration, agent adapters, desktop UI, cloud sync, organization workspaces,
-SDKs, and public adapter registry as later milestones, and rewrite the JSON-RPC
-open question so it asks about default recommendation rather than basic
-existence. Generated clients, Git-specific workflow extensions, host-presence
-streams, and broader filesystem/command adapters remain deferred until a
-concrete consumer or duplicated boundary appears.
+Refresh the tracked draft spec's Open Questions so answered implementation
+decisions are not presented as unresolved. The slice should convert the
+lease-mode and artifact-storage questions into resolved v0.1 notes, keep memory
+scope, Git-specific extensions, signed approvals, JSON-RPC default
+recommendation, and offline CRDT sync as real open questions, and avoid
+introducing new behavior. Generated clients, Git-specific workflow extensions,
+host-presence streams, and broader filesystem/command adapters remain deferred
+until a concrete consumer or duplicated boundary appears.
 
 ## Referenced by
 
