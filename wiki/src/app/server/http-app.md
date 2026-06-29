@@ -21,7 +21,7 @@ HTTP router and the TTL eviction loop act on one `Storage` instance. It is
 socket-agnostic — the listening socket is supplied separately so the exact same
 composition runs in two places:
 
-- [[server-main]] binds it to a production `NodeHttpServer` on `ACP_PORT`.
+- [[server-main]] binds it to [[node-http-server]] on `ACP_PORT`.
 - the **live-boot smoke test** binds it to an ephemeral OS port (`port: 0`).
 
 This is the seam that lets a test prove the composition root wires
@@ -45,7 +45,7 @@ export const HttpAppLive: Layer.Layer<
 
 - **Requires:** [[acp-router]], [[sweeper]], [[app-live]], [[id-clock]],
   [[protocol-error]] (`StorageError`), `@effect/platform` `HttpServer`. The residual requirement is
-  `HttpServer.HttpServer` — the socket, provided by whoever launches the layer.
+  `HttpServer.HttpServer` — the socket, provided by [[node-http-server]] or tests.
 - **Consumed by:** [[server-main]] (production socket) and `live-boot.test.ts`
   (ephemeral socket). Re-exported by [[server-index]].
 
@@ -85,7 +85,9 @@ bearer-token actor resolution, and spec §8 scope enforcement all compose.
   `HttpServer.serve` + the socket layer + `AppLive` + `IdClockLive` listen and
   serve over TCP. `port: 0` lets the OS assign a free port, so a busy `4317` or
   concurrent runs never collide; the bound port is read back via
-  `HttpServer.addressWith`. _Rejected:_ re-binding the default `4317` (flaky under
+  `HttpServer.addressWith`. The test uses [[node-http-server]]
+  `nodeHttpServerLayer(0)`, so the same platform boundary builds production and
+  ephemeral sockets. _Rejected:_ re-binding the default `4317` (flaky under
   contention); a second web-handler test (no new coverage over `router.test.ts`).
 - **Q:** Should the test import [[server-main]] to test the real composition root?
   **A:** No — extract `HttpAppLive` as an import-safe seam and have **both**
