@@ -98,16 +98,22 @@ const scopedWorkListPath = (
     return `/v1/work/${encodePathSegment(workId)}/${collection}`
   })
 
-const positiveIntegerFlag = (
+const integerFlag = (
   flags: Readonly<Record<string, string>>,
   key: string,
+  min: number,
 ): Either.Either<number, CliError> => {
   const raw = flags[key]
   const parsed = Number(raw)
-  return Number.isSafeInteger(parsed) && parsed > 0
+  return Number.isSafeInteger(parsed) && parsed >= min
     ? Either.right(parsed)
     : Either.left(new CliError({ message: `invalid --${key}: ${raw}` }))
 }
+
+const positiveIntegerFlag = (
+  flags: Readonly<Record<string, string>>,
+  key: string,
+) => integerFlag(flags, key, 1)
 
 const leaseStateCommand =
   (action: 'release' | 'revoke'): CommandHandler =>
@@ -116,6 +122,15 @@ const leaseStateCommand =
       method: 'POST' as const,
       path: `/v1/leases/${encodePathSegment(leaseId)}/${action}`,
       label: `lease ${action}`,
+    }))
+
+const reviewStateCommand =
+  (action: 'reject' | 'request_changes'): CommandHandler =>
+  ({ positionals }) =>
+    Either.map(positional(positionals, 0, 'review_id'), (reviewId) => ({
+      method: 'POST' as const,
+      path: `/v1/reviews/${encodePathSegment(reviewId)}/${action}`,
+      label: `review ${action.replace('_', '-')}`,
     }))
 
 const unknown = (argv: readonly string[]): Either.Either<never, CliError> =>
@@ -446,25 +461,8 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
       }
     }),
 
-  'review reject': ({ positionals }) =>
-    Either.gen(function* () {
-      const reviewId = yield* positional(positionals, 0, 'review_id')
-      return {
-        method: 'POST',
-        path: `/v1/reviews/${encodePathSegment(reviewId)}/reject`,
-        label: 'review reject',
-      }
-    }),
-
-  'review request-changes': ({ positionals }) =>
-    Either.gen(function* () {
-      const reviewId = yield* positional(positionals, 0, 'review_id')
-      return {
-        method: 'POST',
-        path: `/v1/reviews/${encodePathSegment(reviewId)}/request_changes`,
-        label: 'review request-changes',
-      }
-    }),
+  'review reject': reviewStateCommand('reject'),
+  'review request-changes': reviewStateCommand('request_changes'),
 
   'events stream': ({ flags }) =>
     Either.gen(function* () {
@@ -474,6 +472,18 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
         path: `/v1/events/stream?workspace_id=${encodeURIComponent(workspaceId)}`,
         stream: true,
         label: 'events stream',
+      }
+    }),
+
+  'events list': ({ flags }) =>
+    Either.gen(function* () {
+      const workspaceId = yield* flag(flags, 'workspace')
+      const afterSeq =
+        'after' in flags ? yield* integerFlag(flags, 'after', 0) : 0
+      return {
+        method: 'GET',
+        path: `/v1/events?workspace_id=${encodeURIComponent(workspaceId)}&after_seq=${afterSeq.toString()}`,
+        label: 'events list',
       }
     }),
 }

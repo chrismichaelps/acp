@@ -263,6 +263,12 @@ describe('AcpHttpApi', () => {
       },
       {
         group: 'events',
+        name: 'replayEvents',
+        method: 'GET',
+        path: '/v1/events',
+      },
+      {
+        group: 'events',
         name: 'streamEvents',
         method: 'GET',
         path: '/v1/events/stream',

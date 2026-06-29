@@ -75,7 +75,10 @@ export const acpRouter: HttpRouter.HttpRouter<
   · `POST /v1/reviews/:review_id/approve`
   · `POST /v1/reviews/:review_id/reject`
   · `POST /v1/reviews/:review_id/request_changes`
-- `GET  /v1/events/stream?workspace_id=…` → SSE ([[sse-event-stream]])
+- `GET /v1/events?workspace_id=…&after_seq=…` → replay workspace [[Event]]
+  history through [[event-routes]]
+- `GET  /v1/events/stream?workspace_id=…` → SSE ([[event-routes]] /
+  [[sse-event-stream]])
 - `POST /rpc` → JSON-RPC 2.0 framing ([[rpc-endpoint]]); the `/v1` routes above are
   built as `v1Router`, and `acpRouter = v1Router + POST /rpc` so JSON-RPC dispatch
   replays into `v1Router` (never into `/rpc`)
@@ -84,7 +87,7 @@ export const acpRouter: HttpRouter.HttpRouter<
 
 - **Requires:** domain service barrels used by inline handlers, [[event-store]],
   [[id-clock]], [[acp-http-api]] (payload schemas), [[route-support]],
-  [[workspace-routes]], [[worker-routes]], [[resume-routes]],
+  [[workspace-routes]], [[worker-routes]], [[resume-routes]], [[event-routes]],
   [[sse-event-stream]], [[rpc-endpoint]] (`POST /rpc` handler)
 - **Consumed by:** [[server-main]] (the Node entrypoint).
 
@@ -100,6 +103,9 @@ Those reads include current work, checkpoint history/latest, artifact metadata,
 review gates, and host-stored artifact content.
 Worker registry reads are delegated to [[worker-routes]], keeping host-scoped
 presence separate from workspace event history.
+Event replay and live SSE routes are delegated to [[event-routes]], keeping
+append-only timeline reads and stream response construction out of this
+composition module.
 Workspace-scoped resume aggregates stay in [[workspace-routes]] beside the
 workspace work index and delegate to the owning domain services'
 `listForWorkspace` methods.
@@ -122,8 +128,8 @@ lets the service emit `artifact.updated`. `deleteArtifact` delegates to
 service emit `artifact.deleted`. A missing artifact maps through the shared domain
 error path to `404`.
 
-Backed mutations require their matching session scope when a bearer token is
-present: worker reads, work update/event publication, lease
+Backed mutations and sensitive reads require their matching session scope when a bearer token is
+present: worker reads, event replay, work update/event publication, lease
 renew/release/revoke, artifact update/delete, and review
 approve/reject/request-changes each call [[route-support]] `authorize` with the
 specific action scope. Missing tokens still follow the local-host `worker_system`
@@ -187,4 +193,4 @@ composition behind a single router value. Deleting it scatters HTTP ceremony and
 ## Referenced by
 
 [[server-index]] · [[server-main]] · [[Transport]] · [[route-support]] ·
-[[workspace-routes]] · [[protocol-version]] · [[src/_MOC]]
+[[workspace-routes]] · [[event-routes]] · [[protocol-version]] · [[src/_MOC]]
