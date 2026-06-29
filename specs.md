@@ -608,6 +608,7 @@ Allowed review states:
 - `review.approved`
 - `review.rejected`
 - `review.changes_requested`
+- `review.cancelled`
 
 ---
 
@@ -777,7 +778,19 @@ POST /v1/reviews
 
 ---
 
-### 12.12 Subscribe to Events
+### 12.12 Cancel Review
+
+```http
+POST /v1/reviews/{review_id}/cancel
+```
+
+Cancelling a requested review withdraws the review gate without treating the
+review as rejected. The associated work unit returns to `running`, and the host
+emits `review.cancelled`.
+
+---
+
+### 12.13 Subscribe to Events
 
 ```http
 GET /v1/events/stream?workspace_id=workspace_123
@@ -806,6 +819,7 @@ Optional JSON-RPC method names:
 - `artifact.create`
 - `checkpoint.create`
 - `review.request`
+- `review.cancel`
 - `events.subscribe`
 
 Example:
@@ -847,6 +861,7 @@ claimed -> cancelled
 running -> cancelled
 needs_review -> rejected
 needs_review -> changes_requested -> running
+needs_review -> running (when a requested review is cancelled)
 ```
 
 Invalid transitions should return `409 Conflict`.
@@ -1592,6 +1607,7 @@ acp lease request work_123 file://src/auth/callback.ts
 acp checkpoint create work_123 --summary "Found async redirect issue"
 acp artifact create work_123 --kind patch --file fix.patch
 acp review request work_123 --reviewer human_chris
+acp review cancel review_123
 acp events stream
 ```
 
