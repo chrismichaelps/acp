@@ -14,7 +14,8 @@ aliases: [cli-index]
 ## Purpose
 
 Opaque public surface for the CLI: re-exports [[cli-commands]] and [[cli-client]].
-Excludes [[cli-main]] (a side-effecting entrypoint).
+Excludes [[cli-main]] (a side-effecting entrypoint) and [[cli-usage]] (display
+text used only by the entrypoint).
 
 ## Interface
 
@@ -38,6 +39,8 @@ No behavior. Re-export-only module enforcing the Export Law from
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT re-export [[cli-main]] — it runs on import.
+- ❌ Do NOT re-export [[cli-usage]] unless an external consumer needs display
+  text as API.
 
 ## Depth
 

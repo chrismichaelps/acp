@@ -19,6 +19,7 @@ import {
   InitializeSessionPayload,
   InitializeSessionResponse,
   PublishWorkEventPayload,
+  RenewLeasePayload,
   UpdateWorkStatePayload,
 } from '../../infrastructure/http/index.js'
 import { workspaceSseResponse } from '../../infrastructure/sse/index.js'
@@ -245,6 +246,31 @@ const releaseLease = respond(
   }),
 )
 
+const renewLease = respond(
+  Effect.gen(function* () {
+    const service = yield* LeaseService
+    const idClock = yield* IdClock
+    const leaseId = (yield* pathParam('lease_id')) as LeaseId
+    const payload = yield* HttpServerRequest.schemaBodyJson(RenewLeasePayload)
+    const now = yield* idClock.now
+    const actor = yield* authorize('lease:renew')
+    const lease = yield* service.renew(leaseId, actor, now, payload.ttl_seconds)
+    return yield* ok(200)(Lease, lease)
+  }),
+)
+
+const revokeLease = respond(
+  Effect.gen(function* () {
+    const service = yield* LeaseService
+    const idClock = yield* IdClock
+    const leaseId = (yield* pathParam('lease_id')) as LeaseId
+    const now = yield* idClock.now
+    const actor = yield* authorize('lease:revoke')
+    const lease = yield* service.revoke(leaseId, actor, now)
+    return yield* ok(200)(Lease, lease)
+  }),
+)
+
 const createArtifact = respond(
   Effect.gen(function* () {
     const service = yield* ArtifactService
@@ -403,11 +429,16 @@ const workRouter = HttpRouter.empty.pipe(
   HttpRouter.get('/v1/work/:work_id/checkpoints/latest', latestWorkCheckpoint),
   HttpRouter.get('/v1/work/:work_id/artifacts', listWorkArtifacts),
   HttpRouter.get('/v1/work/:work_id/reviews', listWorkReviews),
-  HttpRouter.post('/v1/leases', requestLease),
-  HttpRouter.post('/v1/leases/:lease_id/release', releaseLease),
 )
 
-const commandRouter = workRouter.pipe(
+const leaseRouter = workRouter.pipe(
+  HttpRouter.post('/v1/leases', requestLease),
+  HttpRouter.post('/v1/leases/:lease_id/renew', renewLease),
+  HttpRouter.post('/v1/leases/:lease_id/release', releaseLease),
+  HttpRouter.post('/v1/leases/:lease_id/revoke', revokeLease),
+)
+
+const commandRouter = leaseRouter.pipe(
   HttpRouter.post('/v1/artifacts', createArtifact),
   HttpRouter.patch('/v1/artifacts/:artifact_id', updateArtifact),
   HttpRouter.del('/v1/artifacts/:artifact_id', deleteArtifact),
