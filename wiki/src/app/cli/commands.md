@@ -47,6 +47,7 @@ export const parseArgs: (
 | `workspace update <workspace_id> --name --kind --uri [--default-branch]`              | `PATCH /v1/workspaces/<id>`             |
 | `workspace archive <workspace_id>`                                                    | `POST /v1/workspaces/<id>/archive`      |
 | `work create <title> --workspace <id> [--priority] [--description]`                   | `POST /v1/work`                         |
+| `work list --workspace <id>`                                                          | `GET /v1/workspaces/<id>/work`          |
 | `work get <work_id>`                                                                  | `GET /v1/work/<id>`                     |
 | `work claim <work_id> --worker <id>`                                                  | `POST /v1/work/<id>/claim`              |
 | `work update <work_id> --state <s>`                                                   | `PATCH /v1/work/<id>`                   |
@@ -84,10 +85,11 @@ TTLs are validated as positive safe integers before HTTP decoding.
 `--default-branch` and `--media-type` normalize to the schema's snake_case JSON
 fields. Artifact create/update forward optional `--uri` so the CLI can register
 external pull request, commit, report, or screenshot artifacts without inline
-content. Work resume reads map `work get`, `checkpoint list/latest --work`,
-`artifact list --work`, `artifact content <id>`, and `review list --work` onto
-the read endpoints. `review approve --met` is a comma-separated list that becomes
-`met_requirements`. `events stream` sets `stream: true`.
+content. Work resume reads map `work list --workspace`, `work get`, `checkpoint
+list/latest --work`, `artifact list --work`, `artifact content <id>`, and
+`review list --work` onto the read endpoints. `review approve --met` is a
+comma-separated list that becomes `met_requirements`. `events stream` sets
+`stream: true`.
 
 ## Negative Logic (Prohibited Paths)
 

@@ -26,6 +26,20 @@ describe('JSON-RPC resume command mapping', () => {
       label: 'work.get',
     })
 
+    const workIndex = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_work_index',
+        method: 'work.list_for_workspace',
+        params: { workspace_id: 'workspace/needs encoding' },
+      }),
+    )
+    expect(workIndex.request).toEqual({
+      method: 'GET',
+      path: '/v1/workspaces/workspace%2Fneeds%20encoding/work',
+      label: 'work.list_for_workspace',
+    })
+
     const checkpoints = expectRight(
       parseJsonRpcCommand({
         jsonrpc: '2.0',

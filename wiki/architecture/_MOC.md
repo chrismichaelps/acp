@@ -115,7 +115,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 46. ✅ Post-observability integration audit — review/content resume gap selected
 47. ✅ Work review reads and artifact content read endpoints
 48. ✅ Post-resume-read integration audit — workspace work index selected
-49. ▶ Workspace work index read endpoint
+49. ✅ Workspace work index read endpoint
+50. ▶ Re-audit remaining integration gaps after workspace work index
 
 ## Referenced by
 
