@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · post-resume-read-integration-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after review/content resume reads and
+  selected a workspace work index read as the next public discoverability gap ·
+  docs-only validation · risk LOW
 - 2026-06-28 · review-resume-content-reads slice · projected work review reads
   and host-stored artifact content reads through [[resume-routes]],
   [[acp-http-api]], [[json-rpc-resume-commands]], and [[cli-commands]] so resume
