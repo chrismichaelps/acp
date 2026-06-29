@@ -215,13 +215,21 @@ The workspace memory foundation is now covered. `@root/specs.md` defines
 SQL/query plan. The feature is intentionally append-oriented and small-record
 focused; large outputs remain [[Artifact]] records.
 
-The next gap is implementation below the transport layer. [[sqlite-store]] needs
-a dedicated memory table and prepared statements instead of generic `kv` scans;
-[[Storage]] needs a narrow memory API; an in-memory equivalent should preserve
-per-workspace sequence ordering for tests; and a new Memory domain service
-should validate record creation/list inputs, emit `memory.created`, and expose
-cursor reads. Transport routes should wait until that core behavior is green so
-the route/API file split can stay mechanical.
+The workspace memory core is now covered below the transport layer. [[common]]
+and [[memory.schema]] define Memory ids, kinds, payloads, query shapes, and
+`memory.created`; [[Storage]] has append/read Memory operations; [[sqlite-store]]
+persists Memory through a dedicated `WITHOUT ROWID` table with prepared
+cursor/key/work statements; [[in-memory-store]] preserves the same per-workspace
+sequence semantics; and [[memory-service]] creates records, emits
+`memory.created`, and exposes cursor reads. Focused tests and the broad
+non-socket suite cover thousands-record cursor replay and query-plan behavior.
+
+The next gap is transport projection. REST, JSON-RPC, and CLI should expose
+Memory creation and reads behind `memory:create` and `memory:read`. Because
+[[acp-router]] and [[acp-http-api]] are near the source-size ceiling, this slice
+should first split memory-specific HTTP route/API definitions into dedicated
+files, following the existing event/worker/resume route pattern, then add
+JSON-RPC and CLI commands as thin projections over the service.
 
 Host-scoped worker presence reads are now covered. [[worker-routes]] exposes the
 current registry through `GET /v1/workers` and `GET /v1/workers/{worker_id}`;
@@ -232,15 +240,15 @@ stream.
 
 ## Next Slice
 
-Implement the workspace memory core before adding transport. The slice should
-add protocol schema for Memory and memory payloads, extend the storage seam with
-append/read memory operations, back those operations with optimized SQLite and
-in-memory implementations, and add a Memory domain service that emits
-`memory.created`. REST, JSON-RPC, and CLI projections should remain the following
-slice so [[acp-router]] and [[acp-http-api]] can be split deliberately instead of
-grown past the source-size ceiling. Generated clients, Git-specific workflow
-extensions, host-presence streams, and broader filesystem/command adapters
-remain deferred until a concrete consumer or duplicated boundary appears.
+Project workspace Memory through REST, JSON-RPC, and the CLI. The slice should
+add `POST /v1/memory` and `GET /v1/memory` behind `memory:create` and
+`memory:read`, map `memory.create` and `memory.list` in JSON-RPC, and expose
+local `memory create` / `memory list` commands. Start by splitting the
+memory-specific route/API surface out of the near-limit central files, then keep
+the transport handlers as schema decode → [[memory-service]] → schema encode.
+Generated clients, Git-specific workflow extensions, host-presence streams, and
+broader filesystem/command adapters remain deferred until a concrete consumer or
+duplicated boundary appears.
 
 ## Referenced by
 
