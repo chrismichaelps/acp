@@ -26,20 +26,20 @@ describe('parseArgs', () => {
       'workspace',
       'create',
       '--name',
-      'acme/web',
+      'example/workspace',
       '--kind',
       'git_repository',
       '--uri',
-      'git+https://example.com/acme/web.git',
+      'git+https://example.com/workspaces/main.git',
       '--default-branch',
       'main',
     ])
     expect(req.method).toBe('POST')
     expect(req.path).toBe('/v1/workspaces')
     expect(req.body).toEqual({
-      name: 'acme/web',
+      name: 'example/workspace',
       kind: 'git_repository',
-      uri: 'git+https://example.com/acme/web.git',
+      uri: 'git+https://example.com/workspaces/main.git',
       default_branch: 'main',
     })
   })
@@ -49,9 +49,9 @@ describe('parseArgs', () => {
       'workspace',
       'create',
       '--name',
-      'acme/web',
+      'example/workspace',
       '--uri',
-      'git+https://example.com/acme/web.git',
+      'git+https://example.com/workspaces/main.git',
     ])
     expect(Either.isLeft(parsed)).toBe(true)
     if (Either.isLeft(parsed)) {
@@ -65,7 +65,7 @@ describe('parseArgs', () => {
       'update',
       'workspace 1/main',
       '--name',
-      'acme/web',
+      'example/workspace',
       '--kind',
       'git_repository',
       '--uri',
@@ -74,7 +74,7 @@ describe('parseArgs', () => {
     expect(req.method).toBe('PATCH')
     expect(req.path).toBe('/v1/workspaces/workspace%201%2Fmain')
     expect(req.body).toEqual({
-      name: 'acme/web',
+      name: 'example/workspace',
       kind: 'git_repository',
       uri: 'file:///repo',
     })
@@ -231,6 +231,12 @@ describe('parseArgs', () => {
     )
   })
 
+  it('parses checkpoint list by workspace', () => {
+    expect(
+      right(['checkpoint', 'list', '--workspace', 'workspace 1/main']).path,
+    ).toBe('/v1/workspaces/workspace%201%2Fmain/checkpoints')
+  })
+
   it('parses artifact creation with content and summary flags', () => {
     const req = right([
       'artifact',
@@ -316,6 +322,15 @@ describe('parseArgs', () => {
     })
   })
 
+  it('parses artifact list by workspace', () => {
+    const req = right(['artifact', 'list', '--workspace', 'workspace 123/main'])
+    expect(req).toEqual({
+      method: 'GET',
+      path: '/v1/workspaces/workspace%20123%2Fmain/artifacts',
+      label: 'artifact list',
+    })
+  })
+
   it('parses artifact content with an encoded path and GET method', () => {
     const req = right(['artifact', 'content', 'artifact 123/main'])
     expect(req).toEqual({
@@ -357,6 +372,15 @@ describe('parseArgs', () => {
     expect(req).toEqual({
       method: 'GET',
       path: '/v1/work/work%20123%2Fmain/reviews',
+      label: 'review list',
+    })
+  })
+
+  it('parses review list by workspace', () => {
+    const req = right(['review', 'list', '--workspace', 'workspace 123/main'])
+    expect(req).toEqual({
+      method: 'GET',
+      path: '/v1/workspaces/workspace%20123%2Fmain/reviews',
       label: 'review list',
     })
   })

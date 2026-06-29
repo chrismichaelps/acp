@@ -104,6 +104,24 @@ describe('AcpHttpApi', () => {
         method: 'GET',
         path: '/v1/workspaces/:workspace_id/work',
       },
+      {
+        group: 'workspaces',
+        name: 'listWorkspaceCheckpoints',
+        method: 'GET',
+        path: '/v1/workspaces/:workspace_id/checkpoints',
+      },
+      {
+        group: 'workspaces',
+        name: 'listWorkspaceArtifacts',
+        method: 'GET',
+        path: '/v1/workspaces/:workspace_id/artifacts',
+      },
+      {
+        group: 'workspaces',
+        name: 'listWorkspaceReviews',
+        method: 'GET',
+        path: '/v1/workspaces/:workspace_id/reviews',
+      },
       { group: 'work', name: 'createWork', method: 'POST', path: '/v1/work' },
       {
         group: 'work',

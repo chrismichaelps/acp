@@ -54,6 +54,20 @@ describe('JSON-RPC resume command mapping', () => {
       label: 'checkpoint.list_for_work',
     })
 
+    const workspaceCheckpoints = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_checkpoint_workspace',
+        method: 'checkpoint.list_for_workspace',
+        params: { workspace_id: 'workspace/needs encoding' },
+      }),
+    )
+    expect(workspaceCheckpoints.request).toEqual({
+      method: 'GET',
+      path: '/v1/workspaces/workspace%2Fneeds%20encoding/checkpoints',
+      label: 'checkpoint.list_for_workspace',
+    })
+
     const latest = expectRight(
       parseJsonRpcCommand({
         jsonrpc: '2.0',
@@ -82,6 +96,20 @@ describe('JSON-RPC resume command mapping', () => {
       label: 'artifact.list_for_work',
     })
 
+    const workspaceArtifacts = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_artifact_workspace',
+        method: 'artifact.list_for_workspace',
+        params: { workspace_id: 'workspace/needs encoding' },
+      }),
+    )
+    expect(workspaceArtifacts.request).toEqual({
+      method: 'GET',
+      path: '/v1/workspaces/workspace%2Fneeds%20encoding/artifacts',
+      label: 'artifact.list_for_workspace',
+    })
+
     const reviews = expectRight(
       parseJsonRpcCommand({
         jsonrpc: '2.0',
@@ -94,6 +122,20 @@ describe('JSON-RPC resume command mapping', () => {
       method: 'GET',
       path: '/v1/work/work%2Fneeds%20encoding/reviews',
       label: 'review.list_for_work',
+    })
+
+    const workspaceReviews = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_review_workspace',
+        method: 'review.list_for_workspace',
+        params: { workspace_id: 'workspace/needs encoding' },
+      }),
+    )
+    expect(workspaceReviews.request).toEqual({
+      method: 'GET',
+      path: '/v1/workspaces/workspace%2Fneeds%20encoding/reviews',
+      label: 'review.list_for_workspace',
     })
   })
 

@@ -1,10 +1,16 @@
 /** @Acp.App.Server.WorkspaceRoutes — workspace HTTP route handlers */
 import { HttpServerRequest } from '@effect/platform'
 import { Effect, Schema } from 'effect'
+import { ArtifactService } from '../../domain/artifacts/index.js'
+import { CheckpointService } from '../../domain/checkpoints/index.js'
+import { ReviewService } from '../../domain/reviews/index.js'
 import { WorkUnitService } from '../../domain/work-units/index.js'
 import { WorkspaceService } from '../../domain/workspaces/index.js'
 import {
+  Artifact,
+  Checkpoint,
   CreateWorkspacePayload,
+  Review,
   UpdateWorkspacePayload,
   WorkUnit,
   Workspace,
@@ -29,6 +35,36 @@ export const listWorkspaceWork = respond(
     yield* authorize('workspace:read')
     const all = yield* work.listForWorkspace(workspaceId)
     return yield* ok(200)(Schema.Array(WorkUnit), all)
+  }),
+)
+
+export const listWorkspaceCheckpoints = respond(
+  Effect.gen(function* () {
+    const checkpoints = yield* CheckpointService
+    const workspaceId = (yield* pathParam('workspace_id')) as WorkspaceId
+    yield* authorize('workspace:read')
+    const all = yield* checkpoints.listForWorkspace(workspaceId)
+    return yield* ok(200)(Schema.Array(Checkpoint), all)
+  }),
+)
+
+export const listWorkspaceArtifacts = respond(
+  Effect.gen(function* () {
+    const artifacts = yield* ArtifactService
+    const workspaceId = (yield* pathParam('workspace_id')) as WorkspaceId
+    yield* authorize('workspace:read')
+    const all = yield* artifacts.listForWorkspace(workspaceId)
+    return yield* ok(200)(Schema.Array(Artifact), all)
+  }),
+)
+
+export const listWorkspaceReviews = respond(
+  Effect.gen(function* () {
+    const reviews = yield* ReviewService
+    const workspaceId = (yield* pathParam('workspace_id')) as WorkspaceId
+    yield* authorize('workspace:read')
+    const all = yield* reviews.listForWorkspace(workspaceId)
+    return yield* ok(200)(Schema.Array(Review), all)
   }),
 )
 
