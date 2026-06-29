@@ -111,11 +111,10 @@ queue only when an external SDK or public artifact policy exists.
 The first `src/infrastructure/platform-node` boundary is now covered.
 [[node-http-server]] owns Node HTTP socket construction, [[server-main]] provides
 that Layer to [[http-app]], and real-socket tests use the same factory with
-`port: 0`. The next concrete platform-node gap is process IO: [[cli-main]] and
-[[stdio-main]] still import `node:process` directly for argv/stdin/stdout access.
-That is narrower and more actionable than generated clients or Git-specific
-workflow semantics, and it aligns with the spec rule that Node-specific
-implementations live under `src/infrastructure/platform-node`.
+`port: 0`. Process IO is now covered too: [[node-process-io]] owns argv,
+stdin, and stdout access for [[cli-main]] and [[stdio-main]]. The remaining Node
+built-ins are either inside `src/infrastructure/platform-node`, the SQLite
+storage adapter, or tests.
 
 Host-level worker presence streams remain out of scope for the current code.
 ADR-0005 requires a new schema and storage/query contract before any
@@ -128,6 +127,13 @@ implemented REST/SSE, `POST /rpc`, stdio JSON-RPC, `GET /rpc` WebSocket
 request/response framing and event notifications, SQLite durability, local
 versus required auth, scoped mutation permissions, worker registry reads,
 expanded CLI, and lease renew/revoke.
+
+The local draft spec still carries historical Hadoof-era naming and placeholder
+examples such as `github.com/acme/web.git`. [[spec-canonicalization]] tells
+readers how to interpret that drift, but the file itself is now the last public
+surface that can make a new reader think ACP depends on a nonexistent repository
+or an old product name. That is a better next documentation slice than generated
+clients because it lowers integration confusion without adding new behavior.
 
 SQLite query shape is not the next bottleneck. [[sqlite-store]] uses `WITHOUT
 ROWID` composite primary-key layouts for keyed collections and per-workspace
@@ -189,14 +195,14 @@ stream.
 
 ## Next Slice
 
-Extract process IO access into `src/infrastructure/platform-node` before adding
-another protocol feature. The slice should create a focused module for `argv`,
-stdin async chunks, and stdout writes, mirror it in
-`wiki/src/infrastructure/platform-node`, and update [[cli-main]] and
-[[stdio-main]] to consume that adapter while preserving CLI JSON output and
-stdio Content-Length framing. Generated clients, Git-specific workflow
-extensions, host-presence streams, and broader filesystem/command adapters remain
-deferred until a concrete consumer or duplicated boundary appears.
+Canonicalize the public draft spec examples before adding another protocol
+feature. The slice should update `@root/specs.md` from Hadoof-era terminology to
+ACP terminology where the document is normative, replace the nonexistent
+`github.com/acme/web.git` example with an obviously illustrative example domain,
+and preserve the historical-name note for readers of older drafts. Generated
+clients, Git-specific workflow extensions, host-presence streams, and broader
+filesystem/command adapters remain deferred until a concrete consumer or
+duplicated boundary appears.
 
 ## Referenced by
 
