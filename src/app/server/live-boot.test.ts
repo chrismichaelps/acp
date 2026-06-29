@@ -1,16 +1,13 @@
 /** @Acp.App.Server.LiveBoot.Test — boots the real socket on an ephemeral port */
-import { createServer } from 'node:http'
 import { describe, expect, it } from 'vitest'
 import { HttpServer } from '@effect/platform'
-import { NodeHttpServer } from '@effect/platform-node'
 import { Effect } from 'effect'
+import { nodeHttpServerLayer } from '../../infrastructure/platform-node/index.js'
 import { HttpAppLive } from './http-app.js'
 
 // Port 0 → the OS assigns a free ephemeral port, so a busy 4317 or concurrent
 // runs never collide. This binds a real TCP socket — not a web handler.
-const EphemeralServerLive = NodeHttpServer.layer(() => createServer(), {
-  port: 0,
-})
+const EphemeralServerLive = nodeHttpServerLayer(0)
 
 const worker = {
   id: 'agent_claude_code',

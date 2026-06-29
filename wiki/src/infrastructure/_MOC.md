@@ -24,6 +24,10 @@ construction and hides it behind narrow service tags.
 
 - [[sse/_MOC|SSE MOC]] — Server-Sent Events adapter for live event streams.
 
+## platform-node/
+
+- [[platform-node/_MOC|Platform Node MOC]] — Node-specific runtime Layers.
+
 ## Referenced by
 
 [[src/_MOC]]

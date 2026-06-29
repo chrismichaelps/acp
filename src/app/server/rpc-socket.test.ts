@@ -1,16 +1,13 @@
 /** @Acp.App.Server.RpcSocket.Test — round-trips JSON-RPC over a real WebSocket */
-import { createServer } from 'node:http'
 import { describe, expect, it } from 'vitest'
 import { HttpServer } from '@effect/platform'
-import { NodeHttpServer } from '@effect/platform-node'
 import { Effect } from 'effect'
+import { nodeHttpServerLayer } from '../../infrastructure/platform-node/index.js'
 import { HttpAppLive } from './http-app.js'
 
 // Port 0 → the OS assigns a free ephemeral port; binds a real TCP socket the
 // WebSocket client can dial, exercising the upgrade path end to end.
-const EphemeralServerLive = NodeHttpServer.layer(() => createServer(), {
-  port: 0,
-})
+const EphemeralServerLive = nodeHttpServerLayer(0)
 
 const worker = {
   id: 'agent_claude_code',

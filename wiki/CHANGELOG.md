@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · platform-node-http-server-layer slice · added
+  [[node-http-server]] and [[platform-node-index]] so the Node HTTP socket Layer
+  lives under `src/infrastructure/platform-node`; [[server-main]] now launches
+  [[http-app]] by providing that adapter, and real-socket server tests reuse the
+  same factory with an ephemeral port · focused validation pending · risk LOW
 - 2026-06-29 · post-review-cancellation-integration-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after [[Review]] cancellation,
   confirming `review.cancelled` transport parity and selecting a narrow
