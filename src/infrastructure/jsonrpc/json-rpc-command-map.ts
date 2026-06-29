@@ -2,7 +2,6 @@
 import { Either, Option, Schema } from 'effect'
 import {
   ApproveReviewPayload,
-  EventsStreamParams,
   InitializeSessionPayload,
   PublishWorkEventPayload,
   UpdateWorkStatePayload,
@@ -39,6 +38,10 @@ import {
   commandForLease,
   leaseMethodLabels,
 } from './json-rpc-lease-commands.js'
+import {
+  commandForEvent,
+  eventMethodLabels,
+} from './json-rpc-event-commands.js'
 import type {
   JsonRpcCommand,
   JsonRpcId,
@@ -82,7 +85,7 @@ const methodLabels = new Set<string>([
   'review.approve',
   'review.reject',
   'review.request_changes',
-  'events.subscribe',
+  ...eventMethodLabels,
 ])
 
 const toMethod = (
@@ -127,6 +130,15 @@ export const commandFor = (
     )
     if (Option.isSome(leaseCommand)) {
       return yield* leaseCommand.value
+    }
+    const eventCommand = commandForEvent(
+      method,
+      paramsValue,
+      id,
+      expectsResponse,
+    )
+    if (Option.isSome(eventCommand)) {
+      return yield* eventCommand.value
     }
 
     if (method === 'session.initialize') {
@@ -429,15 +441,5 @@ export const commandFor = (
       }
     }
 
-    const params = yield* decodeParams(EventsStreamParams, paramsValue, id)
-    return {
-      id,
-      expects_response: expectsResponse,
-      request: {
-        method: 'GET',
-        path: `/v1/events/stream?workspace_id=${encodeURIComponent(params.workspace_id)}`,
-        stream: true,
-        label: method,
-      },
-    }
+    return yield* Either.left(methodNotFound(method, id))
   })

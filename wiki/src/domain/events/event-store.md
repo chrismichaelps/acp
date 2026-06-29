@@ -55,8 +55,8 @@ export const EventStoreLive: Layer.Layer<EventStore, never, Storage>
 ### Linkage
 
 - **Requires:** [[storage]], [[event.schema]], [[protocol-error]]
-- **Consumed by:** future WorkUnit/Lease/Artifact/Checkpoint/Review services and
-  the [[EventStream]] transport adapter.
+- **Consumed by:** WorkUnit/Lease/Artifact/Checkpoint/Review services,
+  [[event-routes]], and the [[EventStream]] transport adapter.
 
 ## Algorithm
 

@@ -455,6 +455,21 @@ describe('parseArgs', () => {
     expect(req.path).toBe('/v1/events/stream?workspace_id=workspace%201')
   })
 
+  it('parses events list with an optional replay cursor', () => {
+    expect(right(['events', 'list', '--workspace', 'workspace 1'])).toEqual({
+      method: 'GET',
+      path: '/v1/events?workspace_id=workspace%201&after_seq=0',
+      label: 'events list',
+    })
+    expect(
+      right(['events', 'list', '--workspace', 'workspace 1', '--after', '7']),
+    ).toEqual({
+      method: 'GET',
+      path: '/v1/events?workspace_id=workspace%201&after_seq=7',
+      label: 'events list',
+    })
+  })
+
   it('rejects an unknown command', () => {
     const parsed = parseArgs(['frobnicate', 'now'])
     expect(Either.isLeft(parsed)).toBe(true)

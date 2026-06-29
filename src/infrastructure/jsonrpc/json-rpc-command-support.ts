@@ -51,6 +51,7 @@ export type JsonRpcMethod =
   | 'review.approve'
   | 'review.reject'
   | 'review.request_changes'
+  | 'events.list'
   | 'events.subscribe'
 
 export interface JsonRpcHttpRequest {

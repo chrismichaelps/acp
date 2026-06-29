@@ -29,6 +29,7 @@ export const usage = `acp — Agent Coordination Protocol CLI
   acp review approve <review_id> --met <requirement,csv>
   acp review reject <review_id>
   acp review request-changes <review_id>
+  acp events list --workspace <id> [--after <seq>]
   acp events stream --workspace <id>
 
 Targets ACP_BASE_URL (default http://localhost:$ACP_PORT).`
