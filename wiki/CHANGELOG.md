@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · post-roadmap-status-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after the tracked spec roadmap status
+  refresh and selected answered Open Questions cleanup for advisory leases and
+  dual-mode artifacts · docs-only validation · risk LOW
 - 2026-06-29 · spec-roadmap-status-refresh slice · moved implemented JSON-RPC
   transport and closed permissions into the `@root/specs.md` v0.1 roadmap
   surface and reframed the JSON-RPC open question around default recommendation
