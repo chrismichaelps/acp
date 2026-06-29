@@ -187,13 +187,21 @@ maps `review.cancel`, and [[cli-commands]] maps `review cancel <review_id>`.
 `@root/specs.md` now names the `needs_review -> running` withdrawal path and the
 same REST, JSON-RPC, event, and CLI surface.
 
-The remaining spec drift is permission vocabulary precision. Section 8 still
-shows a short example list even though [[common]] now defines a closed v0.1
-permission vocabulary for worker reads, workspace reads/writes, event replay,
-work mutation/publication, lease lifecycle operations, artifact mutation, and
-the full review decision/cancellation lifecycle. The examples are not wrong, but
-they under-specify the deployed authorization contract for hosts that enable
-`ACP_REQUIRE_AUTH`.
+Permission vocabulary precision is now covered. Section 8 of `@root/specs.md`
+names the closed v0.1 scope set from [[common]], including worker reads,
+workspace mutation, event replay, work updates and progress events, lease
+renew/release/revoke, artifact mutation, checkpoint creation, and review
+approve/reject/request_changes/cancel. The same section now uses ACP bearer
+token naming instead of the stale pre-canonicalization placeholder.
+
+The remaining spec drift is late-document status language. The Reference MVP
+Roadmap still places JSON-RPC transport and the permission model in later
+milestones even though JSON-RPC is implemented over HTTP POST, stdio, and
+WebSocket, and the permission vocabulary is part of v0.1. The Open Questions
+section also still asks whether JSON-RPC should exist as the MCP-like default
+transport even though the implemented reference position is multi-transport:
+HTTP/SSE remains the recommended MVP path, while JSON-RPC is available for
+stdio/WebSocket clients.
 
 Host-scoped worker presence reads are now covered. [[worker-routes]] exposes the
 current registry through `GET /v1/workers` and `GET /v1/workers/{worker_id}`;
@@ -204,15 +212,15 @@ stream.
 
 ## Next Slice
 
-Align the tracked draft spec's authentication section with the implemented
-closed permission vocabulary before adding another protocol feature. The slice
-should replace the narrow example-only permission block with the current v0.1
-scope families from [[common]], including `worker:read`, `event:read`, work
-update/event publication, lease renew/release/revoke, artifact update/delete,
-and review approve/reject/request_changes/cancel. Generated clients,
-Git-specific workflow extensions, host-presence streams, and broader
-filesystem/command adapters remain deferred until a concrete consumer or
-duplicated boundary appears.
+Refresh the tracked draft spec's Reference MVP Roadmap and Open Questions before
+adding another protocol feature. The slice should move implemented JSON-RPC and
+the permission model into the current v0.1 reference surface, keep Git worktree
+integration, agent adapters, desktop UI, cloud sync, organization workspaces,
+SDKs, and public adapter registry as later milestones, and rewrite the JSON-RPC
+open question so it asks about default recommendation rather than basic
+existence. Generated clients, Git-specific workflow extensions, host-presence
+streams, and broader filesystem/command adapters remain deferred until a
+concrete consumer or duplicated boundary appears.
 
 ## Referenced by
 

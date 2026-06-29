@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · post-permission-vocabulary-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after tracked spec permission
+  vocabulary parity and selected `@root/specs.md` roadmap/open-questions
+  refresh as the next docs slice · docs-only validation · risk LOW
 - 2026-06-29 · spec-permission-vocabulary-parity slice · aligned
   `@root/specs.md` authentication with the closed v0.1 [[common]]
   permission vocabulary and replaced the stale bearer-token placeholder with
