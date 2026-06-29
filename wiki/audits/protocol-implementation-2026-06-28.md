@@ -206,17 +206,22 @@ leases and dual-mode artifact storage as resolved v0.1 decisions, while memory
 scope, Git-specific extensions, signed approvals, JSON-RPC default
 recommendation, and offline CRDT sync remain genuinely open.
 
-The substantive unresolved protocol feature is memory. The spec still asks
-whether memory belongs in ACP; the next implementation should answer yes for a
-bounded v0.1 host feature: workspace-scoped memory records that let workers pass
-durable, queryable context between agents without overloading checkpoints,
-artifacts, or event logs. Because a workspace may accumulate thousands of memory
-records, the storage shape should be explicit rather than a generic `kv` list
-scan: use workspace-scoped composite keys, prepared statements, and
-cursor-friendly reads that match the existing event replay discipline.
-[[sqlite-store]] is still small, but [[acp-router]] and [[acp-http-api]] are both
-close to the source-size ceiling, so memory transport work should introduce
-capability-specific route/API modules instead of growing the central files.
+The workspace memory foundation is now covered. `@root/specs.md` defines
+[[Memory]] as a bounded v0.1 protocol feature with `memory:create` and
+`memory:read` scopes, `supports_memory` capability negotiation, a Memory object,
+`memory.created`, REST/JSON-RPC surfaces, and a storage shape built around
+`(workspace_id, seq)` cursor reads plus key/work indexes. The wiki now has a
+[[Memory]] domain page and [[workspace-memory-records]] reference note for the
+SQL/query plan. The feature is intentionally append-oriented and small-record
+focused; large outputs remain [[Artifact]] records.
+
+The next gap is implementation below the transport layer. [[sqlite-store]] needs
+a dedicated memory table and prepared statements instead of generic `kv` scans;
+[[Storage]] needs a narrow memory API; an in-memory equivalent should preserve
+per-workspace sequence ordering for tests; and a new Memory domain service
+should validate record creation/list inputs, emit `memory.created`, and expose
+cursor reads. Transport routes should wait until that core behavior is green so
+the route/API file split can stay mechanical.
 
 Host-scoped worker presence reads are now covered. [[worker-routes]] exposes the
 current registry through `GET /v1/workers` and `GET /v1/workers/{worker_id}`;
@@ -227,13 +232,15 @@ stream.
 
 ## Next Slice
 
-Add the wiki/spec foundation for workspace memory records before implementation.
-The slice should resolve the memory open question for a bounded v0.1 host
-feature, define the protocol object and events in `@root/specs.md`, and document
-the optimized SQLite query shape and route/API file splits required for a later
-implementation. Generated clients, Git-specific workflow extensions,
-host-presence streams, and broader filesystem/command adapters remain deferred
-until a concrete consumer or duplicated boundary appears.
+Implement the workspace memory core before adding transport. The slice should
+add protocol schema for Memory and memory payloads, extend the storage seam with
+append/read memory operations, back those operations with optimized SQLite and
+in-memory implementations, and add a Memory domain service that emits
+`memory.created`. REST, JSON-RPC, and CLI projections should remain the following
+slice so [[acp-router]] and [[acp-http-api]] can be split deliberately instead of
+grown past the source-size ceiling. Generated clients, Git-specific workflow
+extensions, host-presence streams, and broader filesystem/command adapters
+remain deferred until a concrete consumer or duplicated boundary appears.
 
 ## Referenced by
 

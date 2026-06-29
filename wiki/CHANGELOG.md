@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · post-memory-foundation-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after [[Memory]] foundation and
+  selected the workspace memory core implementation before transport projection
+  · docs-only validation · risk LOW
 - 2026-06-29 · workspace-memory-foundation slice · added tracked
   `@root/specs.md` foundation and wiki anchors for [[Memory]] records,
   including `memory.created`, REST/JSON-RPC surfaces, `memory:create/read`
