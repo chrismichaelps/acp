@@ -15,10 +15,11 @@ aliases: [workspace-routes]
 
 ## Purpose
 
-Own the HTTP handlers for workspace listing and backed workspace mutations. The
-domain [[workspace-service]] already persists `workspace.created` and
-`workspace.updated` events and now owns the `workspace.archived` lifecycle
-transition; this module exposes those backed behaviors to clients.
+Own the HTTP handlers for workspace listing, workspace work indexes, and backed
+workspace mutations. The domain [[workspace-service]] already persists
+`workspace.created` and `workspace.updated` events and now owns the
+`workspace.archived` lifecycle transition; this module exposes those backed
+behaviors to clients.
 
 ## Interface
 
@@ -39,6 +40,15 @@ export const createWorkspace: Effect<
   | AppConfigTag
   | SessionService
   | HttpServerRequest
+>
+export const listWorkspaceWork: Effect<
+  HttpServerResponse,
+  never,
+  | WorkUnitService
+  | AppConfigTag
+  | SessionService
+  | HttpServerRequest
+  | HttpRouter.RouteContext
 >
 export const updateWorkspace: Effect<
   HttpServerResponse,
@@ -67,21 +77,25 @@ export const archiveWorkspace: Effect<
 ### Routes
 
 - `GET /v1/workspaces` → `workspace:read`
+- `GET /v1/workspaces/{workspace_id}/work` → `workspace:read`
 - `POST /v1/workspaces` → `workspace:write`, mints a `WorkspaceId`
 - `PATCH /v1/workspaces/{workspace_id}` → `workspace:write`, full replacement by id
 - `POST /v1/workspaces/{workspace_id}/archive` → `workspace:write`, one-way archive
 
 ### Linkage
 
-- **Requires:** [[workspace-service]], [[id-clock]], [[route-support]],
-  [[workspace.schema]]
+- **Requires:** [[workspace-service]], [[work-unit-service]], [[id-clock]],
+  [[route-support]], [[workspace.schema]], [[work-unit.schema]]
 - **Consumed by:** [[acp-router]]
 
 ## Algorithm
 
 `listWorkspaces` authorizes `workspace:read`, delegates to
-[[workspace-service]] `list`, and encodes the array response. `createWorkspace`
-decodes [[workspace.schema|CreateWorkspacePayload]], mints a `workspace_*` id and
+[[workspace-service]] `list`, and encodes the array response. `listWorkspaceWork`
+authorizes `workspace:read`, reads `workspace_id` from the path, delegates to
+[[work-unit-service]] `listForWorkspace`, and encodes the current work index for
+that workspace. `createWorkspace` decodes
+[[workspace.schema|CreateWorkspacePayload]], mints a `workspace_*` id and
 timestamp, resolves the actor through `workspace:write`, and delegates to service
 `create`. `updateWorkspace` decodes [[workspace.schema|UpdateWorkspacePayload]],
 takes the id from the path, resolves the actor through `workspace:write`, and
@@ -94,6 +108,8 @@ resolves the actor through `workspace:write`, and delegates to service `archive`
   mints it.
 - ❌ Do NOT duplicate event emission; [[workspace-service]] owns persisted events.
 - ❌ Do NOT archive by deleting the workspace record.
+- ❌ Do NOT scan raw storage in route code; [[work-unit-service]] owns the
+  workspace work filter.
 
 ## Depth
 

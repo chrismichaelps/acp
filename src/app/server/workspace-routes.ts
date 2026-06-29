@@ -1,10 +1,12 @@
 /** @Acp.App.Server.WorkspaceRoutes — workspace HTTP route handlers */
 import { HttpServerRequest } from '@effect/platform'
 import { Effect, Schema } from 'effect'
+import { WorkUnitService } from '../../domain/work-units/index.js'
 import { WorkspaceService } from '../../domain/workspaces/index.js'
 import {
   CreateWorkspacePayload,
   UpdateWorkspacePayload,
+  WorkUnit,
   Workspace,
 } from '../../protocol/schema/index.js'
 import type { WorkspaceId } from '../../protocol/schema/index.js'
@@ -17,6 +19,16 @@ export const listWorkspaces = respond(
     yield* authorize('workspace:read')
     const all = yield* workspaces.list()
     return yield* ok(200)(Schema.Array(Workspace), all)
+  }),
+)
+
+export const listWorkspaceWork = respond(
+  Effect.gen(function* () {
+    const work = yield* WorkUnitService
+    const workspaceId = (yield* pathParam('workspace_id')) as WorkspaceId
+    yield* authorize('workspace:read')
+    const all = yield* work.listForWorkspace(workspaceId)
+    return yield* ok(200)(Schema.Array(WorkUnit), all)
   }),
 )
 

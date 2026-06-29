@@ -1,6 +1,6 @@
 /** @Acp.Infra.JsonRpc.ResumeCommands — work-scoped read method mappings */
 import { Either, Option, Schema } from 'effect'
-import { ArtifactId, WorkId } from '../../protocol/schema/index.js'
+import { ArtifactId, WorkId, WorkspaceId } from '../../protocol/schema/index.js'
 import { decodeParams, encodeSegment } from './json-rpc-command-support.js'
 import type {
   JsonRpcCommand,
@@ -11,6 +11,7 @@ import type {
 
 export const resumeMethodLabels = [
   'work.get',
+  'work.list_for_workspace',
   'checkpoint.list_for_work',
   'checkpoint.latest_for_work',
   'artifact.list_for_work',
@@ -19,6 +20,7 @@ export const resumeMethodLabels = [
 ] as const
 
 const WorkResumeParams = Schema.Struct({ work_id: WorkId })
+const WorkspaceWorkParams = Schema.Struct({ workspace_id: WorkspaceId })
 const ArtifactContentParams = Schema.Struct({ artifact_id: ArtifactId })
 
 const command = (
@@ -46,6 +48,19 @@ export const commandForResume = (
           expectsResponse,
           method,
           `/v1/work/${encodeSegment(params.work_id)}`,
+        ),
+      ),
+    )
+  }
+
+  if (method === 'work.list_for_workspace') {
+    return Option.some(
+      Either.map(decodeParams(WorkspaceWorkParams, paramsValue, id), (params) =>
+        command(
+          id,
+          expectsResponse,
+          method,
+          `/v1/workspaces/${encodeSegment(params.workspace_id)}/work`,
         ),
       ),
     )

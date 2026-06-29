@@ -15,9 +15,10 @@ aliases: [work-unit-service, WorkUnitService]
 
 ## Purpose
 
-Own the [[WorkUnit]] lifecycle for v0.1: create work, read stored work, claim open
-work, validate state transitions, persist updates through [[Storage]], and emit
-state-change [[Event]]s through [[EventStore]].
+Own the [[WorkUnit]] lifecycle for v0.1: create work, read stored work, list work
+inside a [[Workspace]], claim open work, validate state transitions, persist
+updates through [[Storage]], and emit state-change [[Event]]s through
+[[EventStore]].
 
 ## Interface
 
@@ -34,6 +35,9 @@ export interface CreateWorkInput {
 export interface WorkUnitServiceApi {
   readonly create: (input: CreateWorkInput) => Effect<WorkUnit, StorageError>
   readonly get: (workId: WorkId) => Effect<Option<WorkUnit>, StorageError>
+  readonly listForWorkspace: (
+    workspaceId: WorkspaceId,
+  ) => Effect<readonly WorkUnit[], StorageError>
   readonly claim: (
     workId: WorkId,
     workerId: WorkerId,
@@ -89,6 +93,8 @@ export const WorkUnitServiceLive: Layer.Layer<
    saves the updated state, and emits the corresponding work/review event.
 4. `get` returns `Option.none` for absence and decodes stored records through
    [[work-unit.schema]] for drift protection.
+5. `listForWorkspace` decodes stored records and filters by `workspace_id`,
+   returning the current metadata index for workspace discoverability.
 
 ## State Machine
 
@@ -113,6 +119,8 @@ the transition path even though spec §10.3 omitted it from the prose list.
 - ❌ Do NOT write raw undecoded objects into the WorkUnit collection.
 - ❌ Do NOT emit events before a state change is persisted.
 - ❌ Do NOT generate IDs or timestamps here until those seams exist.
+- ❌ Do NOT make transport adapters scan raw storage for work indexes; this
+  service owns the filter.
 
 ## Depth
 

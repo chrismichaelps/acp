@@ -33,6 +33,7 @@ export const commandForResume: (
 ### Methods
 
 - `work.get`
+- `work.list_for_workspace`
 - `checkpoint.list_for_work`
 - `checkpoint.latest_for_work`
 - `artifact.list_for_work`
@@ -42,11 +43,12 @@ export const commandForResume: (
 ## Algorithm
 
 For work-scoped resume methods, decode `work_id` through [[ids]], encode it as a
-URL path segment, and return the canonical REST read command. For artifact
-content reads, decode `artifact_id` and map it to
-`GET /v1/artifacts/{artifact_id}/content`. Unsupported methods return
-`Option.none` so [[json-rpc-command-map]] can continue with the mutation table or
-method-not-found flow.
+URL path segment, and return the canonical REST read command. For workspace work
+indexes, decode `workspace_id` and map it to
+`GET /v1/workspaces/{workspace_id}/work`. For artifact content reads, decode
+`artifact_id` and map it to `GET /v1/artifacts/{artifact_id}/content`.
+Unsupported methods return `Option.none` so [[json-rpc-command-map]] can continue
+with the mutation table or method-not-found flow.
 
 ## Negative Logic (Prohibited Paths)
 
