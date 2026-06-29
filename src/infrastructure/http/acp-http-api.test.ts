@@ -75,6 +75,18 @@ describe('AcpHttpApi', () => {
         path: '/v1/session/initialize',
       },
       {
+        group: 'workers',
+        name: 'listWorkers',
+        method: 'GET',
+        path: '/v1/workers',
+      },
+      {
+        group: 'workers',
+        name: 'getWorker',
+        method: 'GET',
+        path: '/v1/workers/:worker_id',
+      },
+      {
         group: 'workspaces',
         name: 'listWorkspaces',
         method: 'GET',

@@ -47,6 +47,8 @@ export const acpRouter: HttpRouter.HttpRouter<
   §9); accepts both full internal [[Worker]] records and draft §9
   `protocol_version` + client capability handshakes, rejecting unsupported
   versions through [[protocol-version]]
+- `GET /v1/workers` · `GET /v1/workers/:worker_id` → read host-scoped
+  [[Worker]] registry state through [[worker-routes]]
 - `GET  /v1/workspaces` → list [[Workspace]]s
 - `POST /v1/workspaces` · `PATCH /v1/workspaces/:workspace_id` → create/update
   [[Workspace]]s through [[workspace-routes]]
@@ -82,8 +84,8 @@ export const acpRouter: HttpRouter.HttpRouter<
 
 - **Requires:** domain service barrels used by inline handlers, [[event-store]],
   [[id-clock]], [[acp-http-api]] (payload schemas), [[route-support]],
-  [[workspace-routes]], [[resume-routes]], [[sse-event-stream]], [[rpc-endpoint]]
-  (`POST /rpc` handler)
+  [[workspace-routes]], [[worker-routes]], [[resume-routes]],
+  [[sse-event-stream]], [[rpc-endpoint]] (`POST /rpc` handler)
 - **Consumed by:** [[server-main]] (the Node entrypoint).
 
 ## Algorithm
@@ -96,6 +98,8 @@ Per inline route: decode body (`HttpServerRequest.schemaBodyJson`) / path
 Work-scoped resume reads are delegated to [[resume-routes]] for the same reason.
 Those reads include current work, checkpoint history/latest, artifact metadata,
 review gates, and host-stored artifact content.
+Worker registry reads are delegated to [[worker-routes]], keeping host-scoped
+presence separate from workspace event history.
 Workspace-scoped resume aggregates stay in [[workspace-routes]] beside the
 workspace work index and delegate to the owning domain services'
 `listForWorkspace` methods.
@@ -119,10 +123,11 @@ service emit `artifact.deleted`. A missing artifact maps through the shared doma
 error path to `404`.
 
 Backed mutations require their matching session scope when a bearer token is
-present: work update/event publication, lease renew/release/revoke, artifact
-update/delete, and review approve/reject/request-changes each call
-[[route-support]] `authorize` with the specific action scope. Missing tokens
-still follow the local-host `worker_system` fallback unless
+present: worker reads, work update/event publication, lease
+renew/release/revoke, artifact update/delete, and review
+approve/reject/request-changes each call [[route-support]] `authorize` with the
+specific action scope. Missing tokens still follow the local-host `worker_system`
+fallback unless
 `ACP_REQUIRE_AUTH=true`.
 
 ## Negative Logic (Prohibited Paths)

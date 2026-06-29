@@ -76,6 +76,7 @@ import {
   listWorkspaces,
   updateWorkspace,
 } from './workspace-routes.js'
+import { getWorker, listWorkers } from './worker-routes.js'
 
 // Static host identity + capabilities advertised at session/initialize (spec §9).
 const host = { name: 'ACP Local', kind: 'local' } as const
@@ -407,6 +408,8 @@ const streamEvents = respond(
 // The canonical REST surface (spec §12). JSON-RPC dispatch replays against this.
 const workRouter = HttpRouter.empty.pipe(
   HttpRouter.post('/v1/session/initialize', initializeSession),
+  HttpRouter.get('/v1/workers', listWorkers),
+  HttpRouter.get('/v1/workers/:worker_id', getWorker),
   HttpRouter.get('/v1/workspaces', listWorkspaces),
   HttpRouter.post('/v1/workspaces', createWorkspace),
   HttpRouter.patch('/v1/workspaces/:workspace_id', updateWorkspace),

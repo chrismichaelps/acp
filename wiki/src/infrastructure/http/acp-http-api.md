@@ -31,6 +31,7 @@ export const LeasePath: Schema.Struct<{ lease_id: LeaseId }>
 export const ArtifactPath: Schema.Struct<{ artifact_id: ArtifactId }>
 export const EventsStreamParams: Schema.Struct<{ workspace_id: WorkspaceId }>
 export const WorkspacePath: Schema.Struct<{ workspace_id: WorkspaceId }>
+export const WorkerPath: Schema.Struct<{ worker_id: WorkerId }>
 export const UpdateWorkStatePayload: Schema.Struct<{ state: WorkState }>
 export const PublishWorkEventPayload: Schema.Struct<{ type: EventType; data: Record<string, unknown> }>
 export const ApproveReviewPayload: Schema.Struct<{ met_requirements: string[] }>
@@ -47,6 +48,7 @@ export const InitializeSessionResponse: Schema.Struct<{ // spec §9 host handsha
   capabilities: { supports_events; supports_reviews; supports_artifacts; supports_sse: boolean } }>
 
 export const WorkGroup: HttpApiGroup.HttpApiGroup<'work', ...>
+export const WorkerGroup: HttpApiGroup.HttpApiGroup<'workers', ...>
 export const LeaseGroup: HttpApiGroup.HttpApiGroup<'leases', ...>
 export const EventsGroup: HttpApiGroup.HttpApiGroup<'events', ...>
 export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
@@ -55,6 +57,8 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 ### Routes
 
 - `POST /v1/session/initialize`
+- `GET /v1/workers`
+- `GET /v1/workers/{worker_id}`
 - `GET /v1/workspaces`
 - `POST /v1/workspaces`
 - `PATCH /v1/workspaces/{workspace_id}`
@@ -139,6 +143,10 @@ Lease renew/revoke are declared as backed lifecycle extensions because
 [[lease-service]] already owns `renew`/`revoke` state transitions and emits
 `lease.renewed`/`lease.revoked`. `RenewLeasePayload` accepts an optional positive
 TTL override; omitting it delegates to the host default lease TTL.
+
+Worker reads are declared as host-scoped presence extensions over
+[[worker-service]] `list` and `get`. They expose current registry state without
+adding worker presence events to the workspace event log.
 
 ## Negative Logic (Prohibited Paths)
 
