@@ -126,14 +126,16 @@ Public documentation drift is covered again. The README describes the
 implemented REST/SSE, `POST /rpc`, stdio JSON-RPC, `GET /rpc` WebSocket
 request/response framing and event notifications, SQLite durability, local
 versus required auth, scoped mutation permissions, worker registry reads,
-expanded CLI, and lease renew/revoke.
+expanded CLI, and lease renew/revoke. It now lags in smaller but user-visible
+ways: review cancellation is only implied by “review actions,” the tracked
+`specs.md` draft is not named, and Node-specific runtime adapters are described
+as staying at application entrypoints even though [[node-http-server]] and
+[[node-process-io]] now live under `src/infrastructure/platform-node`.
 
 The draft spec is now tracked and canonicalized. Normative sections use Agent
 Coordination Protocol (ACP), `ACP_` configuration examples, `acp://` artifact
-examples, and illustrative `example.com` repository URIs. Hadoof appears only in
-the historical supersession note. The next visible spec hygiene issue is section
-numbering drift: `Relationship to MCP` repeats section 19 and `Example CLI`
-repeats section 21, which makes references to later sections ambiguous.
+examples, illustrative `example.com` repository URIs, and stable section numbers
+through 25. Hadoof appears only in the historical supersession note.
 
 SQLite query shape is not the next bottleneck. [[sqlite-store]] uses `WITHOUT
 ROWID` composite primary-key layouts for keyed collections and per-workspace
@@ -195,12 +197,13 @@ stream.
 
 ## Next Slice
 
-Clean up `@root/specs.md` section numbering before adding another protocol
-feature. The slice should renumber the repeated late sections so Security,
-MCP relationship, roadmap, CLI example, open questions, pitch, and naming each
-have stable unique headings. Generated clients, Git-specific workflow extensions,
-host-presence streams, and broader filesystem/command adapters remain deferred
-until a concrete consumer or duplicated boundary appears.
+Refresh the public README before adding another protocol feature. The slice
+should keep the README prose-first and senior-level while naming review
+cancellation (`review.cancel`, REST cancel route, CLI `review cancel`), tracked
+`specs.md`, and the current platform-node boundary. Generated clients,
+Git-specific workflow extensions, host-presence streams, and broader
+filesystem/command adapters remain deferred until a concrete consumer or
+duplicated boundary appears.
 
 ## Referenced by
 
