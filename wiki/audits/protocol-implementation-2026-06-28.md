@@ -17,8 +17,8 @@ query, Effect observability logging, and second resume-read slices. It compares
 the current ACP reference host against `@root/specs.md` through
 [[spec-canonicalization]], then chooses the next backed implementation gap. This
 revision follows the README lease refresh and WebSocket transport slice, closing
-the stale WebSocket deferral, host-scoped worker presence reads, and the next
-live-transport integration gap.
+the stale WebSocket deferral, host-scoped worker presence reads, WebSocket
+event subscription, and the next replay-read integration gap.
 
 ## Current Coverage
 
@@ -53,12 +53,12 @@ The JSON-RPC surface covers draft §13 plus the same backed extensions:
 and `lease.revoke`, with artifact URI fields flowing through the shared schema.
 Work-centric resume read commands, review-list reads, artifact-content reads,
 workspace work-index reads, and workspace aggregate resume reads are also
-projected through JSON-RPC and the CLI. `events.subscribe` maps to the SSE
-route. Runtime execution is available through `POST /rpc` and
+projected through JSON-RPC and the CLI. `events.subscribe` maps to the live
+event path: SSE for HTTP clients and `events.event` notifications for WebSocket
+JSON-RPC clients. Runtime execution is available through `POST /rpc` and
 `acp-jsonrpc-stdio`. `GET /rpc` now upgrades to a WebSocket and frames the same
 JSON-RPC request/response surface over text messages, reusing the in-process
-router through [[rpc-socket]] and [[rpc-endpoint]]. JSON-RPC event subscription
-remains deferred; live event delivery stays on SSE.
+router through [[rpc-socket]] and [[rpc-endpoint]].
 
 The event vocabulary boundary is settled for v0.1. Workspace archive and
 artifact update/delete are backed by persisted domain mutations.
@@ -110,9 +110,9 @@ presence feed is no longer needed merely to inspect current status.
 
 Public documentation drift is covered again. The README describes the
 implemented REST/SSE, `POST /rpc`, stdio JSON-RPC, `GET /rpc` WebSocket
-request/response framing, SQLite durability, local versus required auth, scoped
-mutation permissions, worker registry reads, expanded CLI, lease renew/revoke,
-and WebSocket event subscription deferral.
+request/response framing and event notifications, SQLite durability, local
+versus required auth, scoped mutation permissions, worker registry reads,
+expanded CLI, and lease renew/revoke.
 
 SQLite query shape is not the next bottleneck. [[sqlite-store]] uses `WITHOUT
 ROWID` composite primary-key layouts for keyed collections and per-workspace
@@ -154,6 +154,12 @@ later events arrive as `events.event` JSON-RPC notifications on the same socket.
 HTTP JSON-RPC continues to reject stream commands, and SSE remains the HTTP live
 channel.
 
+Event history replay is not yet public. [[event-store]] has `readAfter`, and both
+storage adapters implement efficient per-workspace event scans, but REST,
+JSON-RPC, and CLI clients can only subscribe to future events. A recovering agent
+that wants the append-only timeline currently has to infer state from aggregate
+reads or keep its own cursor outside ACP.
+
 Host-scoped worker presence reads are now covered. [[worker-routes]] exposes the
 current registry through `GET /v1/workers` and `GET /v1/workers/{worker_id}`;
 [[json-rpc-worker-commands]] maps `worker.list` and `worker.get` to those routes;
@@ -163,12 +169,14 @@ stream.
 
 ## Next Slice
 
-Re-audit remaining integration gaps after WebSocket event subscriptions. The
-next pass should verify whether any spec-backed command or read surface remains
-unprojected after worker reads, lease lifecycle parity, resume reads, and live
-JSON-RPC event delivery. Generated clients, Git-specific extensions,
-host-presence streams, and platform-node extraction remain deferred until a
-concrete consumer or duplicated boundary appears.
+Project workspace event replay reads through REST, JSON-RPC, and the CLI. The
+slice should expose `EventStore.readAfter(workspace_id, after_seq)` as a bounded,
+workspace-scoped read path so recovering agents can replay the append-only
+timeline before opening SSE or WebSocket live subscriptions. Keep worker
+presence out of that replay log per ADR-0005, and keep SQLite scans aligned with
+the existing `(workspace_id, seq)` query shape. Generated clients, Git-specific
+extensions, host-presence streams, and platform-node extraction remain deferred
+until a concrete consumer or duplicated boundary appears.
 
 ## Referenced by
 
