@@ -224,6 +224,7 @@ The host owns:
 - Events
 - Artifacts
 - Checkpoints
+- Workspace memory records
 - Reviews
 
 ---
@@ -284,6 +285,8 @@ messages carry the explicit scope strings.
 | `artifact:update` | Replace artifact metadata, content, or external URI references. |
 | `artifact:delete` | Delete artifact records. |
 | `checkpoint:create` | Create resumability checkpoints. |
+| `memory:create` | Create workspace-scoped memory records for agent handoff and recall. |
+| `memory:read` | Read workspace-scoped memory records through indexed cursors. |
 | `review:create` | Request a review gate for a WorkUnit. |
 | `review:approve` | Approve a requested review. |
 | `review:reject` | Reject a requested review. |
@@ -336,6 +339,7 @@ POST /v1/session/initialize
     "supports_events": true,
     "supports_reviews": true,
     "supports_artifacts": true,
+    "supports_memory": true,
     "supports_sse": true
   }
 }
@@ -556,7 +560,46 @@ Allowed review states:
 
 ---
 
-### 10.8 Event
+### 10.8 Memory
+
+```json
+{
+  "id": "memory_123",
+  "workspace_id": "workspace_123",
+  "work_id": "work_123",
+  "seq": 42,
+  "created_by": "agent_claude_code",
+  "kind": "decision",
+  "key": "auth.redirect.async-session",
+  "summary": "Redirect waits for session creation before navigating.",
+  "content": "Login callback redirects only after the session promise resolves.",
+  "labels": ["auth", "handoff"],
+  "created_at": "2026-06-25T19:11:00Z"
+}
+```
+
+Memory records are workspace-scoped, append-oriented coordination context. They
+are for durable recall between workers: decisions, observations, handoff notes,
+constraints, and short summaries that should be queryable without replaying the
+entire event log. Large files, patches, logs, reports, screenshots, and binary
+payloads remain Artifacts.
+
+Allowed memory kinds:
+
+- `note`
+- `decision`
+- `observation`
+- `constraint`
+- `handoff`
+- `custom`
+
+`seq` is monotonic per workspace and assigned by the host. Reads must support
+cursor-style pagination by `(workspace_id, seq)` so thousands of memory records
+can be shared across agents without full table scans.
+
+---
+
+### 10.9 Event
 
 ```json
 {
@@ -617,6 +660,10 @@ Allowed review states:
 ### Checkpoint Events
 
 - `checkpoint.created`
+
+### Memory Events
+
+- `memory.created`
 
 ### Review Events
 
@@ -806,7 +853,42 @@ emits `review.cancelled`.
 
 ---
 
-### 12.13 Subscribe to Events
+### 12.13 Create Memory
+
+```http
+POST /v1/memory
+```
+
+```json
+{
+  "workspace_id": "workspace_123",
+  "work_id": "work_123",
+  "kind": "decision",
+  "key": "auth.redirect.async-session",
+  "summary": "Redirect waits for session creation before navigating.",
+  "content": "Login callback redirects only after the session promise resolves.",
+  "labels": ["auth", "handoff"]
+}
+```
+
+The host assigns `id`, `seq`, `created_by`, and `created_at`, persists the record,
+and emits `memory.created`.
+
+---
+
+### 12.14 List Memory
+
+```http
+GET /v1/memory?workspace_id=workspace_123&after_seq=0&limit=100
+```
+
+Optional filters may include `work_id`, `kind`, `key`, and `label`. Hosts should
+serve the default cursor path from `(workspace_id, seq)` and should not implement
+workspace memory reads as generic collection scans.
+
+---
+
+### 12.15 Subscribe to Events
 
 ```http
 GET /v1/events/stream?workspace_id=workspace_123
@@ -834,6 +916,8 @@ Optional JSON-RPC method names:
 - `lease.release`
 - `artifact.create`
 - `checkpoint.create`
+- `memory.create`
+- `memory.list`
 - `review.request`
 - `review.cancel`
 - `events.subscribe`
@@ -881,6 +965,41 @@ needs_review -> running (when a requested review is cancelled)
 ```
 
 Invalid transitions should return `409 Conflict`.
+
+---
+
+### 14.1 Memory Storage Shape
+
+Reference hosts should store workspace memory independently from the generic
+object store. A memory table should be keyed for the cursor and filter paths
+agents use during handoff:
+
+```sql
+CREATE TABLE memory (
+  workspace_id TEXT NOT NULL,
+  seq INTEGER NOT NULL,
+  id TEXT NOT NULL,
+  work_id TEXT,
+  kind TEXT NOT NULL,
+  key TEXT NOT NULL,
+  labels_json TEXT NOT NULL,
+  value_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (workspace_id, seq),
+  UNIQUE (workspace_id, id)
+) WITHOUT ROWID;
+
+CREATE INDEX memory_workspace_key_seq
+  ON memory (workspace_id, key, seq);
+
+CREATE INDEX memory_workspace_work_seq
+  ON memory (workspace_id, work_id, seq);
+```
+
+The hot read path is `WHERE workspace_id = ? AND seq > ? ORDER BY seq ASC LIMIT
+?`. Hosts may add a label index if label filtering becomes a dominant access
+pattern, but the default implementation should optimize for chronological replay
+and key/work-scoped handoff reads before adding more indexes.
 
 ---
 
@@ -990,6 +1109,7 @@ ConfigLayer
   ├── LeaseLayer
   ├── ArtifactLayer
   ├── CheckpointLayer
+  ├── MemoryLayer
   ├── ReviewLayer
   └── TransportLayer
         ├── HttpApiLayer
@@ -1018,6 +1138,7 @@ src/protocol/schema/
   lease.schema.ts
   artifact.schema.ts
   checkpoint.schema.ts
+  memory.schema.ts
   review.schema.ts
   event.schema.ts
   error.schema.ts
@@ -1369,6 +1490,12 @@ src/
       checkpoint.layer.ts
       checkpoint.errors.ts
       checkpoint.test.ts
+    memory/
+      memory.schema.ts
+      memory.service.ts
+      memory.layer.ts
+      memory.errors.ts
+      memory.test.ts
     reviews/
       review.schema.ts
       review.service.ts
@@ -1449,6 +1576,7 @@ A minimal ACP host should include:
 - Lease table
 - Artifact table
 - Checkpoint table
+- Memory table
 - Review table
 - SSE event stream
 - CLI client
@@ -1635,14 +1763,14 @@ Resolved in v0.1: leases are advisory coordination claims with explicit
 renew/release/revoke lifecycle controls, not mandatory filesystem or scheduler
 locks. Artifacts may be host-stored as `acp://artifacts/{id}` content or recorded
 as external URI references, depending on where the durable evidence already
-lives.
+lives. Memory records are part of ACP as workspace-scoped, append-oriented
+coordination context for agent handoff and recall.
 
-1. Should memory be part of the protocol or remain an implementation detail?
-2. Should ACP define Git-specific extensions?
-3. Should reviews support signed approvals?
-4. Should ACP continue recommending HTTP/SSE as the MVP default while supporting
+1. Should ACP define Git-specific extensions?
+2. Should reviews support signed approvals?
+3. Should ACP continue recommending HTTP/SSE as the MVP default while supporting
    JSON-RPC for stdio and WebSocket clients?
-5. Should protocol objects support CRDT-style sync for offline agents?
+4. Should protocol objects support CRDT-style sync for offline agents?
 
 ---
 

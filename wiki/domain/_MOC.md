@@ -14,6 +14,7 @@ must resolve to a page here (Constitution Invariant 4).
 - [[Lease]] — a temporary, expiring claim over a resource.
 - [[Artifact]] — a durable output of work.
 - [[Checkpoint]] — a resumable summary of partial progress.
+- [[Memory]] — durable workspace context for agent handoff and recall.
 - [[Review]] — an explicit approval / rejection gate.
 - [[Event]] — an immutable append-only record; the coordination primitive.
 
