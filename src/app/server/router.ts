@@ -32,6 +32,7 @@ import {
   listWorkReviews,
 } from './resume-routes.js'
 import { makeRpcHandler } from './rpc-endpoint.js'
+import { makeRpcSocketHandler } from './rpc-socket.js'
 import {
   NotFoundError,
   ValidationError,
@@ -458,7 +459,10 @@ const v1Router = commandRouter.pipe(
 )
 
 // Add the spec §13 JSON-RPC framing, which dispatches into v1Router in the same
-// service context (one shared store — no second AppLive).
+// service context (one shared store — no second AppLive). `POST /rpc` frames it
+// over HTTP; `GET /rpc` upgrades to a WebSocket and frames it per spec §7. Both
+// dispatch into v1Router, so HTTP, WebSocket, and REST share one store.
 export const acpRouter = v1Router.pipe(
   HttpRouter.post('/rpc', makeRpcHandler(v1Router)),
+  HttpRouter.get('/rpc', makeRpcSocketHandler(v1Router)),
 )

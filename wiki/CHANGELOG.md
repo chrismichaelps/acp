@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · websocket-transport slice · added [[rpc-socket]] mounting a
+  `GET /rpc` WebSocket upgrade beside `POST /rpc`, reusing the in-process router
+  via the shared `dispatchVia` ([[rpc-endpoint]]) so WebSocket, HTTP, and REST
+  share one store; connection-bound bearer (handshake header or `?token=`),
+  request/response only (SSE keeps live events). Partially supersedes
+  [[ADR-0002-json-rpc-transport-framing]]; updated [[Transport]] and README ·
+  223 tests green (real-socket round-trip + parse-error) · risk LOW
 - 2026-06-29 · readme-lease-lifecycle slice · refreshed the public README to
   name the `POST /v1/leases/:lease_id/renew` and `/revoke` routes, the
   `lease.renew`/`lease.revoke` JSON-RPC methods, the `lease renew`/`lease revoke`

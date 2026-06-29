@@ -16,8 +16,10 @@ aliases: [Transport, TransportLayer]
 ## Classification
 
 CRITICAL — the protocol boundary between [[Worker]] clients and the [[Host]].
-HTTP+SSE, `POST /rpc`, and stdio JSON-RPC are current v0.1 adapters. WebSocket is
-explicitly deferred by [[ADR-0002-json-rpc-transport-framing]]. Event vocabulary
+HTTP+SSE, `POST /rpc`, stdio JSON-RPC, and `GET /rpc` WebSocket JSON-RPC are
+current adapters. WebSocket request/response framing supersedes the deferral in
+[[ADR-0002-json-rpc-transport-framing]] (see that ADR's Update); only JSON-RPC
+event _subscription_ stays deferred — SSE remains the live channel. Event vocabulary
 that lacks persisted domain state is deferred by
 [[ADR-0003-event-vocabulary-domain-boundaries]]. On a core path (all commands
 cross it), so failure = system failure, but variation is still emerging —
@@ -36,15 +38,17 @@ delegate → encode → error-map boundary is mandatory (spec §16.8).
 | -------- | ---------- | -------------------------------------------------------- | ------------- | ---------------------------- |
 | HTTP     | production | @root/src/infrastructure/http/                           | 2026-06-26    | API CONTRACT CURRENT         |
 | SSE      | production | @root/src/infrastructure/sse/                            | —             | PLANNED (v0.1 stream)        |
-| JSON-RPC | production | @root/src/infrastructure/jsonrpc/ + @root/src/app/stdio/ | 2026-06-27    | HTTP + STDIO FRAMING CURRENT |
+| JSON-RPC | production | @root/src/infrastructure/jsonrpc/ + @root/src/app/{stdio,server} | 2026-06-29    | HTTP + STDIO + WS FRAMING CURRENT |
 
 ## Health
 
 DRIFT 0 (HEALTHY). HTTP API declaration, error mapper, `POST /rpc`, JSON-RPC
-method normalization, runtime folding, and stdio Content-Length framing are
-code-complete for the current v0.1 transport surface. WebSocket host execution is
-deferred by ADR until auth, event subscription, heartbeat, backpressure, and
-server-upgrade semantics are specified.
+method normalization, runtime folding, stdio Content-Length framing, and the
+`GET /rpc` WebSocket upgrade ([[rpc-socket]]) are code-complete for the current
+transport surface. WebSocket request/response now reuses the in-process router via
+the shared `dispatchVia` (connection-bound bearer, header or `?token=`); only
+JSON-RPC event subscription remains deferred — heartbeat and backpressure are
+handled by the platform socket.
 
 ## Deepening
 
@@ -56,5 +60,5 @@ ADR: [[ADR-0001-architecture-foundation]] and
 ## Referenced by
 
 [[Event]] · [[acp-http-api]] · [[http-error-mapper]] · [[json-rpc]] ·
-[[stdio-main]] · [[architecture/_MOC]] ·
+[[stdio-main]] · [[rpc-socket]] · [[architecture/_MOC]] ·
 [[ADR-0003-event-vocabulary-domain-boundaries]]
