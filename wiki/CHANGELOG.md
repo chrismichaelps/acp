@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · post-spec-review-cancellation-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after tracked spec review
+  cancellation parity and selected `@root/specs.md` permission vocabulary
+  parity as the next docs slice · docs-only validation · risk LOW
 - 2026-06-29 · spec-review-cancellation-parity slice · aligned tracked
   `@root/specs.md` with implemented review cancellation by documenting
   `review.cancelled`, `POST /v1/reviews/{review_id}/cancel`, JSON-RPC
