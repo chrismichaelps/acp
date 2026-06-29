@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · spec-canonicalization-cleanup slice · updated `@root/specs.md`
+  to use Agent Coordination Protocol (ACP) terminology, `ACP_` examples, and
+  `acp://` examples in normative sections; replaced the nonexistent
+  `github.com/acme/web.git` sample with `example.com/acp/project.git` and
+  refreshed [[spec-canonicalization]] · validation pending · risk LOW
 - 2026-06-29 · post-process-io-integration-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after [[node-process-io]], closing the
   process IO platform-node gap and selecting public `specs.md` canonicalization

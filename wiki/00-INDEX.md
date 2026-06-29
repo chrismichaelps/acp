@@ -25,12 +25,12 @@ truth; code is a projection of it (FMCF v4.0). Build the wiki first, then code t
 - Ledger: [[CHANGELOG]] — temporal log of logic deltas.
 - Handoffs: `wiki/handoffs/` — session/role continuity.
 - External alignment: [[external-protocols]] — how ACP relates to MCP and IBM/LF ACP.
-- Spec canonicalization: [[spec-canonicalization]] — how to read the ignored
-  Hadoof-era draft through the tracked ACP naming decision.
+- Spec canonicalization: [[spec-canonicalization]] — how to read the working
+  draft through the tracked ACP naming decision.
 
 ## Source of Truth
 
-- Spec: `@root/specs.md` (ignored local draft). Older sections name "Hadoof";
-  per [[ADR-0001-architecture-foundation]] and [[spec-canonicalization]], the
-  canonical tracked name is **ACP**.
+- Spec: `@root/specs.md` (working draft). Per
+  [[ADR-0001-architecture-foundation]] and [[spec-canonicalization]], the
+  canonical tracked name is **Agent Coordination Protocol (ACP)**.
 - Governance: `@root/SKILL.md` (FMCF v4.0).
