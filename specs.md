@@ -1578,17 +1578,18 @@ An agent may use MCP tools while reporting its work through ACP.
 - Local ACP host
 - HTTP API
 - SSE event stream
+- JSON-RPC over HTTP POST, stdio, and WebSocket
 - Work units
 - Workers
 - Leases
 - Artifacts
 - Checkpoints
 - Reviews
+- Closed bearer-session permission model
 - CLI
 
 ### v0.2
 
-- JSON-RPC transport
 - Git worktree integration
 - GitHub PR artifacts
 - Claude Code adapter
@@ -1606,7 +1607,6 @@ An agent may use MCP tools while reporting its work through ACP.
 - Stable spec
 - Cloud sync
 - Organization workspaces
-- Permission model
 - SDKs
 - Public registry of adapters
 
@@ -1636,7 +1636,8 @@ acp events stream
 3. Should ACP define Git-specific extensions?
 4. Should reviews support signed approvals?
 5. Should artifacts be stored by the host or referenced externally?
-6. Should ACP use JSON-RPC as the default transport like MCP?
+6. Should ACP continue recommending HTTP/SSE as the MVP default while supporting
+   JSON-RPC for stdio and WebSocket clients?
 7. Should protocol objects support CRDT-style sync for offline agents?
 
 ---
