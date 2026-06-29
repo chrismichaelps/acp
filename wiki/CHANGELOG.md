@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · platform-node-process-io slice · added
+  [[node-process-io]] so argv, stdin, and stdout access lives under
+  `src/infrastructure/platform-node`; [[cli-main]] now parses `nodeArgv()` and
+  [[stdio-main]] reads/writes frames through the adapter while preserving stdout
+  protocol behavior · validation pending · risk LOW
 - 2026-06-29 · post-platform-node-integration-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after [[node-http-server]], closing the
   Node HTTP socket boundary gap and selecting process IO extraction for
