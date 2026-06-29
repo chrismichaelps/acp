@@ -4,7 +4,8 @@ import { HttpClient, HttpClientRequest } from '@effect/platform'
 import { NodeHttpClient, NodeRuntime } from '@effect/platform-node'
 import { Config, Console, Effect, Either, Stream } from 'effect'
 import { runCliRequest } from './client.js'
-import { CliError, parseArgs, usage } from './commands.js'
+import { CliError, parseArgs } from './commands.js'
+import { usage } from './usage.js'
 
 const program = Effect.gen(function* () {
   const parsed = parseArgs(process.argv.slice(2))

@@ -63,7 +63,9 @@ export const acpRouter: HttpRouter.HttpRouter<
   · `GET /v1/work/:work_id/checkpoints/latest`
   · `GET /v1/work/:work_id/artifacts`
   · `GET /v1/work/:work_id/reviews`
-- `POST /v1/leases` · `POST /v1/leases/:lease_id/release` (→ 204)
+- `POST /v1/leases` · `POST /v1/leases/:lease_id/renew`
+  · `POST /v1/leases/:lease_id/release` (→ 204)
+  · `POST /v1/leases/:lease_id/revoke`
 - `POST /v1/artifacts` · `PATCH /v1/artifacts/:artifact_id`
   · `DELETE /v1/artifacts/:artifact_id`
   · `GET /v1/artifacts/:artifact_id/content`
@@ -117,10 +119,11 @@ service emit `artifact.deleted`. A missing artifact maps through the shared doma
 error path to `404`.
 
 Backed mutations require their matching session scope when a bearer token is
-present: work update/event publication, lease release, artifact update/delete,
-and review approve/reject/request-changes each call [[route-support]] `authorize`
-with the specific action scope. Missing tokens still follow the local-host
-`worker_system` fallback unless `ACP_REQUIRE_AUTH=true`.
+present: work update/event publication, lease renew/release/revoke, artifact
+update/delete, and review approve/reject/request-changes each call
+[[route-support]] `authorize` with the specific action scope. Missing tokens
+still follow the local-host `worker_system` fallback unless
+`ACP_REQUIRE_AUTH=true`.
 
 ## Negative Logic (Prohibited Paths)
 
