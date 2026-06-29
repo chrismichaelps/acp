@@ -15,7 +15,9 @@ archive lifecycle, JSON-RPC command-map split, artifact update lifecycle,
 refresh, CLI parser dispatch-table, external artifact reference, work resume
 query, Effect observability logging, and second resume-read slices. It compares
 the current ACP reference host against `@root/specs.md` through
-[[spec-canonicalization]], then chooses the next backed implementation gap.
+[[spec-canonicalization]], then chooses the next backed implementation gap. This
+revision follows the workspace work index read slice and narrows the remaining
+resumability gap to workspace-scoped aggregates.
 
 ## Current Coverage
 
@@ -33,18 +35,22 @@ create/update accepts external URIs for pull request, commit, CI report,
 screenshot, or cloud-object references while preserving host-stored
 `acp://artifacts/{id}` content as the default. Work-centric resume reads now
 cover `GET /v1/work/{work_id}`, checkpoint lists, latest checkpoint, artifact
-metadata lists, review lists, and host-stored artifact content. The router and
-the declarative [[acp-http-api]] contract are aligned on those endpoints.
+metadata lists, review lists, and host-stored artifact content. Workspace
+discovery now includes `GET /v1/workspaces/{workspace_id}/work`, JSON-RPC
+`work.list_for_workspace`, and CLI `work list --workspace <id>`, so a resuming
+agent can discover current WorkUnit ids before using work-scoped reads. The
+router and the declarative [[acp-http-api]] contract are aligned on those
+endpoints.
 
 The JSON-RPC surface covers draft §13 plus the same backed extensions:
 `workspace.create`, `workspace.update`, `workspace.archive`,
 `work.publish_event`, `review.approve`, `review.reject`,
 `review.request_changes`, `artifact.update`, and `artifact.delete`, with
 artifact URI fields flowing through the shared schema. Work-centric resume read
-commands, review-list reads, and artifact-content reads are also projected
-through JSON-RPC and the CLI. `events.subscribe` maps to the SSE route. Runtime
-execution is available through `POST /rpc` and `acp-jsonrpc-stdio`; WebSocket
-remains deferred by
+commands, review-list reads, artifact-content reads, and workspace work-index
+reads are also projected through JSON-RPC and the CLI. `events.subscribe` maps
+to the SSE route. Runtime execution is available through `POST /rpc` and
+`acp-jsonrpc-stdio`; WebSocket remains deferred by
 [[ADR-0002-json-rpc-transport-framing]].
 
 The event vocabulary boundary is settled for v0.1. Workspace archive and
@@ -111,22 +117,25 @@ Work resume query endpoints are now covered for a known work id:
 [[artifact-service]] metadata/content, and [[review-service]] review gates are
 available through REST, JSON-RPC, and the CLI.
 
-The remaining resumability gap is workspace work discovery. A worker can list
-workspaces, and it can resume a known WorkUnit, but it cannot ask the host for
-the current WorkUnit index inside a workspace. That forces new agents to tail
-and replay the event stream just to learn which work ids exist before using the
-resume reads. [[work-unit-service]] currently exposes only `get`, `create`,
-`claim`, and `transition`, so the next slice needs a domain read method before it
-can safely project a route.
+Workspace work discovery is now covered. A worker can list workspaces, list the
+WorkUnits inside one workspace, and then resume a chosen WorkUnit through the
+work-scoped reads. The remaining resumability gap is workspace-scoped aggregate
+reads for the associated evidence and gates: checkpoints, artifact metadata, and
+reviews. Without those aggregate endpoints, a dashboard or supervising agent must
+iterate every WorkUnit id to reconstruct workspace state even though
+[[checkpoint-service]], [[artifact-service]], and [[review-service]] already own
+`listForWorkspace` domain reads.
 
 ## Next Slice
 
-Add a workspace work index read: `GET /v1/workspaces/{workspace_id}/work`,
-JSON-RPC `work.list_for_workspace`, and CLI `work list --workspace <id>`.
-First add `WorkUnitService.listForWorkspace(workspace_id)` so the transport does
-not duplicate storage filtering. Keep the first slice to work metadata only;
-workspace-wide checkpoint/review/artifact aggregate lists, generated clients,
-host-level presence streams, WebSocket transport, Git-specific extensions, and
+Add workspace aggregate resume reads:
+`GET /v1/workspaces/{workspace_id}/checkpoints`,
+`GET /v1/workspaces/{workspace_id}/artifacts`, and
+`GET /v1/workspaces/{workspace_id}/reviews`, with JSON-RPC projections and CLI
+commands. Reuse the existing service-level `listForWorkspace` methods so route
+handlers stay thin and storage filtering remains centralized. Keep the slice to
+metadata and review/checkpoint records only; generated clients, host-level
+presence streams, WebSocket transport, Git-specific extensions, and
 platform-node extraction remain deferred until a concrete consumer or duplicated
 boundary appears.
 

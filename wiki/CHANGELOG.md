@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · post-work-index-integration-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after workspace work indexing and
+  selected workspace-scoped checkpoint, artifact, and review aggregate reads as
+  the next integration gap · docs-only validation · risk LOW
 - 2026-06-28 · workspace-work-index-reads slice · added
   [[work-unit-service]] workspace indexing and projected
   `GET /v1/workspaces/{workspace_id}/work` through [[workspace-routes]],
