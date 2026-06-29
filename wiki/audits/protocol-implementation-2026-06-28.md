@@ -201,12 +201,22 @@ artifacts, agent adapters, desktop UI, cloud sync, organization workspaces,
 SDKs, and public adapter registry as future milestones. The JSON-RPC open
 question now asks about default recommendation rather than basic existence.
 
-The remaining spec drift is the rest of the Open Questions list. It still asks
-whether leases should be advisory or enforced even though the reference host
-treats leases as advisory claims with renew/release/revoke lifecycle controls.
-It also asks whether artifacts should be stored by the host or referenced
-externally even though the current Artifact schema and service support both:
-host-stored `acp://artifacts/{id}` content and explicit external URI references.
+Answered Open Questions are now cleaned up. `@root/specs.md` records advisory
+leases and dual-mode artifact storage as resolved v0.1 decisions, while memory
+scope, Git-specific extensions, signed approvals, JSON-RPC default
+recommendation, and offline CRDT sync remain genuinely open.
+
+The substantive unresolved protocol feature is memory. The spec still asks
+whether memory belongs in ACP; the next implementation should answer yes for a
+bounded v0.1 host feature: workspace-scoped memory records that let workers pass
+durable, queryable context between agents without overloading checkpoints,
+artifacts, or event logs. Because a workspace may accumulate thousands of memory
+records, the storage shape should be explicit rather than a generic `kv` list
+scan: use workspace-scoped composite keys, prepared statements, and
+cursor-friendly reads that match the existing event replay discipline.
+[[sqlite-store]] is still small, but [[acp-router]] and [[acp-http-api]] are both
+close to the source-size ceiling, so memory transport work should introduce
+capability-specific route/API modules instead of growing the central files.
 
 Host-scoped worker presence reads are now covered. [[worker-routes]] exposes the
 current registry through `GET /v1/workers` and `GET /v1/workers/{worker_id}`;
@@ -217,12 +227,11 @@ stream.
 
 ## Next Slice
 
-Refresh the tracked draft spec's Open Questions so answered implementation
-decisions are not presented as unresolved. The slice should convert the
-lease-mode and artifact-storage questions into resolved v0.1 notes, keep memory
-scope, Git-specific extensions, signed approvals, JSON-RPC default
-recommendation, and offline CRDT sync as real open questions, and avoid
-introducing new behavior. Generated clients, Git-specific workflow extensions,
+Add the wiki/spec foundation for workspace memory records before implementation.
+The slice should resolve the memory open question for a bounded v0.1 host
+feature, define the protocol object and events in `@root/specs.md`, and document
+the optimized SQLite query shape and route/API file splits required for a later
+implementation. Generated clients, Git-specific workflow extensions,
 host-presence streams, and broader filesystem/command adapters remain deferred
 until a concrete consumer or duplicated boundary appears.
 
