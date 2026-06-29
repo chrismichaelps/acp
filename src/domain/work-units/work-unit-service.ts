@@ -1,5 +1,5 @@
 /** @Acp.Domain.WorkUnits.Service — WorkUnit persistence + state machine */
-import { Context, Effect, Layer, Option, Schema } from 'effect'
+import { Chunk, Context, Effect, Layer, Option, Schema } from 'effect'
 import { EventStore } from '../events/index.js'
 import { Storage } from '../../infrastructure/storage/index.js'
 import {
@@ -14,6 +14,7 @@ import type {
   Timestamp,
   WorkId,
   WorkerId,
+  WorkspaceId,
   WorkState,
 } from '../../protocol/schema/index.js'
 
@@ -36,6 +37,9 @@ export interface WorkUnitServiceApi {
   readonly get: (
     workId: WorkId,
   ) => Effect.Effect<Option.Option<WorkUnit>, StorageError>
+  readonly listForWorkspace: (
+    workspaceId: WorkspaceId,
+  ) => Effect.Effect<readonly WorkUnit[], StorageError>
   readonly claim: (
     workId: WorkId,
     workerId: WorkerId,
@@ -170,6 +174,18 @@ const make = Effect.gen(function* () {
       }),
     )
 
+  const all = () =>
+    Effect.flatMap(storage.list(collection), (stored) =>
+      Effect.forEach(Chunk.toReadonlyArray(stored), decodeStoredWork),
+    )
+
+  const listForWorkspace: WorkUnitServiceApi['listForWorkspace'] = (
+    workspaceId,
+  ) =>
+    Effect.map(all(), (workUnits) =>
+      workUnits.filter((work) => work.workspace_id === workspaceId),
+    )
+
   const requireWork = (workId: WorkId) =>
     Effect.flatMap(get(workId), (work) =>
       Option.match(work, {
@@ -249,6 +265,7 @@ const make = Effect.gen(function* () {
   return {
     create,
     get,
+    listForWorkspace,
     claim,
     transition,
   } satisfies WorkUnitServiceApi

@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · workspace-work-index-reads slice · added
+  [[work-unit-service]] workspace indexing and projected
+  `GET /v1/workspaces/{workspace_id}/work` through [[workspace-routes]],
+  [[acp-http-api]], [[json-rpc-resume-commands]], and [[cli-commands]] so workers
+  can discover current WorkUnit ids before calling resume reads · 212 tests
+  green · risk LOW
 - 2026-06-28 · post-resume-read-integration-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after review/content resume reads and
   selected a workspace work index read as the next public discoverability gap ·

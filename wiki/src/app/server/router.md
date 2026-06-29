@@ -50,6 +50,8 @@ export const acpRouter: HttpRouter.HttpRouter<
 - `GET  /v1/workspaces` → list [[Workspace]]s
 - `POST /v1/workspaces` · `PATCH /v1/workspaces/:workspace_id` → create/update
   [[Workspace]]s through [[workspace-routes]]
+- `GET /v1/workspaces/:workspace_id/work` → list [[WorkUnit]]s in a workspace
+  through [[workspace-routes]]
 - `POST /v1/work` · `GET /v1/work/:work_id`
   · `POST /v1/work/:work_id/claim` · `PATCH /v1/work/:work_id`
   · `POST /v1/work/:work_id/events`

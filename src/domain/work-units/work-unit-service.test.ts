@@ -9,6 +9,7 @@ import {
   Timestamp,
   WorkId,
   WorkerId,
+  WorkspaceId,
 } from '../../protocol/schema/index.js'
 import { WorkUnitService, WorkUnitServiceLive } from './index.js'
 import type { CreateWorkInput } from './index.js'
@@ -27,6 +28,7 @@ const runSync = <A, E>(
 
 const workId = Schema.decodeUnknownSync(WorkId)('work_state_machine')
 const workerId = Schema.decodeUnknownSync(WorkerId)('agent_codex')
+const workspaceId = Schema.decodeUnknownSync(WorkspaceId)('workspace_work')
 const now = Schema.decodeUnknownSync(Timestamp)('2026-06-26T01:25:00Z')
 const later = Schema.decodeUnknownSync(Timestamp)('2026-06-26T01:26:00Z')
 
@@ -84,6 +86,33 @@ describe('WorkUnitService', () => {
 
     expect(claimed.state).toBe('claimed')
     expect(Option.getOrNull(claimed.assigned_to)).toBe(claimPayload.worker_id)
+  })
+
+  it('lists work units by workspace', () => {
+    const listed = runSync(
+      Effect.gen(function* () {
+        const work = yield* WorkUnitService
+        yield* work.create(
+          createInput(Schema.decodeUnknownSync(WorkId)('work_workspace_a')),
+        )
+        yield* work.create(
+          createInput(Schema.decodeUnknownSync(WorkId)('work_workspace_b')),
+        )
+        yield* work.create({
+          ...createInput(Schema.decodeUnknownSync(WorkId)('work_workspace_c')),
+          payload: Schema.decodeUnknownSync(CreateWorkPayload)({
+            workspace_id: 'workspace_other',
+            title: 'Other workspace',
+          }),
+        })
+        return yield* work.listForWorkspace(workspaceId)
+      }),
+    )
+
+    expect(listed.map((work) => work.id)).toEqual([
+      'work_workspace_a',
+      'work_workspace_b',
+    ])
   })
 
   it('allows the review changes_requested path back to running', () => {
