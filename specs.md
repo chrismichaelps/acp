@@ -1631,14 +1631,18 @@ acp events stream
 
 ## 23. Open Questions
 
-1. Should leases be advisory or enforced?
-2. Should memory be part of the protocol or remain an implementation detail?
-3. Should ACP define Git-specific extensions?
-4. Should reviews support signed approvals?
-5. Should artifacts be stored by the host or referenced externally?
-6. Should ACP continue recommending HTTP/SSE as the MVP default while supporting
+Resolved in v0.1: leases are advisory coordination claims with explicit
+renew/release/revoke lifecycle controls, not mandatory filesystem or scheduler
+locks. Artifacts may be host-stored as `acp://artifacts/{id}` content or recorded
+as external URI references, depending on where the durable evidence already
+lives.
+
+1. Should memory be part of the protocol or remain an implementation detail?
+2. Should ACP define Git-specific extensions?
+3. Should reviews support signed approvals?
+4. Should ACP continue recommending HTTP/SSE as the MVP default while supporting
    JSON-RPC for stdio and WebSocket clients?
-7. Should protocol objects support CRDT-style sync for offline agents?
+5. Should protocol objects support CRDT-style sync for offline agents?
 
 ---
 
