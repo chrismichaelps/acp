@@ -16,8 +16,8 @@ refresh, CLI parser dispatch-table, external artifact reference, work resume
 query, Effect observability logging, and second resume-read slices. It compares
 the current ACP reference host against `@root/specs.md` through
 [[spec-canonicalization]], then chooses the next backed implementation gap. This
-revision follows the workspace work index read slice and narrows the remaining
-resumability gap to workspace-scoped aggregates.
+revision follows the workspace aggregate resume-read slice and narrows the
+remaining backed-command gap to lease lifecycle parity.
 
 ## Current Coverage
 
@@ -38,19 +38,21 @@ cover `GET /v1/work/{work_id}`, checkpoint lists, latest checkpoint, artifact
 metadata lists, review lists, and host-stored artifact content. Workspace
 discovery now includes `GET /v1/workspaces/{workspace_id}/work`, JSON-RPC
 `work.list_for_workspace`, and CLI `work list --workspace <id>`, so a resuming
-agent can discover current WorkUnit ids before using work-scoped reads. The
-router and the declarative [[acp-http-api]] contract are aligned on those
-endpoints.
+agent can discover current WorkUnit ids before using work-scoped reads.
+Workspace-level aggregate reads now expose checkpoints, artifact metadata, and
+reviews for dashboards or supervising agents that need resumability evidence
+without iterating every WorkUnit id. The router and the declarative
+[[acp-http-api]] contract are aligned on those endpoints.
 
 The JSON-RPC surface covers draft §13 plus the same backed extensions:
 `workspace.create`, `workspace.update`, `workspace.archive`,
 `work.publish_event`, `review.approve`, `review.reject`,
 `review.request_changes`, `artifact.update`, and `artifact.delete`, with
 artifact URI fields flowing through the shared schema. Work-centric resume read
-commands, review-list reads, artifact-content reads, and workspace work-index
-reads are also projected through JSON-RPC and the CLI. `events.subscribe` maps
-to the SSE route. Runtime execution is available through `POST /rpc` and
-`acp-jsonrpc-stdio`; WebSocket remains deferred by
+commands, review-list reads, artifact-content reads, workspace work-index reads,
+and workspace aggregate resume reads are also projected through JSON-RPC and the
+CLI. `events.subscribe` maps to the SSE route. Runtime execution is available
+through `POST /rpc` and `acp-jsonrpc-stdio`; WebSocket remains deferred by
 [[ADR-0002-json-rpc-transport-framing]].
 
 The event vocabulary boundary is settled for v0.1. Workspace archive and
@@ -119,23 +121,27 @@ available through REST, JSON-RPC, and the CLI.
 
 Workspace work discovery is now covered. A worker can list workspaces, list the
 WorkUnits inside one workspace, and then resume a chosen WorkUnit through the
-work-scoped reads. The remaining resumability gap is workspace-scoped aggregate
-reads for the associated evidence and gates: checkpoints, artifact metadata, and
-reviews. Without those aggregate endpoints, a dashboard or supervising agent must
-iterate every WorkUnit id to reconstruct workspace state even though
-[[checkpoint-service]], [[artifact-service]], and [[review-service]] already own
-`listForWorkspace` domain reads.
+work-scoped reads. Workspace aggregate reads are now covered for associated
+evidence and gates: checkpoints, artifact metadata, and reviews. Supervising
+agents no longer need to iterate every WorkUnit id to reconstruct workspace
+resumability state.
+
+The next backed-command gap is lease lifecycle parity. [[lease-service]] already
+owns `renew` and `revoke`, and [[event.schema]] already includes
+`lease.renewed` and `lease.revoked`, but the public transports expose only
+request and release. That leaves long-running workers unable to extend an
+advisory claim through ACP and leaves human or supervising systems without a
+transport-level way to revoke a stale or unsafe lease before TTL expiry.
 
 ## Next Slice
 
-Add workspace aggregate resume reads:
-`GET /v1/workspaces/{workspace_id}/checkpoints`,
-`GET /v1/workspaces/{workspace_id}/artifacts`, and
-`GET /v1/workspaces/{workspace_id}/reviews`, with JSON-RPC projections and CLI
-commands. Reuse the existing service-level `listForWorkspace` methods so route
-handlers stay thin and storage filtering remains centralized. Keep the slice to
-metadata and review/checkpoint records only; generated clients, host-level
-presence streams, WebSocket transport, Git-specific extensions, and
+Add lease lifecycle transport parity: `POST /v1/leases/{lease_id}/renew` and
+`POST /v1/leases/{lease_id}/revoke`, JSON-RPC `lease.renew` and
+`lease.revoke`, and CLI `lease renew`/`lease revoke`. Reuse
+[[lease-service]] so conflict, TTL, and event semantics remain centralized.
+Extend permission scopes explicitly rather than overloading `lease:release`;
+renew and revoke are different operational powers. Generated clients,
+host-level presence streams, WebSocket transport, Git-specific extensions, and
 platform-node extraction remain deferred until a concrete consumer or duplicated
 boundary appears.
 
