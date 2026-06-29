@@ -52,6 +52,7 @@ file has exactly one page here. A source file with no page is UNREGISTERED.
 - [[http/_MOC|HTTP]] — Effect Platform REST API declaration and error mapper.
 - [[jsonrpc/_MOC|JSON-RPC]] — JSON-RPC 2.0 method normalization core.
 - [[sse/_MOC|SSE]] — Server-Sent Events adapter for live event streams.
+- [[platform-node/_MOC|Platform Node]] — Node-specific runtime Layers.
 
 _(apps added as their slices land)_
 
