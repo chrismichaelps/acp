@@ -44,7 +44,10 @@ agent can discover current WorkUnit ids before using work-scoped reads.
 Workspace-level aggregate reads now expose checkpoints, artifact metadata, and
 reviews for dashboards or supervising agents that need resumability evidence
 without iterating every WorkUnit id. The router and the declarative
-[[acp-http-api]] contract are aligned on those endpoints.
+[[acp-http-api]] contract are aligned on those endpoints. Workspace event replay
+now exposes the append-only timeline through `GET /v1/events`, JSON-RPC
+`events.list`, and CLI `events list`, using the existing `(workspace_id, seq)`
+storage cursor.
 
 The JSON-RPC surface covers draft §13 plus the same backed extensions:
 `workspace.create`, `workspace.update`, `workspace.archive`,
@@ -154,11 +157,17 @@ later events arrive as `events.event` JSON-RPC notifications on the same socket.
 HTTP JSON-RPC continues to reject stream commands, and SSE remains the HTTP live
 channel.
 
-Event history replay is not yet public. [[event-store]] has `readAfter`, and both
-storage adapters implement efficient per-workspace event scans, but REST,
-JSON-RPC, and CLI clients can only subscribe to future events. A recovering agent
-that wants the append-only timeline currently has to infer state from aggregate
-reads or keep its own cursor outside ACP.
+Event history replay is now public. [[event-store]] `readAfter` is projected
+through REST, JSON-RPC, and the CLI with `event:read`, so recovering agents can
+replay persisted workspace history before opening SSE or WebSocket live
+subscriptions.
+
+Review cancellation remains a bounded domain/event vocabulary gap. [[Review]]
+already includes the `cancelled` state, but [[event.schema]] has no
+`review.cancelled` event type and [[review-service]] deliberately maps no cancel
+operation. This is smaller and more concrete than generated clients or
+platform-node extraction: it is a protocol object state that lacks a faithful
+event and transport projection.
 
 Host-scoped worker presence reads are now covered. [[worker-routes]] exposes the
 current registry through `GET /v1/workers` and `GET /v1/workers/{worker_id}`;
@@ -169,14 +178,12 @@ stream.
 
 ## Next Slice
 
-Project workspace event replay reads through REST, JSON-RPC, and the CLI. The
-slice should expose `EventStore.readAfter(workspace_id, after_seq)` as a bounded,
-workspace-scoped read path so recovering agents can replay the append-only
-timeline before opening SSE or WebSocket live subscriptions. Keep worker
-presence out of that replay log per ADR-0005, and keep SQLite scans aligned with
-the existing `(workspace_id, seq)` query shape. Generated clients, Git-specific
-extensions, host-presence streams, and platform-node extraction remain deferred
-until a concrete consumer or duplicated boundary appears.
+Add review cancellation as a backed domain lifecycle. The slice should add
+`review.cancelled` to [[event.schema]], teach [[review-service]] to cancel a
+requested review without fabricating another outcome, and project that operation
+through REST, JSON-RPC, and the CLI with a dedicated scope. Generated clients,
+Git-specific extensions, host-presence streams, and platform-node extraction
+remain deferred until a concrete consumer or duplicated boundary appears.
 
 ## Referenced by
 
