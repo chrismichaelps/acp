@@ -137,11 +137,15 @@ expiry.
 
 ## Next Slice
 
-Refresh the public README so it names lease renew/revoke routes, JSON-RPC
-methods, CLI commands, and the dedicated scopes. Keep the update explanatory and
-compact; generated clients, host-level presence streams, WebSocket transport,
-Git-specific extensions, and platform-node extraction remain deferred until a
-concrete consumer or duplicated boundary appears.
+The public README now names the lease renew/revoke routes, the `lease.renew`/
+`lease.revoke` JSON-RPC methods, the `lease renew`/`lease revoke` CLI commands,
+and the dedicated `lease:renew`/`lease:revoke` scopes, so the documented surface
+matches the implemented transport parity. No backed-command coverage gap remains
+for v0.2: every domain mutation and resume read is reachable over REST,
+JSON-RPC, and the CLI. Generated clients, host-level presence streams, WebSocket
+transport, Git-specific extensions, and platform-node extraction remain deferred
+until a concrete consumer or duplicated boundary appears; revisit those only when
+such a consumer materializes.
 
 ## Referenced by
 

@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · readme-lease-lifecycle slice · refreshed the public README to
+  name the `POST /v1/leases/:lease_id/renew` and `/revoke` routes, the
+  `lease.renew`/`lease.revoke` JSON-RPC methods, the `lease renew`/`lease revoke`
+  CLI commands, and the dedicated `lease:renew`/`lease:revoke` scopes ·
+  docs-only validation, 221 tests green · risk LOW
 - 2026-06-28 · post-lease-lifecycle-integration-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after lease renew/revoke transport
   parity and selected the public README refresh as the next docs correction ·
