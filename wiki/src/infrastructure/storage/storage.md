@@ -18,8 +18,9 @@ aliases: [storage, StorageTag]
 The persistence port for the [[Storage]] seam. A pure `Context.Tag` interface that
 every domain service depends on, with **no construction leaked** — adapters
 (InMemory now, SQLite later) are provided as swappable Layers. Holds two shapes of
-state: keyed entity collections, and the append-only ordered [[Event]] log that
-assigns each event its monotonic per-workspace `seq`.
+state: keyed entity collections, the append-only ordered [[Event]] log that
+assigns each event its monotonic per-workspace `seq`, and optimized
+workspace-scoped [[Memory]] records.
 
 ## Interface
 
@@ -27,6 +28,7 @@ assigns each event its monotonic per-workspace `seq`.
 
 ```typescript
 export type EventDraft = Omit<Event, 'seq'> // caller supplies all but seq
+export type MemoryDraft = Omit<Memory, 'seq'>
 
 export interface StorageApi {
   readonly put: (
@@ -51,6 +53,13 @@ export interface StorageApi {
     workspaceId: string,
     afterSeq: number,
   ) => Effect<Chunk<Event>, StorageError>
+  readonly appendMemory: (
+    workspaceId: string,
+    draft: MemoryDraft,
+  ) => Effect<Memory, StorageError>
+  readonly readMemory: (
+    query: ReadMemoryQuery,
+  ) => Effect<Chunk<Memory>, StorageError>
 }
 export class Storage extends Context.Tag('Storage')<Storage, StorageApi>() {}
 ```
@@ -59,8 +68,11 @@ export class Storage extends Context.Tag('Storage')<Storage, StorageApi>() {}
 
 - Collection values are `unknown` at this layer — typing/decoding is the caller's
   job (future domain repositories decode through Effect Schema). Storage never
-  inspects entity shape except [[Event]] (which it owns the `seq` of).
+  inspects entity shape except [[Event]] and [[Memory]] records, whose
+  per-workspace `seq` values and hot cursor reads are owned by the adapter.
 - `appendEvent` is the **only** way to obtain a `seq`; callers never set it.
+- `appendMemory` is the equivalent Memory path and exists to avoid generic `kv`
+  scans for thousands of handoff/recall records.
 
 ### Linkage
 
@@ -75,7 +87,9 @@ Interface only — no behavior. Behavior lives in adapters; see [[in-memory-stor
 
 - ❌ Do NOT leak adapter construction (Ref, SQL handle) through this interface.
 - ❌ Do NOT let a caller assign `Event.seq` — `appendEvent` owns it.
-- ❌ Do NOT add entity-specific methods here — keep the port generic + the event log.
+- ❌ Do NOT add entity-specific methods here unless the data shape needs
+  adapter-owned sequencing or query-plan guarantees; [[Memory]] is the v0.1
+  exception because it requires `(workspace_id, seq)` cursor reads.
 
 ## Depth
 
@@ -84,5 +98,5 @@ zero domain code. This is the seam's whole value.
 
 ## Referenced by
 
-[[storage-index]] · [[in-memory-store]] · [[event-store]] · [[Storage]] ·
-[[src/_MOC]]
+[[storage-index]] · [[in-memory-store]] · [[event-store]] ·
+[[workspace-memory-records]] · [[Storage]] · [[src/_MOC]]

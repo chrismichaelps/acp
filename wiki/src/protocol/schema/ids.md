@@ -25,7 +25,7 @@ mix-up bugs. One thin surface (`Schema.String + brand`) hides real type safety.
 ```typescript
 export const WorkId: Schema.brand<Schema.SchemaClass<string>, 'WorkId'>
 export type WorkId = typeof WorkId.Type
-// …WorkerId, WorkspaceId, LeaseId, ArtifactId, CheckpointId, ReviewId, EventId, SessionId
+// …WorkerId, WorkspaceId, LeaseId, ArtifactId, CheckpointId, MemoryId, ReviewId, EventId, SessionId
 ```
 
 ### Governance

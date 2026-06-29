@@ -2,13 +2,14 @@
 import { Chunk, Effect, HashMap, Layer, Option, Ref } from 'effect'
 import { Storage } from './storage.js'
 import type { StorageApi } from './storage.js'
-import type { Event } from '../../protocol/schema/index.js'
+import type { Event, Memory } from '../../protocol/schema/index.js'
 
 const make = Effect.gen(function* () {
   const collections = yield* Ref.make(
     HashMap.empty<string, HashMap.HashMap<string, unknown>>(),
   )
   const events = yield* Ref.make(HashMap.empty<string, Chunk.Chunk<Event>>())
+  const memory = yield* Ref.make(HashMap.empty<string, Chunk.Chunk<Memory>>())
 
   const put: StorageApi['put'] = (collection, id, value) =>
     Ref.update(collections, (cs) => {
@@ -63,6 +64,52 @@ const make = Effect.gen(function* () {
       }),
     )
 
+  const appendMemory: StorageApi['appendMemory'] = (workspaceId, draft) =>
+    Ref.modify(memory, (ms) => {
+      const chunk = Option.getOrElse(HashMap.get(ms, workspaceId), () =>
+        Chunk.empty<Memory>(),
+      )
+      const full: Memory = { ...draft, seq: Chunk.size(chunk) + 1 }
+      const next = HashMap.set(ms, workspaceId, Chunk.append(chunk, full))
+      return [full, next]
+    })
+
+  const readMemory: StorageApi['readMemory'] = (query) =>
+    Effect.map(Ref.get(memory), (ms) => {
+      const limit = Option.getOrElse(query.limit, () => 100)
+      const chunk = Option.getOrElse(HashMap.get(ms, query.workspace_id), () =>
+        Chunk.empty<Memory>(),
+      )
+      return Chunk.take(
+        Chunk.filter(
+          chunk,
+          (record) =>
+            record.seq > query.after_seq &&
+            Option.match(query.work_id, {
+              onNone: () => true,
+              onSome: (workId) =>
+                Option.match(record.work_id, {
+                  onNone: () => false,
+                  onSome: (recordWorkId) => recordWorkId === workId,
+                }),
+            }) &&
+            Option.match(query.kind, {
+              onNone: () => true,
+              onSome: (kind) => record.kind === kind,
+            }) &&
+            Option.match(query.key, {
+              onNone: () => true,
+              onSome: (key) => record.key === key,
+            }) &&
+            Option.match(query.label, {
+              onNone: () => true,
+              onSome: (label) => record.labels.includes(label),
+            }),
+        ),
+        limit,
+      )
+    })
+
   return {
     put,
     get,
@@ -70,6 +117,8 @@ const make = Effect.gen(function* () {
     remove,
     appendEvent,
     readEventsAfter,
+    appendMemory,
+    readMemory,
   } satisfies StorageApi
 })
 

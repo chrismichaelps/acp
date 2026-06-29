@@ -31,6 +31,7 @@ export const WorkState: Schema.Literal<[…10 states including "changes_requeste
 export const LeaseState: Schema.Literal<["active","expired","released","revoked"]>
 export const ResourceKind: Schema.Literal<[…8 kinds…]>
 export const ArtifactKind: Schema.Literal<[…11 kinds…]>
+export const MemoryKind: Schema.Literal<["note","decision","observation","constraint","handoff","custom"]>
 export const ReviewState: Schema.Literal<[…5 states…]>
 export const WorkspaceKind: Schema.Literal<[…6 kinds…]>
 export const WorkspaceState: Schema.Literal<["active","archived"]>
@@ -39,7 +40,7 @@ export const Permission: Schema.Literal<[ // session auth scopes (spec §8)
   "worker:read","workspace:read","workspace:write","work:create","work:claim",
   "event:read","lease:create","work:update","work:publish_event","lease:renew","lease:release",
   "lease:revoke","artifact:create",
-  "artifact:update","artifact:delete","checkpoint:create","review:create",
+  "artifact:update","artifact:delete","checkpoint:create","memory:create","memory:read","review:create",
   "review:approve","review:reject","review:request_changes","review:cancel"]>
 ```
 
@@ -62,7 +63,9 @@ not workspace event history. Lease lifecycle actions are split into create,
 renew, release, and revoke because extending an advisory claim and terminating
 one are different operational powers. Review decisions are split from
 `review:cancel` because cancellation withdraws a requested gate without creating
-a reviewer outcome.
+a reviewer outcome. Memory actions are split into create/read because recall
+data can expose cross-agent context without granting the ability to publish new
+handoff records.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -77,4 +80,5 @@ duplicated literal lists that would drift out of sync.
 ## Referenced by
 
 [[work-unit.schema]] · [[work-unit-service]] · [[worker.schema]] ·
-[[workspace-routes]] · [[event-routes]] · [[lease.schema]] · [[src/_MOC]]
+[[workspace-routes]] · [[event-routes]] · [[lease.schema]] · [[memory.schema]] ·
+[[src/_MOC]]

@@ -24,7 +24,7 @@ import `from "../protocol/schema/index.js"` rather than reaching into individual
 ```typescript
 export * from './ids.js'
 export * from './common.js'
-export * from './worker.schema.js' // …and the rest
+export * from './worker.schema.js' // …including memory.schema.js and the rest
 export * from '../version.js'
 ```
 

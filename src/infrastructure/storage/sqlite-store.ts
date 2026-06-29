@@ -2,7 +2,7 @@
 import { DatabaseSync } from 'node:sqlite'
 import { Chunk, Effect, Layer, Option, Schema } from 'effect'
 import { StorageError } from '../../protocol/errors/protocol-error.js'
-import { Event } from '../../protocol/schema/index.js'
+import { Event, Memory } from '../../protocol/schema/index.js'
 import { Storage } from './storage.js'
 import type { StorageApi } from './storage.js'
 
@@ -28,6 +28,26 @@ CREATE TABLE IF NOT EXISTS events (
   value TEXT NOT NULL,
   PRIMARY KEY (workspace_id, seq)
 ) WITHOUT ROWID;
+
+CREATE TABLE IF NOT EXISTS memory (
+  workspace_id TEXT NOT NULL,
+  seq INTEGER NOT NULL,
+  id TEXT NOT NULL,
+  work_id TEXT,
+  kind TEXT NOT NULL,
+  key TEXT NOT NULL,
+  labels_json TEXT NOT NULL,
+  value TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (workspace_id, seq),
+  UNIQUE (workspace_id, id)
+) WITHOUT ROWID;
+
+CREATE INDEX IF NOT EXISTS memory_workspace_key_seq
+  ON memory (workspace_id, key, seq);
+
+CREATE INDEX IF NOT EXISTS memory_workspace_work_seq
+  ON memory (workspace_id, work_id, seq);
 `
 
 const toCause = (cause: unknown): string =>
@@ -68,6 +88,46 @@ const decodeEvent = (op: string, value: unknown) =>
   Schema.decodeUnknown(Event)(value).pipe(
     Effect.mapError((cause) => new StorageError({ op, cause: String(cause) })),
   )
+
+const decodeMemory = (op: string, value: unknown) =>
+  Schema.decodeUnknown(Memory)(value).pipe(
+    Effect.mapError((cause) => new StorageError({ op, cause: String(cause) })),
+  )
+
+const optionalText = <A>(option: Option.Option<A>): A | null =>
+  Option.match(option, {
+    onNone: () => null,
+    onSome: (value) => value,
+  })
+
+const memoryMatchesSecondaryFilters = (
+  memory: Memory,
+  query: Parameters<StorageApi['readMemory']>[0],
+) =>
+  Option.match(query.kind, {
+    onNone: () => true,
+    onSome: (kind) => memory.kind === kind,
+  }) &&
+  Option.match(query.label, {
+    onNone: () => true,
+    onSome: (label) => memory.labels.includes(label),
+  })
+
+const memoryRowsToChunk = (
+  rows: readonly JsonRow[],
+  query: Parameters<StorageApi['readMemory']>[0],
+) =>
+  Effect.gen(function* () {
+    const limit = Option.getOrElse(query.limit, () => 100)
+    const decoded = yield* Effect.forEach(rows, (row) =>
+      Effect.flatMap(parseJson('decode_memory_json', row.value), (value) =>
+        decodeMemory('decode_memory', value),
+      ),
+    )
+    return Chunk.fromIterable(
+      decoded.filter((memory) => memoryMatchesSecondaryFilters(memory, query)),
+    ).pipe(Chunk.take(limit))
+  })
 
 const rollback = (db: DatabaseSync) => {
   try {
@@ -118,6 +178,38 @@ const make = (path: string) =>
       `SELECT value FROM events
        WHERE workspace_id = ? AND seq > ?
        ORDER BY seq ASC`,
+    )
+    const nextMemorySeqStmt = db.prepare(
+      'SELECT COALESCE(MAX(seq), 0) + 1 AS seq FROM memory WHERE workspace_id = ?',
+    )
+    const appendMemoryStmt = db.prepare(
+      `INSERT INTO memory
+       (workspace_id, seq, id, work_id, kind, key, labels_json, value, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    const readMemoryStmt = db.prepare(
+      `SELECT value FROM memory
+       WHERE workspace_id = ? AND seq > ?
+       ORDER BY seq ASC
+       LIMIT ?`,
+    )
+    const readMemoryByKeyStmt = db.prepare(
+      `SELECT value FROM memory INDEXED BY memory_workspace_key_seq
+       WHERE workspace_id = ? AND key = ? AND seq > ?
+       ORDER BY seq ASC
+       LIMIT ?`,
+    )
+    const readMemoryByWorkStmt = db.prepare(
+      `SELECT value FROM memory INDEXED BY memory_workspace_work_seq
+       WHERE workspace_id = ? AND work_id = ? AND seq > ?
+       ORDER BY seq ASC
+       LIMIT ?`,
+    )
+    const readMemoryByWorkAndKeyStmt = db.prepare(
+      `SELECT value FROM memory INDEXED BY memory_workspace_work_seq
+       WHERE workspace_id = ? AND work_id = ? AND key = ? AND seq > ?
+       ORDER BY seq ASC
+       LIMIT ?`,
     )
 
     const put: StorageApi['put'] = (collection, id, value) =>
@@ -184,6 +276,76 @@ const make = (path: string) =>
         return Chunk.fromIterable(events)
       })
 
+    const appendMemory: StorageApi['appendMemory'] = (workspaceId, draft) =>
+      storageTry('append_memory', () => {
+        db.exec('BEGIN IMMEDIATE')
+        try {
+          const nextSeq = seqRow(nextMemorySeqStmt.get(workspaceId)).seq
+          const memory: Memory = { ...draft, seq: nextSeq }
+          const encoded = JSON.stringify(Schema.encodeSync(Memory)(memory))
+          appendMemoryStmt.run(
+            workspaceId,
+            nextSeq,
+            memory.id,
+            optionalText(memory.work_id),
+            memory.kind,
+            memory.key,
+            JSON.stringify(memory.labels),
+            encoded,
+            memory.created_at,
+          )
+          db.exec('COMMIT')
+          return memory
+        } catch (cause) {
+          rollback(db)
+          throw cause
+        }
+      })
+
+    const readMemory: StorageApi['readMemory'] = (query) =>
+      Effect.gen(function* () {
+        const limit = Option.getOrElse(query.limit, () => 100)
+        const key = optionalText(query.key)
+        const workId = optionalText(query.work_id)
+        const rows = yield* storageTry('read_memory', () => {
+          if (workId !== null && key !== null) {
+            return jsonRows(
+              readMemoryByWorkAndKeyStmt.all(
+                query.workspace_id,
+                workId,
+                key,
+                query.after_seq,
+                limit,
+              ),
+            )
+          }
+          if (workId !== null) {
+            return jsonRows(
+              readMemoryByWorkStmt.all(
+                query.workspace_id,
+                workId,
+                query.after_seq,
+                limit,
+              ),
+            )
+          }
+          if (key !== null) {
+            return jsonRows(
+              readMemoryByKeyStmt.all(
+                query.workspace_id,
+                key,
+                query.after_seq,
+                limit,
+              ),
+            )
+          }
+          return jsonRows(
+            readMemoryStmt.all(query.workspace_id, query.after_seq, limit),
+          )
+        })
+        return yield* memoryRowsToChunk(rows, query)
+      })
+
     return {
       put,
       get,
@@ -191,6 +353,8 @@ const make = (path: string) =>
       remove,
       appendEvent,
       readEventsAfter,
+      appendMemory,
+      readMemory,
     } satisfies StorageApi
   })
 
