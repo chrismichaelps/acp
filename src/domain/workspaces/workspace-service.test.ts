@@ -26,12 +26,12 @@ const actor = Schema.decodeUnknownSync(WorkerId)('agent_claude_code')
 const now = Schema.decodeUnknownSync(Timestamp)('2026-06-26T02:00:00Z')
 const later = Schema.decodeUnknownSync(Timestamp)('2026-06-26T02:01:00Z')
 
-const decodeWorkspace = (name = 'acme/web') =>
+const decodeWorkspace = (name = 'example/workspace') =>
   Schema.decodeUnknownSync(Workspace)({
     id: 'workspace_123',
     name,
     kind: 'git_repository',
-    uri: 'git+https://example.com/acme/web.git',
+    uri: 'git+https://example.com/workspaces/main.git',
     default_branch: 'main',
     metadata: { provider: 'github' },
   })
@@ -66,9 +66,9 @@ describe('WorkspaceService', () => {
         yield* workspaces.create(
           Schema.decodeUnknownSync(Workspace)({
             id: 'workspace_456',
-            name: 'acme/api',
+            name: 'example/service',
             kind: 'directory',
-            uri: 'file:///srv/acme/api',
+            uri: 'file:///srv/example/service',
             metadata: {},
           }),
           actor,
@@ -87,9 +87,13 @@ describe('WorkspaceService', () => {
       Effect.gen(function* () {
         const workspaces = yield* WorkspaceService
         const events = yield* EventStore
-        yield* workspaces.create(decodeWorkspace('acme/web'), actor, now)
+        yield* workspaces.create(
+          decodeWorkspace('example/workspace'),
+          actor,
+          now,
+        )
         const updated = yield* workspaces.update(
-          decodeWorkspace('acme/web-renamed'),
+          decodeWorkspace('example/workspace-renamed'),
           actor,
           later,
         )
@@ -98,7 +102,7 @@ describe('WorkspaceService', () => {
       }),
     )
 
-    expect(result.updated.name).toBe('acme/web-renamed')
+    expect(result.updated.name).toBe('example/workspace-renamed')
     expect(
       Chunk.toReadonlyArray(result.log).map((event: Event) => event.type),
     ).toEqual(['workspace.created', 'workspace.updated'])
@@ -109,7 +113,11 @@ describe('WorkspaceService', () => {
       Effect.gen(function* () {
         const workspaces = yield* WorkspaceService
         const events = yield* EventStore
-        yield* workspaces.create(decodeWorkspace('acme/web'), actor, now)
+        yield* workspaces.create(
+          decodeWorkspace('example/workspace'),
+          actor,
+          now,
+        )
         const archived = yield* workspaces.archive(workspaceId, actor, later)
         const stored = yield* workspaces.get(workspaceId)
         const log = yield* events.readAfter('workspace_123', 0)
@@ -129,10 +137,14 @@ describe('WorkspaceService', () => {
       Effect.either(
         Effect.gen(function* () {
           const workspaces = yield* WorkspaceService
-          yield* workspaces.create(decodeWorkspace('acme/web'), actor, now)
+          yield* workspaces.create(
+            decodeWorkspace('example/workspace'),
+            actor,
+            now,
+          )
           yield* workspaces.archive(workspaceId, actor, later)
           return yield* workspaces.update(
-            decodeWorkspace('acme/web-renamed'),
+            decodeWorkspace('example/workspace-renamed'),
             actor,
             later,
           )

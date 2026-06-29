@@ -115,9 +115,9 @@ describe('Workspace / Lease / Event schemas', () => {
   it('decodes a git workspace with metadata', () => {
     const ws = Schema.decodeUnknownSync(Workspace)({
       id: 'workspace_123',
-      name: 'acme/web',
+      name: 'example/workspace',
       kind: 'git_repository',
-      uri: 'git+https://example.com/acme/web.git',
+      uri: 'git+https://example.com/workspaces/main.git',
       default_branch: 'main',
       metadata: { provider: 'github' },
     })

@@ -176,9 +176,9 @@ describe('acpRouter', () => {
           authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          name: 'acme/web',
+          name: 'example/workspace',
           kind: 'git_repository',
-          uri: 'git+https://example.com/acme/web.git',
+          uri: 'git+https://example.com/workspaces/main.git',
           default_branch: 'main',
           metadata: { provider: 'github' },
         }),
@@ -187,7 +187,7 @@ describe('acpRouter', () => {
     expect(created.status).toBe(201)
     const workspace = (await created.json()) as { id: string; name: string }
     expect(workspace.id).toMatch(/^workspace_/)
-    expect(workspace.name).toBe('acme/web')
+    expect(workspace.name).toBe('example/workspace')
 
     const updated = await handler(
       new Request(`http://acp.test/v1/workspaces/${workspace.id}`, {
@@ -197,16 +197,16 @@ describe('acpRouter', () => {
           authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          name: 'acme/web-renamed',
+          name: 'example/workspace-renamed',
           kind: 'git_repository',
-          uri: 'git+https://example.com/acme/web.git',
+          uri: 'git+https://example.com/workspaces/main.git',
           metadata: { provider: 'github' },
         }),
       }),
     )
     expect(updated.status).toBe(200)
     expect(((await updated.json()) as { name: string }).name).toBe(
-      'acme/web-renamed',
+      'example/workspace-renamed',
     )
   })
 
@@ -221,9 +221,9 @@ describe('acpRouter', () => {
           authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          name: 'acme/web',
+          name: 'example/workspace',
           kind: 'git_repository',
-          uri: 'git+https://example.com/acme/web.git',
+          uri: 'git+https://example.com/workspaces/main.git',
           metadata: { provider: 'github' },
         }),
       }),
@@ -249,9 +249,9 @@ describe('acpRouter', () => {
           authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          name: 'acme/web-renamed',
+          name: 'example/workspace-renamed',
           kind: 'git_repository',
-          uri: 'git+https://example.com/acme/web.git',
+          uri: 'git+https://example.com/workspaces/main.git',
           metadata: { provider: 'github' },
         }),
       }),

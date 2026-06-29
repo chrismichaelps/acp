@@ -85,6 +85,19 @@ const csvFlag = (
 
 const encodePathSegment = (value: string): string => encodeURIComponent(value)
 
+const scopedWorkListPath = (
+  flags: Readonly<Record<string, string>>,
+  collection: string,
+): Either.Either<string, CliError> =>
+  Either.gen(function* () {
+    if ('workspace' in flags) {
+      const workspaceId = yield* flag(flags, 'workspace')
+      return `/v1/workspaces/${encodePathSegment(workspaceId)}/${collection}`
+    }
+    const workId = yield* flag(flags, 'work')
+    return `/v1/work/${encodePathSegment(workId)}/${collection}`
+  })
+
 const positiveIntegerFlag = (
   flags: Readonly<Record<string, string>>,
   key: string,
@@ -272,10 +285,10 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
 
   'checkpoint list': ({ flags }) =>
     Either.gen(function* () {
-      const workId = yield* flag(flags, 'work')
+      const path = yield* scopedWorkListPath(flags, 'checkpoints')
       return {
         method: 'GET',
-        path: `/v1/work/${encodePathSegment(workId)}/checkpoints`,
+        path,
         label: 'checkpoint list',
       }
     }),
@@ -330,10 +343,10 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
 
   'artifact list': ({ flags }) =>
     Either.gen(function* () {
-      const workId = yield* flag(flags, 'work')
+      const path = yield* scopedWorkListPath(flags, 'artifacts')
       return {
         method: 'GET',
-        path: `/v1/work/${encodePathSegment(workId)}/artifacts`,
+        path,
         label: 'artifact list',
       }
     }),
@@ -381,10 +394,10 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
 
   'review list': ({ flags }) =>
     Either.gen(function* () {
-      const workId = yield* flag(flags, 'work')
+      const path = yield* scopedWorkListPath(flags, 'reviews')
       return {
         method: 'GET',
-        path: `/v1/work/${encodePathSegment(workId)}/reviews`,
+        path,
         label: 'review list',
       }
     }),
@@ -456,15 +469,15 @@ export const usage = `acp — Agent Coordination Protocol CLI
   acp lease request --workspace <id> --holder <id> --kind <k> --uri <u> [--ttl <n>]
   acp lease release <lease_id>
   acp checkpoint create --workspace <id> --work <id> --summary <s>
-  acp checkpoint list --work <id>
+  acp checkpoint list --work <id>|--workspace <id>
   acp checkpoint latest --work <id>
   acp artifact create --workspace <id> --work <id> --kind <k> [--uri <u>] [--summary <s>] [--content <c>]
   acp artifact update <artifact_id> --kind <k> [--uri <u>] [--media-type <m>] [--summary <s>] [--content <c>]
-  acp artifact list --work <id>
+  acp artifact list --work <id>|--workspace <id>
   acp artifact content <artifact_id>
   acp artifact delete <artifact_id>
   acp review request --work <id> --by <id> [--reviewer <id>]
-  acp review list --work <id>
+  acp review list --work <id>|--workspace <id>
   acp review approve <review_id> --met <requirement,csv>
   acp review reject <review_id>
   acp review request-changes <review_id>
