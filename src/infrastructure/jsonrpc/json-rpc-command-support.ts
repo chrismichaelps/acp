@@ -24,6 +24,7 @@ export type JsonRpcMethod =
   | 'workspace.update'
   | 'workspace.archive'
   | 'work.get'
+  | 'work.list_for_workspace'
   | 'work.create'
   | 'work.claim'
   | 'work.update'

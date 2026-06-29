@@ -206,6 +206,16 @@ export const WorkspaceGroup = HttpApiGroup.make('workspaces')
       .addError(ProtocolError, protocolError(404))
       .addError(ProtocolError, protocolError(409)),
   )
+  .add(
+    HttpApiEndpoint.get(
+      'listWorkspaceWork',
+      '/v1/workspaces/:workspace_id/work',
+    )
+      .setPath(WorkspacePath)
+      .addSuccess(Schema.Array(WorkUnit))
+      .addError(ProtocolError, protocolError(401))
+      .addError(ProtocolError, protocolError(404)),
+  )
 
 export const WorkGroup = HttpApiGroup.make('work')
   .add(

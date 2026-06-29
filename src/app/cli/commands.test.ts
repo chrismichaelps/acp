@@ -106,6 +106,15 @@ describe('parseArgs', () => {
     })
   })
 
+  it('parses work list by workspace', () => {
+    const req = right(['work', 'list', '--workspace', 'workspace 123/main'])
+    expect(req).toEqual({
+      method: 'GET',
+      path: '/v1/workspaces/workspace%20123%2Fmain/work',
+      label: 'work list',
+    })
+  })
+
   it('fails work create when --workspace is missing', () => {
     const parsed = parseArgs(['work', 'create', 'Fix bug'])
     expect(Either.isLeft(parsed)).toBe(true)

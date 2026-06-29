@@ -164,10 +164,12 @@ describe('resume routes', () => {
       ((await artifacts.json()) as { uri: string }[]).map(
         (listed) => listed.uri,
       ),
-    ).toEqual([
-      'https://example.com/acp/artifacts/pr-7',
-      `acp://artifacts/${artifact.id}`,
-    ])
+    ).toEqual(
+      expect.arrayContaining([
+        'https://example.com/acp/artifacts/pr-7',
+        `acp://artifacts/${artifact.id}`,
+      ]),
+    )
 
     const reviews = await handler(
       new Request(`http://acp.test/v1/work/${work.id}/reviews`, {

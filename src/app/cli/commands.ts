@@ -174,6 +174,16 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
       }
     }),
 
+  'work list': ({ flags }) =>
+    Either.gen(function* () {
+      const workspaceId = yield* flag(flags, 'workspace')
+      return {
+        method: 'GET',
+        path: `/v1/workspaces/${encodePathSegment(workspaceId)}/work`,
+        label: 'work list',
+      }
+    }),
+
   'work get': ({ positionals }) =>
     Either.gen(function* () {
       const workId = yield* positional(positionals, 0, 'work_id')
@@ -439,6 +449,7 @@ export const usage = `acp — Agent Coordination Protocol CLI
   acp workspace update <workspace_id> --name <n> --kind <k> --uri <u> [--default-branch <b>]
   acp workspace archive <workspace_id>
   acp work create <title> --workspace <id> [--priority <p>] [--description <d>]
+  acp work list --workspace <id>
   acp work get <work_id>
   acp work claim <work_id> --worker <id>
   acp work update <work_id> --state <state>
