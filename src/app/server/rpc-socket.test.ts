@@ -116,4 +116,68 @@ describe('rpc websocket', () => {
       error: { code: -32700 },
     })
   })
+
+  it('delivers events.subscribe as JSON-RPC notifications', async () => {
+    const result = await onLiveServer(async (_httpBase, wsBase) => {
+      const init = (await rpcOverSocket(`${wsBase}/rpc`, {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'session.initialize',
+        params: { worker, permissions: ['work:create'] },
+      })) as { result: { session_id: string } }
+
+      return await new Promise((resolve, reject) => {
+        const socket = new WebSocket(
+          `${wsBase}/rpc?token=${init.result.session_id}`,
+        )
+        const seen: unknown[] = []
+        socket.addEventListener('open', () => {
+          socket.send(
+            JSON.stringify({
+              jsonrpc: '2.0',
+              id: 'subscribe',
+              method: 'events.subscribe',
+              params: { workspace_id: 'workspace_socket_events' },
+            }),
+          )
+        })
+        socket.addEventListener('message', (event) => {
+          const payload = JSON.parse(String(event.data)) as {
+            method?: string
+            params?: { type?: string; workspace_id?: string }
+          }
+          seen.push(payload)
+          if (seen.length === 1) {
+            socket.send(
+              JSON.stringify({
+                jsonrpc: '2.0',
+                id: 'create',
+                method: 'work.create',
+                params: {
+                  workspace_id: 'workspace_socket_events',
+                  title: 'Verify WebSocket events',
+                },
+              }),
+            )
+          }
+          if (payload.method === 'events.event') {
+            socket.close()
+            resolve(payload)
+          }
+        })
+        socket.addEventListener('error', () => {
+          reject(new Error('ws event subscription error'))
+        })
+      })
+    })
+
+    expect(result).toMatchObject({
+      jsonrpc: '2.0',
+      method: 'events.event',
+      params: {
+        type: 'work.created',
+        workspace_id: 'workspace_socket_events',
+      },
+    })
+  })
 })

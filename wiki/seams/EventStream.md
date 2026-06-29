@@ -1,13 +1,13 @@
 ---
 type: seam
-capacity: EXPLORATORY
-capacity_score: 3
-lifecycle: EXPLORATORY
+capacity: CRITICAL
+capacity_score: 6
+lifecycle: CRITICAL
 drift_score: 0
 drift_status: HEALTHY
 production_adapters: 1
 change_freq_per_quarter: 1
-tags: [seam, exploratory]
+tags: [seam, critical]
 aliases: [EventStream, SseEventStream]
 ---
 
@@ -15,13 +15,12 @@ aliases: [EventStream, SseEventStream]
 
 ## Classification
 
-EXPLORATORY — live fan-out of [[Event]]s to subscribed [[Worker]]s. One production
-adapter in v0.1 (Server-Sent Events). WebSocket is deferred by
-[[ADR-0002-json-rpc-transport-framing]] because event notification semantics,
-backpressure, heartbeat, and disconnect behavior need a dedicated design before a
-second live adapter lands. Host/global worker presence is not part of this seam
-in v0.1; [[ADR-0005-worker-presence-scope]] keeps presence in the worker registry
-until a separate host-presence stream is justified.
+CRITICAL — live fan-out of [[Event]]s to subscribed [[Worker]]s. Server-Sent
+Events remains the HTTP live adapter, and [[rpc-socket]] adds JSON-RPC
+notification delivery for WebSocket clients that send `events.subscribe`. Host
+or global worker presence is not part of this seam in v0.1;
+[[ADR-0005-worker-presence-scope]] keeps presence in the worker registry until a
+separate host-presence stream is justified.
 
 ## Interface
 
@@ -31,22 +30,26 @@ adapter renders the stream into its wire format (SSE `event:`/`data:` frames).
 
 ## Adapters
 
-| Adapter   | Type       | Path                          | Last verified | Status              |
-| --------- | ---------- | ----------------------------- | ------------- | ------------------- |
-| SSE       | production | @root/src/infrastructure/sse/ | 2026-06-26    | CURRENT (v0.1)      |
-| WebSocket | —          | —                             | —             | DEFERRED (ADR-0002) |
+| Adapter   | Type       | Path                               | Last verified | Status         |
+| --------- | ---------- | ---------------------------------- | ------------- | -------------- |
+| SSE       | production | @root/src/infrastructure/sse/      | 2026-06-26    | CURRENT (v0.1) |
+| WebSocket | production | @root/src/app/server/rpc-socket.ts | 2026-06-29    | CURRENT        |
 
 ## Health
 
 DRIFT 0 (HEALTHY). SSE adapter code-complete and tested (4 targeted tests: frame
 shape, UTF-8 byte rendering, streaming response metadata, heartbeat comment).
-Handler/server route wiring remains in the HTTP server slice.
+WebSocket subscription is tested over a real upgraded socket by subscribing to a
+workspace, publishing a later work event, and receiving an `events.event`
+notification.
 
 ## Deepening
 
 ADR: [[ADR-0001-architecture-foundation]],
 [[ADR-0003-event-vocabulary-domain-boundaries]], and
-[[ADR-0005-worker-presence-scope]]. Heartbeat interval from `ACP_SSE_HEARTBEAT`.
+[[ADR-0005-worker-presence-scope]]. Heartbeat interval from `ACP_SSE_HEARTBEAT`
+for SSE; WebSocket unsubscribe is connection close until the protocol defines an
+explicit unsubscribe method.
 
 ## Referenced by
 

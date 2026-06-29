@@ -125,7 +125,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 56. ✅ WebSocket JSON-RPC request/response transport
 57. ✅ Host-scoped worker presence reads
 58. ✅ Re-audit remaining integration gaps after worker presence reads
-59. ▶ JSON-RPC event subscription semantics over WebSocket
+59. ✅ JSON-RPC event subscription semantics over WebSocket
+60. ▶ Re-audit remaining integration gaps after WebSocket event subscriptions
 
 ## Referenced by
 

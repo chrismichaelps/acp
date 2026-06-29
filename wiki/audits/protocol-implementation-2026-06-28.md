@@ -148,8 +148,11 @@ expiry.
 WebSocket request/response transport is now covered. [[rpc-socket]] mounts
 `GET /rpc` beside `POST /rpc`, authenticates the socket with the handshake bearer
 header or `?token=` fallback, and processes each text frame as a JSON-RPC single
-request or batch. This closes the request/response part of
-[[ADR-0002-json-rpc-transport-framing]] while leaving event subscription on SSE.
+request or batch. WebSocket `events.subscribe` is now also covered for persisted
+workspace events: a single subscribe frame acknowledges the subscription and
+later events arrive as `events.event` JSON-RPC notifications on the same socket.
+HTTP JSON-RPC continues to reject stream commands, and SSE remains the HTTP live
+channel.
 
 Host-scoped worker presence reads are now covered. [[worker-routes]] exposes the
 current registry through `GET /v1/workers` and `GET /v1/workers/{worker_id}`;
@@ -160,17 +163,12 @@ stream.
 
 ## Next Slice
 
-Define JSON-RPC event subscription semantics over the existing WebSocket
-transport before adding another live adapter. The current mapper can translate
-`events.subscribe` into the SSE route, but [[json-rpc-runtime]] rejects streaming
-commands because request/response JSON-RPC cannot carry an SSE body. The next
-slice should decide whether WebSocket `events.subscribe` emits JSON-RPC
-notifications, how unsubscribe/disconnect and heartbeat behavior work, and how
-backpressure stays bounded. If that design remains too wide for v0.1, record the
-deferral explicitly and keep SSE as the sole live event channel. Generated
-clients, Git-specific extensions, host-presence streams, and platform-node
-extraction remain deferred until a concrete consumer or duplicated boundary
-appears.
+Re-audit remaining integration gaps after WebSocket event subscriptions. The
+next pass should verify whether any spec-backed command or read surface remains
+unprojected after worker reads, lease lifecycle parity, resume reads, and live
+JSON-RPC event delivery. Generated clients, Git-specific extensions,
+host-presence streams, and platform-node extraction remain deferred until a
+concrete consumer or duplicated boundary appears.
 
 ## Referenced by
 
