@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · post-worker-presence-integration-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after host-scoped [[Worker]] registry
+  reads, closing the stale next-slice language and selecting JSON-RPC
+  `events.subscribe` semantics over WebSocket as the next live-transport gap ·
+  docs-only validation · risk LOW
 - 2026-06-29 · host-worker-presence-reads slice · projected host-scoped
   [[Worker]] registry reads through [[worker-routes]], [[acp-http-api]],
   [[json-rpc-worker-commands]], and [[cli-commands]] with dedicated
