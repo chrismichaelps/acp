@@ -126,11 +126,8 @@ Public documentation drift is covered again. The README describes the
 implemented REST/SSE, `POST /rpc`, stdio JSON-RPC, `GET /rpc` WebSocket
 request/response framing and event notifications, SQLite durability, local
 versus required auth, scoped mutation permissions, worker registry reads,
-expanded CLI, and lease renew/revoke. It now lags in smaller but user-visible
-ways: review cancellation is only implied by “review actions,” the tracked
-`specs.md` draft is not named, and Node-specific runtime adapters are described
-as staying at application entrypoints even though [[node-http-server]] and
-[[node-process-io]] now live under `src/infrastructure/platform-node`.
+expanded CLI, lease renew/revoke, review cancellation, tracked `specs.md`, and
+the current platform-node adapter boundary.
 
 The draft spec is now tracked and canonicalized. Normative sections use Agent
 Coordination Protocol (ACP), `ACP_` configuration examples, `acp://` artifact
@@ -186,7 +183,11 @@ Review cancellation is now covered. [[event.schema]] includes
 `review.cancelled`, [[review-service]] cancels only requested reviews without
 fabricating a reviewer outcome, [[acp-router]] exposes
 `POST /v1/reviews/{review_id}/cancel` behind `review:cancel`, JSON-RPC maps
-`review.cancel`, and [[cli-commands]] maps `review cancel <review_id>`.
+`review.cancel`, and [[cli-commands]] maps `review cancel <review_id>`. The
+tracked draft spec still needs to catch up to that implementation surface: its
+event list omits `review.cancelled`, its REST and JSON-RPC examples omit cancel,
+and its state-machine prose does not name the `needs_review -> running`
+withdrawal path.
 
 Host-scoped worker presence reads are now covered. [[worker-routes]] exposes the
 current registry through `GET /v1/workers` and `GET /v1/workers/{worker_id}`;
@@ -197,12 +198,12 @@ stream.
 
 ## Next Slice
 
-Refresh the public README before adding another protocol feature. The slice
-should keep the README prose-first and senior-level while naming review
-cancellation (`review.cancel`, REST cancel route, CLI `review cancel`), tracked
-`specs.md`, and the current platform-node boundary. Generated clients,
-Git-specific workflow extensions, host-presence streams, and broader
-filesystem/command adapters remain deferred until a concrete consumer or
+Align the tracked draft spec with review cancellation before adding another
+protocol feature. The slice should add `review.cancelled` to the Review event
+list, document `POST /v1/reviews/{review_id}/cancel`, include `review.cancel` in
+the JSON-RPC method list, and make the cancellation state-machine path explicit.
+Generated clients, Git-specific workflow extensions, host-presence streams, and
+broader filesystem/command adapters remain deferred until a concrete consumer or
 duplicated boundary appears.
 
 ## Referenced by
