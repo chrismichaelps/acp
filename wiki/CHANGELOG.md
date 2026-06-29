@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · host-worker-presence-reads slice · projected host-scoped
+  [[Worker]] registry reads through [[worker-routes]], [[acp-http-api]],
+  [[json-rpc-worker-commands]], and [[cli-commands]] with dedicated
+  `worker:read` scope, preserving [[ADR-0005-worker-presence-scope]] by keeping
+  presence out of workspace [[Event]] logs · 228 tests green · risk LOW
 - 2026-06-29 · post-websocket-integration-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after README lease refresh and
   [[rpc-socket]], closing stale WebSocket deferral language and selecting

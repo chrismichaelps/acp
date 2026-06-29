@@ -125,6 +125,20 @@ const commandKey = (group: string | undefined, action: string | undefined) =>
   `${group ?? ''} ${action ?? ''}`
 
 const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
+  'worker list': () =>
+    Either.right({
+      method: 'GET',
+      path: '/v1/workers',
+      label: 'worker list',
+    }),
+
+  'worker get': ({ positionals }) =>
+    Either.map(positional(positionals, 0, 'worker_id'), (workerId) => ({
+      method: 'GET' as const,
+      path: `/v1/workers/${encodePathSegment(workerId)}`,
+      label: 'worker get',
+    })),
+
   'workspace list': () =>
     Either.right({
       method: 'GET',

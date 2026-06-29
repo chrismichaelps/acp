@@ -36,8 +36,8 @@ export const WorkspaceKind: Schema.Literal<[…6 kinds…]>
 export const WorkspaceState: Schema.Literal<["active","archived"]>
 export const Resource: Schema.Struct<{ kind: ResourceKind; uri: NonEmptyString }>
 export const Permission: Schema.Literal<[ // session auth scopes (spec §8)
-  "workspace:read","workspace:write","work:create","work:claim","lease:create",
-  "work:update","work:publish_event","lease:renew","lease:release",
+  "worker:read","workspace:read","workspace:write","work:create","work:claim",
+  "lease:create","work:update","work:publish_event","lease:renew","lease:release",
   "lease:revoke","artifact:create",
   "artifact:update","artifact:delete","checkpoint:create","review:create",
   "review:approve","review:reject","review:request_changes"]>
@@ -54,10 +54,11 @@ move one-way to `archived`.
 
 `Permission` is the closed bearer-session authorization vocabulary. It includes
 both draft create scopes and the backed mutation/action scopes used by
-[[acp-router]] so destructive or review-outcome commands can be granted
-independently. Lease lifecycle actions are split into create, renew, release, and
-revoke because extending an advisory claim and terminating one are different
-operational powers.
+[[acp-router]] so read surfaces, destructive actions, and review-outcome commands
+can be granted independently. Worker presence reads use `worker:read` because
+presence is host-scoped registry state, not workspace event history. Lease
+lifecycle actions are split into create, renew, release, and revoke because
+extending an advisory claim and terminating one are different operational powers.
 
 ## Negative Logic (Prohibited Paths)
 

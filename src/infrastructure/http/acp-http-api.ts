@@ -70,6 +70,11 @@ export const WorkspacePath = Schema.Struct({
 })
 export type WorkspacePath = typeof WorkspacePath.Type
 
+export const WorkerPath = Schema.Struct({
+  worker_id: HttpApiSchema.param('worker_id', Worker.fields.id),
+})
+export type WorkerPath = typeof WorkerPath.Type
+
 export const ClientCapabilities = Schema.Struct({
   can_edit_files: Schema.optionalWith(Schema.Boolean, { default: () => false }),
   can_run_commands: Schema.optionalWith(Schema.Boolean, {
@@ -180,6 +185,20 @@ export const SessionGroup = HttpApiGroup.make('session').add(
     .addError(ProtocolError, protocolError(400))
     .addError(ProtocolError, protocolError(401)),
 )
+
+export const WorkerGroup = HttpApiGroup.make('workers')
+  .add(
+    HttpApiEndpoint.get('listWorkers', '/v1/workers')
+      .addSuccess(Schema.Array(Worker))
+      .addError(ProtocolError, protocolError(401)),
+  )
+  .add(
+    HttpApiEndpoint.get('getWorker', '/v1/workers/:worker_id')
+      .setPath(WorkerPath)
+      .addSuccess(Worker)
+      .addError(ProtocolError, protocolError(401))
+      .addError(ProtocolError, protocolError(404)),
+  )
 
 export const WorkspaceGroup = HttpApiGroup.make('workspaces')
   .add(
@@ -448,6 +467,7 @@ export const EventsGroup = HttpApiGroup.make('events').add(
 
 export class AcpHttpApi extends HttpApi.make('acp')
   .add(SessionGroup)
+  .add(WorkerGroup)
   .add(WorkspaceGroup)
   .add(WorkGroup)
   .add(LeaseGroup)

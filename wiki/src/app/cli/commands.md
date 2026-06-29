@@ -42,6 +42,8 @@ export const parseArgs: (
 
 | Argv                                                                                  | → request                                         |
 | ------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `worker list`                                                                         | `GET /v1/workers`                                 |
+| `worker get <worker_id>`                                                              | `GET /v1/workers/<id>`                            |
 | `workspace list`                                                                      | `GET /v1/workspaces`                              |
 | `workspace create --name --kind --uri [--default-branch]`                             | `POST /v1/workspaces`                             |
 | `workspace update <workspace_id> --name --kind --uri [--default-branch]`              | `PATCH /v1/workspaces/<id>`                       |
@@ -88,9 +90,11 @@ TTLs are validated as positive safe integers before HTTP decoding.
 fields. Artifact create/update forward optional `--uri` so the CLI can register
 external pull request, commit, report, or screenshot artifacts without inline
 content. Lease renewal accepts optional `--ttl` and otherwise lets the host use
-its default lease TTL. Work resume reads map `work list --workspace`, `work get`,
-`checkpoint list/latest --work`, `artifact list --work`,
-`artifact content <id>`, and `review list --work` onto the read endpoints.
+its default lease TTL. Worker registry reads map `worker list` and `worker get`
+onto host-scoped presence endpoints. Work resume reads map
+`work list --workspace`, `work get`, `checkpoint list/latest --work`,
+`artifact list --work`, `artifact content <id>`, and `review list --work` onto
+the read endpoints.
 `checkpoint list`, `artifact list`, and `review list` also accept `--workspace`
 for workspace-level aggregate resume reads. `review approve --met` is a
 comma-separated list that becomes `met_requirements`. `events stream` sets

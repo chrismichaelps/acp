@@ -16,7 +16,9 @@ aliases: [cli-usage]
 
 Own the printable CLI usage table separately from [[cli-commands]] so the pure
 parser can keep growing by command handler without carrying display-only text or
-crossing the file-size gate.
+crossing the file-size gate. The table includes host-scoped worker reads,
+workspace/work flows, lease lifecycle, resume reads, review actions, and event
+streaming.
 
 ## Interface
 
