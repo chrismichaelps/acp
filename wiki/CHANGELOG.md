@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · spec-section-numbering-cleanup slice · fixed duplicate late
+  headings in `@root/specs.md` so Relationship to MCP, roadmap, CLI examples,
+  open questions, pitch, and protocol naming have stable unique section numbers
+  · validation pending · risk LOW
 - 2026-06-29 · post-spec-canonicalization-integration-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after tracked `specs.md`
   canonicalization and selected duplicate late-section numbering cleanup as the
