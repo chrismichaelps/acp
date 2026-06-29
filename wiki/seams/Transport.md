@@ -18,9 +18,10 @@ aliases: [Transport, TransportLayer]
 CRITICAL — the protocol boundary between [[Worker]] clients and the [[Host]].
 HTTP+SSE, `POST /rpc`, stdio JSON-RPC, and `GET /rpc` WebSocket JSON-RPC are
 current adapters. WebSocket request/response framing supersedes the deferral in
-[[ADR-0002-json-rpc-transport-framing]] (see that ADR's Update); only JSON-RPC
-event _subscription_ stays deferred — SSE remains the live channel. Event vocabulary
-that lacks persisted domain state is deferred by
+[[ADR-0002-json-rpc-transport-framing]] (see that ADR's Update), and WebSocket
+`events.subscribe` now delivers persisted workspace events as JSON-RPC
+notifications. SSE remains the HTTP live channel. Event vocabulary that lacks
+persisted domain state is deferred by
 [[ADR-0003-event-vocabulary-domain-boundaries]]. On a core path (all commands
 cross it), so failure = system failure, but variation is still emerging —
 lifecycle EXPLORATORY.
@@ -46,9 +47,9 @@ DRIFT 0 (HEALTHY). HTTP API declaration, error mapper, `POST /rpc`, JSON-RPC
 method normalization, runtime folding, stdio Content-Length framing, and the
 `GET /rpc` WebSocket upgrade ([[rpc-socket]]) are code-complete for the current
 transport surface. WebSocket request/response now reuses the in-process router via
-the shared `dispatchVia` (connection-bound bearer, header or `?token=`); only
-JSON-RPC event subscription remains deferred — heartbeat and backpressure are
-handled by the platform socket.
+the shared `dispatchVia` (connection-bound bearer, header or `?token=`), and
+WebSocket `events.subscribe` emits `events.event` notifications from the existing
+[[EventStore]] subscription.
 
 ## Deepening
 

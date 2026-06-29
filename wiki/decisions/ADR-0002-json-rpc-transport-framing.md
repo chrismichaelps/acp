@@ -10,9 +10,10 @@ aliases: [ADR-0002, ADR-0002-json-rpc-transport-framing]
 
 ## Status
 
-ACCEPTED — 2026-06-27. Partially SUPERSEDED — 2026-06-29 (see Update).
+ACCEPTED — 2026-06-27. SUPERSEDED for WebSocket transport — 2026-06-29 (see
+Updates).
 
-## Update — 2026-06-29
+## Update — 2026-06-29 (request/response)
 
 The WebSocket _request/response_ deferral is lifted: [[rpc-socket]] mounts a
 `GET /rpc` upgrade beside `POST /rpc`, reusing the in-process router through the
@@ -21,8 +22,18 @@ are resolved for request/response: **auth** is a connection-bound bearer (handsh
 `Authorization` header or `?token=` query, since browsers cannot set handshake
 headers); **server upgrade** is `HttpServerRequest.upgrade` (no `ws` dependency, no
 hand-rolled handshake); **heartbeat/backpressure** are owned by the platform
-socket. What remains deferred is JSON-RPC event _subscription_ (`events.subscribe`)
-— SSE stays the live channel — so this ADR is only partially superseded.
+socket. What remained deferred in this update was JSON-RPC event _subscription_
+(`events.subscribe`).
+
+## Update — 2026-06-29 (event subscription)
+
+The WebSocket event-subscription deferral is lifted for persisted workspace
+events. [[rpc-socket]] handles a single `events.subscribe` request after upgrade,
+acknowledges it with a JSON-RPC result when the request has an `id`, and sends
+later workspace [[Event]]s as `events.event` JSON-RPC notifications on the same
+socket. Socket close is unsubscribe because spec §13 does not define
+`events.unsubscribe`. SSE remains the HTTP live-event channel, while `POST /rpc`
+continues rejecting stream commands through [[json-rpc-runtime]].
 
 ## Context
 
@@ -63,14 +74,12 @@ extra adapter.
 
 ## Consequences
 
-Tool integrations that need a stream-oriented JSON-RPC process should use
-`acp-jsonrpc-stdio`. Browser or service integrations can use `POST /rpc` or the
-REST/SSE surface. WebSocket remains a deliberate future adapter, not an implicit
-gap in the current v0.1 transport.
-
-Before WebSocket lands, the implementation needs a focused design note for
-authentication, event subscription semantics, heartbeat/backpressure behavior,
-and test strategy over a real upgraded connection.
+Tool integrations that need process-local JSON-RPC framing should use
+`acp-jsonrpc-stdio`. Browser or service integrations can use `POST /rpc`,
+`GET /rpc` WebSocket, or the REST/SSE surface. WebSocket is now an implemented
+adapter for request/response plus workspace event notifications; host-presence
+streams remain intentionally separate under
+[[ADR-0005-worker-presence-scope]].
 
 ## Alternatives
 
@@ -84,9 +93,10 @@ surface area.
 
 ## Validation
 
-The stdio slice proves the chosen non-HTTP framing path with 149 tests green,
-including pure byte-framing tests and the existing `POST /rpc` runtime tests.
-WebSocket has no production adapter in v0.1 and remains documented as deferred.
+The stdio slice proved the chosen process-local framing path with pure
+byte-framing tests and the existing `POST /rpc` runtime tests. The WebSocket
+slices add real upgraded-socket tests for request/response, parse errors, and
+`events.subscribe` receiving a later `events.event` notification.
 
 ## Referenced by
 
