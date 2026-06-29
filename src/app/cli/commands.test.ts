@@ -200,6 +200,23 @@ describe('parseArgs', () => {
     expect(req.body).toBeUndefined()
   })
 
+  it('parses lease renew and revoke commands', () => {
+    const renew = right(['lease', 'renew', 'lease 123/main', '--ttl', '120'])
+    expect(renew).toEqual({
+      method: 'POST',
+      path: '/v1/leases/lease%20123%2Fmain/renew',
+      body: { ttl_seconds: 120 },
+      label: 'lease renew',
+    })
+
+    const revoke = right(['lease', 'revoke', 'lease 123/main'])
+    expect(revoke).toEqual({
+      method: 'POST',
+      path: '/v1/leases/lease%20123%2Fmain/revoke',
+      label: 'lease revoke',
+    })
+  })
+
   it('parses checkpoint creation with empty step lists', () => {
     const req = right([
       'checkpoint',

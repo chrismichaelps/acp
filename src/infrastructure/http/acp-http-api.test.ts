@@ -179,9 +179,21 @@ describe('AcpHttpApi', () => {
       },
       {
         group: 'leases',
+        name: 'renewLease',
+        method: 'POST',
+        path: '/v1/leases/:lease_id/renew',
+      },
+      {
+        group: 'leases',
         name: 'releaseLease',
         method: 'POST',
         path: '/v1/leases/:lease_id/release',
+      },
+      {
+        group: 'leases',
+        name: 'revokeLease',
+        method: 'POST',
+        path: '/v1/leases/:lease_id/revoke',
       },
       {
         group: 'artifacts',

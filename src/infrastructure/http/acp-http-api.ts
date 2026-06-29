@@ -162,6 +162,14 @@ export const ArtifactContentResponse = Schema.Struct({
 })
 export type ArtifactContentResponse = typeof ArtifactContentResponse.Type
 
+export const RenewLeasePayload = Schema.Struct({
+  ttl_seconds: Schema.optionalWith(Schema.Positive, {
+    as: 'Option',
+    nullable: true,
+  }),
+})
+export type RenewLeasePayload = typeof RenewLeasePayload.Type
+
 const protocolError = (status: number) =>
   ({ status }) satisfies { readonly status: number }
 
@@ -328,10 +336,29 @@ export const LeaseGroup = HttpApiGroup.make('leases')
       .addError(ProtocolError, protocolError(409)),
   )
   .add(
+    HttpApiEndpoint.post('renewLease', '/v1/leases/:lease_id/renew')
+      .setPath(LeasePath)
+      .setPayload(RenewLeasePayload)
+      .addSuccess(Lease)
+      .addError(ProtocolError, protocolError(400))
+      .addError(ProtocolError, protocolError(401))
+      .addError(ProtocolError, protocolError(404))
+      .addError(ProtocolError, protocolError(409)),
+  )
+  .add(
     HttpApiEndpoint.post('releaseLease', '/v1/leases/:lease_id/release')
       .setPath(LeasePath)
       .addSuccess(HttpApiSchema.NoContent)
+      .addError(ProtocolError, protocolError(401))
       .addError(ProtocolError, protocolError(404)),
+  )
+  .add(
+    HttpApiEndpoint.post('revokeLease', '/v1/leases/:lease_id/revoke')
+      .setPath(LeasePath)
+      .addSuccess(Lease)
+      .addError(ProtocolError, protocolError(401))
+      .addError(ProtocolError, protocolError(404))
+      .addError(ProtocolError, protocolError(409)),
   )
 
 export const ArtifactGroup = HttpApiGroup.make('artifacts')

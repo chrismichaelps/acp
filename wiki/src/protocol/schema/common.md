@@ -37,7 +37,8 @@ export const WorkspaceState: Schema.Literal<["active","archived"]>
 export const Resource: Schema.Struct<{ kind: ResourceKind; uri: NonEmptyString }>
 export const Permission: Schema.Literal<[ // session auth scopes (spec §8)
   "workspace:read","workspace:write","work:create","work:claim","lease:create",
-  "work:update","work:publish_event","lease:release","artifact:create",
+  "work:update","work:publish_event","lease:renew","lease:release",
+  "lease:revoke","artifact:create",
   "artifact:update","artifact:delete","checkpoint:create","review:create",
   "review:approve","review:reject","review:request_changes"]>
 ```
@@ -54,7 +55,9 @@ move one-way to `archived`.
 `Permission` is the closed bearer-session authorization vocabulary. It includes
 both draft create scopes and the backed mutation/action scopes used by
 [[acp-router]] so destructive or review-outcome commands can be granted
-independently.
+independently. Lease lifecycle actions are split into create, renew, release, and
+revoke because extending an advisory claim and terminating one are different
+operational powers.
 
 ## Negative Logic (Prohibited Paths)
 
