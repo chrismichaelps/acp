@@ -249,7 +249,7 @@ Recommended MVP transport:
 ACP v0.1 supports bearer tokens.
 
 ```http
-Authorization: Bearer hdf_xxx
+Authorization: Bearer acp_xxx
 ```
 
 Workers should be scoped by permissions.
@@ -260,19 +260,35 @@ reads scoped workspace state must reject requests without a valid bearer session
 with `401 Unauthorized`. `POST /v1/session/initialize` remains the open bootstrap
 route because it mints the bearer session used by later calls.
 
-Example permissions:
+The v0.1 permission vocabulary is closed so a host can reject unknown scopes
+during session initialization instead of silently accepting misspelled or
+future-version authority. Permissions are intentionally action-oriented rather
+than role-oriented; hosts may compose them into local roles, but protocol
+messages carry the explicit scope strings.
 
-```json
-[
-  "workspace:read",
-  "work:create",
-  "work:claim",
-  "lease:create",
-  "artifact:create",
-  "checkpoint:create",
-  "review:create"
-]
-```
+| Scope | Grants |
+| --- | --- |
+| `worker:read` | Read host-scoped worker registry records. |
+| `workspace:read` | Read workspace records and workspace-scoped aggregate indexes. |
+| `workspace:write` | Create, update, or archive workspace records. |
+| `event:read` | Replay persisted workspace event history. |
+| `work:create` | Create WorkUnits. |
+| `work:claim` | Claim WorkUnits by creating leases. |
+| `work:update` | Mutate WorkUnit state such as progress, block, resume, or completion. |
+| `work:publish_event` | Publish WorkUnit progress or diagnostic events. |
+| `lease:create` | Create advisory leases for WorkUnits. |
+| `lease:renew` | Extend an existing lease before expiry. |
+| `lease:release` | Release a lease voluntarily. |
+| `lease:revoke` | Revoke another worker's stale or unsafe lease. |
+| `artifact:create` | Attach host-stored content or external artifact references. |
+| `artifact:update` | Replace artifact metadata, content, or external URI references. |
+| `artifact:delete` | Delete artifact records. |
+| `checkpoint:create` | Create resumability checkpoints. |
+| `review:create` | Request a review gate for a WorkUnit. |
+| `review:approve` | Approve a requested review. |
+| `review:reject` | Reject a requested review. |
+| `review:request_changes` | Mark a requested review as requiring changes. |
+| `review:cancel` | Withdraw a requested review without creating a reviewer outcome. |
 
 ---
 
