@@ -86,6 +86,8 @@ route used by the HTTP transport.
 `artifact.create` and `artifact.update` carry optional external artifact `uri`
 values through the shared schema, letting JSON-RPC register PR/commit/report
 artifacts without inlining content.
+`review.cancel` maps to the dedicated review cancellation endpoint so JSON-RPC
+clients can withdraw a requested review without sending a false rejection.
 
 Unknown method labels fail as JSON-RPC `-32601`. Missing or invalid params fail
 as `-32602`, with response suppression for notifications handled later by

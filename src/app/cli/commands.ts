@@ -125,7 +125,7 @@ const leaseStateCommand =
     }))
 
 const reviewStateCommand =
-  (action: 'reject' | 'request_changes'): CommandHandler =>
+  (action: 'reject' | 'request_changes' | 'cancel'): CommandHandler =>
   ({ positionals }) =>
     Either.map(positional(positionals, 0, 'review_id'), (reviewId) => ({
       method: 'POST' as const,
@@ -463,6 +463,7 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
 
   'review reject': reviewStateCommand('reject'),
   'review request-changes': reviewStateCommand('request_changes'),
+  'review cancel': reviewStateCommand('cancel'),
 
   'events stream': ({ flags }) =>
     Either.gen(function* () {

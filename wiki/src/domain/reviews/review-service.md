@@ -19,7 +19,8 @@ Own [[Review]] gates for v0.1. A Review is the protocol's human-in-the-loop
 primitive for a [[WorkUnit]]. The service stores review records through
 [[Storage]], emits `review.*` [[Event]] records through [[EventStore]], and uses
 [[work-unit-service]] to move the related WorkUnit into `needs_review`,
-`approved`, `rejected`, or `changes_requested`.
+`approved`, `rejected`, `changes_requested`, or back to `running` when a
+requested review is cancelled.
 
 ## Interface
 
@@ -66,6 +67,14 @@ export interface ReviewServiceApi {
     Review,
     NotFoundError | InvalidStateTransitionError | StorageError
   >
+  readonly cancel: (
+    reviewId: ReviewId,
+    actor: WorkerId,
+    now: Timestamp,
+  ) => Effect<
+    Review,
+    NotFoundError | InvalidStateTransitionError | StorageError
+  >
 }
 ```
 
@@ -76,7 +85,9 @@ export interface ReviewServiceApi {
 - `request` requires the WorkUnit to be in a state that can move to
   `needs_review`.
 - `approve` requires every review requirement to be present in `metRequirements`.
-- Cancel is deferred because [[event.schema]] has no `review.cancelled` event type.
+- `cancel` is only valid for a `requested` Review. It emits `review.cancelled`
+  and returns the WorkUnit to `running`, preserving the distinction between a
+  withdrawn gate and an explicit review outcome.
 
 ## Algorithm
 
@@ -88,12 +99,14 @@ export interface ReviewServiceApi {
    WorkUnit to `rejected`.
 4. `requestChanges` saves `changes_requested`, emits `review.changes_requested`,
    and transitions the WorkUnit to `changes_requested`.
-5. `listForWorkspace` resolves each review's WorkUnit to filter by workspace.
+5. `cancel` saves `cancelled`, emits `review.cancelled`, and transitions the
+   WorkUnit back to `running`.
+6. `listForWorkspace` resolves each review's WorkUnit to filter by workspace.
 
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT approve with unmet requirements.
-- ❌ Do NOT invent `review.cancelled` until [[event.schema]] includes it.
+- ❌ Do NOT represent a cancelled review as `review.rejected`.
 - ❌ Do NOT emit review events without a WorkUnit-derived workspace scope.
 
 ## Depth
@@ -107,9 +120,9 @@ validation, event emission, and WorkUnit outcome coupling behind one domain API.
   **A:** Yes. The domain page states review outcomes affect WorkUnit state, and
   [[work-unit-service]] already owns the legal transition table.
 - **Q:** Should cancel ship in this slice?
-  **A:** No. The Review schema has `cancelled`, but the Event schema has no
-  `review.cancelled` event type. Shipping cancel silently would break the
-  append-only event contract.
+  **A:** Yes. [[event.schema]] now carries `review.cancelled`, so cancellation can
+  be represented as its own append-only event instead of being forced through a
+  false reviewer outcome.
 
 ## Referenced by
 

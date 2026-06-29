@@ -361,6 +361,9 @@ describe('acpRouter', () => {
       post('/v1/reviews/review_missing/request_changes'),
     )
     expect(changes.status).toBe(404)
+
+    const cancelled = await handler(post('/v1/reviews/review_missing/cancel'))
+    expect(cancelled.status).toBe(404)
   })
 
   it('rejects review actions when the session lacks the action scope', async () => {

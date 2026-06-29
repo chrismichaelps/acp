@@ -75,6 +75,7 @@ export const acpRouter: HttpRouter.HttpRouter<
   · `POST /v1/reviews/:review_id/approve`
   · `POST /v1/reviews/:review_id/reject`
   · `POST /v1/reviews/:review_id/request_changes`
+  · `POST /v1/reviews/:review_id/cancel`
 - `GET /v1/events?workspace_id=…&after_seq=…` → replay workspace [[Event]]
   history through [[event-routes]]
 - `GET  /v1/events/stream?workspace_id=…` → SSE ([[event-routes]] /
@@ -131,9 +132,9 @@ error path to `404`.
 Backed mutations and sensitive reads require their matching session scope when a bearer token is
 present: worker reads, event replay, work update/event publication, lease
 renew/release/revoke, artifact update/delete, and review
-approve/reject/request-changes each call [[route-support]] `authorize` with the
-specific action scope. Missing tokens still follow the local-host `worker_system`
-fallback unless
+approve/reject/request-changes/cancel each call [[route-support]] `authorize`
+with the specific action scope. Missing tokens still follow the local-host
+`worker_system` fallback unless
 `ACP_REQUIRE_AUTH=true`.
 
 ## Negative Logic (Prohibited Paths)

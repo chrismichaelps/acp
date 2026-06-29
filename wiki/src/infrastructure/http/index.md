@@ -24,12 +24,13 @@ files.
 
 ```typescript
 export * from './acp-http-api.js'
+export * from './acp-http-api-events.js'
 export * from './http-error-mapper.js'
 ```
 
 ### Linkage
 
-- **Requires:** [[acp-http-api]], [[http-error-mapper]]
+- **Requires:** [[acp-http-api]], [[acp-http-api-events]], [[http-error-mapper]]
 - **Consumed by:** future server app wiring.
 
 ## Algorithm

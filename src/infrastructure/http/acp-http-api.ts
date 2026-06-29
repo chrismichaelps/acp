@@ -39,6 +39,7 @@ import {
   WorkUnit,
   ACP_PROTOCOL_VERSION,
 } from '../../protocol/schema/index.js'
+import { EventsGroup } from './acp-http-api-events.js'
 
 export const WorkPath = Schema.Struct({
   work_id: HttpApiSchema.param('work_id', WorkId),
@@ -59,20 +60,6 @@ export const ArtifactPath = Schema.Struct({
   artifact_id: HttpApiSchema.param('artifact_id', ArtifactId),
 })
 export type ArtifactPath = typeof ArtifactPath.Type
-
-export const EventsStreamParams = Schema.Struct({
-  workspace_id: WorkspaceId,
-})
-export type EventsStreamParams = typeof EventsStreamParams.Type
-
-export const EventsReplayParams = Schema.Struct({
-  workspace_id: WorkspaceId,
-  after_seq: Schema.optionalWith(
-    Schema.NumberFromString.pipe(Schema.int(), Schema.nonNegative()),
-    { default: () => 0 },
-  ),
-})
-export type EventsReplayParams = typeof EventsReplayParams.Type
 
 export const WorkspacePath = Schema.Struct({
   workspace_id: HttpApiSchema.param('workspace_id', WorkspaceId),
@@ -465,21 +452,12 @@ export const ReviewGroup = HttpApiGroup.make('reviews')
       .addError(ProtocolError, protocolError(404))
       .addError(ProtocolError, protocolError(409)),
   )
-
-export const EventsGroup = HttpApiGroup.make('events')
   .add(
-    HttpApiEndpoint.get('replayEvents', '/v1/events')
-      .setUrlParams(EventsReplayParams)
-      .addSuccess(Schema.Array(Event))
-      .addError(ProtocolError, protocolError(400))
-      .addError(ProtocolError, protocolError(401)),
-  )
-  .add(
-    HttpApiEndpoint.get('streamEvents', '/v1/events/stream')
-      .setUrlParams(EventsStreamParams)
-      .addSuccess(Schema.Array(Event))
-      .addError(ProtocolError, protocolError(400))
-      .addError(ProtocolError, protocolError(401)),
+    HttpApiEndpoint.post('cancelReview', '/v1/reviews/:review_id/cancel')
+      .setPath(ReviewPath)
+      .addSuccess(Review)
+      .addError(ProtocolError, protocolError(404))
+      .addError(ProtocolError, protocolError(409)),
   )
 
 export class AcpHttpApi extends HttpApi.make('acp')

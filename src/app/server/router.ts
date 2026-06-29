@@ -396,6 +396,18 @@ const requestReviewChanges = respond(
   }),
 )
 
+const cancelReview = respond(
+  Effect.gen(function* () {
+    const service = yield* ReviewService
+    const idClock = yield* IdClock
+    const reviewId = (yield* pathParam('review_id')) as ReviewId
+    const now = yield* idClock.now
+    const actor = yield* authorize('review:cancel')
+    const review = yield* service.cancel(reviewId, actor, now)
+    return yield* ok(200)(Review, review)
+  }),
+)
+
 // The canonical REST surface (spec §12). JSON-RPC dispatch replays against this.
 const workRouter = HttpRouter.empty.pipe(
   HttpRouter.post('/v1/session/initialize', initializeSession),
@@ -449,6 +461,7 @@ const v1Router = commandRouter.pipe(
     '/v1/reviews/:review_id/request_changes',
     requestReviewChanges,
   ),
+  HttpRouter.post('/v1/reviews/:review_id/cancel', cancelReview),
   HttpRouter.get('/v1/events', replayEvents),
   HttpRouter.get('/v1/events/stream', streamEvents),
 )
