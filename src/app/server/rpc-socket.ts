@@ -5,11 +5,31 @@ import {
   HttpServerResponse,
 } from '@effect/platform'
 import type { HttpApp } from '@effect/platform'
-import { Effect, Option } from 'effect'
-import { executeJsonRpc } from '../../infrastructure/jsonrpc/index.js'
+import { Effect, Either, Option, Schema, Stream } from 'effect'
+import { EventStore } from '../../domain/events/index.js'
+import {
+  executeJsonRpc,
+  jsonRpcError,
+  jsonRpcSuccess,
+  JsonRpcRequestError,
+  parseJsonRpcCommand,
+} from '../../infrastructure/jsonrpc/index.js'
+import { Event } from '../../protocol/schema/index.js'
+import type {
+  JsonRpcCommand,
+  JsonRpcId,
+} from '../../infrastructure/jsonrpc/index.js'
+import type { Scope } from 'effect'
+import type { Event as EventModel } from '../../protocol/schema/index.js'
 import { dispatchVia, parseErrorEnvelope } from './rpc-endpoint.js'
 
 const decoder = new TextDecoder()
+
+interface JsonRpcEventNotification {
+  readonly jsonrpc: '2.0'
+  readonly method: 'events.event'
+  readonly params: unknown
+}
 
 // The bearer token (session id) for a WebSocket connection. A non-browser client
 // can set `Authorization: Bearer` on the handshake; a browser cannot, so a
@@ -43,6 +63,86 @@ const parseJson = (text: string): Option.Option<unknown> => {
   }
 }
 
+const streamWorkspaceId = (command: JsonRpcCommand): Option.Option<string> => {
+  const url = new URL(`http://acp.internal${command.request.path}`)
+  const workspaceId = url.searchParams.get('workspace_id')
+  return workspaceId === null || workspaceId === ''
+    ? Option.none()
+    : Option.some(workspaceId)
+}
+
+const eventNotification = (
+  event: EventModel,
+): Effect.Effect<JsonRpcEventNotification> =>
+  Schema.encode(Event)(event).pipe(
+    Effect.map((params) => ({
+      jsonrpc: '2.0' as const,
+      method: 'events.event' as const,
+      params,
+    })),
+    Effect.orDie,
+  )
+
+const invalidSubscription = (
+  id: Option.Option<JsonRpcId>,
+): Option.Option<unknown> =>
+  jsonRpcError(
+    new JsonRpcRequestError({
+      code: -32602,
+      message: 'Invalid params',
+      id,
+      expects_response: Option.isSome(id),
+      data: { reason: 'events.subscribe requires workspace_id' },
+    }),
+  )
+
+const startEventSubscription = (
+  command: JsonRpcCommand,
+  writeJson: (value: unknown) => Effect.Effect<void, Error>,
+): Effect.Effect<void, Error, EventStore | Scope.Scope> =>
+  Effect.gen(function* () {
+    const workspaceId = streamWorkspaceId(command)
+    if (Option.isNone(workspaceId)) {
+      const error = invalidSubscription(command.id)
+      if (Option.isSome(error)) {
+        yield* writeJson(error.value)
+      }
+      return
+    }
+
+    const ack = jsonRpcSuccess(command, {
+      subscribed: true,
+      workspace_id: workspaceId.value,
+    })
+    if (Option.isSome(ack)) {
+      yield* writeJson(ack.value)
+    }
+
+    const store = yield* EventStore
+    const events = yield* store.subscribe(workspaceId.value)
+    yield* Effect.forkScoped(
+      Stream.runForEach(events, (event) =>
+        Effect.flatMap(eventNotification(event), writeJson),
+      ),
+    )
+  })
+
+const isSingleEventSubscription = (
+  payload: unknown,
+): Option.Option<JsonRpcCommand | JsonRpcRequestError> => {
+  if (Array.isArray(payload)) {
+    return Option.none()
+  }
+  const parsed = parseJsonRpcCommand(payload)
+  if (Either.isLeft(parsed)) {
+    return Option.some(parsed.left)
+  }
+  return parsed.right.request.stream === true &&
+    parsed.right.request.label === 'events.subscribe'
+    ? Option.some(parsed.right)
+    : Option.none()
+}
+
 /**
  * The `GET /rpc` WebSocket handler (spec §7: JSON-RPC 2.0 over WebSocket). It
  * upgrades the connection, then for every inbound text frame executes the
@@ -52,7 +152,9 @@ const parseJson = (text: string): Option.Option<unknown> => {
  * token (handshake `Authorization` header or `?token=` query) authorizes every
  * frame for the life of the socket. A frame's response (when not all
  * notifications) is written back as one text frame; a non-JSON frame echoes a
- * `-32700` parse error. The handler effect lives exactly as long as the socket.
+ * `-32700` parse error. A single `events.subscribe` frame starts a scoped
+ * workspace event subscription and emits later events as `events.event`
+ * notifications. The handler effect lives exactly as long as the socket.
  */
 export const makeRpcSocketHandler = <E, R>(
   routerApp: HttpApp.Default<E, R>,
@@ -60,6 +162,7 @@ export const makeRpcSocketHandler = <E, R>(
   HttpServerResponse.HttpServerResponse,
   Error,
   | Exclude<R, HttpServerRequest.HttpServerRequest>
+  | EventStore
   | HttpServerRequest.HttpServerRequest
 > =>
   Effect.gen(function* () {
@@ -69,13 +172,28 @@ export const makeRpcSocketHandler = <E, R>(
     yield* Effect.scoped(
       Effect.gen(function* () {
         const write = yield* socket.writer
+        const writes = yield* Effect.makeSemaphore(1)
+        const writeJson = (value: unknown) =>
+          writes.withPermits(1)(write(JSON.stringify(value)))
         yield* socket.runRaw((message) =>
           Effect.gen(function* () {
             const text =
               typeof message === 'string' ? message : decoder.decode(message)
             const payload = parseJson(text)
             if (Option.isNone(payload)) {
-              yield* write(JSON.stringify(parseErrorEnvelope))
+              yield* writeJson(parseErrorEnvelope)
+              return
+            }
+            const subscription = isSingleEventSubscription(payload.value)
+            if (Option.isSome(subscription)) {
+              if (subscription.value instanceof JsonRpcRequestError) {
+                const error = jsonRpcError(subscription.value)
+                if (Option.isSome(error)) {
+                  yield* writeJson(error.value)
+                }
+                return
+              }
+              yield* startEventSubscription(subscription.value, writeJson)
               return
             }
             const out = yield* executeJsonRpc(
@@ -84,7 +202,7 @@ export const makeRpcSocketHandler = <E, R>(
               token,
             )
             if (Option.isSome(out)) {
-              yield* write(JSON.stringify(out.value))
+              yield* writeJson(out.value)
             }
           }),
         )

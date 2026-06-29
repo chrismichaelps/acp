@@ -77,8 +77,10 @@ Notifications (no `id`) execute for their side effect but never produce a
 response, even on error. A batch returns only the non-suppressed responses, or
 `None` if none remain; an empty batch array is a single `-32600` Invalid Request.
 Stream commands (`events.subscribe`, `request.stream === true`) are rejected with
-`-32603` before dispatch — long-lived SSE cannot ride a request/response reply;
-clients use the `GET /v1/events/stream` SSE route directly.
+`-32603` before dispatch in request/response runtimes — long-lived SSE cannot
+ride a single HTTP JSON-RPC reply. [[rpc-socket]] handles `events.subscribe`
+itself after upgrade because a WebSocket can keep delivering JSON-RPC
+notifications on the same connection.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -87,6 +89,8 @@ clients use the `GET /v1/events/stream` SSE route directly.
   duplicated.
 - ❌ Do NOT emit a response for a notification, even when dispatch fails.
 - ❌ Do NOT attempt to stream an SSE body through a JSON-RPC reply.
+- ❌ Do NOT own WebSocket notification semantics here; [[rpc-socket]] owns that
+  transport-specific stream lifetime.
 - ❌ Do NOT invent error codes outside the JSON-RPC reserved set — domain failures
   collapse to `-32602`/`-32603` with the structured ACP error preserved in `data`.
 
