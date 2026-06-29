@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · review-cancellation-lifecycle slice · added
+  `review.cancelled` to [[event.schema]], implemented [[review-service]]
+  `cancel` for requested reviews, returned the associated [[WorkUnit]] to
+  `running`, and projected cancellation through REST, JSON-RPC, and
+  [[cli-commands]] with a dedicated `review:cancel` scope; split
+  [[acp-http-api-events]] out of the REST contract to keep the central API file
+  within the source-size budget · focused Vitest gate green · risk LOW
 - 2026-06-29 · post-event-replay-integration-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after workspace [[Event]] replay reads,
   closing stale replay-gap language and selecting [[Review]] cancellation

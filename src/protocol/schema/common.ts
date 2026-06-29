@@ -124,5 +124,6 @@ export const Permission = Schema.Literal(
   'review:approve',
   'review:reject',
   'review:request_changes',
+  'review:cancel',
 )
 export type Permission = typeof Permission.Type

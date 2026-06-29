@@ -85,6 +85,7 @@ const methodLabels = new Set<string>([
   'review.approve',
   'review.reject',
   'review.request_changes',
+  'review.cancel',
   ...eventMethodLabels,
 ])
 
@@ -436,6 +437,23 @@ export const commandFor = (
         request: {
           method: 'POST',
           path: `/v1/reviews/${encodeSegment(params.review_id)}/request_changes`,
+          label: method,
+        },
+      }
+    }
+
+    if (method === 'review.cancel') {
+      const params = yield* decodeParams(
+        Schema.Struct({ review_id: ReviewId }),
+        paramsValue,
+        id,
+      )
+      return {
+        id,
+        expects_response: expectsResponse,
+        request: {
+          method: 'POST',
+          path: `/v1/reviews/${encodeSegment(params.review_id)}/cancel`,
           label: method,
         },
       }

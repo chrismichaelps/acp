@@ -40,7 +40,7 @@ export const Permission: Schema.Literal<[ // session auth scopes (spec §8)
   "event:read","lease:create","work:update","work:publish_event","lease:renew","lease:release",
   "lease:revoke","artifact:create",
   "artifact:update","artifact:delete","checkpoint:create","review:create",
-  "review:approve","review:reject","review:request_changes"]>
+  "review:approve","review:reject","review:request_changes","review:cancel"]>
 ```
 
 ## Algorithm
@@ -60,7 +60,9 @@ append-only workspace timeline may contain sensitive recovery details. Worker
 presence reads use `worker:read` because presence is host-scoped registry state,
 not workspace event history. Lease lifecycle actions are split into create,
 renew, release, and revoke because extending an advisory claim and terminating
-one are different operational powers.
+one are different operational powers. Review decisions are split from
+`review:cancel` because cancellation withdraws a requested gate without creating
+a reviewer outcome.
 
 ## Negative Logic (Prohibited Paths)
 

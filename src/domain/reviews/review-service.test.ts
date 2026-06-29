@@ -163,6 +163,36 @@ describe('ReviewService', () => {
     )
   })
 
+  it('cancels a requested review, emits review.cancelled, and resumes work', () => {
+    const result = runSync(
+      Effect.gen(function* () {
+        yield* prepareWorkForReview()
+        const reviews = yield* ReviewService
+        const work = yield* WorkUnitService
+        const events = yield* EventStore
+        yield* reviews.request(requestReviewInput())
+        const review = yield* reviews.cancel(reviewId, reviewerId, later)
+        const reviewedWork = yield* work.get(workId)
+        const log = yield* events.readAfter('workspace_review', 0)
+        return { review, reviewedWork, log }
+      }),
+    )
+
+    expect(result.review.state).toBe('cancelled')
+    expect(Option.getOrNull(result.reviewedWork)?.state).toBe('running')
+    expect(
+      Chunk.toReadonlyArray(result.log).map((event: Event) => event.type),
+    ).toEqual([
+      'work.created',
+      'work.claimed',
+      'work.started',
+      'review.requested',
+      'work.needs_review',
+      'review.cancelled',
+      'work.unblocked',
+    ])
+  })
+
   it('lists reviews by work and workspace', () => {
     const result = runSync(
       Effect.gen(function* () {

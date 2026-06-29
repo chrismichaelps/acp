@@ -71,6 +71,14 @@ export interface ReviewServiceApi {
     Review,
     NotFoundError | InvalidStateTransitionError | StorageError
   >
+  readonly cancel: (
+    reviewId: ReviewId,
+    actor: WorkerId,
+    now: Timestamp,
+  ) => Effect.Effect<
+    Review,
+    NotFoundError | InvalidStateTransitionError | StorageError
+  >
 }
 
 export class ReviewService extends Context.Tag('ReviewService')<
@@ -102,7 +110,7 @@ const reviewEventType = (state: ReviewState): EventType => {
     case 'changes_requested':
       return 'review.changes_requested'
     case 'cancelled':
-      return 'review.rejected'
+      return 'review.cancelled'
   }
 }
 
@@ -333,6 +341,20 @@ const make = Effect.gen(function* () {
       }),
     )
 
+  const cancel: ReviewServiceApi['cancel'] = (reviewId, actor, now) =>
+    Effect.flatMap(requireReview(reviewId), (review) =>
+      Effect.gen(function* () {
+        const cancelled = yield* transitionReview(
+          review,
+          actor,
+          now,
+          'cancelled',
+        )
+        yield* workUnits.transition(review.work_id, 'running', actor, now)
+        return cancelled
+      }),
+    )
+
   return {
     request,
     get,
@@ -341,6 +363,7 @@ const make = Effect.gen(function* () {
     approve,
     reject,
     requestChanges,
+    cancel,
   } satisfies ReviewServiceApi
 })
 

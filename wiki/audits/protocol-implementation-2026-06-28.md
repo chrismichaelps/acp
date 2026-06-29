@@ -18,7 +18,8 @@ the current ACP reference host against `@root/specs.md` through
 [[spec-canonicalization]], then chooses the next backed implementation gap. This
 revision follows the README lease refresh and WebSocket transport slice, closing
 the stale WebSocket deferral, host-scoped worker presence reads, WebSocket
-event subscription, and the next replay-read integration gap.
+event subscription, replay-read integration gap, and review cancellation
+lifecycle.
 
 ## Current Coverage
 
@@ -32,7 +33,10 @@ transport adapters.
 The REST surface now covers the draft §12 command set plus backed reference-host
 extensions for workspace create/update/archive, work progress publication,
 review approve/reject/request-changes, artifact update/delete, and lease
-renew/revoke. Artifact create/update accepts external URIs for pull request,
+renew/revoke. Review cancellation is now a first-class withdrawal lifecycle:
+`review.cancelled` is a distinct event, not an alias for `review.rejected`, and
+the associated WorkUnit returns from `needs_review` to `running`. Artifact
+create/update accepts external URIs for pull request,
 commit, CI report,
 screenshot, or cloud-object references while preserving host-stored
 `acp://artifacts/{id}` content as the default. Work-centric resume reads now
@@ -52,8 +56,9 @@ storage cursor.
 The JSON-RPC surface covers draft §13 plus the same backed extensions:
 `workspace.create`, `workspace.update`, `workspace.archive`,
 `work.publish_event`, `review.approve`, `review.reject`,
-`review.request_changes`, `artifact.update`, `artifact.delete`, `lease.renew`,
-and `lease.revoke`, with artifact URI fields flowing through the shared schema.
+`review.request_changes`, `review.cancel`, `artifact.update`,
+`artifact.delete`, `lease.renew`, and `lease.revoke`, with artifact URI fields
+flowing through the shared schema.
 Work-centric resume read commands, review-list reads, artifact-content reads,
 workspace work-index reads, and workspace aggregate resume reads are also
 projected through JSON-RPC and the CLI. `events.subscribe` maps to the live
@@ -162,12 +167,11 @@ through REST, JSON-RPC, and the CLI with `event:read`, so recovering agents can
 replay persisted workspace history before opening SSE or WebSocket live
 subscriptions.
 
-Review cancellation remains a bounded domain/event vocabulary gap. [[Review]]
-already includes the `cancelled` state, but [[event.schema]] has no
-`review.cancelled` event type and [[review-service]] deliberately maps no cancel
-operation. This is smaller and more concrete than generated clients or
-platform-node extraction: it is a protocol object state that lacks a faithful
-event and transport projection.
+Review cancellation is now covered. [[event.schema]] includes
+`review.cancelled`, [[review-service]] cancels only requested reviews without
+fabricating a reviewer outcome, [[acp-router]] exposes
+`POST /v1/reviews/{review_id}/cancel` behind `review:cancel`, JSON-RPC maps
+`review.cancel`, and [[cli-commands]] maps `review cancel <review_id>`.
 
 Host-scoped worker presence reads are now covered. [[worker-routes]] exposes the
 current registry through `GET /v1/workers` and `GET /v1/workers/{worker_id}`;
@@ -178,12 +182,12 @@ stream.
 
 ## Next Slice
 
-Add review cancellation as a backed domain lifecycle. The slice should add
-`review.cancelled` to [[event.schema]], teach [[review-service]] to cancel a
-requested review without fabricating another outcome, and project that operation
-through REST, JSON-RPC, and the CLI with a dedicated scope. Generated clients,
-Git-specific extensions, host-presence streams, and platform-node extraction
-remain deferred until a concrete consumer or duplicated boundary appears.
+Re-audit remaining integration gaps after review cancellation before selecting
+the next code slice. The most likely candidates are standalone protocol
+codecs/generated clients or Git-specific artifact/workflow extensions, but they
+should be chosen from current `@root/specs.md` pressure rather than from stale
+queue order. Host-presence streams and platform-node extraction remain deferred
+until a concrete consumer or duplicated boundary appears.
 
 ## Referenced by
 

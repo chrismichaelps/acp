@@ -262,6 +262,12 @@ describe('AcpHttpApi', () => {
         path: '/v1/reviews/:review_id/request_changes',
       },
       {
+        group: 'reviews',
+        name: 'cancelReview',
+        method: 'POST',
+        path: '/v1/reviews/:review_id/cancel',
+      },
+      {
         group: 'events',
         name: 'replayEvents',
         method: 'GET',
