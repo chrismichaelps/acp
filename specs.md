@@ -1520,7 +1520,7 @@ ACP should not grant filesystem, shell, GitHub, or cloud permissions by itself. 
 
 ---
 
-## 19. Relationship to MCP
+## 20. Relationship to MCP
 
 MCP standardizes:
 
@@ -1581,7 +1581,7 @@ An agent may use MCP tools while reporting its work through ACP.
 
 ---
 
-## 21. Example CLI
+## 22. Example CLI
 
 ```bash
 acp init
@@ -1597,7 +1597,7 @@ acp events stream
 
 ---
 
-## 22. Open Questions
+## 23. Open Questions
 
 1. Should leases be advisory or enforced?
 2. Should memory be part of the protocol or remain an implementation detail?
@@ -1609,20 +1609,20 @@ acp events stream
 
 ---
 
-## 23. One-Sentence Pitch
+## 24. One-Sentence Pitch
 
 ACP is a shared workspace protocol that lets AI coding agents and humans coordinate software work through tasks, leases, checkpoints, artifacts, reviews, and events.
 
 
 ---
 
-## 24. Protocol Naming
+## 25. Protocol Naming
 
 Version: 0.1.0 Draft
 
 > ACP is a vendor-neutral protocol for coordinating autonomous software engineering agents, shared workspace state, artifacts, checkpoints, reviews, and execution lifecycle.
 
-## Protocol Naming
+### Naming Rule
 
 **Official name:** Agent Coordination Protocol
 
