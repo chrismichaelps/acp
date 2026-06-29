@@ -34,10 +34,10 @@ delegate → encode → error-map boundary is mandatory (spec §16.8).
 
 ## Adapters
 
-| Adapter  | Type       | Path                                                     | Last verified | Status                       |
-| -------- | ---------- | -------------------------------------------------------- | ------------- | ---------------------------- |
-| HTTP     | production | @root/src/infrastructure/http/                           | 2026-06-26    | API CONTRACT CURRENT         |
-| SSE      | production | @root/src/infrastructure/sse/                            | —             | PLANNED (v0.1 stream)        |
+| Adapter  | Type       | Path                                                             | Last verified | Status                            |
+| -------- | ---------- | ---------------------------------------------------------------- | ------------- | --------------------------------- |
+| HTTP     | production | @root/src/infrastructure/http/                                   | 2026-06-26    | API CONTRACT CURRENT              |
+| SSE      | production | @root/src/infrastructure/sse/                                    | —             | PLANNED (v0.1 stream)             |
 | JSON-RPC | production | @root/src/infrastructure/jsonrpc/ + @root/src/app/{stdio,server} | 2026-06-29    | HTTP + STDIO + WS FRAMING CURRENT |
 
 ## Health
