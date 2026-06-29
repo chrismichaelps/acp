@@ -179,15 +179,21 @@ through REST, JSON-RPC, and the CLI with `event:read`, so recovering agents can
 replay persisted workspace history before opening SSE or WebSocket live
 subscriptions.
 
-Review cancellation is now covered. [[event.schema]] includes
-`review.cancelled`, [[review-service]] cancels only requested reviews without
-fabricating a reviewer outcome, [[acp-router]] exposes
-`POST /v1/reviews/{review_id}/cancel` behind `review:cancel`, JSON-RPC maps
-`review.cancel`, and [[cli-commands]] maps `review cancel <review_id>`. The
-tracked draft spec still needs to catch up to that implementation surface: its
-event list omits `review.cancelled`, its REST and JSON-RPC examples omit cancel,
-and its state-machine prose does not name the `needs_review -> running`
-withdrawal path.
+Review cancellation is now covered in both implementation and the tracked draft
+spec. [[event.schema]] includes `review.cancelled`, [[review-service]] cancels
+only requested reviews without fabricating a reviewer outcome, [[acp-router]]
+exposes `POST /v1/reviews/{review_id}/cancel` behind `review:cancel`, JSON-RPC
+maps `review.cancel`, and [[cli-commands]] maps `review cancel <review_id>`.
+`@root/specs.md` now names the `needs_review -> running` withdrawal path and the
+same REST, JSON-RPC, event, and CLI surface.
+
+The remaining spec drift is permission vocabulary precision. Section 8 still
+shows a short example list even though [[common]] now defines a closed v0.1
+permission vocabulary for worker reads, workspace reads/writes, event replay,
+work mutation/publication, lease lifecycle operations, artifact mutation, and
+the full review decision/cancellation lifecycle. The examples are not wrong, but
+they under-specify the deployed authorization contract for hosts that enable
+`ACP_REQUIRE_AUTH`.
 
 Host-scoped worker presence reads are now covered. [[worker-routes]] exposes the
 current registry through `GET /v1/workers` and `GET /v1/workers/{worker_id}`;
@@ -198,12 +204,14 @@ stream.
 
 ## Next Slice
 
-Align the tracked draft spec with review cancellation before adding another
-protocol feature. The slice should add `review.cancelled` to the Review event
-list, document `POST /v1/reviews/{review_id}/cancel`, include `review.cancel` in
-the JSON-RPC method list, and make the cancellation state-machine path explicit.
-Generated clients, Git-specific workflow extensions, host-presence streams, and
-broader filesystem/command adapters remain deferred until a concrete consumer or
+Align the tracked draft spec's authentication section with the implemented
+closed permission vocabulary before adding another protocol feature. The slice
+should replace the narrow example-only permission block with the current v0.1
+scope families from [[common]], including `worker:read`, `event:read`, work
+update/event publication, lease renew/release/revoke, artifact update/delete,
+and review approve/reject/request_changes/cancel. Generated clients,
+Git-specific workflow extensions, host-presence streams, and broader
+filesystem/command adapters remain deferred until a concrete consumer or
 duplicated boundary appears.
 
 ## Referenced by
