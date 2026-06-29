@@ -120,7 +120,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 51. ✅ Workspace aggregate resume reads for checkpoints, artifacts, and reviews
 52. ✅ Re-audit remaining integration gaps after workspace aggregate reads
 53. ✅ Lease renew/revoke transport parity
-54. ▶ Re-audit remaining integration gaps after lease lifecycle parity
+54. ✅ Re-audit remaining integration gaps after lease lifecycle parity
+55. ▶ Public README refresh after lease lifecycle parity
 
 ## Referenced by
 
