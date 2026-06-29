@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · workspace-memory-core slice · added [[Memory]] protocol schema,
+  storage seam operations, optimized SQLite/in-memory backing, and
+  [[memory-service]] creation/read behavior with `memory.created` event emission
+  · 241 non-socket tests green · risk LOW
 - 2026-06-29 · post-memory-foundation-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after [[Memory]] foundation and
   selected the workspace memory core implementation before transport projection

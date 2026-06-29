@@ -1,11 +1,17 @@
 /** @Acp.Infra.Storage.Port — persistence seam interface */
 import { Context } from 'effect'
 import type { Chunk, Effect, Option } from 'effect'
-import type { Event } from '../../protocol/schema/index.js'
+import type {
+  Event,
+  Memory,
+  ReadMemoryQuery,
+} from '../../protocol/schema/index.js'
 import type { StorageError } from '../../protocol/errors/protocol-error.js'
 
 /** An Event with everything but its monotonic `seq`, which Storage assigns. */
 export type EventDraft = Omit<Event, 'seq'>
+/** A Memory record with everything but its monotonic `seq`, assigned by Storage. */
+export type MemoryDraft = Omit<Memory, 'seq'>
 
 export interface StorageApi {
   readonly put: (
@@ -32,6 +38,13 @@ export interface StorageApi {
     workspaceId: string,
     afterSeq: number,
   ) => Effect.Effect<Chunk.Chunk<Event>, StorageError>
+  readonly appendMemory: (
+    workspaceId: string,
+    draft: MemoryDraft,
+  ) => Effect.Effect<Memory, StorageError>
+  readonly readMemory: (
+    query: ReadMemoryQuery,
+  ) => Effect.Effect<Chunk.Chunk<Memory>, StorageError>
 }
 
 export class Storage extends Context.Tag('Storage')<Storage, StorageApi>() {}

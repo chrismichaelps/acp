@@ -5,13 +5,13 @@ import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Chunk, Effect, Option, Schema } from 'effect'
-import { Event } from '../../protocol/schema/index.js'
+import { Event, Memory, ReadMemoryQuery } from '../../protocol/schema/index.js'
 import {
   makeSqliteStorageLive,
   SqliteMemoryStorageLive,
   Storage,
 } from './index.js'
-import type { EventDraft } from './index.js'
+import type { EventDraft, MemoryDraft } from './index.js'
 
 const run = <A, E>(program: Effect.Effect<A, E, Storage>): A =>
   Effect.runSync(Effect.provide(program, SqliteMemoryStorageLive))
@@ -36,6 +36,41 @@ const draft = (workspace: string, type = 'work.claimed'): EventDraft => {
     data: full.data,
   }
 }
+
+const memoryDraft = (
+  workspace: string,
+  id: string,
+  key = 'handoff.note',
+): MemoryDraft => {
+  const full = Schema.decodeUnknownSync(Memory)({
+    id,
+    workspace_id: workspace,
+    work_id: 'work_1',
+    seq: 0,
+    created_by: 'agent_claude_code',
+    kind: 'note',
+    key,
+    summary: `Memory ${id}`,
+    content: `Content ${id}`,
+    labels: ['handoff'],
+    created_at: '2026-06-25T19:11:00Z',
+  })
+  return {
+    id: full.id,
+    workspace_id: full.workspace_id,
+    work_id: full.work_id,
+    created_by: full.created_by,
+    kind: full.kind,
+    key: full.key,
+    summary: full.summary,
+    content: full.content,
+    labels: full.labels,
+    created_at: full.created_at,
+  }
+}
+
+const memoryQuery = (input: unknown) =>
+  Schema.decodeUnknownSync(ReadMemoryQuery)(input)
 
 const queryPlan = (
   dbPath: string,
@@ -150,6 +185,109 @@ describe('SQLite storage — append-only event log', () => {
       }),
     )
     expect(seqs).toEqual([1996, 1997, 1998, 1999, 2000])
+  })
+})
+
+describe('SQLite storage — workspace memory', () => {
+  it('assigns monotonic per-workspace memory seq', () => {
+    const seqs = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        const m1 = yield* s.appendMemory('ws1', memoryDraft('ws1', 'memory_1'))
+        const m2 = yield* s.appendMemory('ws1', memoryDraft('ws1', 'memory_2'))
+        const other = yield* s.appendMemory(
+          'ws2',
+          memoryDraft('ws2', 'memory_3'),
+        )
+        return [m1.seq, m2.seq, other.seq] as const
+      }),
+    )
+    expect(seqs).toEqual([1, 2, 1])
+  })
+
+  it('reads a small memory tail from thousands of records', () => {
+    const seqs = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        for (let i = 0; i < 2_000; i += 1) {
+          yield* s.appendMemory(
+            'ws_large',
+            memoryDraft('ws_large', `memory_${String(i)}`, 'handoff.note'),
+          )
+        }
+        for (let i = 0; i < 1_000; i += 1) {
+          yield* s.appendMemory(
+            'ws_other',
+            memoryDraft('ws_other', `memory_other_${String(i)}`),
+          )
+        }
+        const tail = yield* s.readMemory(
+          memoryQuery({
+            workspace_id: 'ws_large',
+            after_seq: 1_995,
+            limit: 10,
+          }),
+        )
+        return Chunk.toReadonlyArray(tail).map((record) => record.seq)
+      }),
+    )
+    expect(seqs).toEqual([1996, 1997, 1998, 1999, 2000])
+  })
+
+  it('uses memory indexes for cursor, key, and work reads', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'acp-sqlite-memory-plan-'))
+    const dbPath = join(dir, 'acp.sqlite')
+    const layer = makeSqliteStorageLive(dbPath)
+    try {
+      Effect.runSync(
+        Effect.gen(function* () {
+          const s = yield* Storage
+          yield* s.appendMemory(
+            'workspace_1',
+            memoryDraft('workspace_1', 'memory_1', 'memory.key'),
+          )
+        }).pipe(Effect.provide(layer)),
+      )
+
+      const cursorPlan = queryPlan(
+        dbPath,
+        `SELECT value FROM memory
+         WHERE workspace_id = ? AND seq > ?
+         ORDER BY seq ASC
+         LIMIT ?`,
+        'workspace_1',
+        0,
+        10,
+      )
+      const keyPlan = queryPlan(
+        dbPath,
+        `SELECT value FROM memory INDEXED BY memory_workspace_key_seq
+         WHERE workspace_id = ? AND key = ? AND seq > ?
+         ORDER BY seq ASC
+         LIMIT ?`,
+        'workspace_1',
+        'memory.key',
+        0,
+        10,
+      )
+      const workPlan = queryPlan(
+        dbPath,
+        `SELECT value FROM memory INDEXED BY memory_workspace_work_seq
+         WHERE workspace_id = ? AND work_id = ? AND seq > ?
+         ORDER BY seq ASC
+         LIMIT ?`,
+        'workspace_1',
+        'work_1',
+        0,
+        10,
+      )
+
+      expect(cursorPlan).toContain('USING PRIMARY KEY')
+      expect(keyPlan).toContain('memory_workspace_key_seq')
+      expect(workPlan).toContain('memory_workspace_work_seq')
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
   })
 })
 

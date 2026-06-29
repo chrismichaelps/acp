@@ -74,6 +74,16 @@ export const ArtifactKind = Schema.Literal(
 )
 export type ArtifactKind = typeof ArtifactKind.Type
 
+export const MemoryKind = Schema.Literal(
+  'note',
+  'decision',
+  'observation',
+  'constraint',
+  'handoff',
+  'custom',
+)
+export type MemoryKind = typeof MemoryKind.Type
+
 export const ReviewState = Schema.Literal(
   'requested',
   'approved',
@@ -120,6 +130,8 @@ export const Permission = Schema.Literal(
   'artifact:update',
   'artifact:delete',
   'checkpoint:create',
+  'memory:create',
+  'memory:read',
   'review:create',
   'review:approve',
   'review:reject',
