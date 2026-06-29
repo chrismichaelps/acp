@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · post-readme-refresh-integration-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after README current-surface updates
+  and selected tracked `specs.md` review-cancellation parity as the next docs
+  slice · docs-only validation · risk LOW
 - 2026-06-29 · readme-current-surface-refresh slice · refreshed README prose for
   review cancellation transport parity, the tracked `specs.md` draft, and the
   current `src/infrastructure/platform-node` adapter boundary · validation
