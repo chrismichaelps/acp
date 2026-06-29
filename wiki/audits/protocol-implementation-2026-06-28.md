@@ -107,8 +107,13 @@ requires them when a bearer session is presented. The local no-token
 Standalone protocol codecs and generated clients remain deferred by
 [[ADR-0004-protocol-version-codecs-generated-client]]. They should re-enter the
 queue only when an external SDK or public artifact policy exists. A
-`src/infrastructure/platform-node` extraction also remains premature because
-Node-specific wiring is still small and isolated in app entrypoints.
+The `src/infrastructure/platform-node` boundary is now concrete enough to enter
+the queue. The app graph is stable, WebSocket/live boot are covered by real
+socket tests, and `src/app/server/main.ts` still constructs the Node HTTP server
+directly. SQLite remains an infrastructure storage adapter, and test-only temp
+filesystem imports are not the first concern; the smallest useful extraction is
+the reusable Node HTTP server Layer used by the server entrypoint and real-socket
+tests.
 
 Host-level worker presence streams remain out of scope for the current code.
 ADR-0005 requires a new schema and storage/query contract before any
@@ -182,12 +187,14 @@ stream.
 
 ## Next Slice
 
-Re-audit remaining integration gaps after review cancellation before selecting
-the next code slice. The most likely candidates are standalone protocol
-codecs/generated clients or Git-specific artifact/workflow extensions, but they
-should be chosen from current `@root/specs.md` pressure rather than from stale
-queue order. Host-presence streams and platform-node extraction remain deferred
-until a concrete consumer or duplicated boundary appears.
+Extract the Node HTTP server Layer into `src/infrastructure/platform-node` before
+adding another protocol feature. The slice should create a focused
+platform-node module for the `NodeHttpServer.layer(() => createServer(), { port })`
+construction, mirror it in `wiki/src/infrastructure/platform-node`, and update
+`server-main`, live boot, and WebSocket tests to consume that boundary. Generated
+clients, Git-specific workflow extensions, host-presence streams, and broader
+Node filesystem/command adapters remain deferred until a concrete consumer or
+duplicated boundary appears.
 
 ## Referenced by
 
