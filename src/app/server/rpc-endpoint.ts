@@ -22,7 +22,8 @@ const bearerToken = Effect.map(
 
 // Dispatch a canonical command by replaying it against the SAME router app in the
 // shared service context — no second AppLive, so /rpc and /v1 hit one store.
-const dispatchVia =
+// Exported so the WebSocket framing ([[rpc-socket]]) reuses the exact dispatch.
+export const dispatchVia =
   <E, R>(
     routerApp: HttpApp.Default<E, R>,
   ): JsonRpcDispatch<Exclude<R, HttpServerRequest.HttpServerRequest>> =>
@@ -61,15 +62,16 @@ const dispatchVia =
       ),
     )
 
+// The JSON-RPC `-32700` parse-error envelope (spec §13). Exported so the
+// WebSocket framing ([[rpc-socket]]) can echo the same value on a non-JSON frame.
+export const parseErrorEnvelope = {
+  jsonrpc: '2.0' as const,
+  id: null,
+  error: { code: -32700, message: 'Parse error' },
+}
+
 const parseError: HttpServerResponse.HttpServerResponse =
-  HttpServerResponse.unsafeJson(
-    {
-      jsonrpc: '2.0',
-      id: null,
-      error: { code: -32700, message: 'Parse error' },
-    },
-    { status: 200 },
-  )
+  HttpServerResponse.unsafeJson(parseErrorEnvelope, { status: 200 })
 
 /**
  * The `POST /rpc` handler: read the JSON-RPC payload (single or batch) and the
