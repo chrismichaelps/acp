@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · post-aggregate-read-integration-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after workspace aggregate resume reads
+  and selected lease renew/revoke transport parity as the next backed-command
+  gap · docs-only validation · risk LOW
 - 2026-06-28 · workspace-aggregate-resume-reads slice · projected workspace
   checkpoint, artifact, and review aggregate reads through [[workspace-routes]],
   [[acp-http-api]], [[json-rpc-resume-commands]], and [[cli-commands]] so
