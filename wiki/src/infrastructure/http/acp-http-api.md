@@ -59,6 +59,9 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 - `PATCH /v1/workspaces/{workspace_id}`
 - `POST /v1/workspaces/{workspace_id}/archive`
 - `GET /v1/workspaces/{workspace_id}/work`
+- `GET /v1/workspaces/{workspace_id}/checkpoints`
+- `GET /v1/workspaces/{workspace_id}/artifacts`
+- `GET /v1/workspaces/{workspace_id}/reviews`
 - `POST /v1/work`
 - `GET /v1/work/{work_id}`
 - `POST /v1/work/{work_id}/claim`
@@ -124,6 +127,10 @@ Workspace create/update/archive are declared as backed extensions beside `GET
 Workspace work indexing is a backed read extension over [[work-unit-service]]
 `listForWorkspace`, giving new workers the current WorkUnit ids for a workspace
 before they call work-scoped resume endpoints.
+Workspace aggregate resume reads are backed extensions over
+[[checkpoint-service]], [[artifact-service]], and [[review-service]]
+`listForWorkspace`, giving dashboards and supervising agents a workspace-level
+view of resumability evidence without iterating every WorkUnit id.
 
 ## Negative Logic (Prohibited Paths)
 

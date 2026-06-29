@@ -216,6 +216,36 @@ export const WorkspaceGroup = HttpApiGroup.make('workspaces')
       .addError(ProtocolError, protocolError(401))
       .addError(ProtocolError, protocolError(404)),
   )
+  .add(
+    HttpApiEndpoint.get(
+      'listWorkspaceCheckpoints',
+      '/v1/workspaces/:workspace_id/checkpoints',
+    )
+      .setPath(WorkspacePath)
+      .addSuccess(Schema.Array(Checkpoint))
+      .addError(ProtocolError, protocolError(401))
+      .addError(ProtocolError, protocolError(404)),
+  )
+  .add(
+    HttpApiEndpoint.get(
+      'listWorkspaceArtifacts',
+      '/v1/workspaces/:workspace_id/artifacts',
+    )
+      .setPath(WorkspacePath)
+      .addSuccess(Schema.Array(Artifact))
+      .addError(ProtocolError, protocolError(401))
+      .addError(ProtocolError, protocolError(404)),
+  )
+  .add(
+    HttpApiEndpoint.get(
+      'listWorkspaceReviews',
+      '/v1/workspaces/:workspace_id/reviews',
+    )
+      .setPath(WorkspacePath)
+      .addSuccess(Schema.Array(Review))
+      .addError(ProtocolError, protocolError(401))
+      .addError(ProtocolError, protocolError(404)),
+  )
 
 export const WorkGroup = HttpApiGroup.make('work')
   .add(

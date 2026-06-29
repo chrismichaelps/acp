@@ -67,6 +67,9 @@ import { authorize, ok, pathParam, respond } from './route-support.js'
 import {
   archiveWorkspace,
   createWorkspace,
+  listWorkspaceArtifacts,
+  listWorkspaceCheckpoints,
+  listWorkspaceReviews,
   listWorkspaceWork,
   listWorkspaces,
   updateWorkspace,
@@ -381,6 +384,15 @@ const workRouter = HttpRouter.empty.pipe(
   HttpRouter.post('/v1/workspaces', createWorkspace),
   HttpRouter.patch('/v1/workspaces/:workspace_id', updateWorkspace),
   HttpRouter.get('/v1/workspaces/:workspace_id/work', listWorkspaceWork),
+  HttpRouter.get(
+    '/v1/workspaces/:workspace_id/checkpoints',
+    listWorkspaceCheckpoints,
+  ),
+  HttpRouter.get(
+    '/v1/workspaces/:workspace_id/artifacts',
+    listWorkspaceArtifacts,
+  ),
+  HttpRouter.get('/v1/workspaces/:workspace_id/reviews', listWorkspaceReviews),
   HttpRouter.post('/v1/workspaces/:workspace_id/archive', archiveWorkspace),
   HttpRouter.post('/v1/work', createWork),
   HttpRouter.get('/v1/work/:work_id', getWork),

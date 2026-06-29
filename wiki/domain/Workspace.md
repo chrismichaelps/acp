@@ -15,7 +15,7 @@ aliases: [Workspace, workspace]
 - **Kinds:** `git_repository · git_worktree · directory · container · cloud_sandbox · ci_job`.
 - **Git-aware, not Git-dependent:** a workspace may map to Git but must not require it
   (Design Principle 4.4).
-- **Example:** `workspace_123` "acme/web", kind git_repository, default branch main.
+- **Example:** `workspace_123` "example/workspace", kind git_repository, default branch main.
 
 ## Referenced by
 

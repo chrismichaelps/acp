@@ -15,8 +15,9 @@ aliases: [workspace-routes]
 
 ## Purpose
 
-Own the HTTP handlers for workspace listing, workspace work indexes, and backed
-workspace mutations. The domain [[workspace-service]] already persists
+Own the HTTP handlers for workspace listing, workspace work indexes, workspace
+aggregate resume reads, and backed workspace mutations. The domain
+[[workspace-service]] already persists
 `workspace.created` and `workspace.updated` events and now owns the
 `workspace.archived` lifecycle transition; this module exposes those backed
 behaviors to clients.
@@ -44,6 +45,34 @@ export const createWorkspace: Effect<
 export const listWorkspaceWork: Effect<
   HttpServerResponse,
   never,
+  | WorkUnitService
+  | AppConfigTag
+  | SessionService
+  | HttpServerRequest
+  | HttpRouter.RouteContext
+>
+export const listWorkspaceCheckpoints: Effect<
+  HttpServerResponse,
+  never,
+  | CheckpointService
+  | AppConfigTag
+  | SessionService
+  | HttpServerRequest
+  | HttpRouter.RouteContext
+>
+export const listWorkspaceArtifacts: Effect<
+  HttpServerResponse,
+  never,
+  | ArtifactService
+  | AppConfigTag
+  | SessionService
+  | HttpServerRequest
+  | HttpRouter.RouteContext
+>
+export const listWorkspaceReviews: Effect<
+  HttpServerResponse,
+  never,
+  | ReviewService
   | WorkUnitService
   | AppConfigTag
   | SessionService
@@ -78,14 +107,19 @@ export const archiveWorkspace: Effect<
 
 - `GET /v1/workspaces` → `workspace:read`
 - `GET /v1/workspaces/{workspace_id}/work` → `workspace:read`
+- `GET /v1/workspaces/{workspace_id}/checkpoints` → `workspace:read`
+- `GET /v1/workspaces/{workspace_id}/artifacts` → `workspace:read`
+- `GET /v1/workspaces/{workspace_id}/reviews` → `workspace:read`
 - `POST /v1/workspaces` → `workspace:write`, mints a `WorkspaceId`
 - `PATCH /v1/workspaces/{workspace_id}` → `workspace:write`, full replacement by id
 - `POST /v1/workspaces/{workspace_id}/archive` → `workspace:write`, one-way archive
 
 ### Linkage
 
-- **Requires:** [[workspace-service]], [[work-unit-service]], [[id-clock]],
-  [[route-support]], [[workspace.schema]], [[work-unit.schema]]
+- **Requires:** [[workspace-service]], [[work-unit-service]],
+  [[checkpoint-service]], [[artifact-service]], [[review-service]], [[id-clock]],
+  [[route-support]], [[workspace.schema]], [[work-unit.schema]],
+  [[checkpoint.schema]], [[artifact.schema]], [[review.schema]]
 - **Consumed by:** [[acp-router]]
 
 ## Algorithm
@@ -94,7 +128,10 @@ export const archiveWorkspace: Effect<
 [[workspace-service]] `list`, and encodes the array response. `listWorkspaceWork`
 authorizes `workspace:read`, reads `workspace_id` from the path, delegates to
 [[work-unit-service]] `listForWorkspace`, and encodes the current work index for
-that workspace. `createWorkspace` decodes
+that workspace. `listWorkspaceCheckpoints`, `listWorkspaceArtifacts`, and
+`listWorkspaceReviews` use the same `workspace:read` gate, then delegate to the
+owning domain services' `listForWorkspace` methods so route code never scans
+storage directly. `createWorkspace` decodes
 [[workspace.schema|CreateWorkspacePayload]], mints a `workspace_*` id and
 timestamp, resolves the actor through `workspace:write`, and delegates to service
 `create`. `updateWorkspace` decodes [[workspace.schema|UpdateWorkspacePayload]],
@@ -108,8 +145,8 @@ resolves the actor through `workspace:write`, and delegates to service `archive`
   mints it.
 - ❌ Do NOT duplicate event emission; [[workspace-service]] owns persisted events.
 - ❌ Do NOT archive by deleting the workspace record.
-- ❌ Do NOT scan raw storage in route code; [[work-unit-service]] owns the
-  workspace work filter.
+- ❌ Do NOT scan raw storage in route code; domain services own workspace
+  filtering for work, checkpoints, artifacts, and reviews.
 
 ## Depth
 

@@ -41,7 +41,7 @@ export const parseArgs: (
 ### Commands (spec §21)
 
 | Argv                                                                                  | → request                               |
-| ------------------------------------------------------------------------------------- | --------------------------------------- |
+| ------------------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------ |
 | `workspace list`                                                                      | `GET /v1/workspaces`                    |
 | `workspace create --name --kind --uri [--default-branch]`                             | `POST /v1/workspaces`                   |
 | `workspace update <workspace_id> --name --kind --uri [--default-branch]`              | `PATCH /v1/workspaces/<id>`             |
@@ -54,15 +54,15 @@ export const parseArgs: (
 | `lease request --workspace --holder --kind --uri [--ttl]`                             | `POST /v1/leases`                       |
 | `lease release <lease_id>`                                                            | `POST /v1/leases/<id>/release`          |
 | `checkpoint create --workspace --work --summary`                                      | `POST /v1/checkpoints`                  |
-| `checkpoint list --work <id>`                                                         | `GET /v1/work/<id>/checkpoints`         |
+| `checkpoint list --work <id>                                                          | --workspace <id>`                       | `GET /v1/work/<id>/checkpoints` or workspace aggregate |
 | `checkpoint latest --work <id>`                                                       | `GET /v1/work/<id>/checkpoints/latest`  |
 | `artifact create --workspace --work --kind [--uri] [--summary] [--content]`           | `POST /v1/artifacts`                    |
 | `artifact update <artifact_id> --kind [--uri] [--media-type] [--summary] [--content]` | `PATCH /v1/artifacts/<id>`              |
-| `artifact list --work <id>`                                                           | `GET /v1/work/<id>/artifacts`           |
+| `artifact list --work <id>                                                            | --workspace <id>`                       | `GET /v1/work/<id>/artifacts` or workspace aggregate   |
 | `artifact content <artifact_id>`                                                      | `GET /v1/artifacts/<id>/content`        |
 | `artifact delete <artifact_id>`                                                       | `DELETE /v1/artifacts/<id>`             |
 | `review request --work --by [--reviewer]`                                             | `POST /v1/reviews`                      |
-| `review list --work <id>`                                                             | `GET /v1/work/<id>/reviews`             |
+| `review list --work <id>                                                              | --workspace <id>`                       | `GET /v1/work/<id>/reviews` or workspace aggregate     |
 | `review approve <review_id> --met <csv>`                                              | `POST /v1/reviews/<id>/approve`         |
 | `review reject <review_id>`                                                           | `POST /v1/reviews/<id>/reject`          |
 | `review request-changes <review_id>`                                                  | `POST /v1/reviews/<id>/request_changes` |
@@ -87,9 +87,10 @@ fields. Artifact create/update forward optional `--uri` so the CLI can register
 external pull request, commit, report, or screenshot artifacts without inline
 content. Work resume reads map `work list --workspace`, `work get`, `checkpoint
 list/latest --work`, `artifact list --work`, `artifact content <id>`, and
-`review list --work` onto the read endpoints. `review approve --met` is a
-comma-separated list that becomes `met_requirements`. `events stream` sets
-`stream: true`.
+`review list --work` onto the read endpoints. `checkpoint list`, `artifact list`,
+and `review list` also accept `--workspace` for workspace-level aggregate resume
+reads. `review approve --met` is a comma-separated list that becomes
+`met_requirements`. `events stream` sets `stream: true`.
 
 ## Negative Logic (Prohibited Paths)
 
