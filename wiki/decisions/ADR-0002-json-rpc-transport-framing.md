@@ -10,7 +10,19 @@ aliases: [ADR-0002, ADR-0002-json-rpc-transport-framing]
 
 ## Status
 
-ACCEPTED — 2026-06-27.
+ACCEPTED — 2026-06-27. Partially SUPERSEDED — 2026-06-29 (see Update).
+
+## Update — 2026-06-29
+
+The WebSocket _request/response_ deferral is lifted: [[rpc-socket]] mounts a
+`GET /rpc` upgrade beside `POST /rpc`, reusing the in-process router through the
+same `dispatchVia` ([[rpc-endpoint]]). The design-note concerns this ADR raised
+are resolved for request/response: **auth** is a connection-bound bearer (handshake
+`Authorization` header or `?token=` query, since browsers cannot set handshake
+headers); **server upgrade** is `HttpServerRequest.upgrade` (no `ws` dependency, no
+hand-rolled handshake); **heartbeat/backpressure** are owned by the platform
+socket. What remains deferred is JSON-RPC event _subscription_ (`events.subscribe`)
+— SSE stays the live channel — so this ADR is only partially superseded.
 
 ## Context
 
