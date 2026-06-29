@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · post-open-questions-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after answered Open Questions cleanup
+  and selected workspace memory records foundation, including optimized SQLite
+  query shape and route/API file split planning, as the next slice · docs-only
+  validation · risk LOW
 - 2026-06-29 · spec-open-questions-cleanup slice · converted answered
   `@root/specs.md` Open Questions for advisory leases and dual-mode artifacts
   into resolved v0.1 notes while leaving memory, Git extensions, signed reviews,
