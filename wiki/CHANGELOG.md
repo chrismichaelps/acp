@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · post-websocket-events-integration-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after WebSocket `events.subscribe`,
+  closing stale live-transport deferral language and selecting workspace
+  [[Event]] replay reads over the existing `(workspace_id, seq)` storage shape as
+  the next recovery gap · docs-only validation · risk LOW
 - 2026-06-29 · websocket-event-subscriptions slice · lifted the JSON-RPC
   `events.subscribe` WebSocket deferral in [[rpc-socket]], delivering persisted
   workspace [[Event]]s as `events.event` notifications while keeping `POST /rpc`
