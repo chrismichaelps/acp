@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · post-event-replay-integration-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after workspace [[Event]] replay reads,
+  closing stale replay-gap language and selecting [[Review]] cancellation
+  lifecycle plus `review.cancelled` event vocabulary as the next bounded
+  protocol gap · docs-only validation · risk LOW
 - 2026-06-29 · workspace-event-replay-reads slice · projected [[event-store]]
   `readAfter(workspace_id, after_seq)` through [[event-routes]],
   [[acp-http-api]], [[json-rpc-event-commands]], and [[cli-commands]] with
