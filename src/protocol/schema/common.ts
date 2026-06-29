@@ -107,6 +107,7 @@ export const Permission = Schema.Literal(
   'worker:read',
   'workspace:read',
   'workspace:write',
+  'event:read',
   'work:create',
   'work:claim',
   'work:update',

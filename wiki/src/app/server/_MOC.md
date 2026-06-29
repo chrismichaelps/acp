@@ -15,6 +15,7 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
 - [[workspace-routes]] — workspace list/create/update HTTP handlers.
 - [[worker-routes]] — host-scoped worker registry read handlers.
 - [[resume-routes]] — work-scoped read handlers for handoff and recovery.
+- [[event-routes]] — workspace event replay and SSE stream handlers.
 - [[rpc-endpoint]] — `POST /rpc` JSON-RPC framing over the in-process router.
 - [[rpc-socket]] — `GET /rpc` JSON-RPC WebSocket framing over the same router.
 - [[http-app]] — socket-agnostic host layer (router + sweeper over app + id-clock).

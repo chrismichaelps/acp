@@ -29,6 +29,7 @@ wiring land in a later slice.
 export const WorkPath: Schema.Struct<{ work_id: WorkId }>
 export const LeasePath: Schema.Struct<{ lease_id: LeaseId }>
 export const ArtifactPath: Schema.Struct<{ artifact_id: ArtifactId }>
+export const EventsReplayParams: Schema.Struct<{ workspace_id: WorkspaceId; after_seq: number }>
 export const EventsStreamParams: Schema.Struct<{ workspace_id: WorkspaceId }>
 export const WorkspacePath: Schema.Struct<{ workspace_id: WorkspaceId }>
 export const WorkerPath: Schema.Struct<{ worker_id: WorkerId }>
@@ -89,6 +90,7 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 - `POST /v1/reviews/{review_id}/approve`
 - `POST /v1/reviews/{review_id}/reject`
 - `POST /v1/reviews/{review_id}/request_changes`
+- `GET /v1/events?workspace_id=...&after_seq=...`
 - `GET /v1/events/stream?workspace_id=...`
 
 ### Linkage
@@ -148,6 +150,11 @@ Worker reads are declared as host-scoped presence extensions over
 [[worker-service]] `list` and `get`. They expose current registry state without
 adding worker presence events to the workspace event log.
 
+Event replay reads are declared as backed recovery extensions over
+[[event-store]] `readAfter`. The query shape mirrors the storage scan key:
+workspace id plus a non-negative sequence cursor. Live SSE remains on
+`/v1/events/stream`.
+
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT implement business logic here.
@@ -161,5 +168,5 @@ route drift between server handlers, generated clients, and tests.
 
 ## Referenced by
 
-[[http-index]] · [[Transport]] · [[workspace-routes]] · [[protocol-version]] ·
-[[src/_MOC]]
+[[http-index]] · [[Transport]] · [[workspace-routes]] · [[event-routes]] ·
+[[protocol-version]] · [[src/_MOC]]

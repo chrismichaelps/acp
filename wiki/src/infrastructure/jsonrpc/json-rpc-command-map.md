@@ -24,9 +24,10 @@ The split keeps [[json-rpc]] focused on envelope parsing,
 [[json-rpc-command-support]] focused on reusable JSON-RPC mechanics,
 [[json-rpc-worker-commands]] focused on host-scoped worker reads,
 [[json-rpc-resume-commands]] focused on work-scoped read/query commands,
-[[json-rpc-lease-commands]] focused on lease lifecycle commands, and this module
-focused on the remaining ACP command table. It exists to satisfy the spec's
-file-size rule without weakening method compatibility tests.
+[[json-rpc-lease-commands]] focused on lease lifecycle commands,
+[[json-rpc-event-commands]] focused on event replay/live commands, and this
+module focused on the remaining ACP command table. It exists to satisfy the
+spec's file-size rule without weakening method compatibility tests.
 
 ## Interface
 
@@ -73,7 +74,8 @@ export const commandFor: (
 Validate the method label against the closed method set. Host worker reads
 delegate to [[json-rpc-worker-commands]], work-scoped resume methods delegate to
 [[json-rpc-resume-commands]], and lease lifecycle methods delegate to
-[[json-rpc-lease-commands]]. Full-body methods (`session.initialize`,
+[[json-rpc-lease-commands]]. Event replay/live methods delegate to
+[[json-rpc-event-commands]]. Full-body methods (`session.initialize`,
 `workspace.create`, `work.create`, `artifact.create`, `checkpoint.create`,
 `review.request`) validate params with the HTTP payload schema and forward the
 original JSON body so `Option`-wrapped decoded values do not leak back onto the
@@ -83,8 +85,7 @@ fields, encode path segments with `encodeURIComponent`, and build the exact REST
 route used by the HTTP transport.
 `artifact.create` and `artifact.update` carry optional external artifact `uri`
 values through the shared schema, letting JSON-RPC register PR/commit/report
-artifacts without inlining content. `events.subscribe` builds the SSE route and
-marks the command as stream-capable.
+artifacts without inlining content.
 
 Unknown method labels fail as JSON-RPC `-32601`. Missing or invalid params fail
 as `-32602`, with response suppression for notifications handled later by

@@ -15,14 +15,13 @@ import { WorkUnitService } from '../../domain/work-units/index.js'
 import { WorkerService } from '../../domain/workers/index.js'
 import {
   ApproveReviewPayload,
-  EventsStreamParams,
   InitializeSessionPayload,
   InitializeSessionResponse,
   PublishWorkEventPayload,
   RenewLeasePayload,
   UpdateWorkStatePayload,
 } from '../../infrastructure/http/index.js'
-import { workspaceSseResponse } from '../../infrastructure/sse/index.js'
+import { replayEvents, streamEvents } from './event-routes.js'
 import {
   getWork,
   getArtifactContent,
@@ -397,14 +396,6 @@ const requestReviewChanges = respond(
   }),
 )
 
-const streamEvents = respond(
-  Effect.gen(function* () {
-    const params =
-      yield* HttpServerRequest.schemaSearchParams(EventsStreamParams)
-    return yield* workspaceSseResponse(params.workspace_id)
-  }),
-)
-
 // The canonical REST surface (spec §12). JSON-RPC dispatch replays against this.
 const workRouter = HttpRouter.empty.pipe(
   HttpRouter.post('/v1/session/initialize', initializeSession),
@@ -458,6 +449,7 @@ const v1Router = commandRouter.pipe(
     '/v1/reviews/:review_id/request_changes',
     requestReviewChanges,
   ),
+  HttpRouter.get('/v1/events', replayEvents),
   HttpRouter.get('/v1/events/stream', streamEvents),
 )
 
