@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · spec-permission-vocabulary-parity slice · aligned
+  `@root/specs.md` authentication with the closed v0.1 [[common]]
+  permission vocabulary and replaced the stale bearer-token placeholder with
+  ACP naming · validation pending · risk LOW
 - 2026-06-29 · post-spec-review-cancellation-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after tracked spec review
   cancellation parity and selected `@root/specs.md` permission vocabulary
