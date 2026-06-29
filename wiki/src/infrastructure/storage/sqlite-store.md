@@ -16,9 +16,10 @@ aliases: [sqlite-store, SqliteStorage]
 ## Purpose
 
 File-backed production adapter behind the [[Storage]] seam (spec §17). It provides
-the same keyed JSON collections and per-workspace append-only [[Event]] log as
-[[in-memory-store]], but persists them through Node 24's built-in `node:sqlite`
-runtime without adding a package dependency.
+the same keyed JSON collections, per-workspace append-only [[Event]] log, and
+optimized [[Memory]] record table as [[in-memory-store]], but persists them
+through Node 24's built-in `node:sqlite` runtime without adding a package
+dependency.
 
 ## Interface
 
@@ -36,11 +37,16 @@ export const SqliteMemoryStorageLive: Layer.Layer<Storage, StorageError>
 ```sql
 kv(collection TEXT, id TEXT, value TEXT, PRIMARY KEY(collection, id))
 events(workspace_id TEXT, seq INTEGER, value TEXT, PRIMARY KEY(workspace_id, seq))
+memory(workspace_id TEXT, seq INTEGER, id TEXT, work_id TEXT, kind TEXT, key TEXT,
+       labels_json TEXT, value_json TEXT, created_at TEXT,
+       PRIMARY KEY(workspace_id, seq), UNIQUE(workspace_id, id))
 ```
 
-Both tables are created `WITHOUT ROWID`, so the composite primary key is the table
-layout. Hot reads use those keys directly: `kv(collection, id)`, `kv(collection)
-ORDER BY id`, and `events(workspace_id, seq)` for tail replay.
+All three tables are created `WITHOUT ROWID`, so the composite primary key is the
+table layout. Hot reads use those keys directly: `kv(collection, id)`,
+`kv(collection) ORDER BY id`, `events(workspace_id, seq)` for tail replay, and
+`memory(workspace_id, seq)` for memory cursor reads. Secondary indexes cover
+memory key/work handoff reads.
 
 ### Linkage
 
@@ -52,7 +58,7 @@ ORDER BY id`, and `events(workspace_id, seq)` for tail replay.
 ## Algorithm
 
 Open the database in a scoped Layer, set `busy_timeout`, WAL journaling, and
-`synchronous=NORMAL`, create the two `WITHOUT ROWID` tables, prepare statements
+`synchronous=NORMAL`, create the three `WITHOUT ROWID` tables, prepare statements
 once, and close the handle on release. `put` encodes the unknown value as JSON and
 upserts into `kv`; `get` loads one JSON cell and returns `Option.none` for absence;
 `list` walks only the requested collection in primary-key order; `remove` deletes
@@ -66,6 +72,12 @@ the [[event.schema]] so persisted data cannot silently drift from the protocol
 model. Tests assert the query plan uses the composite primary keys for collection
 and event reads and include a thousands-of-events tail replay regression.
 
+`appendMemory` mirrors event sequence ownership for [[Memory]] records. It assigns
+`MAX(seq) + 1` inside `BEGIN IMMEDIATE`, stores the encoded record plus
+query columns, and returns the decoded record. `readMemory` uses the
+`(workspace_id, seq)` cursor by default and may constrain by key or work id
+through secondary indexes.
+
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT expose SQLite statements or database handles through [[Storage]].
@@ -74,6 +86,8 @@ and event reads and include a thousands-of-events tail replay regression.
   [[event.schema]].
 - ❌ Do NOT prepare statements per operation on hot paths; prepare once per Layer.
 - ❌ Do NOT full-scan the event table for replay; constrain by `(workspace_id, seq)`.
+- ❌ Do NOT read Memory through the generic `kv` collection; use the dedicated
+  table and cursor/index statements.
 - ❌ Do NOT add a third-party SQLite dependency for this slice; Node 24 provides the
   local runtime surface.
 
@@ -97,4 +111,5 @@ force domain services to know about SQL and durable ordering.
 
 ## Referenced by
 
-[[storage-index]] · [[storage]] · [[Storage]] · [[src/_MOC]]
+[[storage-index]] · [[storage]] · [[workspace-memory-records]] · [[Storage]] ·
+[[src/_MOC]]

@@ -24,7 +24,7 @@ primitive — plus the closed `EventType` vocabulary (spec §10.8, §11).
 
 ```typescript
 export const EventType: Schema.Literal<[ // all spec §11 types
-  "worker.online", … "review.cancelled" ]>
+  "worker.online", … "memory.created", … "review.cancelled" ]>
 export const Event: Schema.Struct<{
   id: EventId; type: EventType; workspace_id: WorkspaceId
   work_id: optionalWith<WorkId, Option>; actor: WorkerId
@@ -48,6 +48,10 @@ the withdrawal signal for an outstanding review gate; it must not be collapsed
 into `review.rejected`, because rejection is an explicit reviewer outcome while
 cancellation means the gate itself was withdrawn.
 
+Memory events include `memory.created`, emitted after a [[Memory]] record is
+persisted. Memory updates/deletes are intentionally absent in v0.1 because
+Memory is append-oriented handoff context.
+
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT emit an `Event` whose `type` is outside the `EventType` union.
@@ -61,4 +65,5 @@ it scatters string event-name literals across every service.
 
 ## Referenced by
 
-[[EventStream]] · [[Storage]] · [[ADR-0005-worker-presence-scope]] · [[src/_MOC]]
+[[EventStream]] · [[Storage]] · [[Memory]] · [[ADR-0005-worker-presence-scope]] ·
+[[src/_MOC]]

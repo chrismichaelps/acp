@@ -19,6 +19,9 @@ export type ArtifactId = typeof ArtifactId.Type
 export const CheckpointId = Schema.String.pipe(Schema.brand('CheckpointId'))
 export type CheckpointId = typeof CheckpointId.Type
 
+export const MemoryId = Schema.String.pipe(Schema.brand('MemoryId'))
+export type MemoryId = typeof MemoryId.Type
+
 export const ReviewId = Schema.String.pipe(Schema.brand('ReviewId'))
 export type ReviewId = typeof ReviewId.Type
 

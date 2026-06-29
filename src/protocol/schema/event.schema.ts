@@ -30,6 +30,7 @@ export const EventType = Schema.Literal(
   'artifact.updated',
   'artifact.deleted',
   'checkpoint.created',
+  'memory.created',
   'review.requested',
   'review.approved',
   'review.rejected',

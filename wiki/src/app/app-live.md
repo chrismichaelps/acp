@@ -30,6 +30,7 @@ export const AppLive: Layer.Layer<
   | LeaseService
   | ArtifactService
   | CheckpointService
+  | MemoryService
   | ReviewService
 >
 ```
@@ -42,6 +43,9 @@ from the selected storage. Provide each domain service with the storage/event/co
 dependencies it needs. Provide [[review-service]] from [[work-unit-service]] because
 review outcomes are coupled to WorkUnit state transitions. Merge the resulting
 services into one Layer.
+[[memory-service]] is provided from the same [[event-store]] layer as
+checkpoints/artifacts so Memory creation can persist records and emit
+`memory.created` without transport dependencies.
 
 ## Negative Logic (Prohibited Paths)
 

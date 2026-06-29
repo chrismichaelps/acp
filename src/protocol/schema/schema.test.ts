@@ -7,6 +7,9 @@ import {
   Workspace,
   Lease,
   Event,
+  Memory,
+  CreateMemoryPayload,
+  ReadMemoryQuery,
   CreateWorkPayload,
 } from './index.js'
 
@@ -161,5 +164,53 @@ describe('Workspace / Lease / Event schemas', () => {
         data: {},
       }),
     ).toThrow()
+  })
+})
+
+describe('Memory schema', () => {
+  it('decodes memory records and payload filters', () => {
+    const memory = Schema.decodeUnknownSync(Memory)({
+      id: 'memory_123',
+      workspace_id: 'workspace_123',
+      work_id: 'work_123',
+      seq: 3,
+      created_by: 'agent_claude_code',
+      kind: 'decision',
+      key: 'auth.redirect.async-session',
+      summary: 'Redirect waits for session creation.',
+      content: 'The callback awaits session creation before navigation.',
+      labels: ['auth', 'handoff'],
+      created_at: '2026-06-25T19:11:00Z',
+    })
+    const payload = Schema.decodeUnknownSync(CreateMemoryPayload)({
+      workspace_id: 'workspace_123',
+      kind: 'note',
+      key: 'handoff.note',
+      summary: 'Short note.',
+      content: 'Useful for the next worker.',
+      labels: [],
+    })
+    const query = Schema.decodeUnknownSync(ReadMemoryQuery)({
+      workspace_id: 'workspace_123',
+      after_seq: 2,
+      key: 'auth.redirect.async-session',
+    })
+
+    expect(memory.seq).toBe(3)
+    expect(Option.isNone(payload.work_id)).toBe(true)
+    expect(Option.getOrNull(query.key)).toBe('auth.redirect.async-session')
+  })
+
+  it('decodes memory.created events', () => {
+    const e = Schema.decodeUnknownSync(Event)({
+      id: 'event_memory_123_created',
+      type: 'memory.created',
+      workspace_id: 'workspace_123',
+      actor: 'agent_claude_code',
+      timestamp: '2026-06-25T19:11:00Z',
+      seq: 1,
+      data: { memory_id: 'memory_123' },
+    })
+    expect(e.type).toBe('memory.created')
   })
 })
