@@ -11,8 +11,8 @@ aliases: [Lease, lease]
   conflicting on the same resource.
 - **Canonical name:** Lease. Never "lock" (a lock implies permanence; a lease expires),
   never "reservation".
-- **Not:** ownership — a lease is advisory-or-enforced (Open Question 22.1) and always
-  bounded by `expires_at`.
+- **Not:** ownership — a lease is advisory coordination state, not a mandatory
+  filesystem or scheduler lock, and is always bounded by `expires_at`.
 - **States:** `active · expired · released · revoked`.
 - **Resource kinds:** `file · directory · branch · worktree · task · service ·
 database_migration · custom`.

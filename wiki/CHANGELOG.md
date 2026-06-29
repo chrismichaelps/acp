@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · workspace-memory-foundation slice · added tracked
+  `@root/specs.md` foundation and wiki anchors for [[Memory]] records,
+  including `memory.created`, REST/JSON-RPC surfaces, `memory:create/read`
+  scopes, and optimized SQLite cursor/index shape for thousands of records ·
+  validation pending · risk LOW
 - 2026-06-29 · post-open-questions-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after answered Open Questions cleanup
   and selected workspace memory records foundation, including optimized SQLite
