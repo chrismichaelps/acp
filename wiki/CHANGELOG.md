@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · workspace-aggregate-resume-reads slice · projected workspace
+  checkpoint, artifact, and review aggregate reads through [[workspace-routes]],
+  [[acp-http-api]], [[json-rpc-resume-commands]], and [[cli-commands]] so
+  dashboards and supervising agents can inspect resumability evidence without
+  iterating every WorkUnit id · 217 tests green · risk LOW
 - 2026-06-28 · post-work-index-integration-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after workspace work indexing and
   selected workspace-scoped checkpoint, artifact, and review aggregate reads as

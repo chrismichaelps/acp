@@ -117,7 +117,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 48. ✅ Post-resume-read integration audit — workspace work index selected
 49. ✅ Workspace work index read endpoint
 50. ✅ Re-audit remaining integration gaps after workspace work index
-51. ▶ Workspace aggregate resume reads for checkpoints, artifacts, and reviews
+51. ✅ Workspace aggregate resume reads for checkpoints, artifacts, and reviews
+52. ▶ Re-audit remaining integration gaps after workspace aggregate reads
 
 ## Referenced by
 

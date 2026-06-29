@@ -52,6 +52,10 @@ export const acpRouter: HttpRouter.HttpRouter<
   [[Workspace]]s through [[workspace-routes]]
 - `GET /v1/workspaces/:workspace_id/work` → list [[WorkUnit]]s in a workspace
   through [[workspace-routes]]
+- `GET /v1/workspaces/:workspace_id/checkpoints`
+  · `GET /v1/workspaces/:workspace_id/artifacts`
+  · `GET /v1/workspaces/:workspace_id/reviews` → list workspace-scoped resume
+  evidence and review gates through [[workspace-routes]]
 - `POST /v1/work` · `GET /v1/work/:work_id`
   · `POST /v1/work/:work_id/claim` · `PATCH /v1/work/:work_id`
   · `POST /v1/work/:work_id/events`
@@ -90,6 +94,9 @@ Per inline route: decode body (`HttpServerRequest.schemaBodyJson`) / path
 Work-scoped resume reads are delegated to [[resume-routes]] for the same reason.
 Those reads include current work, checkpoint history/latest, artifact metadata,
 review gates, and host-stored artifact content.
+Workspace-scoped resume aggregates stay in [[workspace-routes]] beside the
+workspace work index and delegate to the owning domain services'
+`listForWorkspace` methods.
 
 `initializeSession` is the one route with compatibility normalization. The HTTP
 schema accepts the draft spec handshake, where worker capability booleans sit

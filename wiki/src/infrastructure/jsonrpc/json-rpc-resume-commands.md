@@ -14,9 +14,9 @@ aliases: [json-rpc-resume-commands]
 
 ## Purpose
 
-Own the work-resume JSON-RPC method mappings that would otherwise bloat
-[[json-rpc-command-map]]. The methods are read-only projections over the new
-work-scoped REST resume endpoints.
+Own the resume JSON-RPC method mappings that would otherwise bloat
+[[json-rpc-command-map]]. The methods are read-only projections over work- and
+workspace-scoped REST resume endpoints.
 
 ## Interface
 
@@ -35,20 +35,25 @@ export const commandForResume: (
 - `work.get`
 - `work.list_for_workspace`
 - `checkpoint.list_for_work`
+- `checkpoint.list_for_workspace`
 - `checkpoint.latest_for_work`
 - `artifact.list_for_work`
+- `artifact.list_for_workspace`
 - `artifact.read_content`
 - `review.list_for_work`
+- `review.list_for_workspace`
 
 ## Algorithm
 
 For work-scoped resume methods, decode `work_id` through [[ids]], encode it as a
 URL path segment, and return the canonical REST read command. For workspace work
 indexes, decode `workspace_id` and map it to
-`GET /v1/workspaces/{workspace_id}/work`. For artifact content reads, decode
+`GET /v1/workspaces/{workspace_id}/work`. Workspace aggregate methods reuse the
+same decoded `workspace_id` and map to `/checkpoints`, `/artifacts`, or
+`/reviews` under the workspace path. For artifact content reads, decode
 `artifact_id` and map it to `GET /v1/artifacts/{artifact_id}/content`.
-Unsupported methods return `Option.none` so [[json-rpc-command-map]] can continue
-with the mutation table or method-not-found flow.
+Unsupported methods return `Option.none` so [[json-rpc-command-map]] can
+continue with the mutation table or method-not-found flow.
 
 ## Negative Logic (Prohibited Paths)
 
