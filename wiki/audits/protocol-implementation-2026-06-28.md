@@ -16,8 +16,8 @@ refresh, CLI parser dispatch-table, external artifact reference, work resume
 query, Effect observability logging, and second resume-read slices. It compares
 the current ACP reference host against `@root/specs.md` through
 [[spec-canonicalization]], then chooses the next backed implementation gap. This
-revision follows the workspace aggregate resume-read slice and narrows the
-remaining backed-command gap to lease lifecycle parity.
+revision follows the lease lifecycle transport parity slice and selects public
+README drift as the next small docs correction.
 
 ## Current Coverage
 
@@ -30,8 +30,9 @@ transport adapters.
 
 The REST surface now covers the draft §12 command set plus backed reference-host
 extensions for workspace create/update/archive, work progress publication,
-review approve/reject/request-changes, and artifact update/delete. Artifact
-create/update accepts external URIs for pull request, commit, CI report,
+review approve/reject/request-changes, artifact update/delete, and lease
+renew/revoke. Artifact create/update accepts external URIs for pull request,
+commit, CI report,
 screenshot, or cloud-object references while preserving host-stored
 `acp://artifacts/{id}` content as the default. Work-centric resume reads now
 cover `GET /v1/work/{work_id}`, checkpoint lists, latest checkpoint, artifact
@@ -47,12 +48,13 @@ without iterating every WorkUnit id. The router and the declarative
 The JSON-RPC surface covers draft §13 plus the same backed extensions:
 `workspace.create`, `workspace.update`, `workspace.archive`,
 `work.publish_event`, `review.approve`, `review.reject`,
-`review.request_changes`, `artifact.update`, and `artifact.delete`, with
-artifact URI fields flowing through the shared schema. Work-centric resume read
-commands, review-list reads, artifact-content reads, workspace work-index reads,
-and workspace aggregate resume reads are also projected through JSON-RPC and the
-CLI. `events.subscribe` maps to the SSE route. Runtime execution is available
-through `POST /rpc` and `acp-jsonrpc-stdio`; WebSocket remains deferred by
+`review.request_changes`, `artifact.update`, `artifact.delete`, `lease.renew`,
+and `lease.revoke`, with artifact URI fields flowing through the shared schema.
+Work-centric resume read commands, review-list reads, artifact-content reads,
+workspace work-index reads, and workspace aggregate resume reads are also
+projected through JSON-RPC and the CLI. `events.subscribe` maps to the SSE
+route. Runtime execution is available through `POST /rpc` and
+`acp-jsonrpc-stdio`; WebSocket remains deferred by
 [[ADR-0002-json-rpc-transport-framing]].
 
 The event vocabulary boundary is settled for v0.1. Workspace archive and
@@ -83,10 +85,10 @@ require new protocol state, storage shape, or event semantics, only an expanded
 argv-to-route projection, usage text, and parser/client tests.
 
 Permission-scope parity is now covered. [[common]] includes dedicated action
-scopes for backed work updates/events, lease release, artifact update/delete, and
-review approve/reject/request-changes, and [[acp-router]] requires them when a
-bearer session is presented. The local no-token `worker_system` fallback remains
-unchanged for development mode.
+scopes for backed work updates/events, lease renew/release/revoke, artifact
+update/delete, and review approve/reject/request-changes, and [[acp-router]]
+requires them when a bearer session is presented. The local no-token
+`worker_system` fallback remains unchanged for development mode.
 
 Standalone protocol codecs and generated clients remain deferred by
 [[ADR-0004-protocol-version-codecs-generated-client]]. They should re-enter the
@@ -97,9 +99,10 @@ Node-specific wiring is still small and isolated in app entrypoints.
 Host-level worker presence streams remain out of scope. ADR-0005 requires a new
 schema and storage/query contract before any host-presence feed is implemented.
 
-Public documentation drift is now covered. The README describes the implemented
+Public documentation drift is open again. The README describes the implemented
 REST/SSE, `POST /rpc`, stdio JSON-RPC, SQLite durability, local versus required
-auth, scoped mutation permissions, expanded CLI, and WebSocket deferral.
+auth, scoped mutation permissions, expanded CLI, and WebSocket deferral, but it
+does not yet mention lease renew/revoke or the latest CLI usage split.
 
 SQLite query shape is not the next bottleneck. [[sqlite-store]] uses `WITHOUT
 ROWID` composite primary-key layouts for keyed collections and per-workspace
@@ -126,24 +129,19 @@ evidence and gates: checkpoints, artifact metadata, and reviews. Supervising
 agents no longer need to iterate every WorkUnit id to reconstruct workspace
 resumability state.
 
-The next backed-command gap is lease lifecycle parity. [[lease-service]] already
-owns `renew` and `revoke`, and [[event.schema]] already includes
-`lease.renewed` and `lease.revoked`, but the public transports expose only
-request and release. That leaves long-running workers unable to extend an
-advisory claim through ACP and leaves human or supervising systems without a
-transport-level way to revoke a stale or unsafe lease before TTL expiry.
+Lease lifecycle parity is now covered. [[lease-service]] `renew` and `revoke`
+are projected through REST, JSON-RPC, and the CLI with dedicated `lease:renew`
+and `lease:revoke` scopes. Long-running workers can extend advisory claims
+through ACP, and supervising systems can revoke stale or unsafe leases before TTL
+expiry.
 
 ## Next Slice
 
-Add lease lifecycle transport parity: `POST /v1/leases/{lease_id}/renew` and
-`POST /v1/leases/{lease_id}/revoke`, JSON-RPC `lease.renew` and
-`lease.revoke`, and CLI `lease renew`/`lease revoke`. Reuse
-[[lease-service]] so conflict, TTL, and event semantics remain centralized.
-Extend permission scopes explicitly rather than overloading `lease:release`;
-renew and revoke are different operational powers. Generated clients,
-host-level presence streams, WebSocket transport, Git-specific extensions, and
-platform-node extraction remain deferred until a concrete consumer or duplicated
-boundary appears.
+Refresh the public README so it names lease renew/revoke routes, JSON-RPC
+methods, CLI commands, and the dedicated scopes. Keep the update explanatory and
+compact; generated clients, host-level presence streams, WebSocket transport,
+Git-specific extensions, and platform-node extraction remain deferred until a
+concrete consumer or duplicated boundary appears.
 
 ## Referenced by
 
