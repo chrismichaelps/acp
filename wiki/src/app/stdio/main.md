@@ -14,9 +14,10 @@ aliases: [stdio-main]
 
 ## Purpose
 
-Run a JSON-RPC stdio bridge for ACP. The process reads Content-Length frames from
-stdin, forwards each JSON body unchanged to `POST /rpc` on the configured ACP
-host, and writes any non-empty JSON-RPC response back as a Content-Length frame.
+Run a JSON-RPC stdio bridge for ACP. The process IO is supplied by
+[[node-process-io]]: it reads Content-Length frames from stdin, forwards each JSON
+body unchanged to `POST /rpc` on the configured ACP host, and writes any
+non-empty JSON-RPC response back as a Content-Length frame.
 This gives tools that expect MCP/LSP-style stdio framing a narrow adapter without
 creating a second in-process ACP host.
 
@@ -38,17 +39,18 @@ acp-jsonrpc-stdio -> ./dist/app/stdio/main.js
 
 ### Linkage
 
-- **Requires:** [[stdio-frames]], `POST /rpc` from [[rpc-endpoint]].
+- **Requires:** [[stdio-frames]], [[node-process-io]], `POST /rpc` from
+  [[rpc-endpoint]].
 - **Consumed by:** stdio-capable host integrations.
 
 ## Algorithm
 
 Resolve the target base URL from environment configuration. Accumulate bytes from
-`process.stdin`, decode every complete Content-Length frame, and POST each JSON
+`nodeStdin()`, decode every complete Content-Length frame, and POST each JSON
 body to `${baseUrl}/rpc` as `application/json`. If `ACP_RPC_TOKEN` is set, forward
 it as `Authorization: Bearer ...`. A `204` response is silent because the JSON-RPC
 payload was a notification or all-notification batch. Any non-empty response body
-is written to stdout using [[stdio-frames]].
+is written through `nodeStdoutWrite` using [[stdio-frames]].
 
 ## Negative Logic (Prohibited Paths)
 

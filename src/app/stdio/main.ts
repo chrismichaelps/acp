@@ -1,7 +1,10 @@
 /** @Acp.App.Stdio.Main — JSON-RPC stdio bridge to the local ACP host */
-import process from 'node:process'
 import { NodeRuntime } from '@effect/platform-node'
 import { Config, Console, Effect, Either } from 'effect'
+import {
+  nodeStdin,
+  nodeStdoutWrite,
+} from '../../infrastructure/platform-node/index.js'
 import {
   appendFrameBytes,
   decodeStdioFrames,
@@ -35,7 +38,7 @@ const runLoop = (
 ): Effect.Effect<void, unknown> =>
   Effect.tryPromise(async () => {
     let buffer: Bytes = new Uint8Array()
-    for await (const chunk of process.stdin) {
+    for await (const chunk of nodeStdin()) {
       buffer = appendFrameBytes(buffer, readChunk(chunk))
       const decoded = decodeStdioFrames(buffer)
       if (Either.isLeft(decoded)) {
@@ -45,7 +48,7 @@ const runLoop = (
       for (const message of decoded.right.messages) {
         const response = await postRpc(baseUrl, message, token)
         if (response !== undefined) {
-          process.stdout.write(encodeStdioFrame(response))
+          nodeStdoutWrite(encodeStdioFrame(response))
         }
       }
     }
