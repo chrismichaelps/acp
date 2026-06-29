@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-28 · post-lease-lifecycle-integration-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after lease renew/revoke transport
+  parity and selected the public README refresh as the next docs correction ·
+  docs-only validation · risk LOW
 - 2026-06-28 · lease-lifecycle-transport-parity slice · projected
   [[lease-service]] renew/revoke through [[acp-router]], [[acp-http-api]],
   [[json-rpc-command-map]], and [[cli-commands]] with dedicated `lease:renew`
