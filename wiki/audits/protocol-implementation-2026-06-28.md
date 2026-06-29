@@ -128,12 +128,12 @@ request/response framing and event notifications, SQLite durability, local
 versus required auth, scoped mutation permissions, worker registry reads,
 expanded CLI, and lease renew/revoke.
 
-The local draft spec still carries historical Hadoof-era naming and placeholder
-examples such as `github.com/acme/web.git`. [[spec-canonicalization]] tells
-readers how to interpret that drift, but the file itself is now the last public
-surface that can make a new reader think ACP depends on a nonexistent repository
-or an old product name. That is a better next documentation slice than generated
-clients because it lowers integration confusion without adding new behavior.
+The draft spec is now tracked and canonicalized. Normative sections use Agent
+Coordination Protocol (ACP), `ACP_` configuration examples, `acp://` artifact
+examples, and illustrative `example.com` repository URIs. Hadoof appears only in
+the historical supersession note. The next visible spec hygiene issue is section
+numbering drift: `Relationship to MCP` repeats section 19 and `Example CLI`
+repeats section 21, which makes references to later sections ambiguous.
 
 SQLite query shape is not the next bottleneck. [[sqlite-store]] uses `WITHOUT
 ROWID` composite primary-key layouts for keyed collections and per-workspace
@@ -195,14 +195,12 @@ stream.
 
 ## Next Slice
 
-Canonicalize the public draft spec examples before adding another protocol
-feature. The slice should update `@root/specs.md` from Hadoof-era terminology to
-ACP terminology where the document is normative, replace the nonexistent
-`github.com/acme/web.git` example with an obviously illustrative example domain,
-and preserve the historical-name note for readers of older drafts. Generated
-clients, Git-specific workflow extensions, host-presence streams, and broader
-filesystem/command adapters remain deferred until a concrete consumer or
-duplicated boundary appears.
+Clean up `@root/specs.md` section numbering before adding another protocol
+feature. The slice should renumber the repeated late sections so Security,
+MCP relationship, roadmap, CLI example, open questions, pitch, and naming each
+have stable unique headings. Generated clients, Git-specific workflow extensions,
+host-presence streams, and broader filesystem/command adapters remain deferred
+until a concrete consumer or duplicated boundary appears.
 
 ## Referenced by
 
