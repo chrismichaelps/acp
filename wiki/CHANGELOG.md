@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · post-review-cancellation-integration-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after [[Review]] cancellation,
+  confirming `review.cancelled` transport parity and selecting a narrow
+  `src/infrastructure/platform-node` HTTP server Layer extraction as the next
+  spec-aligned architecture slice · docs-only validation · risk LOW
 - 2026-06-29 · review-cancellation-lifecycle slice · added
   `review.cancelled` to [[event.schema]], implemented [[review-service]]
   `cancel` for requested reviews, returned the associated [[WorkUnit]] to
