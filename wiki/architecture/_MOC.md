@@ -127,7 +127,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 58. ✅ Re-audit remaining integration gaps after worker presence reads
 59. ✅ JSON-RPC event subscription semantics over WebSocket
 60. ✅ Re-audit remaining integration gaps after WebSocket event subscriptions
-61. ▶ Workspace event replay reads
+61. ✅ Workspace event replay reads
+62. ▶ Review cancellation lifecycle
 
 ## Referenced by
 
