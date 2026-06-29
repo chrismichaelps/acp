@@ -1,0 +1,119 @@
+/** @Acp.App.Server.RpcSocket.Test — round-trips JSON-RPC over a real WebSocket */
+import { createServer } from 'node:http'
+import { describe, expect, it } from 'vitest'
+import { HttpServer } from '@effect/platform'
+import { NodeHttpServer } from '@effect/platform-node'
+import { Effect } from 'effect'
+import { HttpAppLive } from './http-app.js'
+
+// Port 0 → the OS assigns a free ephemeral port; binds a real TCP socket the
+// WebSocket client can dial, exercising the upgrade path end to end.
+const EphemeralServerLive = NodeHttpServer.layer(() => createServer(), {
+  port: 0,
+})
+
+const worker = {
+  id: 'agent_claude_code',
+  name: 'Claude Code',
+  kind: 'agent',
+  status: 'online',
+  capabilities: ['can_edit_files', 'can_review'],
+}
+
+// One JSON-RPC request/response over a fresh WebSocket. Opens `wsUrl`, sends one
+// frame on open, resolves with the parsed reply frame, then closes the socket.
+const rpcOverSocket = (wsUrl: string, request: unknown): Promise<unknown> =>
+  new Promise((resolve, reject) => {
+    const socket = new WebSocket(wsUrl)
+    socket.addEventListener('open', () => {
+      socket.send(JSON.stringify(request))
+    })
+    socket.addEventListener('message', (event) => {
+      resolve(JSON.parse(String(event.data)))
+      socket.close()
+    })
+    socket.addEventListener('error', () => {
+      reject(new Error('socket error'))
+    })
+  })
+
+const onLiveServer = <A>(
+  use: (httpBase: string, wsBase: string) => Promise<A>,
+) =>
+  Effect.runPromise(
+    HttpServer.addressWith((address) => {
+      const port = address._tag === 'TcpAddress' ? address.port : 0
+      const host = `127.0.0.1:${port.toString()}`
+      return Effect.promise(() => use(`http://${host}`, `ws://${host}`))
+    }).pipe(
+      Effect.provide(HttpAppLive),
+      Effect.provide(EphemeralServerLive),
+      Effect.scoped,
+    ),
+  )
+
+describe('rpc websocket', () => {
+  it('round-trips session.initialize then a token-scoped work.create', async () => {
+    const result = await onLiveServer(async (httpBase, wsBase) => {
+      const init = (await rpcOverSocket(`${wsBase}/rpc`, {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'session.initialize',
+        params: { worker, permissions: ['work:create', 'workspace:read'] },
+      })) as { id: number; result: { session_id: string } }
+
+      const sessionId = init.result.session_id
+
+      // A second connection carries the minted token on the handshake query, so
+      // the scoped work.create is authorized for the life of that socket.
+      const created = (await rpcOverSocket(`${wsBase}/rpc?token=${sessionId}`, {
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'work.create',
+        params: {
+          workspace_id: 'workspace_1',
+          title: 'Fix login redirect',
+        },
+      })) as { id: number; result: { id: string; state: string } }
+
+      // Prove WebSocket and REST share one store: fetch the work over REST.
+      const restRes = await fetch(`${httpBase}/v1/work/${created.result.id}`, {
+        headers: { authorization: `Bearer ${sessionId}` },
+      })
+      const restWork = (await restRes.json()) as { state: string }
+
+      return { init, created, restStatus: restRes.status, restWork }
+    })
+
+    expect(result.init.id).toBe(1)
+    expect(result.init.result.session_id).toMatch(/^session_/)
+    expect(result.created.id).toBe(2)
+    expect(result.created.result.state).toBe('open')
+    expect(result.restStatus).toBe(200)
+    expect(result.restWork.state).toBe('open')
+  })
+
+  it('echoes a -32700 parse error for a non-JSON frame', async () => {
+    const result = await onLiveServer(
+      (_httpBase, wsBase) =>
+        new Promise((resolve, reject) => {
+          const socket = new WebSocket(`${wsBase}/rpc`)
+          socket.addEventListener('open', () => {
+            socket.send('not json')
+          })
+          socket.addEventListener('message', (event) => {
+            resolve(JSON.parse(String(event.data)))
+            socket.close()
+          })
+          socket.addEventListener('error', () => {
+            reject(new Error('ws error'))
+          })
+        }),
+    )
+
+    expect(result).toMatchObject({
+      jsonrpc: '2.0',
+      error: { code: -32700 },
+    })
+  })
+})
