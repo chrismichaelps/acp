@@ -2,6 +2,15 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · rpc-structured-telemetry slice · added
+  [[rpc-telemetry-middleware]] as a wrap-style native RPC middleware using
+  Effect log spans and annotations to emit one structured completion log per
+  operation with operation, client id, outcome, duration, failure class, and
+  ACP error code when available; attached telemetry after auth on scoped calls
+  and directly on `session.initialize`; added a contract regression that every
+  native RPC operation carries telemetry · validation: format, lint, typecheck,
+  file-size, focused RPC telemetry/route tests, and 274-test non-socket suite
+  green · risk LOW
 - 2026-06-30 · rpc-http-work-lease-roundtrip slice · extended
   [[native-rpc-route]] live-socket coverage with worker lookup, workspace
   update/archive, work claim/state transition, and lease request/renew/release/

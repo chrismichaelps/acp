@@ -40,7 +40,9 @@ requires the application services and [[id-clock]], which is exactly what the
 host needs: [[http-app]] can provide one memoized `AppLive ⊕ IdClockLive` above
 REST, legacy JSON-RPC, WebSocket JSON-RPC, native RPC, and the sweeper. The
 layer includes [[rpc-auth-middleware]] so native HTTP execution evaluates
-contract scope annotations before the handler runs.
+contract scope annotations before the handler runs, and
+[[rpc-telemetry-middleware]] so each operation emits one structured completion
+log with operation, outcome, duration, and protocol error code when available.
 
 `AcpRpcHandlersLive` provides that handler layer with `AppLive ⊕ IdClockLive`.
 It is dependency-complete and launch-ready for isolated transports such as the
@@ -68,4 +70,5 @@ dependency boundary the typed transport depends on.
 [[acp-rpc-roundtrip-artifact-checkpoint-test]] ·
 [[acp-rpc-roundtrip-review-memory-event-test]] ·
 [[acp-rpc-roundtrip-test]] · [[acp-rpc-roundtrip-work-lease-test]] ·
-[[rpc-auth-middleware]] · [[native-rpc-route]] · [[rpc-index]] · [[rpc/_MOC]]
+[[rpc-auth-middleware]] · [[rpc-telemetry-middleware]] ·
+[[native-rpc-route]] · [[rpc-index]] · [[rpc/_MOC]]
