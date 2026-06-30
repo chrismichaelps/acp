@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · workspace-memory-transport slice · projected [[Memory]] through
+  REST, JSON-RPC, and the CLI: [[memory-routes]] (`POST /v1/memory`,
+  `GET /v1/memory`) behind `memory:create`/`memory:read` with the API contract
+  split into [[acp-http-api-memory]]; [[json-rpc-memory-commands]] mapping
+  `memory.create`/`memory.list`; and `memory create`/`memory list` CLI commands.
+  Fixed the WIP UrlParams `nullable` encode error and a latent double-decode in
+  the list handler · 252 tests green · risk LOW
 - 2026-06-29 · post-memory-core-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after workspace [[Memory]] core and
   selected REST/JSON-RPC/CLI memory projection with route/API file splitting as

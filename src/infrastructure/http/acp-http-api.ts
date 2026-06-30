@@ -40,6 +40,7 @@ import {
   ACP_PROTOCOL_VERSION,
 } from '../../protocol/schema/index.js'
 import { EventsGroup } from './acp-http-api-events.js'
+import { MemoryGroup } from './acp-http-api-memory.js'
 
 export const WorkPath = Schema.Struct({
   work_id: HttpApiSchema.param('work_id', WorkId),
@@ -130,6 +131,7 @@ export const HostCapabilities = Schema.Struct({
   supports_events: Schema.Boolean,
   supports_reviews: Schema.Boolean,
   supports_artifacts: Schema.Boolean,
+  supports_memory: Schema.Boolean,
   supports_sse: Schema.Boolean,
 })
 export type HostCapabilities = typeof HostCapabilities.Type
@@ -468,5 +470,6 @@ export class AcpHttpApi extends HttpApi.make('acp')
   .add(LeaseGroup)
   .add(ArtifactGroup)
   .add(CheckpointGroup)
+  .add(MemoryGroup)
   .add(ReviewGroup)
   .add(EventsGroup) {}
