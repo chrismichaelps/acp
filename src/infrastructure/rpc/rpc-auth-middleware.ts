@@ -4,10 +4,8 @@ import { Context, Effect, Layer, Option } from 'effect'
 import { AppConfigTag } from '../../config/app-config.js'
 import { SessionService } from '../../domain/sessions/index.js'
 import { ProtocolError } from '../../protocol/schema/index.js'
-import type { Permission, WorkerId } from '../../protocol/schema/index.js'
-import { authorizeRpc } from './rpc-auth.js'
-
-export const AcpRpcActor = Context.GenericTag<WorkerId>('@acp/rpc/Actor')
+import type { Permission } from '../../protocol/schema/index.js'
+import { AcpRpcActor, authorizeRpc } from './rpc-auth.js'
 
 export const AcpRpcRequiredScope = Context.GenericTag<Permission | undefined>(
   '@acp/rpc/RequiredScope',
