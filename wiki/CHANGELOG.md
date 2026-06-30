@@ -2,6 +2,15 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · effect-rpc-transport-wiring slice · stood up the native RPC
+  transport seam — [[acp-rpc-server]] (`AcpRpcHandlersLive`, handlers ⊕ AppLive ⊕
+  IdClockLive, requirement `never`), [[acp-rpc-client]] (generated typed
+  `makeAcpRpcClient` + `acpRpcClientHttpLayer` JSON streaming-HTTP protocol), and
+  [[acp-rpc-roundtrip-test]] proving a real `RpcTest` client round-trip
+  (encode→serialize→handler→typed decode) including per-call bearer auth and a
+  typed `unauthorized` denial; refreshed [[protocol-implementation-2026-06-28]] to
+  select host RpcServer HTTP-route mounting as the next slice · validation:
+  format, lint, typecheck, file-size, and 263 non-socket tests green · risk LOW
 - 2026-06-30 · effect-rpc-memory-event-handlers slice · added
   [[acp-rpc-memory-event-handlers]] and merged it into [[acp-rpc-handlers]] for
   native `memory.create`/`memory.list` over [[memory-service]] and `events.list`
