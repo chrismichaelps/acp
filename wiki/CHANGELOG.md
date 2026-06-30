@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · post-rpc-checkpoint-handlers-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after
+  [[acp-rpc-checkpoint-handlers]] and selected native review request/outcome/list
+  handlers as the next direct-RPC human-gate vertical · docs-only validation
+  green: format, file-size, and diff whitespace checks · risk LOW
 - 2026-06-30 · effect-rpc-checkpoint-handlers slice · added
   [[acp-rpc-checkpoint-handlers]] and merged it into [[acp-rpc-handlers]] for
   native `checkpoint.create`, work/workspace checkpoint lists, and latest
