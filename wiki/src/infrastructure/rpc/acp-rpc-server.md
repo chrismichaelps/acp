@@ -14,39 +14,44 @@ aliases: [acp-rpc-server]
 
 ## Purpose
 
-Provide the single dependency-complete server-side layer for the native
-`@effect/rpc` surface, so any transport mounts the [[acp-rpc-handlers]] set over
-one composition instead of re-wiring domain dependencies per entry point. This
-is the server half of the [[ADR-0007-effect-rpc-adoption]] transport stand-up:
-the native-handler phase is finished, and this layer is what a real
-`RpcServer.layer` HTTP/socket protocol — or today's [[acp-rpc-roundtrip-test]]
-`RpcTest` client — runs against.
+Provide the canonical server-side handler composition for the native
+`@effect/rpc` surface. The module exposes a host-shared handler layer for real
+route mounting and a dependency-complete live layer for standalone transports
+and focused round-trip tests. This is the server half of the
+[[ADR-0007-effect-rpc-adoption]] transport stand-up: the native-handler phase is
+finished, and [[native-rpc-route]] now mounts the same handler set over real HTTP.
 
 ## Interface
 
 ```typescript
-export const AcpRpcHandlersLive: Layer<
+export const AcpRpcHandlersLive: Layer<Rpc.ToHandler<AcpRpcGroup>, never, never>
+
+export const AcpRpcHandlersLayer: Layer<
   Rpc.ToHandler<AcpRpcGroup>,
   never,
-  never
+  AppLive | IdClock
 >
 ```
 
 ## Algorithm
 
-`AcpRpcHandlersLive` provides `AcpRpcSessionWorkerWorkspaceHandlersLive` with
-`AppLive ⊕ IdClockLive`. `AppLive` supplies the storage-backed domain services
-(sessions, workers, workspaces, work, leases, artifacts, checkpoints, reviews,
-memory, events) and `IdClockLive` supplies id/timestamp minting, so the merged
-layer's requirement channel collapses to `never` — it is launch-ready. Handlers
-still authorize through the forwarded `options.headers`, so the transport
-chosen above this layer never leaks into the domain, preserving the
+`AcpRpcHandlersLayer` is the raw merged handler set. It still requires the
+application services and [[id-clock]], which is exactly what the host needs:
+[[http-app]] can provide one memoized `AppLive ⊕ IdClockLive` above REST, legacy
+JSON-RPC, WebSocket JSON-RPC, native RPC, and the sweeper.
+
+`AcpRpcHandlersLive` provides that handler layer with `AppLive ⊕ IdClockLive`.
+It is dependency-complete and launch-ready for isolated transports such as
+[[acp-rpc-roundtrip-test]], where there is no surrounding host composition to
+share. Handlers still authorize through forwarded `options.headers`, so the
+transport chosen above this layer never leaks into the domain, preserving the
 [[Transport]] "domain never sees HTTP" invariant.
 
 ## Negative Logic (Prohibited Paths)
 
-- ❌ Do NOT provide a second `AppLive`/store above this layer — one composition
-  keeps the native surface and the HTTP/JSON-RPC surfaces over one state.
+- ❌ Do NOT mount the dependency-complete `AcpRpcHandlersLive` inside [[http-app]]
+  or [[native-rpc-route]] — that would allocate a second application graph and
+  split transport state.
 - ❌ Do NOT mount transport-specific protocol layers here; this module is
   transport-agnostic. HTTP/socket route wiring belongs in the host seam.
 
@@ -57,4 +62,5 @@ dependency boundary the typed transport depends on.
 
 ## Referenced by
 
-[[acp-rpc-client]] · [[acp-rpc-handlers]] · [[rpc-index]] · [[rpc/_MOC]]
+[[acp-rpc-client]] · [[acp-rpc-handlers]] · [[native-rpc-route]] ·
+[[rpc-index]] · [[rpc/_MOC]]
