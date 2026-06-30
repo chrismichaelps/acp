@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · cli-session-bootstrap slice · added [[cli-session-commands]]
+  with `acp session init` for `POST /v1/session/initialize`, letting
+  authenticated CLI operators mint bearer sessions before exporting
+  `ACP_RPC_TOKEN` while keeping token persistence outside ACP · validation:
+  format, lint, typecheck, file-size, focused CLI parser tests, and 283-test
+  non-socket suite green · risk LOW
 - 2026-06-30 · cli-bearer-token-forwarding slice · taught [[cli-client]] and
   [[cli-main]] to forward `ACP_RPC_TOKEN` as `Authorization: Bearer ...` for
   normal CLI requests and SSE event streams, closing the authenticated-host CLI

@@ -32,7 +32,7 @@ ACP_STORAGE_ADAPTER=sqlite ACP_SQLITE_PATH=.acp/acp.sqlite node dist/app/server/
 
 Local development allows unauthenticated requests unless `ACP_REQUIRE_AUTH=true` is set. With auth required, callers first initialize a session and then pass the returned session id as a bearer token on scoped routes. The CLI forwards `ACP_RPC_TOKEN` as that bearer token for ordinary requests and event streams, matching the stdio bridge convention for long-lived integrations. Session permissions are explicit strings such as `work:create`, `artifact:delete`, and `review:approve`; presenting a token without the required scope returns `401 Unauthorized`. Runtime logs are emitted through Effect's structured logger; `ACP_LOG_LEVEL` accepts `debug`, `info`, `warn`, or `error`, defaulting to `info`.
 
-The CLI targets `ACP_BASE_URL` when provided, otherwise it uses `http://localhost:$ACP_PORT`. It covers the local command surface for worker registry reads, workspace create/update/archive, work creation and lifecycle updates, lease request/renew/revoke/release, artifact create/update/delete, checkpoint creation, review request/approve/reject/request-changes/cancel, event replay, and event streaming.
+The CLI targets `ACP_BASE_URL` when provided, otherwise it uses `http://localhost:$ACP_PORT`. It covers the local command surface for session bootstrap, worker registry reads, workspace create/update/archive, work creation and lifecycle updates, lease request/renew/revoke/release, artifact create/update/delete, checkpoint creation, review request/approve/reject/request-changes/cancel, event replay, and event streaming.
 
 ```bash
 ACP_BASE_URL=http://localhost:4317 node dist/app/cli/main.js workspace list
