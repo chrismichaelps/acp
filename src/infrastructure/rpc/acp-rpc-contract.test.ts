@@ -28,6 +28,7 @@ describe('AcpRpcGroup', () => {
       'checkpoint.list_for_work',
       'checkpoint.list_for_workspace',
       'events.list',
+      'events.subscribe',
       'lease.release',
       'lease.renew',
       'lease.request',
@@ -82,6 +83,7 @@ describe('AcpRpcGroup', () => {
     )
     expect(requiredScope(AcpRpcs.memoryCreate)).toBe('memory:create')
     expect(requiredScope(AcpRpcs.eventList)).toBe('event:read')
+    expect(requiredScope(AcpRpcs.eventSubscribe)).toBe('event:read')
     expect(hasAuthMiddleware(AcpRpcs.workspaceCreate)).toBe(true)
   })
 })

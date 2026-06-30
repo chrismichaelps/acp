@@ -1,6 +1,6 @@
 /** @Acp.App.Server.NativeRpcRoute.Test — native Effect RPC over the live host socket */
 import { HttpServer } from '@effect/platform'
-import { Effect, Either } from 'effect'
+import { Duration, Effect, Either, Fiber, Option, Stream } from 'effect'
 import { describe, expect, it } from 'vitest'
 import { nodeHttpServerLayer } from '../../infrastructure/platform-node/index.js'
 import {
@@ -85,5 +85,61 @@ describe('native RPC route', () => {
     expect(result.listed.map((workspace) => workspace.id)).toContain(
       result.created.workspace.id,
     )
+  })
+
+  it('streams workspace events through the typed native RPC client', async () => {
+    const result = await onLiveServer((baseUrl) =>
+      Effect.runPromise(
+        Effect.gen(function* () {
+          const client = yield* makeAcpRpcClient
+          const session = yield* client.session.initialize(
+            yield* decodeInitialize([
+              'workspace:write',
+              'work:create',
+              'work:publish_event',
+              'event:read',
+            ]),
+          )
+          const headers = { authorization: `Bearer ${session.session_id}` }
+          const workspace = yield* client.workspace.create(
+            yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
+              name: 'Native RPC Event Stream Workspace',
+              kind: 'git_repository',
+              uri: 'git+https://example.com/acp/native-rpc-events.git',
+            }),
+            { headers },
+          )
+          const work = yield* client.work.create(
+            yield* decodePayload(AcpRpcs.workCreate.payloadSchema, {
+              workspace_id: workspace.id,
+              title: 'Stream native event',
+            }),
+            { headers },
+          )
+
+          const stream = client.events.subscribe(
+            { workspace_id: workspace.id },
+            { headers },
+          )
+          const fiber = yield* Effect.fork(Stream.runHead(stream))
+          yield* Effect.sleep(Duration.millis(25))
+          const published = yield* client.work.publish_event(
+            yield* decodePayload(AcpRpcs.workPublishEvent.payloadSchema, {
+              work_id: work.id,
+              type: 'work.progressed',
+              data: { message: 'native rpc stream observed' },
+            }),
+            { headers },
+          )
+          const observed = yield* Fiber.join(fiber)
+          return { observed, published }
+        }).pipe(
+          Effect.provide(acpRpcClientHttpLayer(`${baseUrl}${nativeRpcPath}`)),
+          Effect.scoped,
+        ),
+      ),
+    )
+
+    expect(Option.getOrNull(result.observed)?.id).toBe(result.published.id)
   })
 })

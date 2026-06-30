@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · effect-rpc-event-subscribe-stream slice · added native
+  `events.subscribe` as an `@effect/rpc` streaming operation over
+  [[acp-rpc-contract]], backed it in [[acp-rpc-memory-event-handlers]] through
+  [[event-store]] subscriptions, switched [[native-rpc-route]] and
+  [[acp-rpc-client]] to NDJSON framing for streaming HTTP, and extended the live
+  route regression to subscribe before publishing and observe the emitted event ·
+  validation: format, lint, typecheck, file-size, focused RPC stream tests, and
+  262-test non-socket suite green · risk LOW
 - 2026-06-30 · effect-rpc-auth-middleware slice · added
   [[rpc-auth-middleware]] with `AcpRpcRequiredScope`, `AcpRpcActor`, and
   `AcpRpcAuthMiddlewareLive`; annotated secured [[acp-rpc-contract]] operations
