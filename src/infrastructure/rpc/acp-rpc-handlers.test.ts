@@ -1,4 +1,4 @@
-/** @Acp.Infra.Rpc.Handlers.Test — first native RPC handler vertical */
+/** @Acp.Infra.Rpc.Handlers.Test — native RPC domain handlers */
 import { Headers } from '@effect/platform'
 import { Effect, Either, Layer, Schema } from 'effect'
 import { describe, expect, it } from 'vitest'
@@ -196,5 +196,94 @@ describe('AcpRpcSessionWorkerWorkspaceHandlersLive', () => {
     expect(result.running.state).toBe('running')
     expect(result.event.type).toBe('work.progressed')
     expect(result.archived.state).toBe('archived')
+  })
+
+  it('runs lease lifecycle handlers directly', async () => {
+    const program = Effect.gen(function* () {
+      const initialize = yield* AcpRpcGroup.accessHandler('session.initialize')
+      const workspaceCreate =
+        yield* AcpRpcGroup.accessHandler('workspace.create')
+      const leaseRequest = yield* AcpRpcGroup.accessHandler('lease.request')
+      const leaseRenew = yield* AcpRpcGroup.accessHandler('lease.renew')
+      const leaseRelease = yield* AcpRpcGroup.accessHandler('lease.release')
+      const leaseRevoke = yield* AcpRpcGroup.accessHandler('lease.revoke')
+
+      const initPayload = yield* decodeInitialize([
+        'workspace:write',
+        'lease:create',
+        'lease:renew',
+        'lease:release',
+        'lease:revoke',
+      ])
+      const session = yield* initialize(initPayload, rpcOptions())
+      const headers = rpcOptions(bearer(session.session_id))
+      const workspace = yield* workspaceCreate(
+        yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
+          name: 'RPC Lease Workspace',
+          kind: 'git_repository',
+          uri: 'git+https://example.com/acp/lease-rpc.git',
+        }),
+        headers,
+      )
+      const firstLease = yield* leaseRequest(
+        yield* decodePayload(AcpRpcs.leaseRequest.payloadSchema, {
+          workspace_id: workspace.id,
+          holder: 'agent_rpc',
+          resource: { kind: 'file', uri: 'file://src/rpc/lease-a.ts' },
+          ttl_seconds: 60,
+        }),
+        headers,
+      )
+      const renewed = yield* leaseRenew(
+        yield* decodePayload(AcpRpcs.leaseRenew.payloadSchema, {
+          lease_id: firstLease.id,
+          ttl_seconds: 120,
+        }),
+        headers,
+      )
+      const released = yield* leaseRelease({ lease_id: firstLease.id }, headers)
+      const secondLease = yield* leaseRequest(
+        yield* decodePayload(AcpRpcs.leaseRequest.payloadSchema, {
+          workspace_id: workspace.id,
+          holder: 'agent_rpc',
+          resource: { kind: 'file', uri: 'file://src/rpc/lease-b.ts' },
+          ttl_seconds: 60,
+        }),
+        headers,
+      )
+      const revoked = yield* leaseRevoke({ lease_id: secondLease.id }, headers)
+      yield* leaseRequest(
+        yield* decodePayload(AcpRpcs.leaseRequest.payloadSchema, {
+          workspace_id: workspace.id,
+          holder: 'agent_rpc',
+          resource: { kind: 'file', uri: 'file://src/rpc/conflict.ts' },
+          ttl_seconds: 60,
+        }),
+        headers,
+      )
+      const conflict = yield* Effect.either(
+        leaseRequest(
+          yield* decodePayload(AcpRpcs.leaseRequest.payloadSchema, {
+            workspace_id: workspace.id,
+            holder: 'agent_other',
+            resource: { kind: 'file', uri: 'file://src/rpc/conflict.ts' },
+            ttl_seconds: 60,
+          }),
+          headers,
+        ),
+      )
+
+      return { conflict, firstLease, released, renewed, revoked }
+    })
+
+    const result = await Effect.runPromise(Effect.provide(program, Runtime))
+    expect(result.firstLease.state).toBe('active')
+    expect(result.renewed.id).toBe(result.firstLease.id)
+    expect(result.released).toBeUndefined()
+    expect(result.revoked.state).toBe('revoked')
+    expect(Either.isLeft(result.conflict)).toBe(true)
+    if (Either.isLeft(result.conflict)) {
+      expect(result.conflict.left.error.code).toBe('lease_conflict')
+    }
   })
 })

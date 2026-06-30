@@ -18,8 +18,9 @@ Declare the native first-party ACP RPC surface selected by
 [[ADR-0007-effect-rpc-adoption]]. The contract replaces the hand-mapped
 JSON-RPC method table with an `@effect/rpc` `RpcGroup` over ACP protocol schemas
 and typed protocol errors. The first handler vertical now lives in
-[[acp-rpc-handlers]]; client generation, streaming, remaining domain handlers,
-and JSON-RPC deletion remain later slices.
+[[acp-rpc-handlers]]; client generation, streaming, remaining artifact,
+checkpoint, review, memory, and event handlers, and JSON-RPC deletion remain
+later slices.
 
 ## Interface
 
