@@ -400,7 +400,7 @@ scoped operations, zero drift**; `session.initialize` is unscoped on both
 sides. Despite the clean parity, handler-local checks stay: `.middleware(...)`
 is attached at the `Rpc` definition level in [[acp-rpc-contract]], not the
 transport, so every real `RpcServer`-mounted protocol (HTTP today, sockets or
-workers later) already runs [[rpc-auth-middleware]] automatically — the *only*
+workers later) already runs [[rpc-auth-middleware]] automatically — the _only_
 path that bypasses it is the test-only `AcpRpcGroup.accessHandler` call used by
 every handler test in this module (via [[acp-rpc-test-support]]). Removing
 handler-local `rpcActor(..., scope)` checks would not simplify any production
@@ -418,6 +418,18 @@ With that decision closed, the live frontier returns to the broader
 regression) toward parity with the hand-mapped JSON-RPC method surface, so that
 retiring `src/infrastructure/jsonrpc/` and the stdio/WebSocket JSON-RPC bridges
 becomes a mechanical client-coverage check rather than a speculative cutover.
+
+That coverage is now materially broader. [[acp-rpc-roundtrip-work-lease-test]]
+drives the generated client through worker discovery, workspace mutation, work
+claim/state transitions, and lease request/renew/release/revoke.
+[[acp-rpc-roundtrip-artifact-checkpoint-test]] covers artifact
+create/update/content/list/delete and checkpoint create/list/latest reads.
+[[acp-rpc-roundtrip-review-memory-event-test]] covers all review outcomes,
+memory create/list, and unary event listing. The remaining native RPC migration
+frontier is no longer basic method reachability; it is transport parity and
+client adoption work: prove these verticals over mounted HTTP where the behavior
+is socket-sensitive, keep `events.subscribe` streaming covered, and then decide
+which legacy JSON-RPC bridge can be retired first without stranding a consumer.
 
 ## Referenced by
 

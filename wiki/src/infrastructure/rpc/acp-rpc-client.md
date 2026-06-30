@@ -49,9 +49,12 @@ auth is forwarded per call via the `headers` option (or
 `RpcSerialization.layerNdjson` and `FetchHttpClient.layer`, so callers supply
 only the host's native RPC URL. NDJSON framing is required for streaming
 operations such as `events.subscribe`; unary calls use the same client layer.
-The [[acp-rpc-roundtrip-test]] proves the client/handler contract through
-`RpcTest` without a socket, and [[native-rpc-route]] covers the mounted
-over-the-wire path.
+The round-trip test set proves the client/handler contract through `RpcTest`
+without a socket: [[acp-rpc-roundtrip-test]] covers the initial workspace path,
+[[acp-rpc-roundtrip-work-lease-test]] covers worker/workspace/work/lease,
+[[acp-rpc-roundtrip-artifact-checkpoint-test]] covers artifact and checkpoint,
+and [[acp-rpc-roundtrip-review-memory-event-test]] covers review, memory, and
+event listing. [[native-rpc-route]] covers the mounted over-the-wire path.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -66,4 +69,7 @@ first-party consumers integrate against.
 
 ## Referenced by
 
-[[acp-rpc-server]] · [[acp-rpc-contract]] · [[rpc-index]] · [[rpc/_MOC]]
+[[acp-rpc-server]] · [[acp-rpc-contract]] ·
+[[acp-rpc-roundtrip-artifact-checkpoint-test]] ·
+[[acp-rpc-roundtrip-review-memory-event-test]] ·
+[[acp-rpc-roundtrip-work-lease-test]] · [[rpc-index]] · [[rpc/_MOC]]
