@@ -4,13 +4,14 @@ import { AppLive } from '../../app/index.js'
 import { IdClockLive } from '../../app/server/identity.js'
 import { AcpRpcSessionWorkerWorkspaceHandlersLive } from './acp-rpc-handlers.js'
 
-// The full native RPC handler set with its domain dependencies satisfied:
-// AppLive supplies the storage-backed services (sessions, work, leases,
-// artifacts, checkpoints, reviews, memory, events) and IdClockLive supplies
-// id/timestamp minting. This is the single server-side layer every transport
-// (the `RpcTest` round-trip today, an `RpcServer.layer` HTTP/socket protocol
-// next) mounts over — handlers never see the transport, honoring the
-// [[Transport]] "domain never sees HTTP" invariant.
-export const AcpRpcHandlersLive = AcpRpcSessionWorkerWorkspaceHandlersLive.pipe(
+// The native RPC handler set without application dependencies filled. Host
+// composition uses this variant so REST, legacy JSON-RPC, WebSocket JSON-RPC,
+// and native RPC all share the same AppLive/Storage instance.
+export const AcpRpcHandlersLayer = AcpRpcSessionWorkerWorkspaceHandlersLive
+
+// Dependency-complete server-side layer for standalone transports and focused
+// round-trip tests. It remains useful outside the host, where there is no
+// surrounding application graph to share.
+export const AcpRpcHandlersLive = AcpRpcHandlersLayer.pipe(
   Layer.provide(Layer.mergeAll(AppLive, IdClockLive)),
 )

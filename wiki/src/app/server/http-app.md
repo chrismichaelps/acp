@@ -14,20 +14,21 @@ aliases: [http-app, http-app-live]
 
 ## Purpose
 
-The running ACP **host** as one import-safe `Layer`: [[acp-router]] served over the
-full application ([[app-live]]) and id/clock minting ([[id-clock]]),
-**plus the background [[sweeper]] daemon merged over the same shared app** so the
-HTTP router and the TTL eviction loop act on one `Storage` instance. It is
-socket-agnostic — the listening socket is supplied separately so the exact same
-composition runs in two places:
+The running ACP **host** as one import-safe `Layer`: [[native-rpc-route]]
+registers REST/JSON-RPC routes plus `/rpc/native` over the full application
+([[app-live]]) and id/clock minting ([[id-clock]]), **plus the background
+[[sweeper]] daemon merged over the same shared app** so every transport and the
+TTL eviction loop act on one `Storage` instance. It is socket-agnostic — the
+listening socket is supplied separately so the exact same composition runs in
+two places:
 
 - [[server-main]] binds it to [[node-http-server]] on `ACP_PORT`.
 - the **live-boot smoke test** binds it to an ephemeral OS port (`port: 0`).
 
-This is the seam that lets a test prove the composition root wires
-`AppLive ⊕ IdClockLive ⊕ acpRouter` correctly over a real socket, without the
-test importing [[server-main]] (whose module-scope `runMain` would bind 4317 on
-import).
+This is the seam that lets tests prove the composition root wires
+`AppLive ⊕ IdClockLive ⊕ AcpHttpRoutesLive` correctly over a real socket,
+without importing [[server-main]] (whose module-scope `runMain` would bind 4317
+on import).
 
 ## Interface
 
@@ -43,19 +44,21 @@ export const HttpAppLive: Layer.Layer<
 
 ### Linkage
 
-- **Requires:** [[acp-router]], [[sweeper]], [[app-live]], [[id-clock]],
-  [[protocol-error]] (`StorageError`), `@effect/platform` `HttpServer`. The residual requirement is
-  `HttpServer.HttpServer` — the socket, provided by [[node-http-server]] or tests.
+- **Requires:** [[native-rpc-route]], [[sweeper]], [[app-live]], [[id-clock]],
+  [[protocol-error]] (`StorageError`), `@effect/platform` `HttpLayerRouter`, and
+  `@effect/platform` `HttpServer`. The residual requirement is
+  `HttpServer.HttpServer` — the socket, provided by [[node-http-server]] or
+  tests.
 - **Consumed by:** [[server-main]] (production socket) and `live-boot.test.ts`
   (ephemeral socket). Re-exported by [[server-index]].
 
 ## Algorithm
 
-1. `Layer.mergeAll(HttpServer.serve(acpRouter), SweeperLive)` — the router request
-   loop and the [[sweeper]] daemon, both as scoped forked fibers.
-2. `Layer.provide(AppLive ⊕ IdClockLive)` — one memoized app runtime satisfies both
-   the router's and the sweeper's service context (the shared store), leaving only
-   `HttpServer.HttpServer` outstanding.
+1. `Layer.mergeAll(HttpLayerRouter.serve(AcpHttpRoutesLive), SweeperLive)` — the
+   route request loop and the [[sweeper]] daemon, both as scoped forked fibers.
+2. `Layer.provide(AppLive ⊕ IdClockLive)` — one memoized app runtime satisfies
+   REST, legacy JSON-RPC, native RPC, and the sweeper service contexts, leaving
+   only `HttpServer.HttpServer` outstanding.
 
 No behavior of its own; pure composition.
 
@@ -63,17 +66,21 @@ No behavior of its own; pure composition.
 
 - ❌ Do NOT provide a socket layer here — `HttpAppLive` must stay socket-agnostic
   so production and the smoke test can each bind their own.
-- ❌ Do NOT add request logic — that lives in [[acp-router]].
+- ❌ Do NOT add request logic — REST/legacy JSON-RPC behavior lives in
+  [[acp-router]], and native RPC behavior lives in [[acp-rpc-handlers]].
 - ❌ Do NOT call `NodeRuntime.runMain` / `Layer.launch` here — launching is the
   entrypoint's job ([[server-main]]); a launch at import time would make this
   module unsafe to import from a test.
 
 ## Depth
 
-MEDIUM (0.5). A named composition seam. Exercised end-to-end by `live-boot.test.ts`,
-which launches it on an ephemeral port and round-trips
-`initialize` → scoped `createWork` over real HTTP — proving the socket boot, the
-bearer-token actor resolution, and spec §8 scope enforcement all compose.
+MEDIUM (0.5). A named composition seam. Exercised end-to-end by
+`live-boot.test.ts`, which launches it on an ephemeral port and round-trips
+`initialize` → scoped `createWork` over real HTTP, and by
+`native-rpc-route.test.ts`, which drives `/rpc/native` through the generated
+client and reads the result back through REST — proving socket boot,
+bearer-token actor resolution, spec §8 scope enforcement, and shared transport
+state all compose.
 
 ## Grill Log
 
@@ -102,4 +109,5 @@ bearer-token actor resolution, and spec §8 scope enforcement all compose.
 
 ## Referenced by
 
-[[server-index]] · [[server-main]] · [[acp-router]] · [[Transport]] · [[src/_MOC]]
+[[server-index]] · [[server-main]] · [[native-rpc-route]] · [[acp-router]] ·
+[[Transport]] · [[src/_MOC]]

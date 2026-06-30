@@ -330,24 +330,24 @@ With this vertical merged, **every [[acp-rpc-contract]] request now has a backin
 handler** — the native handler phase of [[ADR-0007-effect-rpc-adoption]] is
 complete.
 
-The native RPC transport stand-up is now underway. [[acp-rpc-server]] exposes the
-dependency-complete `AcpRpcHandlersLive` (handlers ⊕ `AppLive` ⊕ `IdClockLive`,
-requirement channel `never`), [[acp-rpc-client]] exposes the generated typed
-`makeAcpRpcClient` plus `acpRpcClientHttpLayer(url)` (JSON streaming-HTTP
-protocol), and [[acp-rpc-roundtrip-test]] proves a real client round-trip through
-`RpcTest` — encode → serialize → handler → typed decode — including per-call
-bearer headers forwarded into the existing `authorizeRpc` checks (a scope-denied
-session is rejected with a typed `unauthorized` `ProtocolError`).
+The native RPC HTTP transport is now mounted on the host. [[acp-rpc-server]]
+exposes both a host-shared `AcpRpcHandlersLayer` and a dependency-complete
+`AcpRpcHandlersLive`; [[native-rpc-route]] mounts the shared handler layer at
+`/rpc/native` with `RpcServer.layerHttpRouter`, JSON serialization, and HTTP
+protocol framing; and [[http-app]] serves `AcpHttpRoutesLive` through
+`HttpLayerRouter.serve` so REST, `POST /rpc`, `GET /rpc`, native RPC, and the
+sweeper all receive one memoized `AppLive ⊕ IdClockLive`. The live regression
+drives `makeAcpRpcClient` over an ephemeral TCP socket, creates a workspace
+through native RPC, and reads it back through REST using the same bearer session,
+which proves route mounting, client transport wiring, and shared host state.
 
-The next gap is **mounting the native RpcServer over a real protocol in the
-host**: register `RpcServer.layer(AcpRpcGroup)` with `RpcServer.layerProtocolHttp`
-(JSON serialization) on the served router seam so first-party clients reach the
-surface over the wire, point `acpRpcClientHttpLayer` at that route for an
-over-the-socket integration test, and only then consider migrating the
-per-handler `authorizeRpc` calls to a single `RpcMiddleware`. It should still
-avoid deleting the hand-mapped JSON-RPC layer, replacing the stdio/WebSocket
-bridges, or adding streaming `events.subscribe` until the HTTP route is live and
-exercised.
+The next gap is native RPC transport polish, not replacement. The per-handler
+`authorizeRpc` calls still work and are covered, but a single `RpcMiddleware`
+should be evaluated next so authentication and scope logging become a transport
+policy rather than repeated handler code. That slice should keep the
+hand-mapped JSON-RPC layer, stdio bridge, WebSocket bridge, and SSE channel in
+place; streaming native RPC (`events.subscribe`) should wait until the HTTP
+authorization middleware path is settled.
 
 ## Referenced by
 
