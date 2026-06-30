@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · effect-rpc-handler-vertical slice · added
+  [[acp-rpc-handlers]], [[rpc-auth]], and [[rpc-error]] for native
+  `session.initialize`, `worker.list/get`, and `workspace.list` direct handler
+  coverage over [[acp-rpc-contract]] · 252 non-socket tests green · risk LOW
 - 2026-06-30 · post-rpc-contract-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after [[acp-rpc-contract]] and selected
   the first native handler/auth vertical for session initialization plus

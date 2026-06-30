@@ -15,12 +15,16 @@ aliases: [rpc-index]
 ## Purpose
 
 Opaque barrel for the native Effect RPC infrastructure package. It exports the
-current [[acp-rpc-contract]] without exposing callers to file layout decisions.
+current [[acp-rpc-contract]], first handler vertical, auth helper, and error
+mapper without exposing callers to file layout decisions.
 
 ## Interface
 
 ```typescript
 export * from './acp-rpc-contract.js'
+export * from './acp-rpc-handlers.js'
+export * from './rpc-auth.js'
+export * from './rpc-error.js'
 ```
 
 ## Algorithm
@@ -30,7 +34,7 @@ No runtime behavior. The module preserves the export law for
 
 ## Negative Logic (Prohibited Paths)
 
-- ❌ Do NOT add handler construction or transport wiring here.
+- ❌ Do NOT add handler logic or transport wiring here.
 - ❌ Do NOT re-export JSON-RPC modules from the native RPC package.
 
 ## Depth
