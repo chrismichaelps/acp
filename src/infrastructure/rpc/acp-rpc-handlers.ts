@@ -29,7 +29,7 @@ import { AcpRpcArtifactHandlersLive } from './acp-rpc-artifact-handlers.js'
 import { AcpRpcCheckpointHandlersLive } from './acp-rpc-checkpoint-handlers.js'
 import { AcpRpcMemoryEventHandlersLive } from './acp-rpc-memory-event-handlers.js'
 import { AcpRpcReviewHandlersLive } from './acp-rpc-review-handlers.js'
-import { authorizeRpc } from './rpc-auth.js'
+import { rpcActor } from './rpc-auth.js'
 import { toRpcError } from './rpc-error.js'
 
 const host = { name: 'ACP Local', kind: 'local' } as const
@@ -113,7 +113,7 @@ const workerListHandler = AcpRpcGroup.toLayerHandler(
   'worker.list',
   (_payload, options) =>
     Effect.gen(function* () {
-      yield* authorizeRpc(options.headers, 'worker:read')
+      yield* rpcActor(options.headers, 'worker:read')
       const workers = yield* WorkerService
       return yield* workers.list().pipe(Effect.mapError(toRpcError))
     }),
@@ -123,7 +123,7 @@ const workerGetHandler = AcpRpcGroup.toLayerHandler(
   'worker.get',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* authorizeRpc(options.headers, 'worker:read')
+      yield* rpcActor(options.headers, 'worker:read')
       const workers = yield* WorkerService
       const worker = yield* workers
         .get(payload.worker_id)
@@ -147,7 +147,7 @@ const workspaceListHandler = AcpRpcGroup.toLayerHandler(
   'workspace.list',
   (_payload, options) =>
     Effect.gen(function* () {
-      yield* authorizeRpc(options.headers, 'workspace:read')
+      yield* rpcActor(options.headers, 'workspace:read')
       const workspaces = yield* WorkspaceService
       return yield* workspaces.list().pipe(Effect.mapError(toRpcError))
     }),
@@ -157,7 +157,7 @@ const workspaceCreateHandler = AcpRpcGroup.toLayerHandler(
   'workspace.create',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* authorizeRpc(options.headers, 'workspace:write')
+      const actor = yield* rpcActor(options.headers, 'workspace:write')
       const workspaces = yield* WorkspaceService
       const idClock = yield* IdClock
       const id = (yield* idClock.nextId('workspace')) as WorkspaceId
@@ -172,7 +172,7 @@ const workspaceUpdateHandler = AcpRpcGroup.toLayerHandler(
   'workspace.update',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* authorizeRpc(options.headers, 'workspace:write')
+      const actor = yield* rpcActor(options.headers, 'workspace:write')
       const workspaces = yield* WorkspaceService
       const idClock = yield* IdClock
       const now = yield* idClock.now
@@ -190,7 +190,7 @@ const workspaceArchiveHandler = AcpRpcGroup.toLayerHandler(
   'workspace.archive',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* authorizeRpc(options.headers, 'workspace:write')
+      const actor = yield* rpcActor(options.headers, 'workspace:write')
       const workspaces = yield* WorkspaceService
       const idClock = yield* IdClock
       const now = yield* idClock.now
@@ -204,7 +204,7 @@ const workCreateHandler = AcpRpcGroup.toLayerHandler(
   'work.create',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* authorizeRpc(options.headers, 'work:create')
+      const actor = yield* rpcActor(options.headers, 'work:create')
       const service = yield* WorkUnitService
       const idClock = yield* IdClock
       const id = (yield* idClock.nextId('work')) as WorkId
@@ -219,7 +219,7 @@ const workListForWorkspaceHandler = AcpRpcGroup.toLayerHandler(
   'work.list_for_workspace',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* authorizeRpc(options.headers, 'workspace:read')
+      yield* rpcActor(options.headers, 'workspace:read')
       const service = yield* WorkUnitService
       return yield* service
         .listForWorkspace(payload.workspace_id)
@@ -231,7 +231,7 @@ const workGetHandler = AcpRpcGroup.toLayerHandler(
   'work.get',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* authorizeRpc(options.headers, 'workspace:read')
+      yield* rpcActor(options.headers, 'workspace:read')
       const service = yield* WorkUnitService
       const work = yield* service
         .get(payload.work_id)
@@ -252,7 +252,7 @@ const workClaimHandler = AcpRpcGroup.toLayerHandler(
   'work.claim',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* authorizeRpc(options.headers, 'work:claim')
+      yield* rpcActor(options.headers, 'work:claim')
       const service = yield* WorkUnitService
       const idClock = yield* IdClock
       const now = yield* idClock.now
@@ -266,7 +266,7 @@ const workUpdateStateHandler = AcpRpcGroup.toLayerHandler(
   'work.update_state',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* authorizeRpc(options.headers, 'work:update')
+      const actor = yield* rpcActor(options.headers, 'work:update')
       const service = yield* WorkUnitService
       const idClock = yield* IdClock
       const now = yield* idClock.now
@@ -280,7 +280,7 @@ const workPublishEventHandler = AcpRpcGroup.toLayerHandler(
   'work.publish_event',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* authorizeRpc(options.headers, 'work:publish_event')
+      const actor = yield* rpcActor(options.headers, 'work:publish_event')
       const service = yield* WorkUnitService
       const events = yield* EventStore
       const idClock = yield* IdClock
@@ -316,7 +316,7 @@ const leaseRequestHandler = AcpRpcGroup.toLayerHandler(
   'lease.request',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* authorizeRpc(options.headers, 'lease:create')
+      yield* rpcActor(options.headers, 'lease:create')
       const service = yield* LeaseService
       const idClock = yield* IdClock
       const id = (yield* idClock.nextId('lease')) as LeaseId
@@ -331,7 +331,7 @@ const leaseRenewHandler = AcpRpcGroup.toLayerHandler(
   'lease.renew',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* authorizeRpc(options.headers, 'lease:renew')
+      const actor = yield* rpcActor(options.headers, 'lease:renew')
       const service = yield* LeaseService
       const idClock = yield* IdClock
       const now = yield* idClock.now
@@ -345,7 +345,7 @@ const leaseReleaseHandler = AcpRpcGroup.toLayerHandler(
   'lease.release',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* authorizeRpc(options.headers, 'lease:release')
+      const actor = yield* rpcActor(options.headers, 'lease:release')
       const service = yield* LeaseService
       const idClock = yield* IdClock
       const now = yield* idClock.now
@@ -359,7 +359,7 @@ const leaseRevokeHandler = AcpRpcGroup.toLayerHandler(
   'lease.revoke',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* authorizeRpc(options.headers, 'lease:revoke')
+      const actor = yield* rpcActor(options.headers, 'lease:revoke')
       const service = yield* LeaseService
       const idClock = yield* IdClock
       const now = yield* idClock.now
