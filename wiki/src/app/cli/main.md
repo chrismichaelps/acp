@@ -18,8 +18,9 @@ The packaged `acp` CLI entrypoint (`package.json` `bin` →
 `dist/app/cli/main.js`). Reads argv through [[node-process-io]], parses it via
 [[cli-commands]], sends the
 request through [[cli-client]] against `ACP_BASE_URL` (default
-`http://localhost:${ACP_PORT}`), prints [[cli-usage]] on parse failures, and
-prints the JSON result.
+`http://localhost:${ACP_PORT}`), forwards `ACP_RPC_TOKEN` as a bearer session
+when configured, prints [[cli-usage]] on parse failures, and prints the JSON
+result.
 
 ## Interface
 
@@ -41,14 +42,16 @@ NodeRuntime.runMain(program)
 
 1. `parseArgs(nodeArgv())` → `CliRequest` or print [[cli-usage]] and
    exit non-zero on `CliError`.
-2. For `stream`, open the SSE endpoint and print frames; otherwise `runCliRequest`
-   and print `{ status, body }`.
+2. Read `ACP_RPC_TOKEN` once. For `stream`, open the SSE endpoint with the same
+   bearer header policy as [[cli-client]] and print frames; otherwise
+   `runCliRequest` and print `{ status, body }`.
 3. Provide `NodeHttpClient.layer`; `NodeRuntime.runMain`.
 
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT parse args anywhere but [[cli-commands]].
 - ❌ Do NOT export — runnable entrypoint, excluded from [[cli-index]].
+- ❌ Do NOT print bearer tokens when requests fail.
 
 ## Depth
 

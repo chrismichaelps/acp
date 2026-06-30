@@ -3,7 +3,7 @@ import { HttpClient, HttpClientRequest } from '@effect/platform'
 import { NodeHttpClient, NodeRuntime } from '@effect/platform-node'
 import { Config, Console, Effect, Either, Stream } from 'effect'
 import { nodeArgv } from '../../infrastructure/platform-node/index.js'
-import { runCliRequest } from './client.js'
+import { runCliRequest, withBearerToken } from './client.js'
 import { CliError, parseArgs } from './commands.js'
 import { usage } from './usage.js'
 
@@ -24,11 +24,17 @@ const program = Effect.gen(function* () {
     configuredBaseUrl === ''
       ? `http://localhost:${String(port)}`
       : configuredBaseUrl
+  const token = yield* Config.string('ACP_RPC_TOKEN').pipe(
+    Config.withDefault(''),
+  )
 
   if (request.stream === true) {
     const client = yield* HttpClient.HttpClient
     const response = yield* client.execute(
-      HttpClientRequest.get(`${baseUrl}${request.path}`),
+      withBearerToken(
+        HttpClientRequest.get(`${baseUrl}${request.path}`),
+        token,
+      ),
     )
     return yield* Stream.runForEach(
       Stream.decodeText(response.stream),
@@ -36,7 +42,7 @@ const program = Effect.gen(function* () {
     )
   }
 
-  const result = yield* runCliRequest(request, baseUrl)
+  const result = yield* runCliRequest(request, baseUrl, token)
   if (result.status >= 400) {
     yield* Console.error(result.body)
     return yield* Effect.fail(

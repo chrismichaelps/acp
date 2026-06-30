@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · cli-bearer-token-forwarding slice · taught [[cli-client]] and
+  [[cli-main]] to forward `ACP_RPC_TOKEN` as `Authorization: Bearer ...` for
+  normal CLI requests and SSE event streams, closing the authenticated-host CLI
+  gap without printing bearer tokens · validation: format, lint, typecheck,
+  file-size, focused CLI client tests, and 281-test non-socket suite green · risk
+  LOW
 - 2026-06-30 · github-pr-artifact-cli slice · added `acp artifact pr` as a
   CLI convenience that creates a normal external `pull_request` [[Artifact]]
   using `--url` as `uri`, giving v0.2 GitHub PR artifact evidence a narrow
