@@ -18,10 +18,11 @@ Provide native `@effect/rpc` handler verticals over [[acp-rpc-contract]] without
 replacing existing HTTP, WebSocket, stdio, or JSON-RPC transports. The module now
 implements session initialization, worker/workspace reads, workspace mutations,
 work command handlers, lease lifecycle commands, and the merged
-[[acp-rpc-artifact-handlers]] and [[acp-rpc-checkpoint-handlers]] layers so
-native RPC can prove direct domain-service dispatch, auth semantics, typed ACP
-errors, id/timestamp minting, conflict handling, evidence handling,
-resumability, and event emission before transport replacement begins.
+[[acp-rpc-artifact-handlers]], [[acp-rpc-checkpoint-handlers]], and
+[[acp-rpc-review-handlers]] layers so native RPC can prove direct domain-service
+dispatch, auth semantics, typed ACP errors, id/timestamp minting, conflict
+handling, evidence handling, resumability, review gates, and event emission
+before transport replacement begins.
 
 ## Interface
 
@@ -53,7 +54,14 @@ export const AcpRpcSessionWorkerWorkspaceHandlersLive: Layer<
   | Rpc.Handler<'checkpoint.create'>
   | Rpc.Handler<'checkpoint.list_for_work'>
   | Rpc.Handler<'checkpoint.latest_for_work'>
-  | Rpc.Handler<'checkpoint.list_for_workspace'>,
+  | Rpc.Handler<'checkpoint.list_for_workspace'>
+  | Rpc.Handler<'review.request'>
+  | Rpc.Handler<'review.approve'>
+  | Rpc.Handler<'review.reject'>
+  | Rpc.Handler<'review.request_changes'>
+  | Rpc.Handler<'review.cancel'>
+  | Rpc.Handler<'review.list_for_work'>
+  | Rpc.Handler<'review.list_for_workspace'>,
   never,
   | AppConfigTag
   | SessionService
@@ -63,6 +71,7 @@ export const AcpRpcSessionWorkerWorkspaceHandlersLive: Layer<
   | LeaseService
   | ArtifactService
   | CheckpointService
+  | ReviewService
   | EventStore
   | IdClock
 >
@@ -102,9 +111,13 @@ external URI, delete, and list semantics.
 Checkpoint handlers live in [[acp-rpc-checkpoint-handlers]] and merge into this
 aggregate layer. They preserve [[checkpoint-service]] append-only creation,
 newest-first list ordering, latest selection, and missing-latest `not_found`
-behavior while keeping this source file below the 500-line ceiling. None of
-these handlers dispatches through [[acp-router]], JSON-RPC command maps, or REST
-paths.
+behavior.
+
+Review handlers live in [[acp-rpc-review-handlers]] and merge into this
+aggregate layer. They preserve [[review-service]] request, approval, rejection,
+request-changes, cancellation, WorkUnit coupling, and workspace-list semantics
+while keeping this source file below the 500-line ceiling. None of these
+handlers dispatches through [[acp-router]], JSON-RPC command maps, or REST paths.
 
 ## Negative Logic (Prohibited Paths)
 
