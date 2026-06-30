@@ -31,8 +31,10 @@ export const AcpHttpRoutesLive: Layer<never, never, ...>
 
 ## Algorithm
 
+`nativeRpcPath` is exported as [[acp-rpc-client]] `acpNativeRpcPath`, so server
+mounting and first-party client URL construction share one path literal.
 `AcpNativeRpcRouteLive` registers `RpcServer.layerHttpRouter` for
-[[acp-rpc-contract]] at `/rpc/native` with HTTP protocol framing and NDJSON
+[[acp-rpc-contract]] at that path with HTTP protocol framing and NDJSON
 serialization. NDJSON framing keeps unary operations and stream chunks on the
 same route, which is required for native `events.subscribe`. The route provides
 [[acp-rpc-server]] `AcpRpcHandlersLayer`, not the dependency-complete

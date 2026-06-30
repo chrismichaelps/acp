@@ -3,12 +3,13 @@ import { HttpLayerRouter } from '@effect/platform'
 import { RpcSerialization, RpcServer } from '@effect/rpc'
 import { Layer } from 'effect'
 import {
+  acpNativeRpcPath,
   AcpRpcGroup,
   AcpRpcHandlersLayer,
 } from '../../infrastructure/rpc/index.js'
 import { acpRouter } from './router.js'
 
-export const nativeRpcPath = '/rpc/native'
+export const nativeRpcPath = acpNativeRpcPath
 
 const legacyV1Routes = HttpLayerRouter.add('*', '/v1/*', acpRouter)
 const legacyJsonRpcRoute = HttpLayerRouter.add('*', '/rpc', acpRouter)
