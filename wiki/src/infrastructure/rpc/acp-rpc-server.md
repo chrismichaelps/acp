@@ -35,10 +35,12 @@ export const AcpRpcHandlersLayer: Layer<
 
 ## Algorithm
 
-`AcpRpcHandlersLayer` is the raw merged handler set. It still requires the
-application services and [[id-clock]], which is exactly what the host needs:
-[[http-app]] can provide one memoized `AppLive ⊕ IdClockLive` above REST, legacy
-JSON-RPC, WebSocket JSON-RPC, native RPC, and the sweeper.
+`AcpRpcHandlersLayer` is the merged handler and middleware set. It still
+requires the application services and [[id-clock]], which is exactly what the
+host needs: [[http-app]] can provide one memoized `AppLive ⊕ IdClockLive` above
+REST, legacy JSON-RPC, WebSocket JSON-RPC, native RPC, and the sweeper. The
+layer includes [[rpc-auth-middleware]] so native HTTP execution evaluates
+contract scope annotations before the handler runs.
 
 `AcpRpcHandlersLive` provides that handler layer with `AppLive ⊕ IdClockLive`.
 It is dependency-complete and launch-ready for isolated transports such as
@@ -62,5 +64,5 @@ dependency boundary the typed transport depends on.
 
 ## Referenced by
 
-[[acp-rpc-client]] · [[acp-rpc-handlers]] · [[native-rpc-route]] ·
-[[rpc-index]] · [[rpc/_MOC]]
+[[acp-rpc-client]] · [[acp-rpc-handlers]] · [[rpc-auth-middleware]] ·
+[[native-rpc-route]] · [[rpc-index]] · [[rpc/_MOC]]

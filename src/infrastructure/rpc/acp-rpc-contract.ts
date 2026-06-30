@@ -30,6 +30,7 @@ import {
   Workspace,
   WorkspaceId,
 } from '../../protocol/schema/index.js'
+import type { Permission } from '../../protocol/schema/index.js'
 import {
   ApproveReviewPayload,
   ArtifactContentResponse,
@@ -39,6 +40,10 @@ import {
   RenewLeasePayload,
   UpdateWorkStatePayload,
 } from '../http/acp-http-api.js'
+import {
+  AcpRpcAuthMiddleware,
+  AcpRpcRequiredScope,
+} from './rpc-auth-middleware.js'
 
 const WorkerIdPayload = Schema.Struct({ worker_id: WorkerId })
 const WorkspaceIdPayload = Schema.Struct({ workspace_id: WorkspaceId })
@@ -89,125 +94,217 @@ const ApproveReviewRpcPayload = Schema.Struct({
 const rpc = <const Tag extends string>(tag: Tag) =>
   Rpc.make(tag).setError(ProtocolError)
 
-const workerList = rpc('worker.list').setSuccess(Schema.Array(Worker))
+interface ScopableRpc {
+  annotate: (
+    tag: typeof AcpRpcRequiredScope,
+    value: Permission,
+  ) => {
+    middleware: (middleware: typeof AcpRpcAuthMiddleware) => unknown
+  }
+}
+
+const scoped = <A extends ScopableRpc>(procedure: A, scope: Permission): A => {
+  const annotated: unknown = procedure
+    .annotate(AcpRpcRequiredScope, scope)
+    .middleware(AcpRpcAuthMiddleware)
+  return annotated as A
+}
+
+const workerList = scoped(
+  rpc('worker.list').setSuccess(Schema.Array(Worker)),
+  'worker:read',
+)
 const workerGet = rpc('worker.get')
   .setPayload(WorkerIdPayload)
   .setSuccess(Worker)
+  .pipe((procedure) => scoped(procedure, 'worker:read'))
 
 const sessionInitialize = rpc('session.initialize')
   .setPayload(InitializeSessionPayload)
   .setSuccess(InitializeSessionResponse)
 
-const workspaceList = rpc('workspace.list').setSuccess(Schema.Array(Workspace))
-const workspaceCreate = rpc('workspace.create')
-  .setPayload(CreateWorkspacePayload)
-  .setSuccess(Workspace)
-const workspaceUpdate = rpc('workspace.update')
-  .setPayload(UpdateWorkspaceRpcPayload)
-  .setSuccess(Workspace)
-const workspaceArchive = rpc('workspace.archive')
-  .setPayload(WorkspaceIdPayload)
-  .setSuccess(Workspace)
+const workspaceList = scoped(
+  rpc('workspace.list').setSuccess(Schema.Array(Workspace)),
+  'workspace:read',
+)
+const workspaceCreate = scoped(
+  rpc('workspace.create')
+    .setPayload(CreateWorkspacePayload)
+    .setSuccess(Workspace),
+  'workspace:write',
+)
+const workspaceUpdate = scoped(
+  rpc('workspace.update')
+    .setPayload(UpdateWorkspaceRpcPayload)
+    .setSuccess(Workspace),
+  'workspace:write',
+)
+const workspaceArchive = scoped(
+  rpc('workspace.archive').setPayload(WorkspaceIdPayload).setSuccess(Workspace),
+  'workspace:write',
+)
 
-const workCreate = rpc('work.create')
-  .setPayload(CreateWorkPayload)
-  .setSuccess(WorkUnit)
-const workListForWorkspace = rpc('work.list_for_workspace')
-  .setPayload(WorkspaceWorkListPayload)
-  .setSuccess(Schema.Array(WorkUnit))
-const workGet = rpc('work.get').setPayload(WorkIdPayload).setSuccess(WorkUnit)
-const workClaim = rpc('work.claim')
-  .setPayload(ClaimWorkRpcPayload)
-  .setSuccess(WorkUnit)
-const workUpdateState = rpc('work.update_state')
-  .setPayload(UpdateWorkStateRpcPayload)
-  .setSuccess(WorkUnit)
-const workPublishEvent = rpc('work.publish_event')
-  .setPayload(PublishWorkEventRpcPayload)
-  .setSuccess(Event)
+const workCreate = scoped(
+  rpc('work.create').setPayload(CreateWorkPayload).setSuccess(WorkUnit),
+  'work:create',
+)
+const workListForWorkspace = scoped(
+  rpc('work.list_for_workspace')
+    .setPayload(WorkspaceWorkListPayload)
+    .setSuccess(Schema.Array(WorkUnit)),
+  'workspace:read',
+)
+const workGet = scoped(
+  rpc('work.get').setPayload(WorkIdPayload).setSuccess(WorkUnit),
+  'workspace:read',
+)
+const workClaim = scoped(
+  rpc('work.claim').setPayload(ClaimWorkRpcPayload).setSuccess(WorkUnit),
+  'work:claim',
+)
+const workUpdateState = scoped(
+  rpc('work.update_state')
+    .setPayload(UpdateWorkStateRpcPayload)
+    .setSuccess(WorkUnit),
+  'work:update',
+)
+const workPublishEvent = scoped(
+  rpc('work.publish_event')
+    .setPayload(PublishWorkEventRpcPayload)
+    .setSuccess(Event),
+  'work:publish_event',
+)
 
-const leaseRequest = rpc('lease.request')
-  .setPayload(RequestLeasePayload)
-  .setSuccess(Lease)
-const leaseRenew = rpc('lease.renew')
-  .setPayload(LeaseRenewRpcPayload)
-  .setSuccess(Lease)
-const leaseRelease = rpc('lease.release')
-  .setPayload(LeaseIdPayload)
-  .setSuccess(Schema.Void)
-const leaseRevoke = rpc('lease.revoke')
-  .setPayload(LeaseIdPayload)
-  .setSuccess(Lease)
+const leaseRequest = scoped(
+  rpc('lease.request').setPayload(RequestLeasePayload).setSuccess(Lease),
+  'lease:create',
+)
+const leaseRenew = scoped(
+  rpc('lease.renew').setPayload(LeaseRenewRpcPayload).setSuccess(Lease),
+  'lease:renew',
+)
+const leaseRelease = scoped(
+  rpc('lease.release').setPayload(LeaseIdPayload).setSuccess(Schema.Void),
+  'lease:release',
+)
+const leaseRevoke = scoped(
+  rpc('lease.revoke').setPayload(LeaseIdPayload).setSuccess(Lease),
+  'lease:revoke',
+)
 
-const artifactCreate = rpc('artifact.create')
-  .setPayload(CreateArtifactPayload)
-  .setSuccess(Artifact)
-const artifactUpdate = rpc('artifact.update')
-  .setPayload(UpdateArtifactRpcPayload)
-  .setSuccess(Artifact)
-const artifactDelete = rpc('artifact.delete')
-  .setPayload(ArtifactIdPayload)
-  .setSuccess(Artifact)
-const artifactContent = rpc('artifact.content')
-  .setPayload(ArtifactIdPayload)
-  .setSuccess(ArtifactContentResponse)
-const artifactListForWork = rpc('artifact.list_for_work')
-  .setPayload(WorkResumeListPayload)
-  .setSuccess(Schema.Array(Artifact))
-const artifactListForWorkspace = rpc('artifact.list_for_workspace')
-  .setPayload(WorkspaceResumeListPayload)
-  .setSuccess(Schema.Array(Artifact))
+const artifactCreate = scoped(
+  rpc('artifact.create').setPayload(CreateArtifactPayload).setSuccess(Artifact),
+  'artifact:create',
+)
+const artifactUpdate = scoped(
+  rpc('artifact.update')
+    .setPayload(UpdateArtifactRpcPayload)
+    .setSuccess(Artifact),
+  'artifact:update',
+)
+const artifactDelete = scoped(
+  rpc('artifact.delete').setPayload(ArtifactIdPayload).setSuccess(Artifact),
+  'artifact:delete',
+)
+const artifactContent = scoped(
+  rpc('artifact.content')
+    .setPayload(ArtifactIdPayload)
+    .setSuccess(ArtifactContentResponse),
+  'workspace:read',
+)
+const artifactListForWork = scoped(
+  rpc('artifact.list_for_work')
+    .setPayload(WorkResumeListPayload)
+    .setSuccess(Schema.Array(Artifact)),
+  'workspace:read',
+)
+const artifactListForWorkspace = scoped(
+  rpc('artifact.list_for_workspace')
+    .setPayload(WorkspaceResumeListPayload)
+    .setSuccess(Schema.Array(Artifact)),
+  'workspace:read',
+)
 
-const checkpointCreate = rpc('checkpoint.create')
-  .setPayload(CreateCheckpointPayload)
-  .setSuccess(Checkpoint)
-const checkpointListForWork = rpc('checkpoint.list_for_work')
-  .setPayload(WorkResumeListPayload)
-  .setSuccess(Schema.Array(Checkpoint))
-const checkpointLatestForWork = rpc('checkpoint.latest_for_work')
-  .setPayload(WorkIdPayload)
-  .setSuccess(Checkpoint)
-const checkpointListForWorkspace = rpc('checkpoint.list_for_workspace')
-  .setPayload(WorkspaceResumeListPayload)
-  .setSuccess(Schema.Array(Checkpoint))
+const checkpointCreate = scoped(
+  rpc('checkpoint.create')
+    .setPayload(CreateCheckpointPayload)
+    .setSuccess(Checkpoint),
+  'checkpoint:create',
+)
+const checkpointListForWork = scoped(
+  rpc('checkpoint.list_for_work')
+    .setPayload(WorkResumeListPayload)
+    .setSuccess(Schema.Array(Checkpoint)),
+  'workspace:read',
+)
+const checkpointLatestForWork = scoped(
+  rpc('checkpoint.latest_for_work')
+    .setPayload(WorkIdPayload)
+    .setSuccess(Checkpoint),
+  'workspace:read',
+)
+const checkpointListForWorkspace = scoped(
+  rpc('checkpoint.list_for_workspace')
+    .setPayload(WorkspaceResumeListPayload)
+    .setSuccess(Schema.Array(Checkpoint)),
+  'workspace:read',
+)
 
-const reviewRequest = rpc('review.request')
-  .setPayload(RequestReviewPayload)
-  .setSuccess(Review)
-const reviewApprove = rpc('review.approve')
-  .setPayload(ApproveReviewRpcPayload)
-  .setSuccess(Review)
-const reviewReject = rpc('review.reject')
-  .setPayload(ReviewIdPayload)
-  .setSuccess(Review)
-const reviewRequestChanges = rpc('review.request_changes')
-  .setPayload(ReviewIdPayload)
-  .setSuccess(Review)
-const reviewCancel = rpc('review.cancel')
-  .setPayload(ReviewIdPayload)
-  .setSuccess(Review)
-const reviewListForWork = rpc('review.list_for_work')
-  .setPayload(WorkResumeListPayload)
-  .setSuccess(Schema.Array(Review))
-const reviewListForWorkspace = rpc('review.list_for_workspace')
-  .setPayload(WorkspaceResumeListPayload)
-  .setSuccess(Schema.Array(Review))
+const reviewRequest = scoped(
+  rpc('review.request').setPayload(RequestReviewPayload).setSuccess(Review),
+  'review:create',
+)
+const reviewApprove = scoped(
+  rpc('review.approve').setPayload(ApproveReviewRpcPayload).setSuccess(Review),
+  'review:approve',
+)
+const reviewReject = scoped(
+  rpc('review.reject').setPayload(ReviewIdPayload).setSuccess(Review),
+  'review:reject',
+)
+const reviewRequestChanges = scoped(
+  rpc('review.request_changes').setPayload(ReviewIdPayload).setSuccess(Review),
+  'review:request_changes',
+)
+const reviewCancel = scoped(
+  rpc('review.cancel').setPayload(ReviewIdPayload).setSuccess(Review),
+  'review:cancel',
+)
+const reviewListForWork = scoped(
+  rpc('review.list_for_work')
+    .setPayload(WorkResumeListPayload)
+    .setSuccess(Schema.Array(Review)),
+  'workspace:read',
+)
+const reviewListForWorkspace = scoped(
+  rpc('review.list_for_workspace')
+    .setPayload(WorkspaceResumeListPayload)
+    .setSuccess(Schema.Array(Review)),
+  'workspace:read',
+)
 
-const eventList = rpc('events.list')
-  .setPayload(
-    Schema.Struct({
-      workspace_id: WorkspaceId,
-      after_seq: Schema.Number,
-    }),
-  )
-  .setSuccess(Schema.Array(Event))
+const eventList = scoped(
+  rpc('events.list')
+    .setPayload(
+      Schema.Struct({
+        workspace_id: WorkspaceId,
+        after_seq: Schema.Number,
+      }),
+    )
+    .setSuccess(Schema.Array(Event)),
+  'event:read',
+)
 
-const memoryCreate = rpc('memory.create')
-  .setPayload(CreateMemoryPayload)
-  .setSuccess(Memory)
-const memoryList = rpc('memory.list')
-  .setPayload(ReadMemoryQuery)
-  .setSuccess(Schema.Array(Memory))
+const memoryCreate = scoped(
+  rpc('memory.create').setPayload(CreateMemoryPayload).setSuccess(Memory),
+  'memory:create',
+)
+const memoryList = scoped(
+  rpc('memory.list')
+    .setPayload(ReadMemoryQuery)
+    .setSuccess(Schema.Array(Memory)),
+  'memory:read',
+)
 
 export const AcpRpcs = {
   artifactContent,

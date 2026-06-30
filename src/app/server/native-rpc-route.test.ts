@@ -1,6 +1,6 @@
 /** @Acp.App.Server.NativeRpcRoute.Test — native Effect RPC over the live host socket */
 import { HttpServer } from '@effect/platform'
-import { Effect } from 'effect'
+import { Effect, Either } from 'effect'
 import { describe, expect, it } from 'vitest'
 import { nodeHttpServerLayer } from '../../infrastructure/platform-node/index.js'
 import {
@@ -47,7 +47,24 @@ describe('native RPC route', () => {
             }),
             { headers },
           )
-          return { sessionId: session.session_id, workspace }
+          const readOnly = yield* client.session.initialize(
+            yield* decodeInitialize(['workspace:read']),
+          )
+          const denied = yield* Effect.either(
+            client.workspace.create(
+              yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
+                name: 'Native RPC Denied Workspace',
+                kind: 'git_repository',
+                uri: 'git+https://example.com/acp/native-rpc-denied.git',
+              }),
+              {
+                headers: {
+                  authorization: `Bearer ${readOnly.session_id}`,
+                },
+              },
+            ),
+          )
+          return { denied, sessionId: session.session_id, workspace }
         }).pipe(
           Effect.provide(acpRpcClientHttpLayer(`${baseUrl}${nativeRpcPath}`)),
           Effect.scoped,
@@ -63,6 +80,7 @@ describe('native RPC route', () => {
     })
 
     expect(result.created.workspace.name).toBe('Native RPC Mounted Workspace')
+    expect(Either.isLeft(result.created.denied)).toBe(true)
     expect(result.restStatus).toBe(200)
     expect(result.listed.map((workspace) => workspace.id)).toContain(
       result.created.workspace.id,
