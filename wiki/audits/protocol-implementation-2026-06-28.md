@@ -142,15 +142,17 @@ for collection scans and event tail replay. That is the right baseline for
 thousands of coordination records or agent-memory artifacts before adding
 entity-specific repositories.
 
-Native RPC now has its first stable code anchor and first direct handler
-vertical. [[acp-rpc-contract]] defines an `@effect/rpc` `AcpRpcGroup` for the
-current non-streaming operation set and proves the closed tag surface with a
-registry test. [[acp-rpc-handlers]] implements `session.initialize`,
-`worker.list`, `worker.get`, and `workspace.list` through direct service calls,
-with [[rpc-auth]] preserving bearer-session scope behavior and [[rpc-error]]
-mapping domain failures into ACP `ProtocolError` envelopes. The implementation
-still does not replace `POST /rpc`/`GET /rpc`, and does not delete the JSON-RPC
-command map; this keeps the migration reversible while the native layer grows.
+Native RPC now has a stable code anchor and multiple direct handler verticals.
+[[acp-rpc-contract]] defines an `@effect/rpc` `AcpRpcGroup` for the current
+non-streaming operation set and proves the closed tag surface with a registry
+test. [[acp-rpc-handlers]] implements `session.initialize`, worker reads,
+workspace reads/mutations, work creation/discovery/current-state reads, work
+claiming, work state transitions, and work event publication through direct
+service calls. [[rpc-auth]] preserves bearer-session scope behavior and
+[[rpc-error]] maps domain failures into ACP `ProtocolError` envelopes. The
+implementation still does not replace `POST /rpc`/`GET /rpc`, and does not
+delete the JSON-RPC command map; this keeps the migration reversible while the
+native layer grows.
 
 External artifact references are now covered. [[artifact-service]] supports both
 host-stored inline content and explicit external `uri` references, so workers can
@@ -267,13 +269,22 @@ Effect/TypeScript and benefit more from a typed `RpcGroup`, direct domain
 handlers, typed errors, streaming, and generated clients than from preserving a
 paper wire format.
 
-The next gap is the next native RPC handler vertical: work and workspace command
-handlers. This slice should add direct handlers for `workspace.create`,
-`workspace.update`, `workspace.archive`, `work.create`,
+The work/workspace native RPC handler vertical is now covered. Direct handlers
+for `workspace.create`, `workspace.update`, `workspace.archive`, `work.create`,
 `work.list_for_workspace`, `work.get`, `work.claim`, `work.update_state`, and
-`work.publish_event`, reusing [[rpc-auth]], [[rpc-error]], and [[id-clock]]. It
-should prove parity with direct `accessHandler` tests and still avoid HTTP,
-WebSocket, stdio replacement, streaming `events.subscribe`, or JSON-RPC deletion.
+`work.publish_event` reuse [[rpc-auth]], [[rpc-error]], [[id-clock]], domain
+services, and direct `accessHandler` tests without going through HTTP,
+WebSocket, stdio, or JSON-RPC adapters.
+
+The next gap is the lease native RPC handler vertical. This slice should add
+direct handlers for `lease.request`, `lease.renew`, `lease.release`, and
+`lease.revoke`, reusing [[lease-service]] for TTL/default-config, conflict
+detection, and lifecycle events. The handlers should authorize
+`lease:create`, `lease:renew`, `lease:release`, and `lease:revoke`, mint request
+ids/timestamps through [[id-clock]], map domain failures through [[rpc-error]],
+and prove conflict/renew/release/revoke behavior with direct `accessHandler`
+tests. It should still avoid HTTP, WebSocket, stdio replacement, streaming
+`events.subscribe`, or JSON-RPC deletion.
 
 ## Referenced by
 
