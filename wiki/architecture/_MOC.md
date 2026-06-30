@@ -131,7 +131,9 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 62. ▶ Review cancellation lifecycle
 63. ✅ Native Effect RPC contract and session/read handler foundation
 64. ✅ Native Effect RPC work/workspace command handlers
-65. 🚧 Re-audit remaining native RPC handler gaps after work/workspace handlers
+65. ✅ Re-audit remaining native RPC handler gaps after work/workspace handlers
+66. ✅ Native Effect RPC lease handlers
+67. 🚧 Re-audit remaining native RPC handler gaps after lease handlers
 
 ## Referenced by
 
