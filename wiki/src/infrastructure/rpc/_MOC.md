@@ -10,6 +10,9 @@ first-party Effect RPC contract selected by [[ADR-0007-effect-rpc-adoption]].
 
 - [[rpc-index]] — opaque native RPC infrastructure barrel.
 - [[acp-rpc-contract]] — native first-party `RpcGroup` contract over ACP schemas.
+- [[acp-rpc-handlers]] — first native handler vertical for session/worker/workspace reads.
+- [[rpc-auth]] — bearer-session authorization helper for native RPC handlers.
+- [[rpc-error]] — domain-error to `ProtocolError` mapper for native RPC.
 
 ## Referenced by
 

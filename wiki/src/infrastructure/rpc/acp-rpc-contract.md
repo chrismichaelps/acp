@@ -17,9 +17,9 @@ aliases: [acp-rpc-contract, effect-rpc-contract]
 Declare the native first-party ACP RPC surface selected by
 [[ADR-0007-effect-rpc-adoption]]. The contract replaces the hand-mapped
 JSON-RPC method table with an `@effect/rpc` `RpcGroup` over ACP protocol schemas
-and typed protocol errors. This first source slice is contract-only: handlers,
-auth middleware, client generation, streaming, and JSON-RPC deletion remain later
-slices.
+and typed protocol errors. The first handler vertical now lives in
+[[acp-rpc-handlers]]; client generation, streaming, mutation handlers, and
+JSON-RPC deletion remain later slices.
 
 ## Interface
 
@@ -50,11 +50,10 @@ than encoding HTTP paths. Mutations reuse existing payload schemas wherever the
 REST body already matches the domain command, and add small parameter payload
 schemas only where REST currently carries ids in the path.
 
-The companion handler module, in a later source slice, will implement
-`AcpRpcGroup.toLayer(...)` against the domain services, [[id-clock]], and the
-same authorization semantics currently centralized in [[route-support]]. It must
-call domain services directly; it must not dispatch through [[acp-router]] or
-the JSON-RPC command map.
+Handler modules implement narrow `AcpRpcGroup.toLayerHandler(...)` layers
+against domain services, [[id-clock]], and [[rpc-auth]]. They must call domain
+services directly; they must not dispatch through [[acp-router]] or the JSON-RPC
+command map.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -84,4 +83,5 @@ adapters.
 
 ## Referenced by
 
-[[rpc/_MOC]] · [[ADR-0007-effect-rpc-adoption]] · [[Transport]]
+[[rpc/_MOC]] · [[acp-rpc-handlers]] · [[ADR-0007-effect-rpc-adoption]] ·
+[[Transport]]
