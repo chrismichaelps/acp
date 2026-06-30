@@ -29,7 +29,12 @@ export interface CliResult {
 export const runCliRequest: (
   request: CliRequest,
   baseUrl: string,
+  token?: string,
 ) => Effect<CliResult, HttpClientError, HttpClient.HttpClient>
+export const withBearerToken: (
+  request: HttpClientRequest,
+  token: string,
+) => HttpClientRequest
 ```
 
 ### Linkage
@@ -42,14 +47,16 @@ export const runCliRequest: (
 ## Algorithm
 
 Build a `GET`/`POST`/`PATCH`/`DELETE` `HttpClientRequest` for
-`${baseUrl}${path}`, attach a JSON body when present, `execute`, read the
-response text, return
-`{ status, body }`. Streaming (`events stream`) is handled by [[cli-main]].
+`${baseUrl}${path}`, attach a JSON body when present, apply
+`Authorization: Bearer <token>` only when a token was supplied, `execute`, read
+the response text, return `{ status, body }`. `withBearerToken` is exported so
+[[cli-main]] applies the same header policy to `events stream`.
 
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT decode into domain schemas here — the CLI prints raw JSON.
 - ❌ Do NOT pick the transport Layer here — [[cli-main]] provides it.
+- ❌ Do NOT log or echo bearer tokens.
 
 ## Depth
 

@@ -8,7 +8,19 @@ export interface CliResult {
   readonly body: string
 }
 
-export const runCliRequest = (request: CliRequest, baseUrl: string) =>
+export const withBearerToken = (
+  request: HttpClientRequest.HttpClientRequest,
+  token: string,
+) =>
+  token === ''
+    ? request
+    : HttpClientRequest.setHeader(request, 'authorization', `Bearer ${token}`)
+
+export const runCliRequest = (
+  request: CliRequest,
+  baseUrl: string,
+  token = '',
+) =>
   Effect.gen(function* () {
     const client = yield* HttpClient.HttpClient
     const url = `${baseUrl}${request.path}`
@@ -22,8 +34,11 @@ export const runCliRequest = (request: CliRequest, baseUrl: string) =>
             : HttpClientRequest.post(url)
     const httpRequest =
       request.body === undefined
-        ? base
-        : yield* HttpClientRequest.bodyJson(base, request.body)
+        ? withBearerToken(base, token)
+        : withBearerToken(
+            yield* HttpClientRequest.bodyJson(base, request.body),
+            token,
+          )
     const response = yield* client.execute(httpRequest)
     const body = yield* response.text
     return { status: response.status, body } satisfies CliResult
