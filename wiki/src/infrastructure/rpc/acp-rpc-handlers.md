@@ -17,10 +17,11 @@ aliases: [acp-rpc-handlers]
 Provide native `@effect/rpc` handler verticals over [[acp-rpc-contract]] without
 replacing existing HTTP, WebSocket, stdio, or JSON-RPC transports. The module now
 implements session initialization, worker/workspace reads, workspace mutations,
-work command handlers, and lease lifecycle commands so native RPC can prove
-direct domain-service dispatch, auth semantics, typed ACP errors, id/timestamp
-minting, conflict handling, and event emission before transport replacement
-begins.
+work command handlers, lease lifecycle commands, and the merged
+[[acp-rpc-artifact-handlers]] layer so native RPC can prove direct
+domain-service dispatch, auth semantics, typed ACP errors, id/timestamp minting,
+conflict handling, evidence handling, and event emission before transport
+replacement begins.
 
 ## Interface
 
@@ -42,7 +43,13 @@ export const AcpRpcSessionWorkerWorkspaceHandlersLive: Layer<
   | Rpc.Handler<'lease.request'>
   | Rpc.Handler<'lease.renew'>
   | Rpc.Handler<'lease.release'>
-  | Rpc.Handler<'lease.revoke'>,
+  | Rpc.Handler<'lease.revoke'>
+  | Rpc.Handler<'artifact.create'>
+  | Rpc.Handler<'artifact.update'>
+  | Rpc.Handler<'artifact.delete'>
+  | Rpc.Handler<'artifact.content'>
+  | Rpc.Handler<'artifact.list_for_work'>
+  | Rpc.Handler<'artifact.list_for_workspace'>,
   never,
   | AppConfigTag
   | SessionService
@@ -50,6 +57,7 @@ export const AcpRpcSessionWorkerWorkspaceHandlersLive: Layer<
   | WorkspaceService
   | WorkUnitService
   | LeaseService
+  | ArtifactService
   | EventStore
   | IdClock
 >
@@ -80,8 +88,13 @@ Lease handlers use `lease:create`, `lease:renew`, `lease:release`, and
 to [[lease-service]] so TTL defaults, active-resource conflict checks,
 renew/release/revoke transitions, and lease events remain single-sourced in the
 domain layer. `lease.release` intentionally returns no RPC payload, matching the
-existing HTTP `204` behavior. None of these handlers dispatches through
-[[acp-router]], JSON-RPC command maps, or REST paths.
+existing HTTP `204` behavior.
+
+Artifact handlers live in [[acp-rpc-artifact-handlers]] and merge into this
+aggregate layer. They preserve [[artifact-service]] validation, content storage,
+external URI, delete, and list semantics while keeping this source file below
+the 500-line ceiling. None of these handlers dispatches through [[acp-router]],
+JSON-RPC command maps, or REST paths.
 
 ## Negative Logic (Prohibited Paths)
 

@@ -15,13 +15,14 @@ aliases: [rpc-index]
 ## Purpose
 
 Opaque barrel for the native Effect RPC infrastructure package. It exports the
-current [[acp-rpc-contract]], handler layer, auth helper, and error
-mapper without exposing callers to file layout decisions.
+current [[acp-rpc-contract]], handler layers, auth helper, and error mapper
+without exposing callers to file layout decisions.
 
 ## Interface
 
 ```typescript
 export * from './acp-rpc-contract.js'
+export * from './acp-rpc-artifact-handlers.js'
 export * from './acp-rpc-handlers.js'
 export * from './rpc-auth.js'
 export * from './rpc-error.js'
