@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · effect-rpc-workspace-work-handlers slice · expanded
+  [[acp-rpc-handlers]] with native workspace create/update/archive and work
+  create/list/get/claim/update/event handlers over [[acp-rpc-contract]] ·
+  validation: format, lint, typecheck, file-size, focused RPC tests, and 253
+  non-socket tests green · risk LOW
 - 2026-06-30 · post-rpc-handler-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after [[acp-rpc-handlers]] and selected
   native work/workspace command handlers as the next direct-RPC vertical ·
