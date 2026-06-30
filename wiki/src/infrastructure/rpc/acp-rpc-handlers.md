@@ -18,11 +18,13 @@ Provide native `@effect/rpc` handler verticals over [[acp-rpc-contract]] without
 replacing existing HTTP, WebSocket, stdio, or JSON-RPC transports. The module now
 implements session initialization, worker/workspace reads, workspace mutations,
 work command handlers, lease lifecycle commands, and the merged
-[[acp-rpc-artifact-handlers]], [[acp-rpc-checkpoint-handlers]], and
-[[acp-rpc-review-handlers]] layers so native RPC can prove direct domain-service
-dispatch, auth semantics, typed ACP errors, id/timestamp minting, conflict
-handling, evidence handling, resumability, review gates, and event emission
-before transport replacement begins.
+[[acp-rpc-artifact-handlers]], [[acp-rpc-checkpoint-handlers]],
+[[acp-rpc-review-handlers]], and [[acp-rpc-memory-event-handlers]] layers so
+native RPC can prove direct domain-service dispatch, auth semantics, typed ACP
+errors, id/timestamp minting, conflict handling, evidence handling,
+resumability, review gates, recall, event replay, and event emission before
+transport replacement begins. With the memory/event vertical merged, every
+[[acp-rpc-contract]] request now has a backing handler.
 
 ## Interface
 
@@ -61,7 +63,10 @@ export const AcpRpcSessionWorkerWorkspaceHandlersLive: Layer<
   | Rpc.Handler<'review.request_changes'>
   | Rpc.Handler<'review.cancel'>
   | Rpc.Handler<'review.list_for_work'>
-  | Rpc.Handler<'review.list_for_workspace'>,
+  | Rpc.Handler<'review.list_for_workspace'>
+  | Rpc.Handler<'memory.create'>
+  | Rpc.Handler<'memory.list'>
+  | Rpc.Handler<'events.list'>,
   never,
   | AppConfigTag
   | SessionService

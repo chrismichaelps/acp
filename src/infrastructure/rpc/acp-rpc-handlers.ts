@@ -27,6 +27,7 @@ import { IdClock } from '../../app/server/identity.js'
 import { AcpRpcGroup } from './acp-rpc-contract.js'
 import { AcpRpcArtifactHandlersLive } from './acp-rpc-artifact-handlers.js'
 import { AcpRpcCheckpointHandlersLive } from './acp-rpc-checkpoint-handlers.js'
+import { AcpRpcMemoryEventHandlersLive } from './acp-rpc-memory-event-handlers.js'
 import { AcpRpcReviewHandlersLive } from './acp-rpc-review-handlers.js'
 import { authorizeRpc } from './rpc-auth.js'
 import { toRpcError } from './rpc-error.js'
@@ -389,4 +390,5 @@ export const AcpRpcSessionWorkerWorkspaceHandlersLive = Layer.mergeAll(
   AcpRpcArtifactHandlersLive,
   AcpRpcCheckpointHandlersLive,
   AcpRpcReviewHandlersLive,
+  AcpRpcMemoryEventHandlersLive,
 )
