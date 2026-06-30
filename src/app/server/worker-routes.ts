@@ -6,7 +6,7 @@ import { Worker } from '../../protocol/schema/index.js'
 import type { WorkerId } from '../../protocol/schema/index.js'
 import { authorize, ok, pathParam, respond } from './route-support.js'
 
-export const listWorkers = respond(
+export const listWorkers = respond('GET /v1/workers')(
   Effect.gen(function* () {
     const workers = yield* WorkerService
     yield* authorize('worker:read')
@@ -15,7 +15,7 @@ export const listWorkers = respond(
   }),
 )
 
-export const getWorker = respond(
+export const getWorker = respond('GET /v1/workers/:worker_id')(
   Effect.gen(function* () {
     const workers = yield* WorkerService
     const workerId = (yield* pathParam('worker_id')) as WorkerId

@@ -138,6 +138,8 @@ timestamp, resolves the actor through `workspace:write`, and delegates to servic
 takes the id from the path, resolves the actor through `workspace:write`, and
 delegates to service `update`. `archiveWorkspace` takes the id from the path,
 resolves the actor through `workspace:write`, and delegates to service `archive`.
+Each handler passes its stable route template to [[route-support]] `respond` so
+request lifecycle logs remain low-cardinality and do not include workspace ids.
 
 ## Negative Logic (Prohibited Paths)
 

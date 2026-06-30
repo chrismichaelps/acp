@@ -56,7 +56,8 @@ export const getWorker: Effect<
 `listWorkers` authorizes `worker:read`, delegates to [[worker-service]] `list`,
 and encodes `Worker[]`. `getWorker` authorizes `worker:read`, reads `worker_id`
 from the path, delegates to `WorkerService.get`, maps absence to `NotFoundError`,
-and encodes the `Worker`.
+and encodes the `Worker`. Both handlers pass stable route templates to
+[[route-support]] `respond` so host-presence telemetry avoids raw worker ids.
 
 ## Negative Logic (Prohibited Paths)
 

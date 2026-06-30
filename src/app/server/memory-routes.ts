@@ -8,7 +8,7 @@ import { CreateMemoryPayload, Memory } from '../../protocol/schema/index.js'
 import { IdClock } from './identity.js'
 import { authorize, ok, respond } from './route-support.js'
 
-export const createMemory = respond(
+export const createMemory = respond('POST /v1/memory')(
   Effect.gen(function* () {
     const memory = yield* MemoryService
     const idClock = yield* IdClock
@@ -26,7 +26,7 @@ export const createMemory = respond(
   }),
 )
 
-export const listMemory = respond(
+export const listMemory = respond('GET /v1/memory')(
   Effect.gen(function* () {
     const memory = yield* MemoryService
     // MemoryListParams decodes URL strings straight into the ReadMemoryQuery
