@@ -14,6 +14,8 @@ first-party Effect RPC contract selected by [[ADR-0007-effect-rpc-adoption]].
   workspace, work, and lease operations.
 - [[acp-rpc-artifact-handlers]] — native artifact evidence handlers split from
   the aggregate handler layer.
+- [[acp-rpc-checkpoint-handlers]] — native checkpoint resume handlers split from
+  the aggregate handler layer.
 - [[rpc-auth]] — bearer-session authorization helper for native RPC handlers.
 - [[rpc-error]] — domain-error to `ProtocolError` mapper for native RPC.
 
