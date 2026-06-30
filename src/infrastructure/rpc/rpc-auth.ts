@@ -1,6 +1,6 @@
 /** @Acp.Infra.Rpc.Auth — native RPC bearer authorization */
 import { Headers } from '@effect/platform'
-import { Effect, Option } from 'effect'
+import { Context, Effect, Option } from 'effect'
 import { AppConfigTag } from '../../config/app-config.js'
 import { SessionService } from '../../domain/sessions/index.js'
 import { UnauthorizedError } from '../../protocol/errors/protocol-error.js'
@@ -13,6 +13,8 @@ import type {
 import { toRpcError } from './rpc-error.js'
 
 const systemActor = 'worker_system' as WorkerId
+
+export const AcpRpcActor = Context.GenericTag<WorkerId>('@acp/rpc/Actor')
 
 const bearerToken = (headers: Headers.Headers): string =>
   Option.match(Headers.get(headers, 'authorization'), {
@@ -63,4 +65,16 @@ export const authorizeRpc = (
               ),
             ),
     })
+  })
+
+export const rpcActor = (
+  headers: Headers.Headers,
+  scope?: Permission,
+): Effect.Effect<WorkerId, ProtocolError, AppConfigTag | SessionService> =>
+  Effect.gen(function* () {
+    const actor = yield* Effect.serviceOption(AcpRpcActor)
+    if (Option.isSome(actor)) {
+      return actor.value
+    }
+    return yield* authorizeRpc(headers, scope)
   })

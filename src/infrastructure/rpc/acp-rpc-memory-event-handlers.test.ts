@@ -2,6 +2,7 @@
 import { Effect, Either } from 'effect'
 import { describe, expect, it } from 'vitest'
 import { AcpRpcGroup, AcpRpcs } from './acp-rpc-contract.js'
+import type { WorkerId } from '../../protocol/schema/index.js'
 import {
   Runtime,
   bearer,
@@ -9,6 +10,7 @@ import {
   decodePayload,
   rpcOptions,
 } from './acp-rpc-test-support.js'
+import { AcpRpcActor } from './rpc-auth.js'
 
 describe('AcpRpcMemoryEventHandlersLive', () => {
   it('runs memory and event handlers directly', async () => {
@@ -103,5 +105,26 @@ describe('AcpRpcMemoryEventHandlersLive', () => {
     expect(result.records.map((m) => m.id)).toEqual([result.memory.id])
     expect(result.memory.seq).toBe(1)
     expect(Either.isLeft(result.unauthorized)).toBe(true)
+  })
+
+  it('accepts a middleware-provided actor for handler attribution', async () => {
+    const program = Effect.gen(function* () {
+      const memoryCreate = yield* AcpRpcGroup.accessHandler('memory.create')
+      return yield* memoryCreate(
+        yield* decodePayload(AcpRpcs.memoryCreate.payloadSchema, {
+          workspace_id: 'workspace_actor_bridge',
+          kind: 'observation',
+          key: 'rpc.actor.bridge',
+          summary: 'Actor provided by middleware context.',
+          content: 'The handler reads AcpRpcActor before falling back to auth.',
+          labels: ['rpc', 'actor'],
+        }),
+        rpcOptions(),
+      )
+    }).pipe(Effect.provideService(AcpRpcActor, 'agent_rpc' as WorkerId))
+
+    const result = await Effect.runPromise(Effect.provide(program, Runtime))
+
+    expect(result.created_by).toBe('agent_rpc')
   })
 })
