@@ -1,0 +1,98 @@
+/** @Acp.Infra.Rpc.CheckpointHandlers — native RPC checkpoint handlers */
+import { Effect, Layer, Option } from 'effect'
+import { CheckpointService } from '../../domain/checkpoints/index.js'
+import { WorkUnitService } from '../../domain/work-units/index.js'
+import type { WorkUnitServiceApi } from '../../domain/work-units/index.js'
+import { IdClock } from '../../app/server/identity.js'
+import { NotFoundError } from '../../protocol/errors/protocol-error.js'
+import type { CheckpointId, WorkId } from '../../protocol/schema/index.js'
+import { AcpRpcGroup } from './acp-rpc-contract.js'
+import { authorizeRpc } from './rpc-auth.js'
+import { toRpcError } from './rpc-error.js'
+
+const requireWork = (workUnits: WorkUnitServiceApi, workId: WorkId) =>
+  Effect.flatMap(
+    workUnits.get(workId).pipe(Effect.mapError(toRpcError)),
+    (work) =>
+      Option.match(work, {
+        onNone: () =>
+          Effect.fail(
+            toRpcError(new NotFoundError({ entity: 'work', id: workId })),
+          ),
+        onSome: Effect.succeed,
+      }),
+  )
+
+const checkpointCreateHandler = AcpRpcGroup.toLayerHandler(
+  'checkpoint.create',
+  (payload, options) =>
+    Effect.gen(function* () {
+      const actor = yield* authorizeRpc(options.headers, 'checkpoint:create')
+      const checkpoints = yield* CheckpointService
+      const idClock = yield* IdClock
+      const id = (yield* idClock.nextId('checkpoint')) as CheckpointId
+      const now = yield* idClock.now
+      return yield* checkpoints
+        .create({ id, payload, createdBy: actor, now })
+        .pipe(Effect.mapError(toRpcError))
+    }),
+)
+
+const checkpointListForWorkHandler = AcpRpcGroup.toLayerHandler(
+  'checkpoint.list_for_work',
+  (payload, options) =>
+    Effect.gen(function* () {
+      yield* authorizeRpc(options.headers, 'workspace:read')
+      const workUnits = yield* WorkUnitService
+      yield* requireWork(workUnits, payload.work_id)
+      const checkpoints = yield* CheckpointService
+      return yield* checkpoints
+        .listForWork(payload.work_id)
+        .pipe(Effect.mapError(toRpcError))
+    }),
+)
+
+const checkpointLatestForWorkHandler = AcpRpcGroup.toLayerHandler(
+  'checkpoint.latest_for_work',
+  (payload, options) =>
+    Effect.gen(function* () {
+      yield* authorizeRpc(options.headers, 'workspace:read')
+      const workUnits = yield* WorkUnitService
+      yield* requireWork(workUnits, payload.work_id)
+      const checkpoints = yield* CheckpointService
+      const latest = yield* checkpoints
+        .latestForWork(payload.work_id)
+        .pipe(Effect.mapError(toRpcError))
+      return yield* Option.match(latest, {
+        onNone: () =>
+          Effect.fail(
+            toRpcError(
+              new NotFoundError({
+                entity: 'checkpoint',
+                id: `latest:${payload.work_id}`,
+              }),
+            ),
+          ),
+        onSome: Effect.succeed,
+      })
+    }),
+)
+
+const checkpointListForWorkspaceHandler = AcpRpcGroup.toLayerHandler(
+  'checkpoint.list_for_workspace',
+  (payload, options) =>
+    Effect.gen(function* () {
+      yield* authorizeRpc(options.headers, 'workspace:read')
+      const checkpoints = yield* CheckpointService
+      return yield* checkpoints
+        .listForWorkspace(payload.workspace_id)
+        .pipe(Effect.mapError(toRpcError))
+    }),
+)
+
+export const AcpRpcCheckpointHandlersLive = Layer.mergeAll(
+  checkpointCreateHandler,
+  checkpointListForWorkHandler,
+  checkpointLatestForWorkHandler,
+  checkpointListForWorkspaceHandler,
+)
