@@ -142,4 +142,95 @@ describe('native RPC route', () => {
 
     expect(Option.getOrNull(result.observed)?.id).toBe(result.published.id)
   })
+
+  it('round-trips artifact and checkpoint methods over HTTP', async () => {
+    const result = await onLiveServer((baseUrl) =>
+      Effect.runPromise(
+        Effect.gen(function* () {
+          const client = yield* makeAcpRpcClient
+          const session = yield* client.session.initialize(
+            yield* decodeInitialize([
+              'workspace:read',
+              'workspace:write',
+              'work:create',
+              'artifact:create',
+              'artifact:update',
+              'checkpoint:create',
+            ]),
+          )
+          const headers = { authorization: `Bearer ${session.session_id}` }
+          const workspace = yield* client.workspace.create(
+            yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
+              name: 'Native RPC Artifact Checkpoint Workspace',
+              kind: 'git_repository',
+              uri: 'git+https://example.com/acp/native-rpc-artifacts.git',
+            }),
+            { headers },
+          )
+          const work = yield* client.work.create(
+            yield* decodePayload(AcpRpcs.workCreate.payloadSchema, {
+              workspace_id: workspace.id,
+              title: 'Persist artifact and checkpoint over native RPC',
+            }),
+            { headers },
+          )
+          const artifact = yield* client.artifact.create(
+            yield* decodePayload(AcpRpcs.artifactCreate.payloadSchema, {
+              workspace_id: workspace.id,
+              work_id: work.id,
+              kind: 'patch',
+              summary: 'Mounted transport patch',
+              content: 'diff --git a/http-roundtrip.ts b/http-roundtrip.ts',
+            }),
+            { headers },
+          )
+          const updated = yield* client.artifact.update(
+            yield* decodePayload(AcpRpcs.artifactUpdate.payloadSchema, {
+              artifact_id: artifact.id,
+              kind: 'patch',
+              summary: 'Mounted transport patch revised',
+              content:
+                'diff --git a/http-roundtrip.ts b/http-roundtrip-revised.ts',
+            }),
+            { headers },
+          )
+          const content = yield* client.artifact.content(
+            { artifact_id: artifact.id },
+            { headers },
+          )
+          const checkpoint = yield* client.checkpoint.create(
+            yield* decodePayload(AcpRpcs.checkpointCreate.payloadSchema, {
+              workspace_id: workspace.id,
+              work_id: work.id,
+              summary: 'Mounted transport checkpoint',
+              completed_steps: ['created artifact over mounted native RPC'],
+              remaining_steps: ['continue transport parity coverage'],
+              modified_resources: ['file://src/app/server/native-rpc-route.ts'],
+            }),
+            { headers },
+          )
+          const latest = yield* client.checkpoint.latest_for_work(
+            { work_id: work.id },
+            { headers },
+          )
+          const artifacts = yield* client.artifact.list_for_workspace(
+            { workspace_id: workspace.id },
+            { headers },
+          )
+
+          return { artifact, artifacts, checkpoint, content, latest, updated }
+        }).pipe(
+          Effect.provide(acpRpcClientHttpLayer(`${baseUrl}${nativeRpcPath}`)),
+          Effect.scoped,
+        ),
+      ),
+    )
+
+    expect(result.updated.id).toBe(result.artifact.id)
+    expect(result.content.content).toContain('http-roundtrip-revised.ts')
+    expect(result.artifacts.map((artifact) => artifact.id)).toContain(
+      result.artifact.id,
+    )
+    expect(result.latest.id).toBe(result.checkpoint.id)
+  })
 })
