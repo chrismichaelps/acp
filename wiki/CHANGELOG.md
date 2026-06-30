@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · effect-rpc-contract-foundation slice · added
+  [[acp-rpc-contract]] source with an `@effect/rpc` `AcpRpcGroup` covering the
+  current non-streaming ACP operation set and a registry test for the closed tag
+  surface; handlers/auth/client/streaming remain later slices · 250 non-socket
+  tests green · risk LOW
 - 2026-06-30 · effect-rpc-dependency-preflight slice · made `@effect/rpc`
   explicit in package metadata, pinned the SDK in [[grammar/typescript]], and
   created the planned [[acp-rpc-contract]] wiki page before native RPC source
