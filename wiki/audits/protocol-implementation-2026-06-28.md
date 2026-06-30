@@ -391,19 +391,33 @@ No native RPC handler calls `authorizeRpc` directly anymore — `rpcActor` (whic
 still falls back to `authorizeRpc`'s bearer-header path when no `AcpRpcActor`
 is in scope) is the only entry point.
 
-The next gap is the architectural follow-up the sweep was building toward:
-deciding whether `RpcServer`-routed execution can drop handler-local
-authorization entirely in favor of [[rpc-auth-middleware]] alone, now that
-direct `accessHandler` tests can supply `AcpRpcActor` to exercise authorized
-paths without a live middleware run. This requires auditing that every
-contract-annotated scope in [[acp-rpc-contract]] actually matches what each
-handler checks today (a drift here would silently widen access once
-handler-local checks are removed), then dropping the now-redundant per-handler
-`rpcActor(..., scope)` calls in favor of trusting `options.headers`/`AcpRpcActor`
-unconditionally inside handlers reached only through the mounted route. The
-hand-mapped JSON-RPC layer, stdio bridge, WebSocket bridge, and SSE channel
-should still remain until native RPC has enough client coverage to make
-migration mechanical rather than speculative.
+The contract-scope parity audit the sweep was building toward is now done, with
+a **decision to keep dual-layer authorization** rather than collapse to
+middleware-only. Every scope annotation in [[acp-rpc-contract]] (`scoped(rpc,
+'...')`) was compared against every handler's `rpcActor(options.headers,
+'...')` call across all five handler files plus the aggregate module — **37
+scoped operations, zero drift**; `session.initialize` is unscoped on both
+sides. Despite the clean parity, handler-local checks stay: `.middleware(...)`
+is attached at the `Rpc` definition level in [[acp-rpc-contract]], not the
+transport, so every real `RpcServer`-mounted protocol (HTTP today, sockets or
+workers later) already runs [[rpc-auth-middleware]] automatically — the *only*
+path that bypasses it is the test-only `AcpRpcGroup.accessHandler` call used by
+every handler test in this module (via [[acp-rpc-test-support]]). Removing
+handler-local `rpcActor(..., scope)` checks would not simplify any production
+request path; it would silently turn every existing handler-level
+scope-denial regression (including the `work.publish_event` "lacks a read
+scope" test and the per-vertical not-found/conflict tests gated behind a real
+scope check) into a vacuous pass, since nothing would enforce scope when
+middleware is bypassed. The in-memory cost of the duplicate check is
+negligible, so this is a clear case for defense-in-depth over DRY: **handler-local
+authorization stays permanently**, not as a temporary migration artifact.
+
+With that decision closed, the live frontier returns to the broader
+[[ADR-0007-effect-rpc-adoption]] migration: growing native RPC client coverage
+(beyond [[acp-rpc-roundtrip-test]] and the [[native-rpc-route]] live-socket
+regression) toward parity with the hand-mapped JSON-RPC method surface, so that
+retiring `src/infrastructure/jsonrpc/` and the stdio/WebSocket JSON-RPC bridges
+becomes a mechanical client-coverage check rather than a speculative cutover.
 
 ## Referenced by
 
