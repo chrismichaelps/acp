@@ -31,6 +31,9 @@ export const makeAcpRpcClient: Effect<
 >
 
 export const acpRpcClientHttpLayer: (url: string) => Layer<RpcClient.Protocol>
+export const acpRpcClientHostLayer: (
+  baseUrl: string,
+) => Layer<RpcClient.Protocol>
 export const acpNativeRpcPath = '/rpc/native'
 export const acpNativeRpcUrl: (baseUrl: string) => string
 export const acpRpcBearerHeaders: (sessionId: SessionId) => {
@@ -61,9 +64,12 @@ client calls without repeating `{ authorization: ... }` on every operation.
 
 `acpRpcClientHttpLayer(url)` wires the NDJSON-framed streaming-HTTP protocol:
 `RpcClient.layerProtocolHttp({ url })` provided with
-`RpcSerialization.layerNdjson` and `FetchHttpClient.layer`, so callers supply
-only the host's native RPC URL. NDJSON framing is required for streaming
-operations such as `events.subscribe`; unary calls use the same client layer.
+`RpcSerialization.layerNdjson` and `FetchHttpClient.layer`, so callers can supply
+a fully mounted native RPC URL when they need custom routing.
+`acpRpcClientHostLayer(baseUrl)` is the common host-facing path: it derives the
+mounted URL with `acpNativeRpcUrl(baseUrl)` and then builds the HTTP protocol
+layer. NDJSON framing is required for streaming operations such as
+`events.subscribe`; unary calls use the same client layer.
 The round-trip test set proves the client/handler contract through `RpcTest`
 without a socket: [[acp-rpc-roundtrip-test]] covers the initial workspace path,
 [[acp-rpc-roundtrip-work-lease-test]] covers worker/workspace/work/lease,

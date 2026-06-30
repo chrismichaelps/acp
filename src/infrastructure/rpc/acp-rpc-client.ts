@@ -41,3 +41,8 @@ export const acpRpcClientHttpLayer = (
     Layer.provide(RpcSerialization.layerNdjson),
     Layer.provide(FetchHttpClient.layer),
   )
+
+export const acpRpcClientHostLayer = (
+  baseUrl: string,
+): Layer.Layer<RpcClient.Protocol> =>
+  acpRpcClientHttpLayer(acpNativeRpcUrl(baseUrl))
