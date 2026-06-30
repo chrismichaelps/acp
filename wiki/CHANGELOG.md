@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · cli-parseargs-dispatch-table slice · refactored
+  [[cli-commands]] argument tokenization from nested conditionals to an
+  extensible token parser registry while preserving the existing command handler
+  table; added a regression proving a valueless flag followed by another flag is
+  not consumed as a value · validation: format, lint, typecheck, file-size,
+  focused CLI parser tests, and 275-test non-socket suite green · risk LOW
 - 2026-06-30 · rpc-structured-telemetry slice · added
   [[rpc-telemetry-middleware]] as a wrap-style native RPC middleware using
   Effect log spans and annotations to emit one structured completion log per
