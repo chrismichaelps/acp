@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · rpc-client-host-layer slice · added
+  `acpRpcClientHostLayer(baseUrl)` as the common native RPC client protocol layer
+  for host base URLs and migrated [[native-rpc-route]] live tests away from
+  manual `/rpc/native` URL concatenation · validation: format, lint, typecheck,
+  file-size, focused RPC client/route tests, and 277-test non-socket suite green
+  · risk LOW
 - 2026-06-30 · rpc-client-ergonomics slice · added native RPC client helpers for
   the mounted route path, host URL derivation, bearer headers, and
   `RpcClient.withHeaders` session scoping; made [[native-rpc-route]] reuse the

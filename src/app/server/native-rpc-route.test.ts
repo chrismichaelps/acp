@@ -6,7 +6,7 @@ import { RenewLeasePayload } from '../../infrastructure/http/acp-http-api.js'
 import { nodeHttpServerLayer } from '../../infrastructure/platform-node/index.js'
 import {
   AcpRpcs,
-  acpRpcClientHttpLayer,
+  acpRpcClientHostLayer,
   makeAcpRpcClient,
 } from '../../infrastructure/rpc/index.js'
 import {
@@ -15,7 +15,6 @@ import {
 } from '../../infrastructure/rpc/acp-rpc-test-support.js'
 import type { WorkerId } from '../../protocol/schema/index.js'
 import { HttpAppLive } from './http-app.js'
-import { nativeRpcPath } from './native-rpc-route.js'
 
 const EphemeralServerLive = nodeHttpServerLayer(0)
 
@@ -67,10 +66,7 @@ describe('native RPC route', () => {
             ),
           )
           return { denied, sessionId: session.session_id, workspace }
-        }).pipe(
-          Effect.provide(acpRpcClientHttpLayer(`${baseUrl}${nativeRpcPath}`)),
-          Effect.scoped,
-        ),
+        }).pipe(Effect.provide(acpRpcClientHostLayer(baseUrl)), Effect.scoped),
       )
 
       const rest = await fetch(`${baseUrl}/v1/workspaces`, {
@@ -135,10 +131,7 @@ describe('native RPC route', () => {
           )
           const observed = yield* Fiber.join(fiber)
           return { observed, published }
-        }).pipe(
-          Effect.provide(acpRpcClientHttpLayer(`${baseUrl}${nativeRpcPath}`)),
-          Effect.scoped,
-        ),
+        }).pipe(Effect.provide(acpRpcClientHostLayer(baseUrl)), Effect.scoped),
       ),
     )
 
@@ -252,10 +245,7 @@ describe('native RPC route', () => {
             running,
             renamed,
           }
-        }).pipe(
-          Effect.provide(acpRpcClientHttpLayer(`${baseUrl}${nativeRpcPath}`)),
-          Effect.scoped,
-        ),
+        }).pipe(Effect.provide(acpRpcClientHostLayer(baseUrl)), Effect.scoped),
       ),
     )
 
@@ -344,10 +334,7 @@ describe('native RPC route', () => {
           )
 
           return { artifact, artifacts, checkpoint, content, latest, updated }
-        }).pipe(
-          Effect.provide(acpRpcClientHttpLayer(`${baseUrl}${nativeRpcPath}`)),
-          Effect.scoped,
-        ),
+        }).pipe(Effect.provide(acpRpcClientHostLayer(baseUrl)), Effect.scoped),
       ),
     )
 
@@ -448,10 +435,7 @@ describe('native RPC route', () => {
           )
 
           return { approved, events, memories, memory, published, requested }
-        }).pipe(
-          Effect.provide(acpRpcClientHttpLayer(`${baseUrl}${nativeRpcPath}`)),
-          Effect.scoped,
-        ),
+        }).pipe(Effect.provide(acpRpcClientHostLayer(baseUrl)), Effect.scoped),
       ),
     )
 
