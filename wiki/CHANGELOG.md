@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · spec-native-rpc-transport-guidance slice · updated
+  [[specs.md]] transport guidance to keep HTTP/SSE as the cross-language MVP,
+  name JSON-RPC as stdio/WebSocket compatibility framing, document native Effect
+  RPC as a first-party TypeScript reference transport, and close the stale
+  JSON-RPC-vs-HTTP/SSE open question · validation: format, lint, typecheck,
+  file-size, diff whitespace, and 275-test non-socket suite green · risk LOW
 - 2026-06-30 · readme-native-rpc-current-surface slice · refreshed
   [[README]] prose to include `/rpc/native`, generated Effect RPC client
   coverage, native RPC structured telemetry, and the compatibility role of
