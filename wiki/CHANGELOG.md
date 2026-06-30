@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · rpc-http-artifact-checkpoint-roundtrip slice · extended
+  [[native-rpc-route]] live-socket coverage with artifact create/update/content/
+  list and checkpoint create/latest round-trips over the mounted NDJSON HTTP
+  transport, proving one split handler vertical beyond `RpcTest` against the
+  real host route · validation: focused live native route test green · risk LOW
 - 2026-06-30 · rpc-roundtrip-coverage slice · added generated-client native RPC
   round-trip coverage for the worker/workspace/work/lease,
   artifact/checkpoint, and review/memory/event verticals, extending

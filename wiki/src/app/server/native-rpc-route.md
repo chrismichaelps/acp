@@ -41,6 +41,13 @@ same route, which is required for native `events.subscribe`. The route provides
 sessions, workspaces, events, and memory visible across REST, legacy JSON-RPC,
 WebSocket JSON-RPC, and native RPC inside one running host.
 
+The live route regression now covers three socket-sensitive behaviors: typed
+workspace creation sharing state with REST, streaming `events.subscribe` over
+NDJSON, and artifact/checkpoint round-trips that write and read evidence through
+the mounted route. That last path proves more than reachability; it exercises
+schema decoding, authenticated writes, persisted content reads, and checkpoint
+latest-selection across the real HTTP client protocol.
+
 `AcpHttpRoutesLive` also mounts [[acp-router]] for `/v1/*` and `/rpc`. The
 explicit paths avoid catch-all route ordering ambiguity and leave `/rpc/native`
 owned by the native RPC transport.

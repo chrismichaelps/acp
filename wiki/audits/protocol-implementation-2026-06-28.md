@@ -431,6 +431,15 @@ client adoption work: prove these verticals over mounted HTTP where the behavior
 is socket-sensitive, keep `events.subscribe` streaming covered, and then decide
 which legacy JSON-RPC bridge can be retired first without stranding a consumer.
 
+The artifact/checkpoint vertical is now the first expanded mounted-HTTP parity
+slice. [[native-rpc-route]] boots the real host route, builds
+[[acp-rpc-client]] against `/rpc/native`, creates a workspace and work item,
+persists artifact evidence, reads revised artifact content back through the
+transport, creates a checkpoint, and verifies latest-checkpoint selection. The
+next transport-parity slice should apply the same live-route pressure to
+work/lease or review/memory/event, with special care to keep
+`events.subscribe` covered as the streaming path.
+
 ## Referenced by
 
 [[architecture/_MOC]] · [[protocol-implementation-2026-06-27]] ·
