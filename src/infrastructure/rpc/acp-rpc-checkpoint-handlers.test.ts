@@ -1,7 +1,9 @@
 /** @Acp.Infra.Rpc.CheckpointHandlers.Test — native checkpoint RPC handlers */
 import { Duration, Effect, Either } from 'effect'
 import { describe, expect, it } from 'vitest'
+import type { WorkerId } from '../../protocol/schema/index.js'
 import { AcpRpcGroup, AcpRpcs } from './acp-rpc-contract.js'
+import { AcpRpcActor } from './rpc-auth.js'
 import {
   Runtime,
   bearer,
@@ -115,5 +117,56 @@ describe('AcpRpcCheckpointHandlersLive', () => {
     if (Either.isLeft(result.missingLatest)) {
       expect(result.missingLatest.left.error.code).toBe('not_found')
     }
+  })
+
+  it('accepts a middleware-provided actor for creation attribution', async () => {
+    const program = Effect.gen(function* () {
+      const initialize = yield* AcpRpcGroup.accessHandler('session.initialize')
+      const workspaceCreate =
+        yield* AcpRpcGroup.accessHandler('workspace.create')
+      const workCreate = yield* AcpRpcGroup.accessHandler('work.create')
+      const checkpointCreate =
+        yield* AcpRpcGroup.accessHandler('checkpoint.create')
+
+      const initPayload = yield* decodeInitialize([
+        'workspace:write',
+        'work:create',
+      ])
+      const session = yield* initialize(initPayload, rpcOptions())
+      const headers = rpcOptions(bearer(session.session_id))
+      const workspace = yield* workspaceCreate(
+        yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
+          name: 'RPC Checkpoint Actor Workspace',
+          kind: 'git_repository',
+          uri: 'git+https://example.com/acp/checkpoint-actor-rpc.git',
+        }),
+        headers,
+      )
+      const work = yield* workCreate(
+        yield* decodePayload(AcpRpcs.workCreate.payloadSchema, {
+          workspace_id: workspace.id,
+          title: 'Checkpoint actor bridge',
+        }),
+        headers,
+      )
+
+      // A bogus bearer token would normally fail session lookup; a
+      // middleware-provided AcpRpcActor must short-circuit that lookup.
+      return yield* checkpointCreate(
+        yield* decodePayload(AcpRpcs.checkpointCreate.payloadSchema, {
+          workspace_id: workspace.id,
+          work_id: work.id,
+          summary: 'Actor-bridged checkpoint',
+          completed_steps: ['provided actor context'],
+          remaining_steps: [],
+          modified_resources: [],
+        }),
+        rpcOptions(bearer('not-a-real-session')),
+      )
+    }).pipe(Effect.provideService(AcpRpcActor, 'agent_rpc' as WorkerId))
+
+    const result = await Effect.runPromise(Effect.provide(program, Runtime))
+
+    expect(result.created_by).toBe('agent_rpc')
   })
 })

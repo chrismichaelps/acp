@@ -373,12 +373,26 @@ actor attribution and workspace-read checks, with a direct artifact create
 regression proving middleware-provided actor context still works without bearer
 headers.
 
-The next gap is extending that actor bridge across the remaining native handler
-verticals, starting with the split checkpoint and review modules before the
-large aggregate work/workspace/lease handler file. The hand-mapped JSON-RPC
-layer, stdio bridge, WebSocket bridge, and SSE channel should still remain until
-native RPC has enough client coverage to make migration mechanical rather than
-speculative.
+The actor bridge now also covers the split checkpoint and review modules.
+[[acp-rpc-checkpoint-handlers]] and [[acp-rpc-review-handlers]] migrated their
+`authorizeRpc` calls to `rpcActor`; `checkpoint.create` and `review.approve`
+each gained a direct-handler regression proving a middleware-provided
+`AcpRpcActor` short-circuits session lookup even when the supplied bearer token
+would fail it (a deliberately invalid session id), confirming the bridge is
+consulted before the bearer-header fallback rather than merely succeeding by
+coincidence under permissive `requireAuth: false` defaults.
+
+The next gap is the large aggregate work/workspace/lease handler file
+(`acp-rpc-handlers.ts`, `session.initialize`/`worker.*`/`workspace.*`/`work.*`/
+`lease.*`) — the only native handler vertical still calling `authorizeRpc`
+directly. Migrating it finishes the actor-bridge sweep across every handler.
+After that, the next architectural step is deciding whether to migrate
+`RpcServer`-routed execution off the now-redundant handler-local auth entirely
+(relying solely on [[rpc-auth-middleware]]) now that direct `accessHandler`
+tests can supply `AcpRpcActor` to exercise authorized paths without a live
+middleware run. The hand-mapped JSON-RPC layer, stdio bridge, WebSocket bridge,
+and SSE channel should still remain until native RPC has enough client coverage
+to make migration mechanical rather than speculative.
 
 ## Referenced by
 
