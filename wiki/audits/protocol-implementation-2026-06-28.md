@@ -382,17 +382,28 @@ would fail it (a deliberately invalid session id), confirming the bridge is
 consulted before the bearer-header fallback rather than merely succeeding by
 coincidence under permissive `requireAuth: false` defaults.
 
-The next gap is the large aggregate work/workspace/lease handler file
-(`acp-rpc-handlers.ts`, `session.initialize`/`worker.*`/`workspace.*`/`work.*`/
-`lease.*`) — the only native handler vertical still calling `authorizeRpc`
-directly. Migrating it finishes the actor-bridge sweep across every handler.
-After that, the next architectural step is deciding whether to migrate
-`RpcServer`-routed execution off the now-redundant handler-local auth entirely
-(relying solely on [[rpc-auth-middleware]]) now that direct `accessHandler`
-tests can supply `AcpRpcActor` to exercise authorized paths without a live
-middleware run. The hand-mapped JSON-RPC layer, stdio bridge, WebSocket bridge,
-and SSE channel should still remain until native RPC has enough client coverage
-to make migration mechanical rather than speculative.
+The actor-bridge sweep is now complete across every native handler vertical.
+[[acp-rpc-handlers]] (`session.initialize`/`worker.*`/`workspace.*`/`work.*`/
+`lease.*`) migrated its remaining `authorizeRpc` call sites to `rpcActor`, with
+a `work.create` regression proving a middleware-provided `AcpRpcActor`
+short-circuits session lookup even against a deliberately invalid bearer token.
+No native RPC handler calls `authorizeRpc` directly anymore — `rpcActor` (which
+still falls back to `authorizeRpc`'s bearer-header path when no `AcpRpcActor`
+is in scope) is the only entry point.
+
+The next gap is the architectural follow-up the sweep was building toward:
+deciding whether `RpcServer`-routed execution can drop handler-local
+authorization entirely in favor of [[rpc-auth-middleware]] alone, now that
+direct `accessHandler` tests can supply `AcpRpcActor` to exercise authorized
+paths without a live middleware run. This requires auditing that every
+contract-annotated scope in [[acp-rpc-contract]] actually matches what each
+handler checks today (a drift here would silently widen access once
+handler-local checks are removed), then dropping the now-redundant per-handler
+`rpcActor(..., scope)` calls in favor of trusting `options.headers`/`AcpRpcActor`
+unconditionally inside handlers reached only through the mounted route. The
+hand-mapped JSON-RPC layer, stdio bridge, WebSocket bridge, and SSE channel
+should still remain until native RPC has enough client coverage to make
+migration mechanical rather than speculative.
 
 ## Referenced by
 

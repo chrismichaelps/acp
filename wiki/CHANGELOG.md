@@ -2,6 +2,17 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · effect-rpc-aggregate-actor-bridge slice · migrated
+  [[acp-rpc-handlers]] (`session.initialize`/`worker.*`/`workspace.*`/`work.*`/
+  `lease.*`) from `authorizeRpc` to [[rpc-auth]] `rpcActor`, completing the
+  actor-bridge sweep across every native RPC handler vertical — no handler
+  calls `authorizeRpc` directly anymore; added a `work.create` regression
+  proving the middleware-provided actor short-circuits session lookup against a
+  deliberately invalid bearer token; refreshed
+  [[protocol-implementation-2026-06-28]] to select auditing contract-scope
+  parity before considering dropping handler-local auth in favor of
+  [[rpc-auth-middleware]] alone · validation: format, lint, typecheck,
+  file-size, and 271 non-socket tests green · risk LOW
 - 2026-06-30 · effect-rpc-checkpoint-review-actor-bridge slice · migrated
   [[acp-rpc-checkpoint-handlers]] and [[acp-rpc-review-handlers]] from
   `authorizeRpc` to [[rpc-auth]] `rpcActor`, preserving direct handler bearer

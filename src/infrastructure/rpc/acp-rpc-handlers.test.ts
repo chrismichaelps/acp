@@ -3,6 +3,7 @@ import { Effect, Either } from 'effect'
 import { describe, expect, it } from 'vitest'
 import type { WorkerId } from '../../protocol/schema/index.js'
 import { AcpRpcGroup, AcpRpcs } from './acp-rpc-contract.js'
+import { AcpRpcActor } from './rpc-auth.js'
 import {
   Runtime,
   bearer,
@@ -247,5 +248,40 @@ describe('AcpRpcSessionWorkerWorkspaceHandlersLive', () => {
     if (Either.isLeft(result.conflict)) {
       expect(result.conflict.left.error.code).toBe('lease_conflict')
     }
+  })
+
+  it('accepts a middleware-provided actor for work creation attribution', async () => {
+    const program = Effect.gen(function* () {
+      const initialize = yield* AcpRpcGroup.accessHandler('session.initialize')
+      const workspaceCreate =
+        yield* AcpRpcGroup.accessHandler('workspace.create')
+      const workCreate = yield* AcpRpcGroup.accessHandler('work.create')
+
+      const initPayload = yield* decodeInitialize(['workspace:write'])
+      const session = yield* initialize(initPayload, rpcOptions())
+      const headers = rpcOptions(bearer(session.session_id))
+      const workspace = yield* workspaceCreate(
+        yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
+          name: 'RPC Handlers Actor Workspace',
+          kind: 'git_repository',
+          uri: 'git+https://example.com/acp/handlers-actor-rpc.git',
+        }),
+        headers,
+      )
+
+      // A bogus bearer token would normally fail session lookup; a
+      // middleware-provided AcpRpcActor must short-circuit that lookup.
+      return yield* workCreate(
+        yield* decodePayload(AcpRpcs.workCreate.payloadSchema, {
+          workspace_id: workspace.id,
+          title: 'Handlers actor bridge',
+        }),
+        rpcOptions(bearer('not-a-real-session')),
+      )
+    }).pipe(Effect.provideService(AcpRpcActor, 'agent_rpc' as WorkerId))
+
+    const result = await Effect.runPromise(Effect.provide(program, Runtime))
+
+    expect(result.created_by).toBe('agent_rpc')
   })
 })
