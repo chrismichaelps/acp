@@ -11,6 +11,8 @@ Mirror of `@root/src/app/cli/`. The `acp` command-line client of [[acp-router]].
 - [[cli-commands]] — pure `argv → CliRequest` parser (spec §21 commands).
 - [[cli-session-commands]] — bearer-session bootstrap command map.
 - [[session-commands-test]] — parser regression for `session init`.
+- [[session-auth-flow-test]] — require-auth CLI bootstrap plus bearer forwarding
+  flow.
 - [[artifact-pr-command-test]] — focused parser regression for PR artifact URLs.
 - [[cli-command-support]] — shared request/error types and parser helpers.
 - [[cli-event-commands]] — event replay and streaming command map.
