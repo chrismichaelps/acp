@@ -151,11 +151,13 @@ claiming, work state transitions, work event publication, and lease
 request/renew/release/revoke through direct service calls. The split
 [[acp-rpc-artifact-handlers]] layer covers artifact create/update/delete,
 content, work-list, and workspace-list operations while keeping the aggregate
-handler file below the source-size guard. [[rpc-auth]] preserves bearer-session
-scope behavior and [[rpc-error]] maps domain failures into ACP `ProtocolError`
-envelopes. The implementation still does not replace `POST /rpc`/`GET /rpc`,
-and does not delete the JSON-RPC command map; this keeps the migration
-reversible while the native layer grows.
+handler file below the source-size guard. [[acp-rpc-checkpoint-handlers]] covers
+checkpoint create/list/latest operations and split the focused RPC tests so the
+test suite also stays below the source-size guard. [[rpc-auth]] preserves
+bearer-session scope behavior and [[rpc-error]] maps domain failures into ACP
+`ProtocolError` envelopes. The implementation still does not replace
+`POST /rpc`/`GET /rpc`, and does not delete the JSON-RPC command map; this keeps
+the migration reversible while the native layer grows.
 
 External artifact references are now covered. [[artifact-service]] supports both
 host-stored inline content and explicit external `uri` references, so workers can
@@ -297,16 +299,27 @@ queries, mint ids/timestamps through [[id-clock]], map missing artifacts/content
 through [[rpc-error]], and prove host-stored plus external artifact behavior with
 direct `accessHandler` tests.
 
-The next gap is the checkpoint native RPC handler vertical. This slice should
-add direct handlers for `checkpoint.create`, `checkpoint.list_for_work`,
-`checkpoint.latest_for_work`, and `checkpoint.list_for_workspace`, reusing
-[[checkpoint-service]] for append-only persistence, newest-first ordering,
-latest selection, and `checkpoint.created` event emission. The handlers should
-authorize `checkpoint:create` for creation, `workspace:read` for resume reads,
-mint create ids/timestamps through [[id-clock]], map a missing latest checkpoint
-through [[rpc-error]], and prove create/list/latest/workspace behavior with
-direct `accessHandler` tests. It should still avoid HTTP, WebSocket, stdio
-replacement, streaming `events.subscribe`, or JSON-RPC deletion.
+The checkpoint native RPC handler vertical is now covered. Direct handlers for
+`checkpoint.create`, `checkpoint.list_for_work`, `checkpoint.latest_for_work`,
+and `checkpoint.list_for_workspace` reuse [[checkpoint-service]] for append-only
+persistence, newest-first ordering, latest selection, and `checkpoint.created`
+event emission. They authorize `checkpoint:create` for creation and
+`workspace:read` for resume reads, mint create ids/timestamps through
+[[id-clock]], map missing latest checkpoints through [[rpc-error]], and prove
+create/list/latest/workspace behavior with direct `accessHandler` tests.
+
+The next gap is the review native RPC handler vertical. This slice should add
+direct handlers for `review.request`, `review.approve`, `review.reject`,
+`review.request_changes`, `review.cancel`, `review.list_for_work`, and
+`review.list_for_workspace`, reusing [[review-service]] for WorkUnit state
+coupling, requirement validation, cancellation semantics, workspace resolution,
+and review event emission. The handlers should authorize `review:create`,
+`review:approve`, `review:reject`, `review:request_changes`, `review:cancel`,
+and `workspace:read` for list reads, mint request ids/timestamps through
+[[id-clock]], map domain failures through [[rpc-error]], and prove request,
+approve, cancel/list, and invalid transition behavior with direct
+`accessHandler` tests. It should still avoid HTTP, WebSocket, stdio replacement,
+streaming `events.subscribe`, or JSON-RPC deletion.
 
 ## Referenced by
 
