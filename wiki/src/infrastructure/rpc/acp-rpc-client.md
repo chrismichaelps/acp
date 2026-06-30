@@ -31,6 +31,14 @@ export const makeAcpRpcClient: Effect<
 >
 
 export const acpRpcClientHttpLayer: (url: string) => Layer<RpcClient.Protocol>
+export const acpNativeRpcPath = '/rpc/native'
+export const acpNativeRpcUrl: (baseUrl: string) => string
+export const acpRpcBearerHeaders: (sessionId: SessionId) => {
+  readonly authorization: string
+}
+export const withAcpRpcBearer: (
+  sessionId: SessionId,
+) => <A, E, R>(effect: Effect<A, E, R>) => Effect<A, E, R>
 ```
 
 ## Algorithm
@@ -43,6 +51,13 @@ an Effect whose error channel is the contract's typed `ProtocolError`; bearer
 auth is forwarded per call via the `headers` option (or
 `RpcClient.withHeaders` for a scoped default), which the server reads through
 `options.headers`.
+
+`acpNativeRpcPath` is the single source for the mounted native route path shared
+by [[native-rpc-route]] and first-party clients. `acpNativeRpcUrl(baseUrl)`
+normalizes trailing slashes before appending that path. `acpRpcBearerHeaders`
+builds the low-level header object, while `withAcpRpcBearer(sessionId)` wraps an
+Effect with `RpcClient.withHeaders` so a caller can scope a block of generated
+client calls without repeating `{ authorization: ... }` on every operation.
 
 `acpRpcClientHttpLayer(url)` wires the NDJSON-framed streaming-HTTP protocol:
 `RpcClient.layerProtocolHttp({ url })` provided with
@@ -60,6 +75,8 @@ event listing. [[native-rpc-route]] covers the mounted over-the-wire path.
 
 - ❌ Do NOT hand-build JSON-RPC envelopes — the generated client owns
   encoding, request ids, and response decoding.
+- ❌ Do NOT duplicate `/rpc/native` path literals in callers. Use
+  `acpNativeRpcPath` or `acpNativeRpcUrl`.
 - ❌ Do NOT bypass the typed `ProtocolError` channel with untyped catches.
 
 ## Depth
