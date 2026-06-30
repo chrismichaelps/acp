@@ -20,6 +20,10 @@ construction and hides it behind narrow service tags.
 
 - [[jsonrpc/_MOC|JSON-RPC MOC]] — JSON-RPC 2.0 method normalization core.
 
+## rpc/
+
+- [[rpc/_MOC|Effect RPC MOC]] — native first-party RPC contract and handler plan.
+
 ## sse/
 
 - [[sse/_MOC|SSE MOC]] — Server-Sent Events adapter for live event streams.

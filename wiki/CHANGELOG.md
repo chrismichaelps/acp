@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · effect-rpc-dependency-preflight slice · made `@effect/rpc`
+  explicit in package metadata, pinned the SDK in [[grammar/typescript]], and
+  created the planned [[acp-rpc-contract]] wiki page before native RPC source
+  imports · format/lint/typecheck/file-size green without running install · risk LOW
 - 2026-06-30 · observability-request-logging slice · extended
   [[route-support]] with Effect request lifecycle logs using stable route
   templates, response status, duration, and protocol error code while preserving
