@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · post-rpc-artifact-handlers-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after [[acp-rpc-artifact-handlers]] and
+  selected `checkpoint.create`/`checkpoint.list_for_work`/
+  `checkpoint.latest_for_work`/`checkpoint.list_for_workspace` as the next
+  direct-RPC resume vertical · validation: format, file-size, and diff
+  whitespace checks green · risk LOW
 - 2026-06-30 · effect-rpc-artifact-handlers slice · added
   [[acp-rpc-artifact-handlers]] and merged it into [[acp-rpc-handlers]] for
   native `artifact.create`/`artifact.update`/`artifact.delete`/
