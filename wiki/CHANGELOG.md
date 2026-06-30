@@ -2,6 +2,19 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · post-rpc-aggregate-actor-bridge-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] with the contract-scope parity audit
+  (37 scoped operations across all five RPC handler files compared against
+  [[acp-rpc-contract]] annotations, zero drift) and recorded the decision to
+  keep dual-layer handler-local + middleware authorization permanently rather
+  than collapse to middleware-only, since `.middleware()` is attached at the
+  `Rpc` definition (so every real `RpcServer` transport already runs
+  [[rpc-auth-middleware]]) and the only bypass is the test-only `accessHandler`
+  path — removing handler-local checks would silently void existing
+  scope-denial regressions for zero production benefit; selected growing
+  native RPC client coverage toward JSON-RPC method parity as the live
+  frontier · docs-only validation: format, file-size, and diff whitespace
+  checks green · risk LOW
 - 2026-06-30 · effect-rpc-aggregate-actor-bridge slice · migrated
   [[acp-rpc-handlers]] (`session.initialize`/`worker.*`/`workspace.*`/`work.*`/
   `lease.*`) from `authorizeRpc` to [[rpc-auth]] `rpcActor`, completing the
