@@ -231,10 +231,10 @@ The host owns:
 
 ## 7. Transport
 
-ACP v0.1 supports two transports:
+ACP v0.1 defines two protocol-level transports:
 
 1. HTTP + Server-Sent Events
-2. JSON-RPC 2.0 over stdio or WebSocket
+2. JSON-RPC 2.0 compatibility over stdio or WebSocket
 
 Implementations may support one or both.
 
@@ -242,6 +242,12 @@ Recommended MVP transport:
 
 - HTTP REST for commands
 - Server-Sent Events for live event streaming
+
+The TypeScript reference implementation also exposes a first-party native
+Effect RPC transport over HTTP for Effect/TypeScript clients. That transport is
+an implementation surface for typed clients, not a replacement for HTTP/SSE as
+the cross-language baseline or for JSON-RPC where stdio/WebSocket integrations
+need that framing.
 
 ---
 
@@ -905,7 +911,7 @@ data: {"work_id":"work_123","actor":"agent_claude_code"}
 
 ## 13. JSON-RPC API
 
-Optional JSON-RPC method names:
+Compatibility JSON-RPC method names:
 
 - `session.initialize`
 - `workspace.list`
@@ -1706,6 +1712,7 @@ An agent may use MCP tools while reporting its work through ACP.
 - Local ACP host
 - HTTP API
 - SSE event stream
+- Native Effect RPC over HTTP for first-party TypeScript clients
 - JSON-RPC over HTTP POST, stdio, and WebSocket
 - Work units
 - Workers
@@ -1765,12 +1772,15 @@ locks. Artifacts may be host-stored as `acp://artifacts/{id}` content or recorde
 as external URI references, depending on where the durable evidence already
 lives. Memory records are part of ACP as workspace-scoped, append-oriented
 coordination context for agent handoff and recall.
+Resolved in v0.1: HTTP/SSE remains the recommended cross-language MVP
+transport, JSON-RPC remains the compatibility framing for stdio and WebSocket
+clients, and the TypeScript reference implementation may expose native Effect
+RPC for first-party typed clients without making that stack mandatory for other
+implementations.
 
 1. Should ACP define Git-specific extensions?
 2. Should reviews support signed approvals?
-3. Should ACP continue recommending HTTP/SSE as the MVP default while supporting
-   JSON-RPC for stdio and WebSocket clients?
-4. Should protocol objects support CRDT-style sync for offline agents?
+3. Should protocol objects support CRDT-style sync for offline agents?
 
 ---
 
