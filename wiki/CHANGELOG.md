@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · audit-native-rpc-consumer-frontier slice · refreshed
+  [[protocol-implementation-2026-06-28]] after the native transport spec update:
+  JSON-RPC is compatibility framing rather than a deletion target, native Effect
+  RPC is the first-party TypeScript transport, and the next code slice is client
+  ergonomics for URL and bearer-session handling · validation: format, lint,
+  typecheck, file-size, and diff whitespace green · risk LOW
 - 2026-06-30 · spec-native-rpc-transport-guidance slice · updated
   [[specs.md]] transport guidance to keep HTTP/SSE as the cross-language MVP,
   name JSON-RPC as stdio/WebSocket compatibility framing, document native Effect
