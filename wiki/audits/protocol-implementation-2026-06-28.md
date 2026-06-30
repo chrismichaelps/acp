@@ -147,12 +147,12 @@ Native RPC now has a stable code anchor and multiple direct handler verticals.
 non-streaming operation set and proves the closed tag surface with a registry
 test. [[acp-rpc-handlers]] implements `session.initialize`, worker reads,
 workspace reads/mutations, work creation/discovery/current-state reads, work
-claiming, work state transitions, and work event publication through direct
-service calls. [[rpc-auth]] preserves bearer-session scope behavior and
-[[rpc-error]] maps domain failures into ACP `ProtocolError` envelopes. The
-implementation still does not replace `POST /rpc`/`GET /rpc`, and does not
-delete the JSON-RPC command map; this keeps the migration reversible while the
-native layer grows.
+claiming, work state transitions, work event publication, and lease
+request/renew/release/revoke through direct service calls. [[rpc-auth]]
+preserves bearer-session scope behavior and [[rpc-error]] maps domain failures
+into ACP `ProtocolError` envelopes. The implementation still does not replace
+`POST /rpc`/`GET /rpc`, and does not delete the JSON-RPC command map; this keeps
+the migration reversible while the native layer grows.
 
 External artifact references are now covered. [[artifact-service]] supports both
 host-stored inline content and explicit external `uri` references, so workers can
@@ -276,15 +276,26 @@ for `workspace.create`, `workspace.update`, `workspace.archive`, `work.create`,
 services, and direct `accessHandler` tests without going through HTTP,
 WebSocket, stdio, or JSON-RPC adapters.
 
-The next gap is the lease native RPC handler vertical. This slice should add
-direct handlers for `lease.request`, `lease.renew`, `lease.release`, and
-`lease.revoke`, reusing [[lease-service]] for TTL/default-config, conflict
-detection, and lifecycle events. The handlers should authorize
-`lease:create`, `lease:renew`, `lease:release`, and `lease:revoke`, mint request
-ids/timestamps through [[id-clock]], map domain failures through [[rpc-error]],
-and prove conflict/renew/release/revoke behavior with direct `accessHandler`
-tests. It should still avoid HTTP, WebSocket, stdio replacement, streaming
-`events.subscribe`, or JSON-RPC deletion.
+The lease native RPC handler vertical is now covered. Direct handlers for
+`lease.request`, `lease.renew`, `lease.release`, and `lease.revoke` reuse
+[[lease-service]] for TTL/default-config, active-resource conflict detection,
+state transitions, and lifecycle events. They authorize the dedicated lease
+scopes, mint ids/timestamps through [[id-clock]], map domain failures through
+[[rpc-error]], and preserve `lease.release` as a void success matching the
+existing HTTP `204` command shape.
+
+The next gap is the artifact native RPC handler vertical. This slice should add
+direct handlers for `artifact.create`, `artifact.update`, `artifact.delete`,
+`artifact.content`, `artifact.list_for_work`, and
+`artifact.list_for_workspace`, reusing [[artifact-service]] for content-size
+validation, host-stored content, external URI references, event emission, and
+metadata/content reads. The handlers should authorize `artifact:create`,
+`artifact:update`, `artifact:delete`, and workspace-readable artifact resume
+queries, mint create/update/delete ids or timestamps through [[id-clock]], map
+missing content/artifacts through [[rpc-error]], and prove create/update/delete,
+content read, work-list, and workspace-list behavior with direct
+`accessHandler` tests. It should still avoid HTTP, WebSocket, stdio replacement,
+streaming `events.subscribe`, or JSON-RPC deletion.
 
 ## Referenced by
 
