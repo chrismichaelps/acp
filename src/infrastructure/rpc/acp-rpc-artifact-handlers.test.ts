@@ -9,6 +9,8 @@ import {
   decodePayload,
   rpcOptions,
 } from './acp-rpc-test-support.js'
+import { AcpRpcActor } from './rpc-auth.js'
+import type { WorkerId } from '../../protocol/schema/index.js'
 
 describe('AcpRpcArtifactHandlersLive', () => {
   it('runs artifact handlers directly', async () => {
@@ -150,5 +152,26 @@ describe('AcpRpcArtifactHandlersLive', () => {
     if (Either.isLeft(result.afterDelete)) {
       expect(result.afterDelete.left.error.code).toBe('not_found')
     }
+  })
+
+  it('accepts a middleware-provided actor for mutation attribution', async () => {
+    const program = Effect.gen(function* () {
+      const artifactCreate = yield* AcpRpcGroup.accessHandler('artifact.create')
+      return yield* artifactCreate(
+        yield* decodePayload(AcpRpcs.artifactCreate.payloadSchema, {
+          workspace_id: 'workspace_artifact_actor',
+          work_id: 'work_artifact_actor',
+          kind: 'log',
+          media_type: 'text/plain',
+          summary: 'Artifact actor bridge',
+          content: 'created with AcpRpcActor context',
+        }),
+        rpcOptions(),
+      )
+    }).pipe(Effect.provideService(AcpRpcActor, 'agent_rpc' as WorkerId))
+
+    const result = await Effect.runPromise(Effect.provide(program, Runtime))
+
+    expect(result.created_by).toBe('agent_rpc')
   })
 })

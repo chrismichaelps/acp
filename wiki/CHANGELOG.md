@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · effect-rpc-artifact-actor-bridge slice · migrated
+  [[acp-rpc-artifact-handlers]] to [[rpc-auth]] `rpcActor` for artifact mutation
+  actor attribution and workspace-read checks, preserving direct handler bearer
+  fallback while allowing native middleware-provided `AcpRpcActor`; added a
+  direct artifact create regression without bearer headers · validation: format,
+  lint, typecheck, file-size, focused RPC artifact actor bridge tests, and
+  264-test non-socket suite green · risk LOW
 - 2026-06-30 · effect-rpc-handler-actor-bridge slice · moved `AcpRpcActor` into
   [[rpc-auth]], added `rpcActor` as the middleware-aware handler bridge, migrated
   [[acp-rpc-memory-event-handlers]] to consume it for memory/event authorization

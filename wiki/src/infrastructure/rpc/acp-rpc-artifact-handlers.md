@@ -37,13 +37,15 @@ export const AcpRpcArtifactHandlersLive: Layer<
 
 ## Algorithm
 
-Mutation handlers authorize `artifact:create`, `artifact:update`, or
-`artifact:delete`, mint ids/timestamps through [[id-clock]], and delegate to
-[[artifact-service]]. That preserves content-size validation, host-stored
-`acp://artifacts/{id}` content, external URI references, and artifact lifecycle
-events.
+Handlers authorize through [[rpc-auth]] `rpcActor`, consuming an `AcpRpcActor`
+provided by native RPC middleware when available and falling back to bearer
+headers for direct `accessHandler` tests. Mutation handlers check
+`artifact:create`, `artifact:update`, or `artifact:delete`, mint ids/timestamps
+through [[id-clock]], and delegate to [[artifact-service]]. That preserves
+content-size validation, host-stored `acp://artifacts/{id}` content, external
+URI references, and artifact lifecycle events.
 
-Read handlers authorize `workspace:read`. `artifact.content` first proves the
+Read handlers check `workspace:read`. `artifact.content` first proves the
 artifact exists, then reads host-stored content and returns `not_found` for
 external or deleted content. `artifact.list_for_work` mirrors the HTTP resume
 route by proving the WorkUnit exists through [[work-unit-service]] before
