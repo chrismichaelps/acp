@@ -72,6 +72,15 @@ const optionalAs = (
 ): Record<string, string> =>
   key in flags && flags[key] !== 'true' ? { [field]: flags[key] } : {}
 
+const optionalQuery = (
+  flags: Readonly<Record<string, string>>,
+  key: string,
+  field: string = key,
+): readonly string[] =>
+  key in flags && flags[key] !== 'true'
+    ? [`${field}=${encodeURIComponent(flags[key])}`]
+    : []
+
 const csvFlag = (
   flags: Readonly<Record<string, string>>,
   key: string,
@@ -415,6 +424,51 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
         method: 'DELETE',
         path: `/v1/artifacts/${encodePathSegment(artifactId)}`,
         label: 'artifact delete',
+      }
+    }),
+
+  'memory create': ({ flags }) =>
+    Either.gen(function* () {
+      const workspaceId = yield* flag(flags, 'workspace')
+      const kind = yield* flag(flags, 'kind')
+      const key = yield* flag(flags, 'key')
+      const summary = yield* flag(flags, 'summary')
+      const content = yield* flag(flags, 'content')
+      const labels = 'labels' in flags ? yield* csvFlag(flags, 'labels') : []
+      return {
+        method: 'POST',
+        path: '/v1/memory',
+        body: {
+          workspace_id: workspaceId,
+          kind,
+          key,
+          summary,
+          content,
+          labels,
+          ...optionalAs(flags, 'work', 'work_id'),
+        },
+        label: 'memory create',
+      }
+    }),
+
+  'memory list': ({ flags }) =>
+    Either.gen(function* () {
+      const workspaceId = yield* flag(flags, 'workspace')
+      const afterSeq =
+        'after' in flags ? yield* integerFlag(flags, 'after', 0) : 0
+      const query = [
+        `workspace_id=${encodeURIComponent(workspaceId)}`,
+        `after_seq=${afterSeq.toString()}`,
+        ...optionalQuery(flags, 'limit'),
+        ...optionalQuery(flags, 'work', 'work_id'),
+        ...optionalQuery(flags, 'kind'),
+        ...optionalQuery(flags, 'key'),
+        ...optionalQuery(flags, 'label'),
+      ].join('&')
+      return {
+        method: 'GET',
+        path: `/v1/memory?${query}`,
+        label: 'memory list',
       }
     }),
 

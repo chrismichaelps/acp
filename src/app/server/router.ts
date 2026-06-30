@@ -30,6 +30,7 @@ import {
   listWorkCheckpoints,
   listWorkReviews,
 } from './resume-routes.js'
+import { createMemory, listMemory } from './memory-routes.js'
 import { makeRpcHandler } from './rpc-endpoint.js'
 import { makeRpcSocketHandler } from './rpc-socket.js'
 import {
@@ -83,6 +84,7 @@ const hostCapabilities = {
   supports_events: true,
   supports_reviews: true,
   supports_artifacts: true,
+  supports_memory: true,
   supports_sse: true,
 } as const
 
@@ -451,6 +453,8 @@ const commandRouter = leaseRouter.pipe(
   HttpRouter.del('/v1/artifacts/:artifact_id', deleteArtifact),
   HttpRouter.get('/v1/artifacts/:artifact_id/content', getArtifactContent),
   HttpRouter.post('/v1/checkpoints', createCheckpoint),
+  HttpRouter.post('/v1/memory', createMemory),
+  HttpRouter.get('/v1/memory', listMemory),
   HttpRouter.post('/v1/reviews', requestReview),
   HttpRouter.post('/v1/reviews/:review_id/approve', approveReview),
 )

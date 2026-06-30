@@ -240,15 +240,21 @@ stream.
 
 ## Next Slice
 
-Project workspace Memory through REST, JSON-RPC, and the CLI. The slice should
-add `POST /v1/memory` and `GET /v1/memory` behind `memory:create` and
-`memory:read`, map `memory.create` and `memory.list` in JSON-RPC, and expose
-local `memory create` / `memory list` commands. Start by splitting the
-memory-specific route/API surface out of the near-limit central files, then keep
-the transport handlers as schema decode → [[memory-service]] → schema encode.
-Generated clients, Git-specific workflow extensions, host-presence streams, and
-broader filesystem/command adapters remain deferred until a concrete consumer or
-duplicated boundary appears.
+Workspace Memory now has full transport parity: [[memory-routes]]
+(`POST /v1/memory`, `GET /v1/memory`) behind `memory:create`/`memory:read`,
+the [[acp-http-api-memory]] contract, [[json-rpc-memory-commands]]
+(`memory.create`/`memory.list`), and `memory create`/`memory list` CLI commands —
+each a schema decode → [[memory-service]] → schema encode boundary. No
+backed-command coverage gap remains across REST, JSON-RPC, and the CLI.
+
+The open architectural decision is the JSON-RPC transport itself: the review of
+[[json-rpc-command-map]] established it is an HTTP-bridging translation layer
+(JSON-RPC → synthetic HTTP request → router), not a native RPC surface, and the
+clients are first-party Effect/TS. The recommended next direction is an ADR to
+adopt `@effect/rpc` (a native `RpcGroup` over the domain services) and retire the
+hand-mapped command layer. Generated clients, Git-specific workflow extensions,
+host-presence streams, and broader filesystem/command adapters remain deferred
+until a concrete consumer or duplicated boundary appears.
 
 ## Referenced by
 
