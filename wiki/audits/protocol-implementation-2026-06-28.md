@@ -308,18 +308,35 @@ event emission. They authorize `checkpoint:create` for creation and
 [[id-clock]], map missing latest checkpoints through [[rpc-error]], and prove
 create/list/latest/workspace behavior with direct `accessHandler` tests.
 
-The next gap is the review native RPC handler vertical. This slice should add
-direct handlers for `review.request`, `review.approve`, `review.reject`,
-`review.request_changes`, `review.cancel`, `review.list_for_work`, and
-`review.list_for_workspace`, reusing [[review-service]] for WorkUnit state
-coupling, requirement validation, cancellation semantics, workspace resolution,
-and review event emission. The handlers should authorize `review:create`,
-`review:approve`, `review:reject`, `review:request_changes`, `review:cancel`,
-and `workspace:read` for list reads, mint request ids/timestamps through
-[[id-clock]], map domain failures through [[rpc-error]], and prove request,
-approve, cancel/list, and invalid transition behavior with direct
-`accessHandler` tests. It should still avoid HTTP, WebSocket, stdio replacement,
-streaming `events.subscribe`, or JSON-RPC deletion.
+The review native RPC handler vertical is now covered. Direct handlers for
+`review.request`, `review.approve`, `review.reject`, `review.request_changes`,
+`review.cancel`, `review.list_for_work`, and `review.list_for_workspace` reuse
+[[review-service]] for WorkUnit state coupling, requirement validation,
+cancellation semantics, workspace resolution, and review event emission. They
+authorize the dedicated review scopes plus `workspace:read` for list reads, mint
+request ids/timestamps through [[id-clock]], and map domain failures through
+[[rpc-error]].
+
+The memory and event native RPC handler vertical is now covered. Direct handlers
+for `memory.create`, `memory.list`, and `events.list` in
+[[acp-rpc-memory-event-handlers]] reuse [[memory-service]] for seq assignment and
+`memory.created` emission and the [[event-store]] for `readAfter` replay. They
+authorize `memory:create`, `memory:read`, and `event:read`, forward the native
+`ReadMemoryQuery` payload without URL re-decode, mint memory ids/timestamps
+through [[id-clock]], and prove recall, replay, and scope-denial with direct
+`accessHandler` tests.
+
+With this vertical merged, **every [[acp-rpc-contract]] request now has a backing
+handler** — the native handler phase of [[ADR-0007-effect-rpc-adoption]] is
+complete. The next gap is the native RPC **transport wiring**: serve
+`AcpRpcGroup` over a real `RpcServer` protocol layer (HTTP, then socket) with
+`RpcMiddleware`-based bearer auth replacing the per-handler `authorizeRpc` calls,
+and generate the typed `RpcClient` so first-party Effect/TS consumers can reach
+the surface end-to-end. This slice should stand up the server/client over the
+existing handler layer and prove a round-trip with `RpcTest`/a real protocol
+handler; it should still avoid deleting the hand-mapped JSON-RPC layer, replacing
+the stdio/WebSocket bridges, or adding streaming `events.subscribe` until the
+typed transport is live and exercised.
 
 ## Referenced by
 
