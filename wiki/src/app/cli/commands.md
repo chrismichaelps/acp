@@ -16,7 +16,10 @@ aliases: [cli-commands, parseArgs]
 
 Pure parser turning `process.argv` tokens into a `CliRequest` (method · path ·
 body · stream) for the spec §21 CLI. No I/O — the parser is the testable core of
-the CLI; [[cli-client]] sends what it returns.
+the CLI; [[cli-client]] sends what it returns. Shared request/error primitives
+live in [[cli-command-support]], and feature command maps such as
+[[cli-event-commands]] and [[cli-memory-commands]] extend the central dispatch
+table without growing the parser file.
 
 ## Interface
 
@@ -73,6 +76,8 @@ export const parseArgs: (
 | `review cancel <review_id>`                                                           | `POST /v1/reviews/<id>/cancel`                    |
 | `events list --workspace <id> [--after <seq>]`                                        | `GET /v1/events?workspace_id=&after_seq=`         |
 | `events stream --workspace <id>`                                                      | `GET /v1/events/stream?workspace_id=`             |
+| `memory create --workspace --kind --key --summary --content [--work] [--labels]`      | `POST /v1/memory`                                 |
+| `memory list --workspace [--after] [--limit] [--work] [--kind] [--key] [--label]`     | `GET /v1/memory?workspace_id=&after_seq=`         |
 
 ### Linkage
 
@@ -102,7 +107,9 @@ for workspace-level aggregate resume reads. `events list` maps to the JSON repla
 route with an optional non-negative `--after` cursor. `review approve --met` is a
 comma-separated list that becomes `met_requirements`. `review cancel` maps to the
 dedicated review cancellation route so withdrawal is not expressed as rejection.
-`events stream` sets `stream: true`.
+`events stream` sets `stream: true`. Event and memory handlers are registered by
+spreading their feature command maps into the central table, preserving one
+dispatch point while keeping the parser below the file-size gate.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -133,5 +140,5 @@ without a server.
 
 ## Referenced by
 
-[[cli-index]] · [[cli-client]] · [[cli-main]] · [[cli-usage]] · [[Transport]] ·
-[[src/_MOC]]
+[[cli-index]] · [[cli-client]] · [[cli-main]] · [[cli-usage]] ·
+[[cli-event-commands]] · [[cli-memory-commands]] · [[Transport]] · [[src/_MOC]]
