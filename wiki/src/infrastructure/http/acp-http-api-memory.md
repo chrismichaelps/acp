@@ -23,7 +23,7 @@ file. Added to `AcpHttpApi` as the `memory` group.
 
 ```typescript
 export const MemoryListParams // search-params schema for GET /v1/memory
-export const MemoryGroup      // HttpApiGroup 'memory'
+export const MemoryGroup // HttpApiGroup 'memory'
 ```
 
 ### Endpoints
