@@ -14,12 +14,11 @@ aliases: [acp-rpc-memory-event-handlers]
 
 ## Purpose
 
-Own the native `@effect/rpc` memory and event handler vertical, closing the last
-[[acp-rpc-contract]] coverage gap where `memory.create`, `memory.list`, and
-`events.list` were declared but unbacked. Keeping this vertical in its own module
-prevents [[acp-rpc-handlers]] from growing past the file-size gate while every
-recall and replay path stays single-sourced in [[memory-service]] and the
-[[event-store]].
+Own the native `@effect/rpc` memory and event handler vertical: memory
+create/read, event replay, and event subscription. Keeping this vertical in its
+own module prevents [[acp-rpc-handlers]] from growing past the file-size gate
+while every recall, replay, and live event path stays single-sourced in
+[[memory-service]] and the [[event-store]].
 
 ## Interface
 
@@ -27,7 +26,8 @@ recall and replay path stays single-sourced in [[memory-service]] and the
 export const AcpRpcMemoryEventHandlersLive: Layer<
   | Rpc.Handler<'memory.create'>
   | Rpc.Handler<'memory.list'>
-  | Rpc.Handler<'events.list'>,
+  | Rpc.Handler<'events.list'>
+  | Rpc.Handler<'events.subscribe'>,
   never,
   MemoryService | EventStore | IdClock
 >
@@ -45,14 +45,14 @@ already the native query shape, so no URL re-decode is needed unlike the
 
 `events.list` authorizes `event:read`, reads through `EventStore.readAfter`, and
 converts the returned `Chunk` to a readonly array, matching the HTTP replay
-route. Live streaming (`events.subscribe`) stays out of scope: it remains a
-rejected JSON-RPC method pending native streaming work.
+route. `events.subscribe` authorizes `event:read` and returns the scoped
+`EventStore.subscribe(workspace_id)` stream directly to `@effect/rpc`, so the
+native NDJSON HTTP route can deliver future workspace events as stream chunks.
 
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT re-decode the memory query through URL params — the RPC payload is
   already `ReadMemoryQuery`.
-- ❌ Do NOT add `events.subscribe` streaming here.
 - ❌ Do NOT dispatch through HTTP, JSON-RPC, stdio, or WebSocket adapters.
 
 ## Depth

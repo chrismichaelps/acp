@@ -44,12 +44,14 @@ auth is forwarded per call via the `headers` option (or
 `RpcClient.withHeaders` for a scoped default), which the server reads through
 `options.headers`.
 
-`acpRpcClientHttpLayer(url)` wires the JSON-framed streaming-HTTP protocol:
-`RpcClient.layerProtocolHttp({ url })` provided with `RpcSerialization.layerJson`
-and `FetchHttpClient.layer`, so callers supply only the host's native RPC URL.
+`acpRpcClientHttpLayer(url)` wires the NDJSON-framed streaming-HTTP protocol:
+`RpcClient.layerProtocolHttp({ url })` provided with
+`RpcSerialization.layerNdjson` and `FetchHttpClient.layer`, so callers supply
+only the host's native RPC URL. NDJSON framing is required for streaming
+operations such as `events.subscribe`; unary calls use the same client layer.
 The [[acp-rpc-roundtrip-test]] proves the client/handler contract through
-`RpcTest` without a socket; pointing this layer at a mounted route is the
-remaining transport step.
+`RpcTest` without a socket, and [[native-rpc-route]] covers the mounted
+over-the-wire path.
 
 ## Negative Logic (Prohibited Paths)
 

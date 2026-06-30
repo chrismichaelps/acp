@@ -18,7 +18,7 @@ export const AcpNativeRpcRouteLive = RpcServer.layerHttpRouter({
   path: nativeRpcPath,
   protocol: 'http',
 }).pipe(
-  Layer.provide(RpcSerialization.layerJson),
+  Layer.provide(RpcSerialization.layerNdjson),
   Layer.provide(AcpRpcHandlersLayer),
 )
 

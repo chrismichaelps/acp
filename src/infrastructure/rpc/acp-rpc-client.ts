@@ -13,13 +13,13 @@ import { AcpRpcGroup } from './acp-rpc-contract.js'
 // for a scoped default), matching how handlers read `options.headers`.
 export const makeAcpRpcClient = RpcClient.make(AcpRpcGroup)
 
-// JSON-framed streaming-HTTP transport for the client. Point `url` at the host's
-// mounted native RPC route; serialization and the platform fetch client are
-// supplied so callers only provide the URL.
+// NDJSON-framed streaming-HTTP transport for the client. Point `url` at the
+// host's mounted native RPC route; serialization and the platform fetch client
+// are supplied so callers only provide the URL.
 export const acpRpcClientHttpLayer = (
   url: string,
 ): Layer.Layer<RpcClient.Protocol> =>
   RpcClient.layerProtocolHttp({ url }).pipe(
-    Layer.provide(RpcSerialization.layerJson),
+    Layer.provide(RpcSerialization.layerNdjson),
     Layer.provide(FetchHttpClient.layer),
   )

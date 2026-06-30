@@ -1,5 +1,5 @@
 /** @Acp.Infra.Rpc.MemoryEventHandlers — native RPC memory and event handlers */
-import { Chunk, Effect, Layer } from 'effect'
+import { Chunk, Effect, Layer, Stream } from 'effect'
 import { EventStore } from '../../domain/events/index.js'
 import { MemoryService } from '../../domain/memory/index.js'
 import { IdClock } from '../../app/server/identity.js'
@@ -46,8 +46,21 @@ const eventListHandler = AcpRpcGroup.toLayerHandler(
     }),
 )
 
+const eventSubscribeHandler = AcpRpcGroup.toLayerHandler(
+  'events.subscribe',
+  (payload, options) =>
+    Stream.unwrapScoped(
+      Effect.gen(function* () {
+        yield* authorizeRpc(options.headers, 'event:read')
+        const events = yield* EventStore
+        return yield* events.subscribe(payload.workspace_id)
+      }),
+    ),
+)
+
 export const AcpRpcMemoryEventHandlersLive = Layer.mergeAll(
   memoryCreateHandler,
   memoryListHandler,
   eventListHandler,
+  eventSubscribeHandler,
 )
