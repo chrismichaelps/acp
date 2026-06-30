@@ -52,4 +52,4 @@ central parser table from growing into another branch-heavy module.
 
 ## Referenced by
 
-[[cli/_MOC]] · [[cli-commands]]
+[[cli/_MOC]] · [[cli-commands]] · [[session-auth-flow-test]]
