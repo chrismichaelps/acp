@@ -2,6 +2,7 @@
 export const usage = `acp — Agent Coordination Protocol CLI
 
   acp workspace list
+  acp session init --worker <id> --name <n> [--kind <k>] [--vendor <v>] [--capabilities <csv>] [--permissions <csv>]
   acp worker list
   acp worker get <worker_id>
   acp workspace create --name <n> --kind <k> --uri <u> [--default-branch <b>]
