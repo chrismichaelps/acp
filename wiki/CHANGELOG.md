@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · rpc-roundtrip-coverage slice · added generated-client native RPC
+  round-trip coverage for the worker/workspace/work/lease,
+  artifact/checkpoint, and review/memory/event verticals, extending
+  [[acp-rpc-roundtrip-test]] from an initial workspace smoke into subsystem
+  parity coverage against [[acp-rpc-server]]; added wiki mirrors for the
+  round-trip test files and refreshed [[acp-rpc-client]]/[[acp-rpc-server]] to
+  name the coverage boundary · validation: focused round-trip tests green ·
+  risk LOW
 - 2026-06-30 · post-rpc-aggregate-actor-bridge-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] with the contract-scope parity audit
   (37 scoped operations across all five RPC handler files compared against
