@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · rpc-route-bearer-helper-adoption slice · migrated
+  [[native-rpc-route]] live HTTP client tests to use [[acp-rpc-client]]
+  `withAcpRpcBearer` for unary generated-client calls, proving the bearer helper
+  over the mounted route and removing repeated per-operation header objects ·
+  validation: format, lint, typecheck, file-size, focused route/client tests, and
+  277-test non-socket suite green · risk LOW
 - 2026-06-30 · rpc-client-host-layer slice · added
   `acpRpcClientHostLayer(baseUrl)` as the common native RPC client protocol layer
   for host base URLs and migrated [[native-rpc-route]] live tests away from
