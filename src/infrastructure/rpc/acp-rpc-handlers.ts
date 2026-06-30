@@ -1,6 +1,7 @@
-/** @Acp.Infra.Rpc.Handlers — first native RPC handler vertical */
+/** @Acp.Infra.Rpc.Handlers — native RPC domain handlers */
 import { Effect, Layer, Option } from 'effect'
 import { EventStore } from '../../domain/events/index.js'
+import { LeaseService } from '../../domain/leases/index.js'
 import { SessionService } from '../../domain/sessions/index.js'
 import { WorkUnitService } from '../../domain/work-units/index.js'
 import { WorkerService } from '../../domain/workers/index.js'
@@ -16,6 +17,7 @@ import {
 import type {
   Capability,
   EventId,
+  LeaseId,
   SessionId,
   WorkId,
   WorkspaceId,
@@ -306,6 +308,63 @@ const workPublishEventHandler = AcpRpcGroup.toLayerHandler(
     }),
 )
 
+const leaseRequestHandler = AcpRpcGroup.toLayerHandler(
+  'lease.request',
+  (payload, options) =>
+    Effect.gen(function* () {
+      yield* authorizeRpc(options.headers, 'lease:create')
+      const service = yield* LeaseService
+      const idClock = yield* IdClock
+      const id = (yield* idClock.nextId('lease')) as LeaseId
+      const now = yield* idClock.now
+      return yield* service
+        .request({ id, payload, now })
+        .pipe(Effect.mapError(toRpcError))
+    }),
+)
+
+const leaseRenewHandler = AcpRpcGroup.toLayerHandler(
+  'lease.renew',
+  (payload, options) =>
+    Effect.gen(function* () {
+      const actor = yield* authorizeRpc(options.headers, 'lease:renew')
+      const service = yield* LeaseService
+      const idClock = yield* IdClock
+      const now = yield* idClock.now
+      return yield* service
+        .renew(payload.lease_id, actor, now, payload.ttl_seconds)
+        .pipe(Effect.mapError(toRpcError))
+    }),
+)
+
+const leaseReleaseHandler = AcpRpcGroup.toLayerHandler(
+  'lease.release',
+  (payload, options) =>
+    Effect.gen(function* () {
+      const actor = yield* authorizeRpc(options.headers, 'lease:release')
+      const service = yield* LeaseService
+      const idClock = yield* IdClock
+      const now = yield* idClock.now
+      yield* service
+        .release(payload.lease_id, actor, now)
+        .pipe(Effect.mapError(toRpcError))
+    }),
+)
+
+const leaseRevokeHandler = AcpRpcGroup.toLayerHandler(
+  'lease.revoke',
+  (payload, options) =>
+    Effect.gen(function* () {
+      const actor = yield* authorizeRpc(options.headers, 'lease:revoke')
+      const service = yield* LeaseService
+      const idClock = yield* IdClock
+      const now = yield* idClock.now
+      return yield* service
+        .revoke(payload.lease_id, actor, now)
+        .pipe(Effect.mapError(toRpcError))
+    }),
+)
+
 export const AcpRpcSessionWorkerWorkspaceHandlersLive = Layer.mergeAll(
   sessionInitializeHandler,
   workerListHandler,
@@ -320,4 +379,8 @@ export const AcpRpcSessionWorkerWorkspaceHandlersLive = Layer.mergeAll(
   workClaimHandler,
   workUpdateStateHandler,
   workPublishEventHandler,
+  leaseRequestHandler,
+  leaseRenewHandler,
+  leaseReleaseHandler,
+  leaseRevokeHandler,
 )
