@@ -22,6 +22,7 @@ aliases: [grammar/typescript, effect-grammar]
 | `effect`                | `3.21.4`  | runtime, Layer, Schema, Config, Data, Stream, PubSub, HashMap, Chunk, Option, Duration |
 | `@effect/platform`      | `0.96.2`  | `HttpApi*`, `HttpServer`, `FileSystem`, `Path`, `Command`, `Socket` abstractions       |
 | `@effect/platform-node` | `0.107.0` | `NodeHttpServer`, `NodeContext`, `NodeRuntime`, Node Layer implementations             |
+| `@effect/rpc`           | `0.75.1`  | `Rpc`, `RpcGroup`, `RpcMiddleware`, `RpcServer`, `RpcClient`, `RpcTest`                |
 | `vitest`                | `4.x`     | test runner (`pnpm test`)                                                              |
 
 ## SDK Discovery Map
@@ -31,6 +32,7 @@ Scan these before generating library syntax — do not recall from memory:
 - `@root/node_modules/effect/dist/dts/index.d.ts` — barrel of core modules.
 - `@root/node_modules/@effect/platform/dist/dts/index.d.ts` — `HttpApi`, `HttpApiBuilder`, `HttpApiGroup`, `HttpApiEndpoint`, `HttpApiSchema`, `HttpServer`, `HttpServerResponse`.
 - `@root/node_modules/@effect/platform-node/dist/dts/index.d.ts` — `NodeHttpServer`, `NodeContext`, `NodeRuntime`.
+- `@root/node_modules/@effect/rpc/dist/dts/index.d.ts` — `Rpc`, `RpcGroup`, `RpcMiddleware`, `RpcServer`, `RpcClient`, `RpcTest`. If the direct link is not materialized locally, read the installed pnpm-store copy for `0.75.1` and do not import `@effect/rpc` until the dependency link exists.
 
 ## Imports / Namespaces (immutable references)
 
@@ -65,7 +67,28 @@ import { HttpServer, HttpServerResponse } from '@effect/platform'
 
 // Node Layers — wired ONLY in apps/server/main.ts and apps/cli/main.ts
 import { NodeHttpServer, NodeContext, NodeRuntime } from '@effect/platform-node'
+
+// Native first-party RPC — transport edge only
+import { Rpc, RpcGroup, RpcMiddleware, RpcServer, RpcClient } from '@effect/rpc'
 ```
+
+## Effect RPC Idiom
+
+```typescript
+const createWork = Rpc.make('work.create')
+  .setPayload(CreateWorkPayload)
+  .setSuccess(WorkUnit)
+  .setError(ProtocolError)
+
+export const AcpRpcGroup = RpcGroup.make(createWork)
+```
+
+Use `Rpc.make(...).setPayload(...).setSuccess(...).setError(...)` for each
+operation, then compose the contract with `RpcGroup.make(...).add(...)` or
+`merge(...)`. Implement handlers with `AcpRpcGroup.toLayer(...)`, test
+transport-free behavior with `RpcTest`, and keep HTTP/stdio/socket adaptation
+outside domain services. Do not hand-map RPC methods through REST paths once the
+native handler layer exists.
 
 NodeNext ESM requires explicit `.js` extensions on **relative** imports:
 
