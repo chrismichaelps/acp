@@ -238,6 +238,18 @@ describe('AcpHttpApi', () => {
         path: '/v1/checkpoints',
       },
       {
+        group: 'memory',
+        name: 'createMemory',
+        method: 'POST',
+        path: '/v1/memory',
+      },
+      {
+        group: 'memory',
+        name: 'listMemory',
+        method: 'GET',
+        path: '/v1/memory',
+      },
+      {
         group: 'reviews',
         name: 'requestReview',
         method: 'POST',
