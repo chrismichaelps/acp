@@ -15,6 +15,7 @@ import {
 } from './command-support.js'
 import { eventCommandHandlers } from './event-commands.js'
 import { memoryCommandHandlers } from './memory-commands.js'
+import { sessionCommandHandlers } from './session-commands.js'
 
 export { CliError, type CliRequest } from './command-support.js'
 
@@ -105,6 +106,8 @@ const commandKey = (group: string | undefined, action: string | undefined) =>
   `${group ?? ''} ${action ?? ''}`
 
 const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
+  ...sessionCommandHandlers,
+
   'worker list': () =>
     Either.right({
       method: 'GET',
