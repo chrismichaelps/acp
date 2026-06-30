@@ -1,24 +1,22 @@
 /** @Acp.App.Cli.Commands — pure argv to CliRequest parser */
-import { Data, Either } from 'effect'
+import { Either } from 'effect'
+import {
+  CliError,
+  csvFlag,
+  encodePathSegment,
+  flag,
+  optional,
+  optionalAs,
+  positional,
+  positiveIntegerFlag,
+  type CliRequest,
+  type CommandHandler,
+  type Parsed,
+} from './command-support.js'
+import { eventCommandHandlers } from './event-commands.js'
+import { memoryCommandHandlers } from './memory-commands.js'
 
-export interface CliRequest {
-  readonly method: 'GET' | 'POST' | 'PATCH' | 'DELETE'
-  readonly path: string
-  readonly body?: Record<string, unknown>
-  readonly stream?: boolean
-  readonly label: string
-}
-
-export class CliError extends Data.TaggedError('CliError')<{
-  readonly message: string
-}> {}
-
-interface Parsed {
-  readonly positionals: readonly string[]
-  readonly flags: Readonly<Record<string, string>>
-}
-
-type CommandHandler = (parsed: Parsed) => Either.Either<CliRequest, CliError>
+export { CliError, type CliRequest } from './command-support.js'
 
 const splitArgs = (argv: readonly string[]): Parsed => {
   const positionals: string[] = []
@@ -42,58 +40,6 @@ const splitArgs = (argv: readonly string[]): Parsed => {
   return { positionals, flags }
 }
 
-const flag = (
-  flags: Readonly<Record<string, string>>,
-  key: string,
-): Either.Either<string, CliError> =>
-  key in flags && flags[key] !== 'true'
-    ? Either.right(flags[key])
-    : Either.left(new CliError({ message: `missing required --${key}` }))
-
-const positional = (
-  positionals: readonly string[],
-  index: number,
-  name: string,
-): Either.Either<string, CliError> =>
-  index < positionals.length
-    ? Either.right(positionals[index])
-    : Either.left(new CliError({ message: `missing <${name}>` }))
-
-const optional = (
-  flags: Readonly<Record<string, string>>,
-  key: string,
-): Record<string, string> =>
-  key in flags && flags[key] !== 'true' ? { [key]: flags[key] } : {}
-
-const optionalAs = (
-  flags: Readonly<Record<string, string>>,
-  key: string,
-  field: string,
-): Record<string, string> =>
-  key in flags && flags[key] !== 'true' ? { [field]: flags[key] } : {}
-
-const optionalQuery = (
-  flags: Readonly<Record<string, string>>,
-  key: string,
-  field: string = key,
-): readonly string[] =>
-  key in flags && flags[key] !== 'true'
-    ? [`${field}=${encodeURIComponent(flags[key])}`]
-    : []
-
-const csvFlag = (
-  flags: Readonly<Record<string, string>>,
-  key: string,
-): Either.Either<readonly string[], CliError> =>
-  Either.map(flag(flags, key), (value) =>
-    value
-      .split(',')
-      .map((item) => item.trim())
-      .filter((item) => item !== ''),
-  )
-
-const encodePathSegment = (value: string): string => encodeURIComponent(value)
-
 const scopedWorkListPath = (
   flags: Readonly<Record<string, string>>,
   collection: string,
@@ -106,23 +52,6 @@ const scopedWorkListPath = (
     const workId = yield* flag(flags, 'work')
     return `/v1/work/${encodePathSegment(workId)}/${collection}`
   })
-
-const integerFlag = (
-  flags: Readonly<Record<string, string>>,
-  key: string,
-  min: number,
-): Either.Either<number, CliError> => {
-  const raw = flags[key]
-  const parsed = Number(raw)
-  return Number.isSafeInteger(parsed) && parsed >= min
-    ? Either.right(parsed)
-    : Either.left(new CliError({ message: `invalid --${key}: ${raw}` }))
-}
-
-const positiveIntegerFlag = (
-  flags: Readonly<Record<string, string>>,
-  key: string,
-) => integerFlag(flags, key, 1)
 
 const leaseStateCommand =
   (action: 'release' | 'revoke'): CommandHandler =>
@@ -427,50 +356,7 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
       }
     }),
 
-  'memory create': ({ flags }) =>
-    Either.gen(function* () {
-      const workspaceId = yield* flag(flags, 'workspace')
-      const kind = yield* flag(flags, 'kind')
-      const key = yield* flag(flags, 'key')
-      const summary = yield* flag(flags, 'summary')
-      const content = yield* flag(flags, 'content')
-      const labels = 'labels' in flags ? yield* csvFlag(flags, 'labels') : []
-      return {
-        method: 'POST',
-        path: '/v1/memory',
-        body: {
-          workspace_id: workspaceId,
-          kind,
-          key,
-          summary,
-          content,
-          labels,
-          ...optionalAs(flags, 'work', 'work_id'),
-        },
-        label: 'memory create',
-      }
-    }),
-
-  'memory list': ({ flags }) =>
-    Either.gen(function* () {
-      const workspaceId = yield* flag(flags, 'workspace')
-      const afterSeq =
-        'after' in flags ? yield* integerFlag(flags, 'after', 0) : 0
-      const query = [
-        `workspace_id=${encodeURIComponent(workspaceId)}`,
-        `after_seq=${afterSeq.toString()}`,
-        ...optionalQuery(flags, 'limit'),
-        ...optionalQuery(flags, 'work', 'work_id'),
-        ...optionalQuery(flags, 'kind'),
-        ...optionalQuery(flags, 'key'),
-        ...optionalQuery(flags, 'label'),
-      ].join('&')
-      return {
-        method: 'GET',
-        path: `/v1/memory?${query}`,
-        label: 'memory list',
-      }
-    }),
+  ...memoryCommandHandlers,
 
   'review request': ({ flags }) =>
     Either.gen(function* () {
@@ -519,28 +405,7 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
   'review request-changes': reviewStateCommand('request_changes'),
   'review cancel': reviewStateCommand('cancel'),
 
-  'events stream': ({ flags }) =>
-    Either.gen(function* () {
-      const workspaceId = yield* flag(flags, 'workspace')
-      return {
-        method: 'GET',
-        path: `/v1/events/stream?workspace_id=${encodeURIComponent(workspaceId)}`,
-        stream: true,
-        label: 'events stream',
-      }
-    }),
-
-  'events list': ({ flags }) =>
-    Either.gen(function* () {
-      const workspaceId = yield* flag(flags, 'workspace')
-      const afterSeq =
-        'after' in flags ? yield* integerFlag(flags, 'after', 0) : 0
-      return {
-        method: 'GET',
-        path: `/v1/events?workspace_id=${encodeURIComponent(workspaceId)}&after_seq=${afterSeq.toString()}`,
-        label: 'events list',
-      }
-    }),
+  ...eventCommandHandlers,
 }
 
 export const parseArgs = (
