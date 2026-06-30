@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · effect-rpc-artifact-handlers slice · added
+  [[acp-rpc-artifact-handlers]] and merged it into [[acp-rpc-handlers]] for
+  native `artifact.create`/`artifact.update`/`artifact.delete`/
+  `artifact.content`/artifact list handlers over [[artifact-service]] · focused
+  validation: format, lint, typecheck, file-size, focused RPC tests, and 255
+  non-socket tests green · risk LOW
 - 2026-06-30 · post-rpc-lease-handlers-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after native lease RPC handlers and
   selected `artifact.create`/`artifact.update`/`artifact.delete`/
