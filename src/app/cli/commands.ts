@@ -335,6 +335,25 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
       }
     }),
 
+  'artifact pr': ({ flags }) =>
+    Either.gen(function* () {
+      const workspaceId = yield* flag(flags, 'workspace')
+      const workId = yield* flag(flags, 'work')
+      const uri = yield* flag(flags, 'url')
+      return {
+        method: 'POST',
+        path: '/v1/artifacts',
+        body: {
+          workspace_id: workspaceId,
+          work_id: workId,
+          kind: 'pull_request',
+          uri,
+          ...optional(flags, 'summary'),
+        },
+        label: 'artifact pr',
+      }
+    }),
+
   'artifact update': ({ positionals, flags }) =>
     Either.gen(function* () {
       const artifactId = yield* positional(positionals, 0, 'artifact_id')

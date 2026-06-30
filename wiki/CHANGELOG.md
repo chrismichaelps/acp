@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · github-pr-artifact-cli slice · added `acp artifact pr` as a
+  CLI convenience that creates a normal external `pull_request` [[Artifact]]
+  using `--url` as `uri`, giving v0.2 GitHub PR artifact evidence a narrow
+  protocol projection without granting ACP GitHub permissions · validation:
+  format, lint, typecheck, file-size, focused CLI parser tests, and 279-test
+  non-socket suite green · risk LOW
 - 2026-06-30 · rpc-route-bearer-helper-adoption slice · migrated
   [[native-rpc-route]] live HTTP client tests to use [[acp-rpc-client]]
   `withAcpRpcBearer` for unary generated-client calls, proving the bearer helper

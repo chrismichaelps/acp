@@ -9,6 +9,7 @@ Mirror of `@root/src/app/cli/`. The `acp` command-line client of [[acp-router]].
 
 - [[cli-index]] — opaque CLI barrel (parser + client).
 - [[cli-commands]] — pure `argv → CliRequest` parser (spec §21 commands).
+- [[artifact-pr-command-test]] — focused parser regression for PR artifact URLs.
 - [[cli-command-support]] — shared request/error types and parser helpers.
 - [[cli-event-commands]] — event replay and streaming command map.
 - [[cli-memory-commands]] — workspace memory command map.
