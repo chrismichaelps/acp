@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · effect-rpc-memory-event-handlers slice · added
+  [[acp-rpc-memory-event-handlers]] and merged it into [[acp-rpc-handlers]] for
+  native `memory.create`/`memory.list` over [[memory-service]] and `events.list`
+  replay over the [[event-store]] — closing the last [[acp-rpc-contract]]
+  coverage gap so every contract request now has a backing handler; refreshed
+  [[protocol-implementation-2026-06-28]] to select native RpcServer/RpcClient
+  transport wiring as the next slice · validation: format, lint, typecheck,
+  file-size, and 262 non-socket tests green · risk LOW
 - 2026-06-30 · effect-rpc-review-handlers slice · added
   [[acp-rpc-review-handlers]] and merged it into [[acp-rpc-handlers]] for native
   review request/outcome/cancel/list handlers over [[review-service]] · focused
