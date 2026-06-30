@@ -17,9 +17,10 @@ aliases: [acp-rpc-contract, effect-rpc-contract]
 Declare the native first-party ACP RPC surface selected by
 [[ADR-0007-effect-rpc-adoption]]. The contract replaces the hand-mapped
 JSON-RPC method table with an `@effect/rpc` `RpcGroup` over ACP protocol schemas
-and typed protocol errors. The first handler vertical now lives in
-[[acp-rpc-handlers]]; client generation, streaming, remaining memory and event
-handlers, and JSON-RPC deletion remain later slices.
+and typed protocol errors. Secured operations now carry required-scope
+annotations consumed by [[rpc-auth-middleware]]. Handler verticals live in
+[[acp-rpc-handlers]] and its split modules; streaming `events.subscribe` and
+JSON-RPC deletion remain later slices.
 
 ## Interface
 
@@ -40,6 +41,10 @@ lease, artifact, checkpoint, review, event replay, and memory operations.
 `events.subscribe` is reserved for the streaming stage because it needs explicit
 `RpcSchema.Stream` handling and backpressure tests.
 
+Every secured operation is wrapped by the local `scoped(...)` helper, which
+attaches an `AcpRpcRequiredScope` annotation and the `AcpRpcAuthMiddleware`
+runtime tag while preserving the existing generated-client type shape.
+
 ## Algorithm
 
 Import `Rpc` and `RpcGroup` from `@effect/rpc`. Define one `Rpc.make(tag)` per
@@ -51,7 +56,8 @@ REST body already matches the domain command, and add small parameter payload
 schemas only where REST currently carries ids in the path.
 
 Handler modules implement narrow `AcpRpcGroup.toLayerHandler(...)` layers
-against domain services, [[id-clock]], and [[rpc-auth]]. They must call domain
+against domain services, [[id-clock]], and [[rpc-auth]]. Native HTTP execution
+also runs [[rpc-auth-middleware]] before the handler. Handlers must call domain
 services directly; they must not dispatch through [[acp-router]] or the JSON-RPC
 command map.
 
@@ -59,7 +65,7 @@ command map.
 
 - ❌ Do NOT route native RPC handlers through REST paths or JSON-RPC envelopes.
 - ❌ Do NOT delete [[jsonrpc/_MOC|JSON-RPC]] until the native contract, handlers,
-  auth middleware, client, and tests are complete.
+  auth middleware, client, streaming plan, and tests are complete.
 - ❌ Do NOT expose request bodies, bearer tokens, or local paths through RPC
   errors or logs.
 
@@ -84,4 +90,4 @@ adapters.
 ## Referenced by
 
 [[rpc/_MOC]] · [[acp-rpc-handlers]] · [[ADR-0007-effect-rpc-adoption]] ·
-[[Transport]]
+[[rpc-auth-middleware]] · [[Transport]]

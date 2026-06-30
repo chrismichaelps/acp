@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · effect-rpc-auth-middleware slice · added
+  [[rpc-auth-middleware]] with `AcpRpcRequiredScope`, `AcpRpcActor`, and
+  `AcpRpcAuthMiddlewareLive`; annotated secured [[acp-rpc-contract]] operations
+  with their existing permission scopes; merged the middleware into
+  [[acp-rpc-server]]; and extended the contract/native-route regressions for
+  scope metadata plus over-HTTP denial · validation: format, lint, typecheck,
+  file-size, focused RPC middleware/route/roundtrip tests, and 261-test
+  non-socket suite green · risk LOW
 - 2026-06-30 · effect-rpc-http-route-mount slice · mounted the native Effect RPC
   surface at `/rpc/native` through [[native-rpc-route]], moved [[http-app]] to
   `HttpLayerRouter.serve(AcpHttpRoutesLive)`, split [[acp-rpc-server]] into a

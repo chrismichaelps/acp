@@ -341,13 +341,24 @@ drives `makeAcpRpcClient` over an ephemeral TCP socket, creates a workspace
 through native RPC, and reads it back through REST using the same bearer session,
 which proves route mounting, client transport wiring, and shared host state.
 
-The next gap is native RPC transport polish, not replacement. The per-handler
-`authorizeRpc` calls still work and are covered, but a single `RpcMiddleware`
-should be evaluated next so authentication and scope logging become a transport
-policy rather than repeated handler code. That slice should keep the
-hand-mapped JSON-RPC layer, stdio bridge, WebSocket bridge, and SSE channel in
-place; streaming native RPC (`events.subscribe`) should wait until the HTTP
-authorization middleware path is settled.
+Native RPC auth middleware is now covered as a transport policy seam.
+[[acp-rpc-contract]] annotates secured operations with the same closed
+permission scopes already enforced by handlers, [[rpc-auth-middleware]] reads
+that metadata through `@effect/rpc` middleware and delegates bearer/session
+resolution to [[rpc-auth]], and [[acp-rpc-server]] merges the middleware into the
+handler layer used by [[native-rpc-route]]. Contract tests pin representative
+scope metadata and the native HTTP route still proves insufficient scopes are
+rejected over the generated client path. Handler-local `authorizeRpc` calls
+remain intentionally in place because direct `accessHandler` tests do not
+execute `RpcServer` middleware yet.
+
+The next gap is choosing the native RPC cleanup path. One conservative slice can
+move direct handler tests up to `RpcTest` or the mounted client path, then remove
+duplicated handler-local auth for operations whose actor can come from
+`AcpRpcActor`. Alternatively, streaming `events.subscribe` can be designed once
+the HTTP middleware path is stable. The hand-mapped JSON-RPC layer, stdio bridge,
+WebSocket bridge, and SSE channel should still remain until native HTTP covers
+the streaming story.
 
 ## Referenced by
 
