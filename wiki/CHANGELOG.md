@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · effect-rpc-http-route-mount slice · mounted the native Effect RPC
+  surface at `/rpc/native` through [[native-rpc-route]], moved [[http-app]] to
+  `HttpLayerRouter.serve(AcpHttpRoutesLive)`, split [[acp-rpc-server]] into a
+  host-shared `AcpRpcHandlersLayer` and standalone `AcpRpcHandlersLive`, and
+  added a live TCP regression proving the generated client writes state visible
+  through REST with the same bearer session · validation: format, lint,
+  typecheck, file-size, focused live socket tests, and 260-test non-socket suite
+  green · risk LOW
 - 2026-06-30 · effect-rpc-transport-wiring slice · stood up the native RPC
   transport seam — [[acp-rpc-server]] (`AcpRpcHandlersLive`, handlers ⊕ AppLive ⊕
   IdClockLive, requirement `never`), [[acp-rpc-client]] (generated typed

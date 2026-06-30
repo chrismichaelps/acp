@@ -30,9 +30,7 @@ export const makeAcpRpcClient: Effect<
   RpcClient.Protocol | Scope
 >
 
-export const acpRpcClientHttpLayer: (
-  url: string,
-) => Layer<RpcClient.Protocol>
+export const acpRpcClientHttpLayer: (url: string) => Layer<RpcClient.Protocol>
 ```
 
 ## Algorithm

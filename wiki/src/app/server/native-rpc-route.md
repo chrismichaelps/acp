@@ -1,0 +1,63 @@
+---
+type: module
+path: '@root/src/app/server/native-rpc-route.ts'
+fidelity: Active
+grammar: '[[grammar/typescript]]'
+seam: '[[Transport]]'
+depth_score: 0.55
+depth_status: MEDIUM
+tags: [module, rpc, transport]
+aliases: [native-rpc-route]
+---
+
+# Native RPC Route
+
+## Purpose
+
+Mount the first-party `@effect/rpc` surface on the running host without
+disturbing the existing REST, `POST /rpc` JSON-RPC, or `GET /rpc` WebSocket
+routes. This module is the server-side transport seam for
+[[ADR-0007-effect-rpc-adoption]]: native Effect/TypeScript clients can now reach
+[[acp-rpc-contract]] over real HTTP at `/rpc/native`, while the older protocol
+adapters stay available during migration.
+
+## Interface
+
+```typescript
+export const nativeRpcPath = '/rpc/native'
+export const AcpNativeRpcRouteLive: Layer<never, never, ...>
+export const AcpHttpRoutesLive: Layer<never, never, ...>
+```
+
+## Algorithm
+
+`AcpNativeRpcRouteLive` registers `RpcServer.layerHttpRouter` for
+[[acp-rpc-contract]] at `/rpc/native` with HTTP protocol framing and JSON
+serialization. It provides [[acp-rpc-server]] `AcpRpcHandlersLayer`, not the
+dependency-complete `AcpRpcHandlersLive`, so the host composition can provide one
+shared `AppLive ⊕ IdClockLive` above every transport. That detail is what keeps
+sessions, workspaces, events, and memory visible across REST, legacy JSON-RPC,
+WebSocket JSON-RPC, and native RPC inside one running host.
+
+`AcpHttpRoutesLive` also mounts [[acp-router]] for `/v1/*` and `/rpc`. The
+explicit paths avoid catch-all route ordering ambiguity and leave `/rpc/native`
+owned by the native RPC transport.
+
+## Negative Logic (Prohibited Paths)
+
+- ❌ Do NOT mount native RPC through `AcpRpcHandlersLive` inside the host; that
+  would allocate a second application graph and split transport state.
+- ❌ Do NOT delete the JSON-RPC routes here. Migration from the hand-mapped
+  command layer should happen only after the native HTTP route has exercised real
+  clients and any remaining streaming plan is settled.
+- ❌ Do NOT add domain behavior here. The route owns transport registration; the
+  handlers remain in [[acp-rpc-handlers]] and its split verticals.
+
+## Depth
+
+MEDIUM (0.55). Thin composition code, but it protects the host's shared-state
+invariant at the point where two router implementations meet.
+
+## Referenced by
+
+[[http-app]] · [[server-index]] · [[acp-rpc-server]] · [[Transport]]
