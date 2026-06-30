@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · readme-cli-auth-artifact-refresh slice · refreshed
+  [[README]] CLI prose to mention pull request artifact registration and the
+  `session init` → `ACP_RPC_TOKEN` authenticated command flow · validation:
+  format, lint, typecheck, file-size, and diff-check green · risk LOW
 - 2026-06-30 · cli-authenticated-session-flow slice · added
   [[session-auth-flow-test]] proving `acp session init` plus [[cli-client]]
   bearer forwarding against a require-auth [[acp-router]], covering the
