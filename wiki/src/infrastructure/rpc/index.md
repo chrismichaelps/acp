@@ -15,7 +15,7 @@ aliases: [rpc-index]
 ## Purpose
 
 Opaque barrel for the native Effect RPC infrastructure package. It exports the
-current [[acp-rpc-contract]], first handler vertical, auth helper, and error
+current [[acp-rpc-contract]], handler layer, auth helper, and error
 mapper without exposing callers to file layout decisions.
 
 ## Interface
