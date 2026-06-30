@@ -31,7 +31,7 @@ const requireWork = (work: WorkUnitServiceApi, workId: WorkId) =>
     }),
   )
 
-export const getWork = respond(
+export const getWork = respond('GET /v1/work/:work_id')(
   Effect.gen(function* () {
     const work = yield* WorkUnitService
     const workId = yield* workIdParam()
@@ -41,7 +41,7 @@ export const getWork = respond(
   }),
 )
 
-export const listWorkCheckpoints = respond(
+export const listWorkCheckpoints = respond('GET /v1/work/:work_id/checkpoints')(
   Effect.gen(function* () {
     const work = yield* WorkUnitService
     const checkpoints = yield* CheckpointService
@@ -54,6 +54,8 @@ export const listWorkCheckpoints = respond(
 )
 
 export const latestWorkCheckpoint = respond(
+  'GET /v1/work/:work_id/checkpoints/latest',
+)(
   Effect.gen(function* () {
     const work = yield* WorkUnitService
     const checkpoints = yield* CheckpointService
@@ -71,7 +73,7 @@ export const latestWorkCheckpoint = respond(
   }),
 )
 
-export const listWorkArtifacts = respond(
+export const listWorkArtifacts = respond('GET /v1/work/:work_id/artifacts')(
   Effect.gen(function* () {
     const work = yield* WorkUnitService
     const artifacts = yield* ArtifactService
@@ -83,7 +85,7 @@ export const listWorkArtifacts = respond(
   }),
 )
 
-export const listWorkReviews = respond(
+export const listWorkReviews = respond('GET /v1/work/:work_id/reviews')(
   Effect.gen(function* () {
     const work = yield* WorkUnitService
     const reviews = yield* ReviewService
@@ -96,6 +98,8 @@ export const listWorkReviews = respond(
 )
 
 export const getArtifactContent = respond(
+  'GET /v1/artifacts/:artifact_id/content',
+)(
   Effect.gen(function* () {
     const artifacts = yield* ArtifactService
     const artifactId = yield* artifactIdParam()

@@ -18,7 +18,9 @@ Provide the ACP runtime logging boundary for Effect programs. The module maps th
 documented `ACP_LOG_LEVEL` config value to Effect `LogLevel`, installs Effect's
 structured JSON logger for server processes, and adds stable `service` and
 `component` annotations plus an `acp.<component>` span to every log emitted by
-the wrapped workflow.
+the wrapped workflow. Request lifecycle events are emitted by
+[[route-support]], so the runtime logger remains the process-level installation
+point while route modules own their stable route templates.
 
 The first consumer is [[server-main]]. CLI and stdio entrypoints are intentionally
 excluded because their stdout is user/protocol output; attaching a JSON stdout
@@ -57,6 +59,10 @@ matching [[app-config]]'s fail-fast configuration policy. The wrapper does not
 log secrets, bearer tokens, request bodies, artifact content, or raw error
 internals.
 
+Route-level logs use Effect's logger context from this wrapper and carry
+low-cardinality annotations only: method, route template, status, duration, and
+protocol error code.
+
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT configure stdout JSON logging for [[cli-main]] or [[stdio-main]].
@@ -91,4 +97,5 @@ providers across entrypoints.
 
 ## Referenced by
 
-[[app/_MOC]] · [[server-main]] · [[app-config]] · [[Transport]]
+[[app/_MOC]] · [[server-main]] · [[route-support]] · [[app-config]] ·
+[[Transport]]

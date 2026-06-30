@@ -19,7 +19,9 @@ Provide the shared HTTP route boundary helpers used by server route modules:
 authorization, protocol-error folding, success encoding, and path-parameter
 lookup. This keeps [[acp-router]] and focused route modules under the file-size
 gate while preserving one canonical decode → authorize → delegate → encode
-pattern.
+pattern. The same boundary emits Effect request lifecycle logs with stable route
+templates, status codes, durations, and protocol error codes without recording
+tokens, request bodies, resource identifiers, or local paths.
 
 ## Interface
 
@@ -33,7 +35,9 @@ export const authorize: (
   UnauthorizedError | StorageError,
   AppConfigTag | SessionService | HttpServerRequest
 >
-export const respond: <E, R>(
+export const respond: (
+  route: string,
+) => <E, R>(
   effect: Effect<HttpServerResponse, E, R>,
 ) => Effect<HttpServerResponse, never, R>
 export const ok: (
@@ -58,9 +62,14 @@ tokens fall back to `worker_system` only when `ACP_REQUIRE_AUTH` is false.
 Action scopes are closed in [[common]], so callers cannot invent route-local
 permission strings.
 
-`respond` catches every route failure and folds tagged domain errors through
-[[http-error-mapper]], parse/request failures into `invalid_request`, and unknown
-defects into a non-leaking `internal_error`.
+`respond(route)` catches every route failure and folds tagged domain errors
+through [[http-error-mapper]], parse/request failures into `invalid_request`, and
+unknown defects into a non-leaking `internal_error`. The route argument is a
+low-cardinality `METHOD /template/:param` label used only for telemetry. After a
+response is available, `respond` emits `http request completed` through Effect's
+logger with `http_method`, `http_route`, `http_status`, `duration_ms`, and
+`error_code` when the route failed through the typed error channel. Statuses
+below 400 log at info, client failures at warning, and server failures at error.
 
 `ok` schema-encodes successful values before returning JSON. `pathParam` reads a
 named segment from the current `HttpRouter` route context.
@@ -69,6 +78,8 @@ named segment from the current `HttpRouter` route context.
 
 - ❌ Do NOT duplicate authorization or error folding in individual route modules.
 - ❌ Do NOT leak unknown error causes through HTTP responses.
+- ❌ Do NOT log raw URLs, bearer tokens, request bodies, resource ids, or storage
+  paths from the route boundary.
 - ❌ Do NOT import domain services here beyond session authorization.
 
 ## Depth

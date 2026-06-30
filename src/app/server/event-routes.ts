@@ -10,7 +10,7 @@ import { workspaceSseResponse } from '../../infrastructure/sse/index.js'
 import { Event } from '../../protocol/schema/index.js'
 import { authorize, ok, respond } from './route-support.js'
 
-export const replayEvents = respond(
+export const replayEvents = respond('GET /v1/events')(
   Effect.gen(function* () {
     const events = yield* EventStore
     const params =
@@ -24,7 +24,7 @@ export const replayEvents = respond(
   }),
 )
 
-export const streamEvents = respond(
+export const streamEvents = respond('GET /v1/events/stream')(
   Effect.gen(function* () {
     const params =
       yield* HttpServerRequest.schemaSearchParams(EventsStreamParams)

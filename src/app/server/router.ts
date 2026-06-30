@@ -111,7 +111,7 @@ const capabilitiesFromHandshake = (
   )
 }
 
-const initializeSession = respond(
+const initializeSession = respond('POST /v1/session/initialize')(
   Effect.gen(function* () {
     const workers = yield* WorkerService
     const sessions = yield* SessionService
@@ -147,7 +147,7 @@ const initializeSession = respond(
   }),
 )
 
-const createWork = respond(
+const createWork = respond('POST /v1/work')(
   Effect.gen(function* () {
     const service = yield* WorkUnitService
     const idClock = yield* IdClock
@@ -165,7 +165,7 @@ const createWork = respond(
   }),
 )
 
-const claimWork = respond(
+const claimWork = respond('POST /v1/work/:work_id/claim')(
   Effect.gen(function* () {
     const service = yield* WorkUnitService
     const idClock = yield* IdClock
@@ -178,7 +178,7 @@ const claimWork = respond(
   }),
 )
 
-const updateWorkState = respond(
+const updateWorkState = respond('PATCH /v1/work/:work_id')(
   Effect.gen(function* () {
     const service = yield* WorkUnitService
     const idClock = yield* IdClock
@@ -193,7 +193,7 @@ const updateWorkState = respond(
   }),
 )
 
-const publishWorkEvent = respond(
+const publishWorkEvent = respond('POST /v1/work/:work_id/events')(
   Effect.gen(function* () {
     const service = yield* WorkUnitService
     const events = yield* EventStore
@@ -224,7 +224,7 @@ const publishWorkEvent = respond(
   }),
 )
 
-const requestLease = respond(
+const requestLease = respond('POST /v1/leases')(
   Effect.gen(function* () {
     const service = yield* LeaseService
     const idClock = yield* IdClock
@@ -237,7 +237,7 @@ const requestLease = respond(
   }),
 )
 
-const releaseLease = respond(
+const releaseLease = respond('POST /v1/leases/:lease_id/release')(
   Effect.gen(function* () {
     const service = yield* LeaseService
     const idClock = yield* IdClock
@@ -249,7 +249,7 @@ const releaseLease = respond(
   }),
 )
 
-const renewLease = respond(
+const renewLease = respond('POST /v1/leases/:lease_id/renew')(
   Effect.gen(function* () {
     const service = yield* LeaseService
     const idClock = yield* IdClock
@@ -262,7 +262,7 @@ const renewLease = respond(
   }),
 )
 
-const revokeLease = respond(
+const revokeLease = respond('POST /v1/leases/:lease_id/revoke')(
   Effect.gen(function* () {
     const service = yield* LeaseService
     const idClock = yield* IdClock
@@ -274,7 +274,7 @@ const revokeLease = respond(
   }),
 )
 
-const createArtifact = respond(
+const createArtifact = respond('POST /v1/artifacts')(
   Effect.gen(function* () {
     const service = yield* ArtifactService
     const idClock = yield* IdClock
@@ -294,7 +294,7 @@ const createArtifact = respond(
   }),
 )
 
-const deleteArtifact = respond(
+const deleteArtifact = respond('DELETE /v1/artifacts/:artifact_id')(
   Effect.gen(function* () {
     const service = yield* ArtifactService
     const idClock = yield* IdClock
@@ -306,7 +306,7 @@ const deleteArtifact = respond(
   }),
 )
 
-const updateArtifact = respond(
+const updateArtifact = respond('PATCH /v1/artifacts/:artifact_id')(
   Effect.gen(function* () {
     const service = yield* ArtifactService
     const idClock = yield* IdClock
@@ -321,7 +321,7 @@ const updateArtifact = respond(
   }),
 )
 
-const createCheckpoint = respond(
+const createCheckpoint = respond('POST /v1/checkpoints')(
   Effect.gen(function* () {
     const service = yield* CheckpointService
     const idClock = yield* IdClock
@@ -341,7 +341,7 @@ const createCheckpoint = respond(
   }),
 )
 
-const requestReview = respond(
+const requestReview = respond('POST /v1/reviews')(
   Effect.gen(function* () {
     const service = yield* ReviewService
     const idClock = yield* IdClock
@@ -355,7 +355,7 @@ const requestReview = respond(
   }),
 )
 
-const approveReview = respond(
+const approveReview = respond('POST /v1/reviews/:review_id/approve')(
   Effect.gen(function* () {
     const service = yield* ReviewService
     const idClock = yield* IdClock
@@ -374,7 +374,7 @@ const approveReview = respond(
   }),
 )
 
-const rejectReview = respond(
+const rejectReview = respond('POST /v1/reviews/:review_id/reject')(
   Effect.gen(function* () {
     const service = yield* ReviewService
     const idClock = yield* IdClock
@@ -387,6 +387,8 @@ const rejectReview = respond(
 )
 
 const requestReviewChanges = respond(
+  'POST /v1/reviews/:review_id/request_changes',
+)(
   Effect.gen(function* () {
     const service = yield* ReviewService
     const idClock = yield* IdClock
@@ -398,7 +400,7 @@ const requestReviewChanges = respond(
   }),
 )
 
-const cancelReview = respond(
+const cancelReview = respond('POST /v1/reviews/:review_id/cancel')(
   Effect.gen(function* () {
     const service = yield* ReviewService
     const idClock = yield* IdClock

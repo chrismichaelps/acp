@@ -34,7 +34,9 @@ id and `now` from [[id-clock]], authorizes `memory:create`, then calls
 decodes [[acp-http-api-memory]] `MemoryListParams` directly from the search params
 — its `Option`-wrapped, `NumberFromString` shape **is** the `ReadMemoryQuery`, so
 it feeds `MemoryService.read` without re-decoding — authorizes `memory:read`, and
-encodes the `Memory[]` page at `200`.
+encodes the `Memory[]` page at `200`. Both handlers pass stable route templates
+to [[route-support]] `respond` so memory telemetry does not log workspace ids,
+keys, labels, or content.
 
 ## Negative Logic (Prohibited Paths)
 

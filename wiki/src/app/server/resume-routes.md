@@ -57,6 +57,10 @@ External artifact references and deleted/missing artifacts return `404
 not_found`; callers should follow the artifact metadata URI for external
 systems.
 
+Each handler passes its stable route template to [[route-support]] `respond` so
+read-path telemetry records route/status/duration without logging work or
+artifact identifiers.
+
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT duplicate checkpoint or artifact filtering in the router.

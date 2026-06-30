@@ -56,7 +56,8 @@ export const streamEvents: Effect<
 [[event-store]] `readAfter`, converts the returned `Chunk` to a JSON array, and
 schema-encodes each [[Event]] through [[route-support]] `ok`. `streamEvents`
 decodes the existing live query params and delegates to [[sse-event-stream]]
-without changing its wire format.
+without changing its wire format. Both handlers pass stable route templates to
+[[route-support]] `respond` so replay and SSE telemetry avoid raw workspace ids.
 
 ## Negative Logic (Prohibited Paths)
 

@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · observability-request-logging slice · extended
+  [[route-support]] with Effect request lifecycle logs using stable route
+  templates, response status, duration, and protocol error code while preserving
+  no-body/no-token/no-id logging boundaries across [[acp-router]] and split route
+  modules · 252 tests green · risk LOW
 - 2026-06-29 · cli-command-map-split follow-up · split shared CLI parser
   primitives into [[cli-command-support]] and moved event/memory handlers into
   [[cli-event-commands]] and [[cli-memory-commands]], preserving `parseArgs`
