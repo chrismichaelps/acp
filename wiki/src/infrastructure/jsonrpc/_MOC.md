@@ -14,6 +14,7 @@ Mirror of `@root/src/infrastructure/jsonrpc/`.
 - [[json-rpc-worker-commands]] — host-scoped worker read method mappings.
 - [[json-rpc-resume-commands]] — work-scoped read/query method mappings.
 - [[json-rpc-event-commands]] — event replay and live subscription method mappings.
+- [[json-rpc-memory-commands]] — workspace memory create/list method mappings.
 - [[json-rpc-command-map]] — closed JSON-RPC method table mapping to ACP HTTP commands.
 - [[json-rpc-runtime]] — executes the normalized commands and folds outcomes into JSON-RPC responses.
 

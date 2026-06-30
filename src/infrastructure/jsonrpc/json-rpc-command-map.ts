@@ -42,6 +42,10 @@ import {
   commandForEvent,
   eventMethodLabels,
 } from './json-rpc-event-commands.js'
+import {
+  commandForMemory,
+  memoryMethodLabels,
+} from './json-rpc-memory-commands.js'
 import type {
   JsonRpcCommand,
   JsonRpcId,
@@ -86,6 +90,7 @@ const methodLabels = new Set<string>([
   'review.reject',
   'review.request_changes',
   'review.cancel',
+  ...memoryMethodLabels,
   ...eventMethodLabels,
 ])
 
@@ -140,6 +145,15 @@ export const commandFor = (
     )
     if (Option.isSome(eventCommand)) {
       return yield* eventCommand.value
+    }
+    const memoryCommand = commandForMemory(
+      method,
+      paramsValue,
+      id,
+      expectsResponse,
+    )
+    if (Option.isSome(memoryCommand)) {
+      return yield* memoryCommand.value
     }
 
     if (method === 'session.initialize') {

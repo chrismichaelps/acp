@@ -29,6 +29,8 @@ export const usage = `acp — Agent Coordination Protocol CLI
   acp review approve <review_id> --met <requirement,csv>
   acp review reject <review_id>
   acp review request-changes <review_id>
+  acp memory create --workspace <id> --kind <k> --key <k> --summary <s> --content <c> [--work <id>] [--labels <csv>]
+  acp memory list --workspace <id> [--after <seq>] [--limit <n>] [--work <id>] [--kind <k>] [--key <k>] [--label <l>]
   acp events list --workspace <id> [--after <seq>]
   acp events stream --workspace <id>
 
