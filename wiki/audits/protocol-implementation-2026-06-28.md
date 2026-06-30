@@ -247,14 +247,22 @@ the [[acp-http-api-memory]] contract, [[json-rpc-memory-commands]]
 each a schema decode → [[memory-service]] → schema encode boundary. No
 backed-command coverage gap remains across REST, JSON-RPC, and the CLI.
 
-The open architectural decision is the JSON-RPC transport itself: the review of
-[[json-rpc-command-map]] established it is an HTTP-bridging translation layer
-(JSON-RPC → synthetic HTTP request → router), not a native RPC surface, and the
-clients are first-party Effect/TS. The recommended next direction is an ADR to
-adopt `@effect/rpc` (a native `RpcGroup` over the domain services) and retire the
-hand-mapped command layer. Generated clients, Git-specific workflow extensions,
-host-presence streams, and broader filesystem/command adapters remain deferred
-until a concrete consumer or duplicated boundary appears.
+The open architectural decision is now resolved by
+[[ADR-0007-effect-rpc-adoption]]. ACP will adopt `@effect/rpc` as the native
+first-party RPC surface and retire the hand-mapped JSON-RPC command layer once
+the replacement is live. The ADR deliberately drops JSON-RPC 2.0 wire
+compatibility because no MCP/polyglot client exists; the reference clients are
+Effect/TypeScript and benefit more from a typed `RpcGroup`, direct domain
+handlers, typed errors, streaming, and generated clients than from preserving a
+paper wire format.
+
+The next gap is the first implementation stage from ADR-0007: introduce the
+`@effect/rpc` contract and handler layer without deleting JSON-RPC yet. The slice
+should define a native RpcGroup over the current domain schemas, wire handlers to
+the existing domain services, include auth context boundaries where needed, and
+prove it with `RpcTest` or transport-less handler tests. Stdio/HTTP/WebSocket
+replacement and JSON-RPC deletion should remain later slices after the new
+contract is covered.
 
 ## Referenced by
 

@@ -2,6 +2,16 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · cli-command-map-split follow-up · split shared CLI parser
+  primitives into [[cli-command-support]] and moved event/memory handlers into
+  [[cli-event-commands]] and [[cli-memory-commands]], preserving `parseArgs`
+  while bringing oversized parser/test files back under the repository size
+  gate for PR #106 · focused validation pending · risk LOW
+- 2026-06-29 · post-effect-rpc-adr-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after
+  [[ADR-0007-effect-rpc-adoption]] and selected the initial `@effect/rpc`
+  RpcGroup/handler implementation stage before deleting JSON-RPC · docs-only
+  validation · risk LOW
 - 2026-06-29 · effect-rpc-adoption-decision slice · wrote
   [[ADR-0007-effect-rpc-adoption]] to adopt `@effect/rpc` over the domain services
   and retire the hand-mapped JSON-RPC layer ([[json-rpc-command-map]] et al.),
