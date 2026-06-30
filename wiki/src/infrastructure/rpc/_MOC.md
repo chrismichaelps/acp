@@ -5,12 +5,11 @@ tags: [moc, src, infrastructure, rpc]
 
 # Effect RPC Source MOC
 
-Mirror of future `@root/src/infrastructure/rpc/`. This folder is introduced as
-the wiki-first preflight for [[ADR-0007-effect-rpc-adoption]] before source files
-import `@effect/rpc`.
+Mirror of `@root/src/infrastructure/rpc/`. This folder owns the native
+first-party Effect RPC contract selected by [[ADR-0007-effect-rpc-adoption]].
 
-- [[acp-rpc-contract]] — native first-party `RpcGroup` contract plan over ACP
-  schemas and domain services.
+- [[rpc-index]] — opaque native RPC infrastructure barrel.
+- [[acp-rpc-contract]] — native first-party `RpcGroup` contract over ACP schemas.
 
 ## Referenced by
 
