@@ -2,6 +2,7 @@
 import { HttpServer } from '@effect/platform'
 import { Duration, Effect, Either, Fiber, Option, Stream } from 'effect'
 import { describe, expect, it } from 'vitest'
+import { RenewLeasePayload } from '../../infrastructure/http/acp-http-api.js'
 import { nodeHttpServerLayer } from '../../infrastructure/platform-node/index.js'
 import {
   AcpRpcs,
@@ -142,6 +143,129 @@ describe('native RPC route', () => {
     )
 
     expect(Option.getOrNull(result.observed)?.id).toBe(result.published.id)
+  })
+
+  it('round-trips work and lease methods over HTTP', async () => {
+    const result = await onLiveServer((baseUrl) =>
+      Effect.runPromise(
+        Effect.gen(function* () {
+          const client = yield* makeAcpRpcClient
+          const session = yield* client.session.initialize(
+            yield* decodeInitialize([
+              'worker:read',
+              'workspace:read',
+              'workspace:write',
+              'work:create',
+              'work:claim',
+              'work:update',
+              'lease:create',
+              'lease:renew',
+              'lease:release',
+              'lease:revoke',
+            ]),
+          )
+          const headers = { authorization: `Bearer ${session.session_id}` }
+          const worker = yield* client.worker.get(
+            { worker_id: 'agent_rpc' as WorkerId },
+            { headers },
+          )
+          const workspace = yield* client.workspace.create(
+            yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
+              name: 'Native RPC Work Lease Workspace',
+              kind: 'git_repository',
+              uri: 'git+https://example.com/acp/native-rpc-work-lease.git',
+            }),
+            { headers },
+          )
+          const renamed = yield* client.workspace.update(
+            yield* decodePayload(AcpRpcs.workspaceUpdate.payloadSchema, {
+              workspace_id: workspace.id,
+              name: 'Native RPC Work Lease Workspace Renamed',
+              kind: 'git_repository',
+              uri: 'git+https://example.com/acp/native-rpc-work-lease.git',
+            }),
+            { headers },
+          )
+          const work = yield* client.work.create(
+            yield* decodePayload(AcpRpcs.workCreate.payloadSchema, {
+              workspace_id: workspace.id,
+              title: 'Claim and lease over native RPC',
+            }),
+            { headers },
+          )
+          const claimed = yield* client.work.claim(
+            { work_id: work.id, worker_id: worker.id },
+            { headers },
+          )
+          const running = yield* client.work.update_state(
+            { work_id: work.id, state: 'running' },
+            { headers },
+          )
+          const lease = yield* client.lease.request(
+            yield* decodePayload(AcpRpcs.leaseRequest.payloadSchema, {
+              workspace_id: workspace.id,
+              work_id: work.id,
+              holder: worker.id,
+              resource: {
+                kind: 'file',
+                uri: 'file://src/app/server/native-rpc-route.test.ts',
+              },
+            }),
+            { headers },
+          )
+          const renewParams = yield* decodePayload(RenewLeasePayload, {})
+          const renewed = yield* client.lease.renew(
+            { lease_id: lease.id, ...renewParams },
+            { headers },
+          )
+          const released = yield* client.lease.release(
+            { lease_id: lease.id },
+            { headers },
+          )
+          const secondLease = yield* client.lease.request(
+            yield* decodePayload(AcpRpcs.leaseRequest.payloadSchema, {
+              workspace_id: workspace.id,
+              work_id: work.id,
+              holder: worker.id,
+              resource: {
+                kind: 'file',
+                uri: 'file://src/app/server/native-rpc-route.work-lease.ts',
+              },
+            }),
+            { headers },
+          )
+          const revoked = yield* client.lease.revoke(
+            { lease_id: secondLease.id },
+            { headers },
+          )
+          const archived = yield* client.workspace.archive(
+            { workspace_id: workspace.id },
+            { headers },
+          )
+
+          return {
+            archived,
+            claimed,
+            released,
+            renewed,
+            revoked,
+            running,
+            renamed,
+          }
+        }).pipe(
+          Effect.provide(acpRpcClientHttpLayer(`${baseUrl}${nativeRpcPath}`)),
+          Effect.scoped,
+        ),
+      ),
+    )
+
+    expect(result.renamed.name).toBe('Native RPC Work Lease Workspace Renamed')
+    expect(Option.getOrNull(result.claimed.assigned_to)).toBe('agent_rpc')
+    expect(result.running.state).toBe('running')
+    expect(result.renewed.state).toBe('active')
+    expect(result.released).toBeUndefined()
+    expect(result.revoked.state).toBe('revoked')
+    expect(result.archived.state).toBe('archived')
   })
 
   it('round-trips artifact and checkpoint methods over HTTP', async () => {

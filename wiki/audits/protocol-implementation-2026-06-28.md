@@ -448,6 +448,15 @@ work/lease vertical: claim/state transitions and lease request/renew/release/
 revoke need the same mounted-route pressure before JSON-RPC retirement can be
 treated as a consumer-migration question rather than a coverage question.
 
+That work/lease target is now covered too. The mounted route test performs
+worker lookup, workspace update/archive, work claim and running-state
+transition, and lease request/renew/release/revoke through [[acp-rpc-client]]
+against `/rpc/native`. At this point native RPC has both transport-less
+generated-client coverage and mounted HTTP coverage across the implemented
+handler verticals. The next migration question should stop being "can the
+methods run?" and become "which first-party consumer should move off the
+legacy JSON-RPC bridge first?"
+
 ## Referenced by
 
 [[architecture/_MOC]] · [[protocol-implementation-2026-06-27]] ·
