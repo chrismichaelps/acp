@@ -5,14 +5,14 @@ import { MemoryService } from '../../domain/memory/index.js'
 import { IdClock } from '../../app/server/identity.js'
 import type { MemoryId } from '../../protocol/schema/index.js'
 import { AcpRpcGroup } from './acp-rpc-contract.js'
-import { authorizeRpc } from './rpc-auth.js'
+import { rpcActor } from './rpc-auth.js'
 import { toRpcError } from './rpc-error.js'
 
 const memoryCreateHandler = AcpRpcGroup.toLayerHandler(
   'memory.create',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* authorizeRpc(options.headers, 'memory:create')
+      const actor = yield* rpcActor(options.headers, 'memory:create')
       const memory = yield* MemoryService
       const idClock = yield* IdClock
       const id = (yield* idClock.nextId('memory')) as MemoryId
@@ -27,7 +27,7 @@ const memoryListHandler = AcpRpcGroup.toLayerHandler(
   'memory.list',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* authorizeRpc(options.headers, 'memory:read')
+      yield* rpcActor(options.headers, 'memory:read')
       const memory = yield* MemoryService
       return yield* memory.read(payload).pipe(Effect.mapError(toRpcError))
     }),
@@ -37,7 +37,7 @@ const eventListHandler = AcpRpcGroup.toLayerHandler(
   'events.list',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* authorizeRpc(options.headers, 'event:read')
+      yield* rpcActor(options.headers, 'event:read')
       const events = yield* EventStore
       const replay = yield* events
         .readAfter(payload.workspace_id, payload.after_seq)
@@ -51,7 +51,7 @@ const eventSubscribeHandler = AcpRpcGroup.toLayerHandler(
   (payload, options) =>
     Stream.unwrapScoped(
       Effect.gen(function* () {
-        yield* authorizeRpc(options.headers, 'event:read')
+        yield* rpcActor(options.headers, 'event:read')
         const events = yield* EventStore
         return yield* events.subscribe(payload.workspace_id)
       }),
