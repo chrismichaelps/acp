@@ -352,13 +352,21 @@ rejected over the generated client path. Handler-local `authorizeRpc` calls
 remain intentionally in place because direct `accessHandler` tests do not
 execute `RpcServer` middleware yet.
 
-The next gap is choosing the native RPC cleanup path. One conservative slice can
+Native `events.subscribe` is now covered on the first-party Effect RPC surface.
+[[acp-rpc-contract]] declares it with `stream: true`, `Event` chunks, and
+`ProtocolError` stream failures; [[acp-rpc-memory-event-handlers]] authorizes
+`event:read` and returns the scoped [[event-store]] workspace subscription; and
+[[native-rpc-route]] plus [[acp-rpc-client]] now use NDJSON framing so streaming
+HTTP can deliver chunks without breaking unary calls. The live route regression
+subscribes through the generated client, publishes a work event, and observes
+the same event id from the stream.
+
+The next gap is choosing the native RPC cleanup path. A conservative slice can
 move direct handler tests up to `RpcTest` or the mounted client path, then remove
 duplicated handler-local auth for operations whose actor can come from
-`AcpRpcActor`. Alternatively, streaming `events.subscribe` can be designed once
-the HTTP middleware path is stable. The hand-mapped JSON-RPC layer, stdio bridge,
-WebSocket bridge, and SSE channel should still remain until native HTTP covers
-the streaming story.
+`AcpRpcActor`. The hand-mapped JSON-RPC layer, stdio bridge, WebSocket bridge,
+and SSE channel should still remain until native RPC has enough client coverage
+to make migration mechanical rather than speculative.
 
 ## Referenced by
 

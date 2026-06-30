@@ -19,8 +19,8 @@ Declare the native first-party ACP RPC surface selected by
 JSON-RPC method table with an `@effect/rpc` `RpcGroup` over ACP protocol schemas
 and typed protocol errors. Secured operations now carry required-scope
 annotations consumed by [[rpc-auth-middleware]]. Handler verticals live in
-[[acp-rpc-handlers]] and its split modules; streaming `events.subscribe` and
-JSON-RPC deletion remain later slices.
+[[acp-rpc-handlers]] and its split modules; native `events.subscribe` now uses
+`@effect/rpc` streaming, while JSON-RPC deletion remains a later slice.
 
 ## Interface
 
@@ -36,10 +36,10 @@ export const AcpRpcs: { readonly ... }
 export const acpRpcTags: readonly string[]
 ```
 
-The group covers the existing non-streaming workspace, worker, session, work,
-lease, artifact, checkpoint, review, event replay, and memory operations.
-`events.subscribe` is reserved for the streaming stage because it needs explicit
-`RpcSchema.Stream` handling and backpressure tests.
+The group covers workspace, worker, session, work, lease, artifact, checkpoint,
+review, event replay, event subscription, and memory operations. `events.list`
+returns a replay array; `events.subscribe` is declared with `stream: true` so the
+generated client receives an Effect `Stream<Event, ProtocolError>`.
 
 Every secured operation is wrapped by the local `scoped(...)` helper, which
 attaches an `AcpRpcRequiredScope` annotation and the `AcpRpcAuthMiddleware`
@@ -82,10 +82,10 @@ adapters.
   **A:** It is the current closed ACP wire error envelope and preserves
   low-cardinality error codes immediately. Domain-error unions can replace it
   once the handler layer no longer shares REST error mapping.
-- **Q:** Should `events.subscribe` be in the first contract slice?
-  **A:** Not as a handler. The contract may reserve the tag, but streaming
-  implementation waits for a dedicated slice with `RpcSchema.Stream` and
-  backpressure tests.
+- **Q:** Why switch the native HTTP transport to NDJSON?
+  **A:** `RpcSerialization.layerJson` is sufficient for unary calls but has no
+  frame boundary for incremental chunks. `RpcSerialization.layerNdjson` supports
+  both unary requests and streaming `events.subscribe` on `/rpc/native`.
 
 ## Referenced by
 

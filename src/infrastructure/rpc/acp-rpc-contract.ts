@@ -294,6 +294,15 @@ const eventList = scoped(
     .setSuccess(Schema.Array(Event)),
   'event:read',
 )
+const eventSubscribe = scoped(
+  Rpc.make('events.subscribe', {
+    payload: WorkspaceIdPayload,
+    success: Event,
+    error: ProtocolError,
+    stream: true,
+  }),
+  'event:read',
+)
 
 const memoryCreate = scoped(
   rpc('memory.create').setPayload(CreateMemoryPayload).setSuccess(Memory),
@@ -318,6 +327,7 @@ export const AcpRpcs = {
   checkpointListForWork,
   checkpointListForWorkspace,
   eventList,
+  eventSubscribe,
   leaseRelease,
   leaseRenew,
   leaseRequest,
@@ -382,6 +392,7 @@ export const AcpRpcGroup = RpcGroup.make(
   reviewListForWork,
   reviewListForWorkspace,
   eventList,
+  eventSubscribe,
   memoryCreate,
   memoryList,
 )

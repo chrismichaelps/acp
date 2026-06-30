@@ -32,10 +32,12 @@ export const AcpHttpRoutesLive: Layer<never, never, ...>
 ## Algorithm
 
 `AcpNativeRpcRouteLive` registers `RpcServer.layerHttpRouter` for
-[[acp-rpc-contract]] at `/rpc/native` with HTTP protocol framing and JSON
-serialization. It provides [[acp-rpc-server]] `AcpRpcHandlersLayer`, not the
-dependency-complete `AcpRpcHandlersLive`, so the host composition can provide one
-shared `AppLive ⊕ IdClockLive` above every transport. That detail is what keeps
+[[acp-rpc-contract]] at `/rpc/native` with HTTP protocol framing and NDJSON
+serialization. NDJSON framing keeps unary operations and stream chunks on the
+same route, which is required for native `events.subscribe`. The route provides
+[[acp-rpc-server]] `AcpRpcHandlersLayer`, not the dependency-complete
+`AcpRpcHandlersLive`, so the host composition can provide one shared
+`AppLive ⊕ IdClockLive` above every transport. That detail is what keeps
 sessions, workspaces, events, and memory visible across REST, legacy JSON-RPC,
 WebSocket JSON-RPC, and native RPC inside one running host.
 
@@ -49,7 +51,7 @@ owned by the native RPC transport.
   would allocate a second application graph and split transport state.
 - ❌ Do NOT delete the JSON-RPC routes here. Migration from the hand-mapped
   command layer should happen only after the native HTTP route has exercised real
-  clients and any remaining streaming plan is settled.
+  clients across unary and streaming operations.
 - ❌ Do NOT add domain behavior here. The route owns transport registration; the
   handlers remain in [[acp-rpc-handlers]] and its split verticals.
 
