@@ -17,6 +17,9 @@ tags: [moc, adr]
   clients until a concrete boundary or consumer exists.
 - [[ADR-0005-worker-presence-scope]] — ACCEPTED — worker presence is host-scoped
   registry state in v0.1, not workspace event history.
+- [[ADR-0007-effect-rpc-adoption]] — ACCEPTED — adopt @effect/rpc over the domain
+  services and retire the hand-mapped JSON-RPC layer; clients are first-party
+  Effect/TS, so JSON-RPC 2.0 wire compatibility is dropped.
 
 ## Referenced by
 
