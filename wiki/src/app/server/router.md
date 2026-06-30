@@ -137,6 +137,11 @@ with the specific action scope. Missing tokens still follow the local-host
 `worker_system` fallback unless
 `ACP_REQUIRE_AUTH=true`.
 
+Every inline handler is wrapped with [[route-support]] `respond` using a stable
+`METHOD /template/:param` route label. Request lifecycle logs therefore carry
+low-cardinality route/status/duration/error-code telemetry without logging raw
+URLs or identifiers.
+
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT put business logic in handlers — decode → delegate → encode only.
