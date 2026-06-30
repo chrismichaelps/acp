@@ -440,6 +440,14 @@ next transport-parity slice should apply the same live-route pressure to
 work/lease or review/memory/event, with special care to keep
 `events.subscribe` covered as the streaming path.
 
+The review/memory/event vertical is now also covered over mounted HTTP.
+[[native-rpc-route]] creates and runs work, requests and approves a review,
+persists memory, publishes a work event, and reads memory/events back through
+the same typed HTTP client. The remaining transport-parity target is the
+work/lease vertical: claim/state transitions and lease request/renew/release/
+revoke need the same mounted-route pressure before JSON-RPC retirement can be
+treated as a consumer-migration question rather than a coverage question.
+
 ## Referenced by
 
 [[architecture/_MOC]] · [[protocol-implementation-2026-06-27]] ·
