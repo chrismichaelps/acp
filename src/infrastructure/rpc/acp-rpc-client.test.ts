@@ -6,6 +6,7 @@ import {
   acpNativeRpcPath,
   acpNativeRpcUrl,
   acpRpcBearerHeaders,
+  acpRpcClientHostLayer,
   withAcpRpcBearer,
 } from './acp-rpc-client.js'
 import { AcpRpcGroup, AcpRpcs } from './acp-rpc-contract.js'
@@ -21,6 +22,7 @@ describe('native RPC client helpers', () => {
     expect(acpNativeRpcUrl('http://localhost:4317/')).toBe(
       'http://localhost:4317/rpc/native',
     )
+    expect(acpRpcClientHostLayer('http://localhost:4317')).toBeDefined()
   })
 
   it('scopes generated client calls with a bearer session header', async () => {
