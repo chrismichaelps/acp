@@ -3,6 +3,7 @@ import { Effect, Either } from 'effect'
 import { describe, expect, it } from 'vitest'
 import type { WorkerId } from '../../protocol/schema/index.js'
 import { AcpRpcGroup, AcpRpcs } from './acp-rpc-contract.js'
+import { AcpRpcActor } from './rpc-auth.js'
 import {
   Runtime,
   bearer,
@@ -185,5 +186,67 @@ describe('AcpRpcReviewHandlersLive', () => {
         'invalid_state_transition',
       )
     }
+  })
+
+  it('accepts a middleware-provided actor for outcome attribution', async () => {
+    const program = Effect.gen(function* () {
+      const initialize = yield* AcpRpcGroup.accessHandler('session.initialize')
+      const workspaceCreate =
+        yield* AcpRpcGroup.accessHandler('workspace.create')
+      const workCreate = yield* AcpRpcGroup.accessHandler('work.create')
+      const workClaim = yield* AcpRpcGroup.accessHandler('work.claim')
+      const workUpdate = yield* AcpRpcGroup.accessHandler('work.update_state')
+      const reviewRequest = yield* AcpRpcGroup.accessHandler('review.request')
+      const reviewApprove = yield* AcpRpcGroup.accessHandler('review.approve')
+
+      const initPayload = yield* decodeInitialize([
+        'workspace:write',
+        'work:create',
+        'work:claim',
+        'work:update',
+        'review:create',
+      ])
+      const session = yield* initialize(initPayload, rpcOptions())
+      const headers = rpcOptions(bearer(session.session_id))
+      const workspace = yield* workspaceCreate(
+        yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
+          name: 'RPC Review Actor Workspace',
+          kind: 'git_repository',
+          uri: 'git+https://example.com/acp/review-actor-rpc.git',
+        }),
+        headers,
+      )
+      const work = yield* workCreate(
+        yield* decodePayload(AcpRpcs.workCreate.payloadSchema, {
+          workspace_id: workspace.id,
+          title: 'Review actor bridge',
+        }),
+        headers,
+      )
+      yield* workClaim(
+        { work_id: work.id, worker_id: 'agent_rpc' as WorkerId },
+        headers,
+      )
+      yield* workUpdate({ work_id: work.id, state: 'running' }, headers)
+      const review = yield* reviewRequest(
+        yield* decodePayload(AcpRpcs.reviewRequest.payloadSchema, {
+          work_id: work.id,
+          requested_by: 'agent_rpc',
+          requirements: [],
+        }),
+        headers,
+      )
+
+      // A bogus bearer token would normally fail session lookup; a
+      // middleware-provided AcpRpcActor must short-circuit that lookup.
+      return yield* reviewApprove(
+        { review_id: review.id, met_requirements: [] },
+        rpcOptions(bearer('not-a-real-session')),
+      )
+    }).pipe(Effect.provideService(AcpRpcActor, 'agent_rpc' as WorkerId))
+
+    const result = await Effect.runPromise(Effect.provide(program, Runtime))
+
+    expect(result.state).toBe('approved')
   })
 })
