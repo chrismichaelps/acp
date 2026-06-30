@@ -17,9 +17,10 @@ aliases: [acp-rpc-handlers]
 Provide native `@effect/rpc` handler verticals over [[acp-rpc-contract]] without
 replacing existing HTTP, WebSocket, stdio, or JSON-RPC transports. The module now
 implements session initialization, worker/workspace reads, workspace mutations,
-and work command handlers so native RPC can prove direct domain-service
-dispatch, auth semantics, typed ACP errors, id/timestamp minting, and event
-emission before transport replacement begins.
+work command handlers, and lease lifecycle commands so native RPC can prove
+direct domain-service dispatch, auth semantics, typed ACP errors, id/timestamp
+minting, conflict handling, and event emission before transport replacement
+begins.
 
 ## Interface
 
@@ -37,13 +38,18 @@ export const AcpRpcSessionWorkerWorkspaceHandlersLive: Layer<
   | Rpc.Handler<'work.get'>
   | Rpc.Handler<'work.claim'>
   | Rpc.Handler<'work.update_state'>
-  | Rpc.Handler<'work.publish_event'>,
+  | Rpc.Handler<'work.publish_event'>
+  | Rpc.Handler<'lease.request'>
+  | Rpc.Handler<'lease.renew'>
+  | Rpc.Handler<'lease.release'>
+  | Rpc.Handler<'lease.revoke'>,
   never,
   | AppConfigTag
   | SessionService
   | WorkerService
   | WorkspaceService
   | WorkUnitService
+  | LeaseService
   | EventStore
   | IdClock
 >
@@ -67,8 +73,15 @@ Workspace command handlers use `workspace:write`, mint ids/timestamps through
 same workspace events are emitted as REST. Work command handlers use their
 matching scopes (`work:create`, `workspace:read`, `work:claim`, `work:update`,
 `work:publish_event`), call [[work-unit-service]] directly, and append explicit
-published work events through [[event-store]]. None of these handlers dispatches
-through [[acp-router]], JSON-RPC command maps, or REST paths.
+published work events through [[event-store]].
+
+Lease handlers use `lease:create`, `lease:renew`, `lease:release`, and
+`lease:revoke`, mint request ids/timestamps through [[id-clock]], and delegate
+to [[lease-service]] so TTL defaults, active-resource conflict checks,
+renew/release/revoke transitions, and lease events remain single-sourced in the
+domain layer. `lease.release` intentionally returns no RPC payload, matching the
+existing HTTP `204` behavior. None of these handlers dispatches through
+[[acp-router]], JSON-RPC command maps, or REST paths.
 
 ## Negative Logic (Prohibited Paths)
 
