@@ -90,10 +90,15 @@ handshake booleans when the worker did not send an explicit capability list,
 mint a session id and timestamp through [[id-clock]], persist the session, and
 return the host descriptor and capability flags.
 
-`worker.list`, `worker.get`, and `workspace.list` call [[rpc-auth]] with their
-read scopes, then delegate directly to [[worker-service]] or
-[[workspace-service]]. `worker.get` maps absence to `not_found` through
-[[rpc-error]].
+All authorizing handlers check scopes through [[rpc-auth]] `rpcActor`, which
+consumes a middleware-provided `AcpRpcActor` when [[rpc-auth-middleware]] has
+already authenticated the request and falls back to bearer headers for direct
+`accessHandler` tests — this is now the only call style in the module;
+`authorizeRpc` is no longer referenced here directly.
+
+`worker.list`, `worker.get`, and `workspace.list` check their read scopes, then
+delegate directly to [[worker-service]] or [[workspace-service]]. `worker.get`
+maps absence to `not_found` through [[rpc-error]].
 
 Workspace command handlers use `workspace:write`, mint ids/timestamps through
 [[id-clock]], and delegate to [[workspace-service]] create/update/archive so the
