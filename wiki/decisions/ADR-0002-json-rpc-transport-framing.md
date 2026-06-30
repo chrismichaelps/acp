@@ -11,7 +11,10 @@ aliases: [ADR-0002, ADR-0002-json-rpc-transport-framing]
 ## Status
 
 ACCEPTED — 2026-06-27. SUPERSEDED for WebSocket transport — 2026-06-29 (see
-Updates).
+Updates). SUPERSEDED by [[ADR-0007-effect-rpc-adoption]] — 2026-06-29: the entire
+hand-mapped JSON-RPC framing is slated for removal in favor of `@effect/rpc`
+(first-party Effect/TS clients; JSON-RPC 2.0 wire dropped). This ADR's framing
+remains in effect only until that migration lands.
 
 ## Update — 2026-06-29 (request/response)
 

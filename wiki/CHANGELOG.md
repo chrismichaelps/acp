@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-29 · effect-rpc-adoption-decision slice · wrote
+  [[ADR-0007-effect-rpc-adoption]] to adopt `@effect/rpc` over the domain services
+  and retire the hand-mapped JSON-RPC layer ([[json-rpc-command-map]] et al.),
+  given first-party Effect/TS clients; superseded the framing in
+  [[ADR-0002-json-rpc-transport-framing]] and the client deferral in
+  [[ADR-0004-protocol-version-codecs-generated-client]]; registered in
+  [[decisions/_MOC]] · docs-only, direction not yet implemented · risk LOW
 - 2026-06-29 · workspace-memory-transport slice · projected [[Memory]] through
   REST, JSON-RPC, and the CLI: [[memory-routes]] (`POST /v1/memory`,
   `GET /v1/memory`) behind `memory:create`/`memory:read` with the API contract
