@@ -328,15 +328,26 @@ through [[id-clock]], and prove recall, replay, and scope-denial with direct
 
 With this vertical merged, **every [[acp-rpc-contract]] request now has a backing
 handler** — the native handler phase of [[ADR-0007-effect-rpc-adoption]] is
-complete. The next gap is the native RPC **transport wiring**: serve
-`AcpRpcGroup` over a real `RpcServer` protocol layer (HTTP, then socket) with
-`RpcMiddleware`-based bearer auth replacing the per-handler `authorizeRpc` calls,
-and generate the typed `RpcClient` so first-party Effect/TS consumers can reach
-the surface end-to-end. This slice should stand up the server/client over the
-existing handler layer and prove a round-trip with `RpcTest`/a real protocol
-handler; it should still avoid deleting the hand-mapped JSON-RPC layer, replacing
-the stdio/WebSocket bridges, or adding streaming `events.subscribe` until the
-typed transport is live and exercised.
+complete.
+
+The native RPC transport stand-up is now underway. [[acp-rpc-server]] exposes the
+dependency-complete `AcpRpcHandlersLive` (handlers ⊕ `AppLive` ⊕ `IdClockLive`,
+requirement channel `never`), [[acp-rpc-client]] exposes the generated typed
+`makeAcpRpcClient` plus `acpRpcClientHttpLayer(url)` (JSON streaming-HTTP
+protocol), and [[acp-rpc-roundtrip-test]] proves a real client round-trip through
+`RpcTest` — encode → serialize → handler → typed decode — including per-call
+bearer headers forwarded into the existing `authorizeRpc` checks (a scope-denied
+session is rejected with a typed `unauthorized` `ProtocolError`).
+
+The next gap is **mounting the native RpcServer over a real protocol in the
+host**: register `RpcServer.layer(AcpRpcGroup)` with `RpcServer.layerProtocolHttp`
+(JSON serialization) on the served router seam so first-party clients reach the
+surface over the wire, point `acpRpcClientHttpLayer` at that route for an
+over-the-socket integration test, and only then consider migrating the
+per-handler `authorizeRpc` calls to a single `RpcMiddleware`. It should still
+avoid deleting the hand-mapped JSON-RPC layer, replacing the stdio/WebSocket
+bridges, or adding streaming `events.subscribe` until the HTTP route is live and
+exercised.
 
 ## Referenced by
 
