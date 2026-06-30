@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · cli-authenticated-session-flow slice · added
+  [[session-auth-flow-test]] proving `acp session init` plus [[cli-client]]
+  bearer forwarding against a require-auth [[acp-router]], covering the
+  authenticated CLI bootstrap path without a real socket · validation: format,
+  lint, typecheck, file-size, focused CLI auth-flow test, and 284-test
+  non-socket suite green · risk LOW
 - 2026-06-30 · cli-session-bootstrap slice · added [[cli-session-commands]]
   with `acp session init` for `POST /v1/session/initialize`, letting
   authenticated CLI operators mint bearer sessions before exporting
