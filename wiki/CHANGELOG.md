@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · effect-rpc-review-handlers slice · added
+  [[acp-rpc-review-handlers]] and merged it into [[acp-rpc-handlers]] for native
+  review request/outcome/cancel/list handlers over [[review-service]] · focused
+  validation: format, lint, typecheck, file-size, focused RPC tests, and 257
+  non-socket tests green · risk LOW
 - 2026-06-30 · post-rpc-checkpoint-handlers-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] after
   [[acp-rpc-checkpoint-handlers]] and selected native review request/outcome/list
