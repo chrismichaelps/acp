@@ -64,6 +64,7 @@ export const parseArgs: (
 | `checkpoint list --work <id> \| --workspace <id>`                                     | `GET /v1/work/<id>/checkpoints` or workspace list |
 | `checkpoint latest --work <id>`                                                       | `GET /v1/work/<id>/checkpoints/latest`            |
 | `artifact create --workspace --work --kind [--uri] [--summary] [--content]`           | `POST /v1/artifacts`                              |
+| `artifact pr --workspace --work --url [--summary]`                                    | `POST /v1/artifacts` as `pull_request`            |
 | `artifact update <artifact_id> --kind [--uri] [--media-type] [--summary] [--content]` | `PATCH /v1/artifacts/<id>`                        |
 | `artifact list --work <id> \| --workspace <id>`                                       | `GET /v1/work/<id>/artifacts` or workspace list   |
 | `artifact content <artifact_id>`                                                      | `GET /v1/artifacts/<id>/content`                  |
@@ -98,12 +99,14 @@ positive safe integers before HTTP decoding.
 `--default-branch` and `--media-type` normalize to the schema's snake_case JSON
 fields. Artifact create/update forward optional `--uri` so the CLI can register
 external pull request, commit, report, or screenshot artifacts without inline
-content. Lease renewal accepts optional `--ttl` and otherwise lets the host use
-its default lease TTL. Worker registry reads map `worker list` and `worker get`
-onto host-scoped presence endpoints. Work resume reads map
-`work list --workspace`, `work get`, `checkpoint list/latest --work`,
-`artifact list --work`, `artifact content <id>`, and `review list --work` onto
-the read endpoints.
+content. `artifact pr` is a convenience projection over the same create route:
+it requires `--url`, fixes `kind` to `pull_request`, and leaves ACP as a
+coordination ledger rather than a GitHub actor. Lease renewal accepts optional
+`--ttl` and otherwise lets the host use its default lease TTL. Worker registry
+reads map `worker list` and `worker get` onto host-scoped presence endpoints.
+Work resume reads map `work list --workspace`, `work get`,
+`checkpoint list/latest --work`, `artifact list --work`,
+`artifact content <id>`, and `review list --work` onto the read endpoints.
 `checkpoint list`, `artifact list`, and `review list` also accept `--workspace`
 for workspace-level aggregate resume reads. `events list` maps to the JSON replay
 route with an optional non-negative `--after` cursor. `review approve --met` is a
@@ -146,4 +149,5 @@ without a server.
 ## Referenced by
 
 [[cli-index]] · [[cli-client]] · [[cli-main]] · [[cli-usage]] ·
-[[cli-event-commands]] · [[cli-memory-commands]] · [[Transport]] · [[src/_MOC]]
+[[cli-event-commands]] · [[cli-memory-commands]] ·
+[[artifact-pr-command-test]] · [[Transport]] · [[src/_MOC]]
