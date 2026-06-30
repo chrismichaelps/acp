@@ -397,6 +397,23 @@ describe('parseArgs', () => {
     })
   })
 
+  it('keeps valueless flags from consuming the next flag token', () => {
+    const req = right([
+      'review',
+      'request',
+      '--work',
+      'work_123',
+      '--reviewer',
+      '--by',
+      'agent_x',
+    ])
+    expect(req.body).toEqual({
+      work_id: 'work_123',
+      requested_by: 'agent_x',
+      requirements: [],
+    })
+  })
+
   it('parses review list by work', () => {
     const req = right(['review', 'list', '--work', 'work 123/main'])
     expect(req).toEqual({

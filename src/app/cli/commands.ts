@@ -18,26 +18,53 @@ import { memoryCommandHandlers } from './memory-commands.js'
 
 export { CliError, type CliRequest } from './command-support.js'
 
-const splitArgs = (argv: readonly string[]): Parsed => {
-  const positionals: string[] = []
-  const flags: Record<string, string> = {}
-  for (let i = 0; i < argv.length; i += 1) {
-    const token = argv[i]
-    if (token.startsWith('--')) {
+interface ArgCursor {
+  readonly flags: Record<string, string>
+  readonly index: number
+  readonly positionals: string[]
+}
+
+interface ArgTokenParser {
+  readonly matches: (token: string) => boolean
+  readonly read: (argv: readonly string[], cursor: ArgCursor) => ArgCursor
+}
+
+const isFlagToken = (token: string): boolean => token.startsWith('--')
+
+const argTokenParsers: readonly ArgTokenParser[] = [
+  {
+    matches: isFlagToken,
+    read: (argv, cursor) => {
+      const token = argv[cursor.index]
       const key = token.slice(2)
-      const hasValue = i + 1 < argv.length && !argv[i + 1].startsWith('--')
-      if (hasValue) {
-        const next = argv[i + 1]
-        flags[key] = next
-        i += 1
-      } else {
-        flags[key] = 'true'
+      const valueIndex = cursor.index + 1
+      const value = argv[valueIndex]
+      const hasValue = valueIndex < argv.length && !isFlagToken(value)
+      return {
+        ...cursor,
+        flags: { ...cursor.flags, [key]: hasValue ? value : 'true' },
+        index: cursor.index + (hasValue ? 2 : 1),
       }
-    } else {
-      positionals.push(token)
-    }
+    },
+  },
+  {
+    matches: () => true,
+    read: (argv, cursor) => ({
+      ...cursor,
+      index: cursor.index + 1,
+      positionals: [...cursor.positionals, argv[cursor.index]],
+    }),
+  },
+]
+
+const splitArgs = (argv: readonly string[]): Parsed => {
+  let cursor: ArgCursor = { flags: {}, index: 0, positionals: [] }
+  while (cursor.index < argv.length) {
+    const token = argv[cursor.index]
+    const parser = argTokenParsers.find((candidate) => candidate.matches(token))
+    cursor = parser?.read(argv, cursor) ?? cursor
   }
-  return { positionals, flags }
+  return { flags: cursor.flags, positionals: cursor.positionals }
 }
 
 const scopedWorkListPath = (

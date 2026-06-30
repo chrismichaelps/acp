@@ -86,13 +86,15 @@ export const parseArgs: (
 
 ## Algorithm
 
-Split `argv` into positionals and `--key value` flags, derive the public
-`<group> <action>` command key, and resolve it through a command handler table.
-Each handler receives the parsed positionals and flags, validates its own
-required inputs (missing → `CliError`) and assembles a `CliRequest` with encoded
-route parameters and query values. Unknown keys never fall through a conditional
-chain; they return the same `CliError` as any unsupported command. Numeric lease
-TTLs are validated as positive safe integers before HTTP decoding.
+Split `argv` through a small token parser registry rather than a branch chain:
+flag tokens own `--key value` and valueless `--key` handling, while the fallback
+token parser records positionals. The public `<group> <action>` command key is
+then resolved through the command handler table. Each handler receives the
+parsed positionals and flags, validates its own required inputs (missing →
+`CliError`) and assembles a `CliRequest` with encoded route parameters and query
+values. Unknown keys never fall through a conditional chain; they return the same
+`CliError` as any unsupported command. Numeric lease TTLs are validated as
+positive safe integers before HTTP decoding.
 `--default-branch` and `--media-type` normalize to the schema's snake_case JSON
 fields. Artifact create/update forward optional `--uri` so the CLI can register
 external pull request, commit, report, or screenshot artifacts without inline
@@ -109,7 +111,10 @@ comma-separated list that becomes `met_requirements`. `review cancel` maps to th
 dedicated review cancellation route so withdrawal is not expressed as rejection.
 `events stream` sets `stream: true`. Event and memory handlers are registered by
 spreading their feature command maps into the central table, preserving one
-dispatch point while keeping the parser below the file-size gate.
+dispatch point while keeping the parser below the file-size gate. The parser
+regression suite pins the tokenizer edge where a valueless flag is followed by
+another flag token so future command additions do not accidentally consume the
+next flag as a value.
 
 ## Negative Logic (Prohibited Paths)
 
