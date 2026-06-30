@@ -43,8 +43,8 @@ layer includes [[rpc-auth-middleware]] so native HTTP execution evaluates
 contract scope annotations before the handler runs.
 
 `AcpRpcHandlersLive` provides that handler layer with `AppLive ⊕ IdClockLive`.
-It is dependency-complete and launch-ready for isolated transports such as
-[[acp-rpc-roundtrip-test]], where there is no surrounding host composition to
+It is dependency-complete and launch-ready for isolated transports such as the
+native RPC round-trip tests, where there is no surrounding host composition to
 share. Handlers still authorize through forwarded `options.headers`, so the
 transport chosen above this layer never leaks into the domain, preserving the
 [[Transport]] "domain never sees HTTP" invariant.
@@ -64,5 +64,8 @@ dependency boundary the typed transport depends on.
 
 ## Referenced by
 
-[[acp-rpc-client]] · [[acp-rpc-handlers]] · [[rpc-auth-middleware]] ·
-[[native-rpc-route]] · [[rpc-index]] · [[rpc/_MOC]]
+[[acp-rpc-client]] · [[acp-rpc-handlers]] ·
+[[acp-rpc-roundtrip-artifact-checkpoint-test]] ·
+[[acp-rpc-roundtrip-review-memory-event-test]] ·
+[[acp-rpc-roundtrip-test]] · [[acp-rpc-roundtrip-work-lease-test]] ·
+[[rpc-auth-middleware]] · [[native-rpc-route]] · [[rpc-index]] · [[rpc/_MOC]]
