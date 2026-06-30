@@ -7,7 +7,7 @@ import { IdClock } from '../../app/server/identity.js'
 import { NotFoundError } from '../../protocol/errors/protocol-error.js'
 import type { ArtifactId } from '../../protocol/schema/index.js'
 import { AcpRpcGroup } from './acp-rpc-contract.js'
-import { authorizeRpc } from './rpc-auth.js'
+import { rpcActor } from './rpc-auth.js'
 import { toRpcError } from './rpc-error.js'
 
 const requireArtifact = (
@@ -32,7 +32,7 @@ const artifactCreateHandler = AcpRpcGroup.toLayerHandler(
   'artifact.create',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* authorizeRpc(options.headers, 'artifact:create')
+      const actor = yield* rpcActor(options.headers, 'artifact:create')
       const artifacts = yield* ArtifactService
       const idClock = yield* IdClock
       const id = (yield* idClock.nextId('artifact')) as ArtifactId
@@ -47,7 +47,7 @@ const artifactUpdateHandler = AcpRpcGroup.toLayerHandler(
   'artifact.update',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* authorizeRpc(options.headers, 'artifact:update')
+      const actor = yield* rpcActor(options.headers, 'artifact:update')
       const artifacts = yield* ArtifactService
       const idClock = yield* IdClock
       const now = yield* idClock.now
@@ -61,7 +61,7 @@ const artifactDeleteHandler = AcpRpcGroup.toLayerHandler(
   'artifact.delete',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* authorizeRpc(options.headers, 'artifact:delete')
+      const actor = yield* rpcActor(options.headers, 'artifact:delete')
       const artifacts = yield* ArtifactService
       const idClock = yield* IdClock
       const now = yield* idClock.now
@@ -75,7 +75,7 @@ const artifactContentHandler = AcpRpcGroup.toLayerHandler(
   'artifact.content',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* authorizeRpc(options.headers, 'workspace:read')
+      yield* rpcActor(options.headers, 'workspace:read')
       const artifacts = yield* ArtifactService
       yield* requireArtifact(artifacts, payload.artifact_id)
       const content = yield* artifacts
@@ -100,7 +100,7 @@ const artifactListForWorkHandler = AcpRpcGroup.toLayerHandler(
   'artifact.list_for_work',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* authorizeRpc(options.headers, 'workspace:read')
+      yield* rpcActor(options.headers, 'workspace:read')
       const workUnits = yield* WorkUnitService
       const work = yield* workUnits
         .get(payload.work_id)
@@ -125,7 +125,7 @@ const artifactListForWorkspaceHandler = AcpRpcGroup.toLayerHandler(
   'artifact.list_for_workspace',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* authorizeRpc(options.headers, 'workspace:read')
+      yield* rpcActor(options.headers, 'workspace:read')
       const artifacts = yield* ArtifactService
       return yield* artifacts
         .listForWorkspace(payload.workspace_id)

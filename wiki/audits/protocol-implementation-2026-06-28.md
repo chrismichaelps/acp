@@ -368,9 +368,13 @@ back to bearer-header authorization. [[acp-rpc-memory-event-handlers]] is the
 first migrated vertical: memory creation attributes through `rpcActor`, memory
 and event reads check scopes through the same bridge, and focused tests prove a
 direct handler can be supplied `AcpRpcActor` without bearer headers.
+[[acp-rpc-artifact-handlers]] now follows the same bridge for artifact mutation
+actor attribution and workspace-read checks, with a direct artifact create
+regression proving middleware-provided actor context still works without bearer
+headers.
 
 The next gap is extending that actor bridge across the remaining native handler
-verticals, starting with the split artifact/checkpoint/review modules before the
+verticals, starting with the split checkpoint and review modules before the
 large aggregate work/workspace/lease handler file. The hand-mapped JSON-RPC
 layer, stdio bridge, WebSocket bridge, and SSE channel should still remain until
 native RPC has enough client coverage to make migration mechanical rather than
