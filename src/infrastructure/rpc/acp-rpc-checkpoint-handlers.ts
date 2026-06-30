@@ -7,7 +7,7 @@ import { IdClock } from '../../app/server/identity.js'
 import { NotFoundError } from '../../protocol/errors/protocol-error.js'
 import type { CheckpointId, WorkId } from '../../protocol/schema/index.js'
 import { AcpRpcGroup } from './acp-rpc-contract.js'
-import { authorizeRpc } from './rpc-auth.js'
+import { rpcActor } from './rpc-auth.js'
 import { toRpcError } from './rpc-error.js'
 
 const requireWork = (workUnits: WorkUnitServiceApi, workId: WorkId) =>
@@ -27,7 +27,7 @@ const checkpointCreateHandler = AcpRpcGroup.toLayerHandler(
   'checkpoint.create',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* authorizeRpc(options.headers, 'checkpoint:create')
+      const actor = yield* rpcActor(options.headers, 'checkpoint:create')
       const checkpoints = yield* CheckpointService
       const idClock = yield* IdClock
       const id = (yield* idClock.nextId('checkpoint')) as CheckpointId
@@ -42,7 +42,7 @@ const checkpointListForWorkHandler = AcpRpcGroup.toLayerHandler(
   'checkpoint.list_for_work',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* authorizeRpc(options.headers, 'workspace:read')
+      yield* rpcActor(options.headers, 'workspace:read')
       const workUnits = yield* WorkUnitService
       yield* requireWork(workUnits, payload.work_id)
       const checkpoints = yield* CheckpointService
@@ -56,7 +56,7 @@ const checkpointLatestForWorkHandler = AcpRpcGroup.toLayerHandler(
   'checkpoint.latest_for_work',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* authorizeRpc(options.headers, 'workspace:read')
+      yield* rpcActor(options.headers, 'workspace:read')
       const workUnits = yield* WorkUnitService
       yield* requireWork(workUnits, payload.work_id)
       const checkpoints = yield* CheckpointService
@@ -82,7 +82,7 @@ const checkpointListForWorkspaceHandler = AcpRpcGroup.toLayerHandler(
   'checkpoint.list_for_workspace',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* authorizeRpc(options.headers, 'workspace:read')
+      yield* rpcActor(options.headers, 'workspace:read')
       const checkpoints = yield* CheckpointService
       return yield* checkpoints
         .listForWorkspace(payload.workspace_id)
