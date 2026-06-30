@@ -14,10 +14,11 @@ aliases: [rpc-auth]
 
 ## Purpose
 
-Preserve ACP bearer-session authorization for native Effect RPC handlers. The
-helper accepts Effect Platform `Headers`, resolves the actor through
-[[session-service]], enforces optional permission scopes, and preserves the
-local no-token `worker_system` fallback unless `ACP_REQUIRE_AUTH=true`.
+Preserve ACP bearer-session authorization for native Effect RPC handlers and
+[[rpc-auth-middleware]]. The helper accepts Effect Platform `Headers`, resolves
+the actor through [[session-service]], enforces optional permission scopes, and
+preserves the local no-token `worker_system` fallback unless
+`ACP_REQUIRE_AUTH=true`.
 
 ## Interface
 
@@ -40,7 +41,8 @@ and enforce the requested scope against the session permission list.
 
 - ❌ Do NOT log or return bearer tokens.
 - ❌ Do NOT invent RPC-specific permission names; use [[common]] scopes.
-- ❌ Do NOT duplicate this logic inside individual RPC handlers.
+- ❌ Do NOT duplicate token/session logic inside individual RPC handlers or
+  middleware wrappers; both should delegate here.
 
 ## Depth
 
@@ -49,4 +51,4 @@ handler must share.
 
 ## Referenced by
 
-[[acp-rpc-handlers]] · [[rpc-index]] · [[rpc/_MOC]]
+[[acp-rpc-handlers]] · [[rpc-auth-middleware]] · [[rpc-index]] · [[rpc/_MOC]]
