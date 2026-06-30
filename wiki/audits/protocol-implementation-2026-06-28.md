@@ -457,6 +457,16 @@ handler verticals. The next migration question should stop being "can the
 methods run?" and become "which first-party consumer should move off the
 legacy JSON-RPC bridge first?"
 
+Before moving consumers, native RPC observability was tightened. The existing
+server process already installs Effect JSON logging through [[app-logging]], but
+native `@effect/rpc` calls bypass [[route-support]] request completion logs.
+[[rpc-telemetry-middleware]] now wraps every native RPC operation with Effect log
+spans and annotations, recording operation, client id, outcome, duration, and
+stable ACP error code when a `ProtocolError` reaches the transport. The
+middleware is deliberately payload-blind and header-blind; it gives production
+operators correlation and failure shape without exposing patches, memory
+content, review details, or bearer credentials.
+
 ## Referenced by
 
 [[architecture/_MOC]] · [[protocol-implementation-2026-06-27]] ·

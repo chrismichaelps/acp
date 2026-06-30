@@ -6,6 +6,7 @@ import {
   AcpRpcAuthMiddleware,
   AcpRpcRequiredScope,
 } from './rpc-auth-middleware.js'
+import { AcpRpcTelemetryMiddleware } from './rpc-telemetry-middleware.js'
 
 const requiredScope = (rpc: { annotations: Context.Context<never> }) =>
   Option.getOrUndefined(Context.getOption(rpc.annotations, AcpRpcRequiredScope))
@@ -13,6 +14,10 @@ const requiredScope = (rpc: { annotations: Context.Context<never> }) =>
 const hasAuthMiddleware = (rpc: {
   middlewares: ReadonlySet<unknown>
 }): boolean => rpc.middlewares.has(AcpRpcAuthMiddleware)
+
+const hasTelemetryMiddleware = (rpc: {
+  middlewares: ReadonlySet<unknown>
+}): boolean => rpc.middlewares.has(AcpRpcTelemetryMiddleware)
 
 describe('AcpRpcGroup', () => {
   it('exposes the current non-streaming ACP operation set', () => {
@@ -85,5 +90,11 @@ describe('AcpRpcGroup', () => {
     expect(requiredScope(AcpRpcs.eventList)).toBe('event:read')
     expect(requiredScope(AcpRpcs.eventSubscribe)).toBe('event:read')
     expect(hasAuthMiddleware(AcpRpcs.workspaceCreate)).toBe(true)
+  })
+
+  it('attaches telemetry middleware to every native RPC operation', () => {
+    for (const rpc of AcpRpcGroup.requests.values()) {
+      expect(hasTelemetryMiddleware(rpc)).toBe(true)
+    }
   })
 })
