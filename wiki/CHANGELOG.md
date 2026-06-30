@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · rpc-client-ergonomics slice · added native RPC client helpers for
+  the mounted route path, host URL derivation, bearer headers, and
+  `RpcClient.withHeaders` session scoping; made [[native-rpc-route]] reuse the
+  exported path literal and added a focused generated-client regression proving
+  scoped bearer calls work without per-operation header objects · validation:
+  format, lint, typecheck, file-size, focused RPC client/route tests, and
+  277-test non-socket suite green · risk LOW
 - 2026-06-30 · audit-native-rpc-consumer-frontier slice · refreshed
   [[protocol-implementation-2026-06-28]] after the native transport spec update:
   JSON-RPC is compatibility framing rather than a deletion target, native Effect

@@ -2,7 +2,25 @@
 import { FetchHttpClient } from '@effect/platform'
 import { RpcClient, RpcSerialization } from '@effect/rpc'
 import { Layer } from 'effect'
+import type { Effect } from 'effect'
+import type { SessionId } from '../../protocol/schema/index.js'
 import { AcpRpcGroup } from './acp-rpc-contract.js'
+
+export const acpNativeRpcPath = '/rpc/native'
+
+export const acpNativeRpcUrl = (baseUrl: string): string =>
+  `${baseUrl.replace(/\/+$/, '')}${acpNativeRpcPath}`
+
+export const acpRpcBearerHeaders = (
+  sessionId: SessionId,
+): { readonly authorization: string } => ({
+  authorization: `Bearer ${sessionId}`,
+})
+
+export const withAcpRpcBearer =
+  (sessionId: SessionId) =>
+  <A, E, R>(effect: Effect.Effect<A, E, R>): Effect.Effect<A, E, R> =>
+    RpcClient.withHeaders(effect, acpRpcBearerHeaders(sessionId))
 
 // Build the generated, fully-typed client for the native RPC surface. Tags are
 // dotted (e.g. `session.initialize`), so the client is prefix-grouped:
