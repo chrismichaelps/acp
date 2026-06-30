@@ -1,6 +1,8 @@
 /** @Acp.Infra.Rpc.Handlers — first native RPC handler vertical */
 import { Effect, Layer, Option } from 'effect'
+import { EventStore } from '../../domain/events/index.js'
 import { SessionService } from '../../domain/sessions/index.js'
+import { WorkUnitService } from '../../domain/work-units/index.js'
 import { WorkerService } from '../../domain/workers/index.js'
 import { WorkspaceService } from '../../domain/workspaces/index.js'
 import {
@@ -11,7 +13,13 @@ import {
   ACP_PROTOCOL_VERSION,
   isSupportedProtocolVersion,
 } from '../../protocol/schema/index.js'
-import type { Capability, SessionId } from '../../protocol/schema/index.js'
+import type {
+  Capability,
+  EventId,
+  SessionId,
+  WorkId,
+  WorkspaceId,
+} from '../../protocol/schema/index.js'
 import type { InitializeSessionPayload } from '../http/acp-http-api.js'
 import { IdClock } from '../../app/server/identity.js'
 import { AcpRpcGroup } from './acp-rpc-contract.js'
@@ -139,9 +147,177 @@ const workspaceListHandler = AcpRpcGroup.toLayerHandler(
     }),
 )
 
+const workspaceCreateHandler = AcpRpcGroup.toLayerHandler(
+  'workspace.create',
+  (payload, options) =>
+    Effect.gen(function* () {
+      const actor = yield* authorizeRpc(options.headers, 'workspace:write')
+      const workspaces = yield* WorkspaceService
+      const idClock = yield* IdClock
+      const id = (yield* idClock.nextId('workspace')) as WorkspaceId
+      const now = yield* idClock.now
+      return yield* workspaces
+        .create({ id, state: 'active', ...payload }, actor, now)
+        .pipe(Effect.mapError(toRpcError))
+    }),
+)
+
+const workspaceUpdateHandler = AcpRpcGroup.toLayerHandler(
+  'workspace.update',
+  (payload, options) =>
+    Effect.gen(function* () {
+      const actor = yield* authorizeRpc(options.headers, 'workspace:write')
+      const workspaces = yield* WorkspaceService
+      const idClock = yield* IdClock
+      const now = yield* idClock.now
+      return yield* workspaces
+        .update(
+          { ...payload, id: payload.workspace_id, state: 'active' },
+          actor,
+          now,
+        )
+        .pipe(Effect.mapError(toRpcError))
+    }),
+)
+
+const workspaceArchiveHandler = AcpRpcGroup.toLayerHandler(
+  'workspace.archive',
+  (payload, options) =>
+    Effect.gen(function* () {
+      const actor = yield* authorizeRpc(options.headers, 'workspace:write')
+      const workspaces = yield* WorkspaceService
+      const idClock = yield* IdClock
+      const now = yield* idClock.now
+      return yield* workspaces
+        .archive(payload.workspace_id, actor, now)
+        .pipe(Effect.mapError(toRpcError))
+    }),
+)
+
+const workCreateHandler = AcpRpcGroup.toLayerHandler(
+  'work.create',
+  (payload, options) =>
+    Effect.gen(function* () {
+      const actor = yield* authorizeRpc(options.headers, 'work:create')
+      const service = yield* WorkUnitService
+      const idClock = yield* IdClock
+      const id = (yield* idClock.nextId('work')) as WorkId
+      const now = yield* idClock.now
+      return yield* service
+        .create({ id, payload, createdBy: actor, now })
+        .pipe(Effect.mapError(toRpcError))
+    }),
+)
+
+const workListForWorkspaceHandler = AcpRpcGroup.toLayerHandler(
+  'work.list_for_workspace',
+  (payload, options) =>
+    Effect.gen(function* () {
+      yield* authorizeRpc(options.headers, 'workspace:read')
+      const service = yield* WorkUnitService
+      return yield* service
+        .listForWorkspace(payload.workspace_id)
+        .pipe(Effect.mapError(toRpcError))
+    }),
+)
+
+const workGetHandler = AcpRpcGroup.toLayerHandler(
+  'work.get',
+  (payload, options) =>
+    Effect.gen(function* () {
+      yield* authorizeRpc(options.headers, 'workspace:read')
+      const service = yield* WorkUnitService
+      const work = yield* service
+        .get(payload.work_id)
+        .pipe(Effect.mapError(toRpcError))
+      return yield* Option.match(work, {
+        onNone: () =>
+          Effect.fail(
+            toRpcError(
+              new NotFoundError({ entity: 'work', id: payload.work_id }),
+            ),
+          ),
+        onSome: Effect.succeed,
+      })
+    }),
+)
+
+const workClaimHandler = AcpRpcGroup.toLayerHandler(
+  'work.claim',
+  (payload, options) =>
+    Effect.gen(function* () {
+      yield* authorizeRpc(options.headers, 'work:claim')
+      const service = yield* WorkUnitService
+      const idClock = yield* IdClock
+      const now = yield* idClock.now
+      return yield* service
+        .claim(payload.work_id, payload.worker_id, now)
+        .pipe(Effect.mapError(toRpcError))
+    }),
+)
+
+const workUpdateStateHandler = AcpRpcGroup.toLayerHandler(
+  'work.update_state',
+  (payload, options) =>
+    Effect.gen(function* () {
+      const actor = yield* authorizeRpc(options.headers, 'work:update')
+      const service = yield* WorkUnitService
+      const idClock = yield* IdClock
+      const now = yield* idClock.now
+      return yield* service
+        .transition(payload.work_id, payload.state, actor, now)
+        .pipe(Effect.mapError(toRpcError))
+    }),
+)
+
+const workPublishEventHandler = AcpRpcGroup.toLayerHandler(
+  'work.publish_event',
+  (payload, options) =>
+    Effect.gen(function* () {
+      const actor = yield* authorizeRpc(options.headers, 'work:publish_event')
+      const service = yield* WorkUnitService
+      const events = yield* EventStore
+      const idClock = yield* IdClock
+      const stored = yield* service
+        .get(payload.work_id)
+        .pipe(Effect.mapError(toRpcError))
+      const work = yield* Option.match(stored, {
+        onNone: () =>
+          Effect.fail(
+            toRpcError(
+              new NotFoundError({ entity: 'work', id: payload.work_id }),
+            ),
+          ),
+        onSome: Effect.succeed,
+      })
+      const id = (yield* idClock.nextId('event')) as EventId
+      const now = yield* idClock.now
+      return yield* events
+        .append({
+          id,
+          type: payload.type,
+          workspace_id: work.workspace_id,
+          work_id: Option.some(work.id),
+          actor,
+          timestamp: now,
+          data: payload.data,
+        })
+        .pipe(Effect.mapError(toRpcError))
+    }),
+)
+
 export const AcpRpcSessionWorkerWorkspaceHandlersLive = Layer.mergeAll(
   sessionInitializeHandler,
   workerListHandler,
   workerGetHandler,
   workspaceListHandler,
+  workspaceCreateHandler,
+  workspaceUpdateHandler,
+  workspaceArchiveHandler,
+  workCreateHandler,
+  workListForWorkspaceHandler,
+  workGetHandler,
+  workClaimHandler,
+  workUpdateStateHandler,
+  workPublishEventHandler,
 )

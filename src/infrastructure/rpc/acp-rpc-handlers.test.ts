@@ -10,6 +10,7 @@ import {
   type InitializeSessionPayload as InitializeSessionPayloadType,
 } from '../http/acp-http-api.js'
 import { AcpRpcGroup } from './acp-rpc-contract.js'
+import { AcpRpcs } from './acp-rpc-contract.js'
 import { AcpRpcSessionWorkerWorkspaceHandlersLive } from './acp-rpc-handlers.js'
 
 const Runtime = AcpRpcSessionWorkerWorkspaceHandlersLive.pipe(
@@ -38,6 +39,11 @@ const decodeInitialize = (
 
 const bearer = (sessionId: string) =>
   Headers.fromInput({ authorization: `Bearer ${sessionId}` })
+
+const decodePayload = <A, I, R>(
+  schema: Schema.Schema<A, I, R>,
+  input: unknown,
+) => Schema.decodeUnknown(schema)(input)
 
 const rpcOptions = (headers = Headers.empty) =>
   // Runtime accessHandler forwards this options object; 0.75.1's d.ts narrows it to Headers.
@@ -88,5 +94,107 @@ describe('AcpRpcSessionWorkerWorkspaceHandlersLive', () => {
     if (Either.isLeft(result)) {
       expect(result.left.error.code).toBe('unauthorized')
     }
+  })
+
+  it('runs workspace and work command handlers directly', async () => {
+    const program = Effect.gen(function* () {
+      const initialize = yield* AcpRpcGroup.accessHandler('session.initialize')
+      const workspaceCreate =
+        yield* AcpRpcGroup.accessHandler('workspace.create')
+      const workspaceUpdate =
+        yield* AcpRpcGroup.accessHandler('workspace.update')
+      const workspaceArchive =
+        yield* AcpRpcGroup.accessHandler('workspace.archive')
+      const workCreate = yield* AcpRpcGroup.accessHandler('work.create')
+      const workList = yield* AcpRpcGroup.accessHandler(
+        'work.list_for_workspace',
+      )
+      const workGet = yield* AcpRpcGroup.accessHandler('work.get')
+      const workClaim = yield* AcpRpcGroup.accessHandler('work.claim')
+      const workUpdate = yield* AcpRpcGroup.accessHandler('work.update_state')
+      const workPublish = yield* AcpRpcGroup.accessHandler('work.publish_event')
+
+      const initPayload = yield* decodeInitialize([
+        'workspace:read',
+        'workspace:write',
+        'work:create',
+        'work:claim',
+        'work:update',
+        'work:publish_event',
+      ])
+      const session = yield* initialize(initPayload, rpcOptions())
+      const headers = rpcOptions(bearer(session.session_id))
+      const workspacePayload = yield* decodePayload(
+        AcpRpcs.workspaceCreate.payloadSchema,
+        {
+          name: 'RPC Workspace',
+          kind: 'git_repository',
+          uri: 'git+https://example.com/acp/rpc.git',
+        },
+      )
+      const workspace = yield* workspaceCreate(workspacePayload, headers)
+      const updatePayload = yield* decodePayload(
+        AcpRpcs.workspaceUpdate.payloadSchema,
+        {
+          workspace_id: workspace.id,
+          name: 'RPC Workspace Updated',
+          kind: 'git_repository',
+          uri: 'git+https://example.com/acp/rpc-updated.git',
+        },
+      )
+      const updatedWorkspace = yield* workspaceUpdate(updatePayload, headers)
+      const workPayload = yield* decodePayload(
+        AcpRpcs.workCreate.payloadSchema,
+        {
+          workspace_id: workspace.id,
+          title: 'Wire native RPC handlers',
+        },
+      )
+      const work = yield* workCreate(workPayload, headers)
+      const listed = yield* workList({ workspace_id: workspace.id }, headers)
+      const fetched = yield* workGet({ work_id: work.id }, headers)
+      const claimed = yield* workClaim(
+        { work_id: work.id, worker_id: 'agent_rpc' as WorkerId },
+        headers,
+      )
+      const running = yield* workUpdate(
+        { work_id: work.id, state: 'running' },
+        headers,
+      )
+      const eventPayload = yield* decodePayload(
+        AcpRpcs.workPublishEvent.payloadSchema,
+        {
+          work_id: work.id,
+          type: 'work.progressed',
+          data: { message: 'native rpc handler covered' },
+        },
+      )
+      const event = yield* workPublish(eventPayload, headers)
+      const archived = yield* workspaceArchive(
+        { workspace_id: workspace.id },
+        headers,
+      )
+
+      return {
+        archived,
+        claimed,
+        event,
+        fetched,
+        listed,
+        running,
+        updatedWorkspace,
+        work,
+        workspace,
+      }
+    })
+
+    const result = await Effect.runPromise(Effect.provide(program, Runtime))
+    expect(result.updatedWorkspace.name).toBe('RPC Workspace Updated')
+    expect(result.listed.map((work) => work.id)).toEqual([result.work.id])
+    expect(result.fetched.id).toBe(result.work.id)
+    expect(result.claimed.state).toBe('claimed')
+    expect(result.running.state).toBe('running')
+    expect(result.event.type).toBe('work.progressed')
+    expect(result.archived.state).toBe('archived')
   })
 })
