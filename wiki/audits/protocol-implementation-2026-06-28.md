@@ -216,13 +216,16 @@ Late-document roadmap status is now covered. The Reference MVP Roadmap places
 JSON-RPC over HTTP POST, stdio, and WebSocket plus the closed bearer-session
 permission model in v0.1, leaving Git worktree integration, GitHub PR
 artifacts, agent adapters, desktop UI, cloud sync, organization workspaces,
-SDKs, and public adapter registry as future milestones. The JSON-RPC open
-question now asks about default recommendation rather than basic existence.
+SDKs, and public adapter registry as future milestones. The transport open
+question is now closed: HTTP/SSE remains the cross-language MVP baseline,
+JSON-RPC remains compatibility framing for stdio/WebSocket clients, and native
+Effect RPC is the TypeScript reference implementation's first-party typed
+transport rather than a mandatory stack for all implementations.
 
 Answered Open Questions are now cleaned up. `@root/specs.md` records advisory
 leases and dual-mode artifact storage as resolved v0.1 decisions, while memory
-scope, Git-specific extensions, signed approvals, JSON-RPC default
-recommendation, and offline CRDT sync remain genuinely open.
+scope, Git-specific extensions, signed approvals, and offline CRDT sync remain
+genuinely open.
 
 The workspace memory foundation is now covered. `@root/specs.md` defines
 [[Memory]] as a bounded v0.1 protocol feature with `memory:create` and
@@ -267,12 +270,12 @@ backed-command coverage gap remains across REST, JSON-RPC, and the CLI.
 
 The open architectural decision is now resolved by
 [[ADR-0007-effect-rpc-adoption]]. ACP will adopt `@effect/rpc` as the native
-first-party RPC surface and retire the hand-mapped JSON-RPC command layer once
-the replacement is live. The ADR deliberately drops JSON-RPC 2.0 wire
-compatibility because no MCP/polyglot client exists; the reference clients are
-Effect/TypeScript and benefit more from a typed `RpcGroup`, direct domain
+first-party RPC surface for Effect/TypeScript consumers while retaining JSON-RPC
+as compatibility framing for stdio and WebSocket clients. The ADR deliberately
+drops JSON-RPC 2.0 wire compatibility for the native RPC surface; reference
+clients that can use Effect benefit more from a typed `RpcGroup`, direct domain
 handlers, typed errors, streaming, and generated clients than from preserving a
-paper wire format.
+paper wire format inside the typed transport.
 
 The work/workspace native RPC handler vertical is now covered. Direct handlers
 for `workspace.create`, `workspace.update`, `workspace.archive`, `work.create`,
@@ -416,8 +419,8 @@ With that decision closed, the live frontier returns to the broader
 [[ADR-0007-effect-rpc-adoption]] migration: growing native RPC client coverage
 (beyond [[acp-rpc-roundtrip-test]] and the [[native-rpc-route]] live-socket
 regression) toward parity with the hand-mapped JSON-RPC method surface, so that
-retiring `src/infrastructure/jsonrpc/` and the stdio/WebSocket JSON-RPC bridges
-becomes a mechanical client-coverage check rather than a speculative cutover.
+first-party TypeScript consumers can choose the typed native client without
+waiting on JSON-RPC command-map behavior.
 
 That coverage is now materially broader. [[acp-rpc-roundtrip-work-lease-test]]
 drives the generated client through worker discovery, workspace mutation, work
@@ -428,8 +431,9 @@ create/update/content/list/delete and checkpoint create/list/latest reads.
 memory create/list, and unary event listing. The remaining native RPC migration
 frontier is no longer basic method reachability; it is transport parity and
 client adoption work: prove these verticals over mounted HTTP where the behavior
-is socket-sensitive, keep `events.subscribe` streaming covered, and then decide
-which legacy JSON-RPC bridge can be retired first without stranding a consumer.
+is socket-sensitive, keep `events.subscribe` streaming covered, and then make
+the native client ergonomic enough that a first-party consumer can adopt it
+without rebuilding bearer-header and URL boilerplate at every call site.
 
 The artifact/checkpoint vertical is now the first expanded mounted-HTTP parity
 slice. [[native-rpc-route]] boots the real host route, builds
@@ -446,7 +450,7 @@ persists memory, publishes a work event, and reads memory/events back through
 the same typed HTTP client. The remaining transport-parity target is the
 work/lease vertical: claim/state transitions and lease request/renew/release/
 revoke need the same mounted-route pressure before JSON-RPC retirement can be
-treated as a consumer-migration question rather than a coverage question.
+treated as a native-client ergonomics question rather than a coverage question.
 
 That work/lease target is now covered too. The mounted route test performs
 worker lookup, workspace update/archive, work claim and running-state
@@ -454,8 +458,8 @@ transition, and lease request/renew/release/revoke through [[acp-rpc-client]]
 against `/rpc/native`. At this point native RPC has both transport-less
 generated-client coverage and mounted HTTP coverage across the implemented
 handler verticals. The next migration question should stop being "can the
-methods run?" and become "which first-party consumer should move off the
-legacy JSON-RPC bridge first?"
+methods run?" and become "what native client shape should first-party
+TypeScript consumers import?"
 
 Before moving consumers, native RPC observability was tightened. The existing
 server process already installs Effect JSON logging through [[app-logging]], but
@@ -466,6 +470,13 @@ stable ACP error code when a `ProtocolError` reaches the transport. The
 middleware is deliberately payload-blind and header-blind; it gives production
 operators correlation and failure shape without exposing patches, memory
 content, review details, or bearer credentials.
+
+The next bounded code slice should improve [[acp-rpc-client]] ergonomics without
+changing protocol behavior: provide a small URL helper for the mounted native
+route and a bearer-session wrapper so callers do not hand-build
+`{ authorization: ... }` headers at every operation. That keeps the consumer
+adoption path honest while JSON-RPC remains the compatibility surface for
+stdio/WebSocket integrations.
 
 ## Referenced by
 
