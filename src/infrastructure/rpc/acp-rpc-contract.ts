@@ -44,6 +44,7 @@ import {
   AcpRpcAuthMiddleware,
   AcpRpcRequiredScope,
 } from './rpc-auth-middleware.js'
+import { AcpRpcTelemetryMiddleware } from './rpc-telemetry-middleware.js'
 
 const WorkerIdPayload = Schema.Struct({ worker_id: WorkerId })
 const WorkspaceIdPayload = Schema.Struct({ workspace_id: WorkspaceId })
@@ -99,7 +100,9 @@ interface ScopableRpc {
     tag: typeof AcpRpcRequiredScope,
     value: Permission,
   ) => {
-    middleware: (middleware: typeof AcpRpcAuthMiddleware) => unknown
+    middleware: (middleware: typeof AcpRpcAuthMiddleware) => {
+      middleware: (middleware: typeof AcpRpcTelemetryMiddleware) => unknown
+    }
   }
 }
 
@@ -107,8 +110,16 @@ const scoped = <A extends ScopableRpc>(procedure: A, scope: Permission): A => {
   const annotated: unknown = procedure
     .annotate(AcpRpcRequiredScope, scope)
     .middleware(AcpRpcAuthMiddleware)
+    .middleware(AcpRpcTelemetryMiddleware)
   return annotated as A
 }
+
+interface TelemetryRpc {
+  middleware: (middleware: typeof AcpRpcTelemetryMiddleware) => unknown
+}
+
+const instrumented = <A extends TelemetryRpc>(procedure: A): A =>
+  procedure.middleware(AcpRpcTelemetryMiddleware) as A
 
 const workerList = scoped(
   rpc('worker.list').setSuccess(Schema.Array(Worker)),
@@ -119,9 +130,11 @@ const workerGet = rpc('worker.get')
   .setSuccess(Worker)
   .pipe((procedure) => scoped(procedure, 'worker:read'))
 
-const sessionInitialize = rpc('session.initialize')
-  .setPayload(InitializeSessionPayload)
-  .setSuccess(InitializeSessionResponse)
+const sessionInitialize = instrumented(
+  rpc('session.initialize')
+    .setPayload(InitializeSessionPayload)
+    .setSuccess(InitializeSessionResponse),
+)
 
 const workspaceList = scoped(
   rpc('workspace.list').setSuccess(Schema.Array(Workspace)),

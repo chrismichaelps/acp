@@ -20,7 +20,9 @@ JSON-RPC method table with an `@effect/rpc` `RpcGroup` over ACP protocol schemas
 and typed protocol errors. Secured operations now carry required-scope
 annotations consumed by [[rpc-auth-middleware]]. Handler verticals live in
 [[acp-rpc-handlers]] and its split modules; native `events.subscribe` now uses
-`@effect/rpc` streaming, while JSON-RPC deletion remains a later slice.
+`@effect/rpc` streaming, and every operation carries
+[[rpc-telemetry-middleware]] completion logging while JSON-RPC deletion remains
+a later slice.
 
 ## Interface
 
@@ -43,7 +45,10 @@ generated client receives an Effect `Stream<Event, ProtocolError>`.
 
 Every secured operation is wrapped by the local `scoped(...)` helper, which
 attaches an `AcpRpcRequiredScope` annotation and the `AcpRpcAuthMiddleware`
-runtime tag while preserving the existing generated-client type shape.
+runtime tag while preserving the existing generated-client type shape. The same
+helper attaches [[rpc-telemetry-middleware]] after auth so auth failures and
+handler failures both produce one structured completion log. `session.initialize`
+is not scoped, so it is instrumented directly.
 
 ## Algorithm
 
@@ -57,7 +62,8 @@ schemas only where REST currently carries ids in the path.
 
 Handler modules implement narrow `AcpRpcGroup.toLayerHandler(...)` layers
 against domain services, [[id-clock]], and [[rpc-auth]]. Native HTTP execution
-also runs [[rpc-auth-middleware]] before the handler. Handlers must call domain
+also runs [[rpc-auth-middleware]] before the handler and
+[[rpc-telemetry-middleware]] around the handler. Handlers must call domain
 services directly; they must not dispatch through [[acp-router]] or the JSON-RPC
 command map.
 
@@ -90,4 +96,4 @@ adapters.
 ## Referenced by
 
 [[rpc/_MOC]] · [[acp-rpc-handlers]] · [[ADR-0007-effect-rpc-adoption]] ·
-[[rpc-auth-middleware]] · [[Transport]]
+[[rpc-auth-middleware]] · [[rpc-telemetry-middleware]] · [[Transport]]
