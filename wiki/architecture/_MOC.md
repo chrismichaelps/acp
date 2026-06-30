@@ -134,6 +134,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 65. ✅ Re-audit remaining native RPC handler gaps after work/workspace handlers
 66. ✅ Native Effect RPC lease handlers
 67. 🚧 Re-audit remaining native RPC handler gaps after lease handlers
+68. ✅ Native Effect RPC artifact handlers
+69. 🚧 Re-audit remaining native RPC handler gaps after artifact handlers
 
 ## Referenced by
 
