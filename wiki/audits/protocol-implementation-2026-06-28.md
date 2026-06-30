@@ -142,12 +142,15 @@ for collection scans and event tail replay. That is the right baseline for
 thousands of coordination records or agent-memory artifacts before adding
 entity-specific repositories.
 
-Native RPC now has its first stable code anchor. [[acp-rpc-contract]] defines an
-`@effect/rpc` `AcpRpcGroup` for the current non-streaming operation set and
-proves the closed tag surface with a registry test. It deliberately does not
-dispatch through handlers yet, does not replace `POST /rpc`/`GET /rpc`, and does
-not delete the JSON-RPC command map; this keeps the migration reversible while
-the typed contract settles.
+Native RPC now has its first stable code anchor and first direct handler
+vertical. [[acp-rpc-contract]] defines an `@effect/rpc` `AcpRpcGroup` for the
+current non-streaming operation set and proves the closed tag surface with a
+registry test. [[acp-rpc-handlers]] implements `session.initialize`,
+`worker.list`, `worker.get`, and `workspace.list` through direct service calls,
+with [[rpc-auth]] preserving bearer-session scope behavior and [[rpc-error]]
+mapping domain failures into ACP `ProtocolError` envelopes. The implementation
+still does not replace `POST /rpc`/`GET /rpc`, and does not delete the JSON-RPC
+command map; this keeps the migration reversible while the native layer grows.
 
 External artifact references are now covered. [[artifact-service]] supports both
 host-stored inline content and explicit external `uri` references, so workers can
@@ -264,15 +267,13 @@ Effect/TypeScript and benefit more from a typed `RpcGroup`, direct domain
 handlers, typed errors, streaming, and generated clients than from preserving a
 paper wire format.
 
-The next gap is the second implementation stage from ADR-0007: add a native
-`AcpRpcGroup.toLayer(...)` handler layer for a narrow vertical set of operations
-without deleting JSON-RPC yet. The first handler slice should implement session
-initialization plus worker/workspace read operations, because those exercise
-open bootstrap, scoped reads, typed errors, and direct service calls without
-starting with high-risk mutations. It should introduce the reusable auth
-boundary needed by later RPC handlers, prove behavior with `RpcTest` or direct
-`accessHandler` tests, and keep HTTP/WebSocket/stdio replacement for later
-slices.
+The next gap is the next native RPC handler vertical: work and workspace command
+handlers. This slice should add direct handlers for `workspace.create`,
+`workspace.update`, `workspace.archive`, `work.create`,
+`work.list_for_workspace`, `work.get`, `work.claim`, `work.update_state`, and
+`work.publish_event`, reusing [[rpc-auth]], [[rpc-error]], and [[id-clock]]. It
+should prove parity with direct `accessHandler` tests and still avoid HTTP,
+WebSocket, stdio replacement, streaming `events.subscribe`, or JSON-RPC deletion.
 
 ## Referenced by
 
