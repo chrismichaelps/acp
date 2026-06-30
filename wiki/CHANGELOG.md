@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · post-rpc-contract-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] after [[acp-rpc-contract]] and selected
+  the first native handler/auth vertical for session initialization plus
+  worker/workspace reads · docs-only validation · risk LOW
 - 2026-06-30 · effect-rpc-contract-foundation slice · added
   [[acp-rpc-contract]] source with an `@effect/rpc` `AcpRpcGroup` covering the
   current non-streaming ACP operation set and a registry test for the closed tag

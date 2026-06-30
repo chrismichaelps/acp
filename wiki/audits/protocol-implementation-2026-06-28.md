@@ -13,13 +13,14 @@ This audit refreshes [[protocol-implementation-2026-06-27]] after the workspace
 archive lifecycle, JSON-RPC command-map split, artifact update lifecycle,
 [[ADR-0005-worker-presence-scope]], CLI parity, permission scope parity, README
 refresh, CLI parser dispatch-table, external artifact reference, work resume
-query, Effect observability logging, and second resume-read slices. It compares
-the current ACP reference host against `@root/specs.md` through
-[[spec-canonicalization]], then chooses the next backed implementation gap. This
-revision follows the README lease refresh and WebSocket transport slice, closing
-the stale WebSocket deferral, host-scoped worker presence reads, WebSocket
-event subscription, replay-read integration gap, and review cancellation
-lifecycle.
+query, Effect observability logging, second resume-read slices, review
+cancellation, workspace [[Memory]], request lifecycle logging, and the native
+[[acp-rpc-contract]] foundation. It compares the current ACP reference host
+against `@root/specs.md` through [[spec-canonicalization]], then chooses the next
+backed implementation gap. This revision follows the README lease refresh and
+WebSocket transport slice, closing the stale WebSocket deferral, host-scoped
+worker presence reads, WebSocket event subscription, replay-read integration gap,
+and review cancellation lifecycle.
 
 ## Current Coverage
 
@@ -141,6 +142,13 @@ for collection scans and event tail replay. That is the right baseline for
 thousands of coordination records or agent-memory artifacts before adding
 entity-specific repositories.
 
+Native RPC now has its first stable code anchor. [[acp-rpc-contract]] defines an
+`@effect/rpc` `AcpRpcGroup` for the current non-streaming operation set and
+proves the closed tag surface with a registry test. It deliberately does not
+dispatch through handlers yet, does not replace `POST /rpc`/`GET /rpc`, and does
+not delete the JSON-RPC command map; this keeps the migration reversible while
+the typed contract settles.
+
 External artifact references are now covered. [[artifact-service]] supports both
 host-stored inline content and explicit external `uri` references, so workers can
 record pull requests, commits, CI reports, screenshots, and cloud objects without
@@ -256,13 +264,15 @@ Effect/TypeScript and benefit more from a typed `RpcGroup`, direct domain
 handlers, typed errors, streaming, and generated clients than from preserving a
 paper wire format.
 
-The next gap is the first implementation stage from ADR-0007: introduce the
-`@effect/rpc` contract and handler layer without deleting JSON-RPC yet. The slice
-should define a native RpcGroup over the current domain schemas, wire handlers to
-the existing domain services, include auth context boundaries where needed, and
-prove it with `RpcTest` or transport-less handler tests. Stdio/HTTP/WebSocket
-replacement and JSON-RPC deletion should remain later slices after the new
-contract is covered.
+The next gap is the second implementation stage from ADR-0007: add a native
+`AcpRpcGroup.toLayer(...)` handler layer for a narrow vertical set of operations
+without deleting JSON-RPC yet. The first handler slice should implement session
+initialization plus worker/workspace read operations, because those exercise
+open bootstrap, scoped reads, typed errors, and direct service calls without
+starting with high-risk mutations. It should introduce the reusable auth
+boundary needed by later RPC handlers, prove behavior with `RpcTest` or direct
+`accessHandler` tests, and keep HTTP/WebSocket/stdio replacement for later
+slices.
 
 ## Referenced by
 
