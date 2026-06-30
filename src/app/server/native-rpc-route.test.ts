@@ -12,6 +12,7 @@ import {
   decodeInitialize,
   decodePayload,
 } from '../../infrastructure/rpc/acp-rpc-test-support.js'
+import type { WorkerId } from '../../protocol/schema/index.js'
 import { HttpAppLive } from './http-app.js'
 import { nativeRpcPath } from './native-rpc-route.js'
 
@@ -232,5 +233,111 @@ describe('native RPC route', () => {
       result.artifact.id,
     )
     expect(result.latest.id).toBe(result.checkpoint.id)
+  })
+
+  it('round-trips review, memory, and event reads over HTTP', async () => {
+    const result = await onLiveServer((baseUrl) =>
+      Effect.runPromise(
+        Effect.gen(function* () {
+          const client = yield* makeAcpRpcClient
+          const session = yield* client.session.initialize(
+            yield* decodeInitialize([
+              'workspace:read',
+              'workspace:write',
+              'work:create',
+              'work:claim',
+              'work:update',
+              'work:publish_event',
+              'review:create',
+              'review:approve',
+              'memory:create',
+              'memory:read',
+              'event:read',
+            ]),
+          )
+          const headers = { authorization: `Bearer ${session.session_id}` }
+          const workspace = yield* client.workspace.create(
+            yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
+              name: 'Native RPC Review Memory Workspace',
+              kind: 'git_repository',
+              uri: 'git+https://example.com/acp/native-rpc-review-memory.git',
+            }),
+            { headers },
+          )
+          const work = yield* client.work.create(
+            yield* decodePayload(AcpRpcs.workCreate.payloadSchema, {
+              workspace_id: workspace.id,
+              title: 'Review and remember over native RPC',
+            }),
+            { headers },
+          )
+          yield* client.work.claim(
+            { work_id: work.id, worker_id: 'agent_rpc' as WorkerId },
+            { headers },
+          )
+          const running = yield* client.work.update_state(
+            { work_id: work.id, state: 'running' },
+            { headers },
+          )
+          const requested = yield* client.review.request(
+            yield* decodePayload(AcpRpcs.reviewRequest.payloadSchema, {
+              work_id: running.id,
+              requested_by: 'agent_rpc',
+              requirements: [],
+            }),
+            { headers },
+          )
+          const approved = yield* client.review.approve(
+            { review_id: requested.id, met_requirements: [] },
+            { headers },
+          )
+          const memory = yield* client.memory.create(
+            yield* decodePayload(AcpRpcs.memoryCreate.payloadSchema, {
+              workspace_id: workspace.id,
+              work_id: running.id,
+              kind: 'decision',
+              key: 'rpc.http.review-memory',
+              summary: 'Mounted transport review approved.',
+              content: 'review.approve and memory.create crossed HTTP.',
+              labels: ['rpc', 'http'],
+            }),
+            { headers },
+          )
+          const memories = yield* client.memory.list(
+            yield* decodePayload(AcpRpcs.memoryList.payloadSchema, {
+              workspace_id: workspace.id,
+              after_seq: 0,
+            }),
+            { headers },
+          )
+          const published = yield* client.work.publish_event(
+            yield* decodePayload(AcpRpcs.workPublishEvent.payloadSchema, {
+              work_id: running.id,
+              type: 'work.progressed',
+              data: { message: 'review-memory http roundtrip' },
+            }),
+            { headers },
+          )
+          const events = yield* client.events.list(
+            { workspace_id: workspace.id, after_seq: 0 },
+            { headers },
+          )
+
+          return { approved, events, memories, memory, published, requested }
+        }).pipe(
+          Effect.provide(acpRpcClientHttpLayer(`${baseUrl}${nativeRpcPath}`)),
+          Effect.scoped,
+        ),
+      ),
+    )
+
+    expect(result.approved.id).toBe(result.requested.id)
+    expect(result.approved.state).toBe('approved')
+    expect(result.memories.map((memory) => memory.id)).toContain(
+      result.memory.id,
+    )
+    expect(result.events.map((event) => event.id)).toContain(
+      result.published.id,
+    )
   })
 })
