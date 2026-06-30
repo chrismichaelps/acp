@@ -8,6 +8,7 @@ import {
   AcpRpcs,
   acpRpcClientHostLayer,
   makeAcpRpcClient,
+  withAcpRpcBearer,
 } from '../../infrastructure/rpc/index.js'
 import {
   decodeInitialize,
@@ -39,30 +40,28 @@ describe('native RPC route', () => {
           const session = yield* client.session.initialize(
             yield* decodeInitialize(['workspace:read', 'workspace:write']),
           )
-          const headers = { authorization: `Bearer ${session.session_id}` }
-          const workspace = yield* client.workspace.create(
-            yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
-              name: 'Native RPC Mounted Workspace',
-              kind: 'git_repository',
-              uri: 'git+https://example.com/acp/native-rpc.git',
-            }),
-            { headers },
+          const authed = withAcpRpcBearer(session.session_id)
+          const workspace = yield* authed(
+            client.workspace.create(
+              yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
+                name: 'Native RPC Mounted Workspace',
+                kind: 'git_repository',
+                uri: 'git+https://example.com/acp/native-rpc.git',
+              }),
+            ),
           )
           const readOnly = yield* client.session.initialize(
             yield* decodeInitialize(['workspace:read']),
           )
           const denied = yield* Effect.either(
-            client.workspace.create(
-              yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
-                name: 'Native RPC Denied Workspace',
-                kind: 'git_repository',
-                uri: 'git+https://example.com/acp/native-rpc-denied.git',
-              }),
-              {
-                headers: {
-                  authorization: `Bearer ${readOnly.session_id}`,
-                },
-              },
+            withAcpRpcBearer(readOnly.session_id)(
+              client.workspace.create(
+                yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
+                  name: 'Native RPC Denied Workspace',
+                  kind: 'git_repository',
+                  uri: 'git+https://example.com/acp/native-rpc-denied.git',
+                }),
+              ),
             ),
           )
           return { denied, sessionId: session.session_id, workspace }
@@ -157,83 +156,81 @@ describe('native RPC route', () => {
               'lease:revoke',
             ]),
           )
-          const headers = { authorization: `Bearer ${session.session_id}` }
-          const worker = yield* client.worker.get(
-            { worker_id: 'agent_rpc' as WorkerId },
-            { headers },
+          const authed = withAcpRpcBearer(session.session_id)
+          const worker = yield* authed(
+            client.worker.get({ worker_id: 'agent_rpc' as WorkerId }),
           )
-          const workspace = yield* client.workspace.create(
-            yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
-              name: 'Native RPC Work Lease Workspace',
-              kind: 'git_repository',
-              uri: 'git+https://example.com/acp/native-rpc-work-lease.git',
-            }),
-            { headers },
+          const workspace = yield* authed(
+            client.workspace.create(
+              yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
+                name: 'Native RPC Work Lease Workspace',
+                kind: 'git_repository',
+                uri: 'git+https://example.com/acp/native-rpc-work-lease.git',
+              }),
+            ),
           )
-          const renamed = yield* client.workspace.update(
-            yield* decodePayload(AcpRpcs.workspaceUpdate.payloadSchema, {
-              workspace_id: workspace.id,
-              name: 'Native RPC Work Lease Workspace Renamed',
-              kind: 'git_repository',
-              uri: 'git+https://example.com/acp/native-rpc-work-lease.git',
-            }),
-            { headers },
+          const renamed = yield* authed(
+            client.workspace.update(
+              yield* decodePayload(AcpRpcs.workspaceUpdate.payloadSchema, {
+                workspace_id: workspace.id,
+                name: 'Native RPC Work Lease Workspace Renamed',
+                kind: 'git_repository',
+                uri: 'git+https://example.com/acp/native-rpc-work-lease.git',
+              }),
+            ),
           )
-          const work = yield* client.work.create(
-            yield* decodePayload(AcpRpcs.workCreate.payloadSchema, {
-              workspace_id: workspace.id,
-              title: 'Claim and lease over native RPC',
-            }),
-            { headers },
+          const work = yield* authed(
+            client.work.create(
+              yield* decodePayload(AcpRpcs.workCreate.payloadSchema, {
+                workspace_id: workspace.id,
+                title: 'Claim and lease over native RPC',
+              }),
+            ),
           )
-          const claimed = yield* client.work.claim(
-            { work_id: work.id, worker_id: worker.id },
-            { headers },
+          const claimed = yield* authed(
+            client.work.claim({ work_id: work.id, worker_id: worker.id }),
           )
-          const running = yield* client.work.update_state(
-            { work_id: work.id, state: 'running' },
-            { headers },
+          const running = yield* authed(
+            client.work.update_state({ work_id: work.id, state: 'running' }),
           )
-          const lease = yield* client.lease.request(
-            yield* decodePayload(AcpRpcs.leaseRequest.payloadSchema, {
-              workspace_id: workspace.id,
-              work_id: work.id,
-              holder: worker.id,
-              resource: {
-                kind: 'file',
-                uri: 'file://src/app/server/native-rpc-route.test.ts',
-              },
-            }),
-            { headers },
+          const lease = yield* authed(
+            client.lease.request(
+              yield* decodePayload(AcpRpcs.leaseRequest.payloadSchema, {
+                workspace_id: workspace.id,
+                work_id: work.id,
+                holder: worker.id,
+                resource: {
+                  kind: 'file',
+                  uri: 'file://src/app/server/native-rpc-route.test.ts',
+                },
+              }),
+            ),
           )
           const renewParams = yield* decodePayload(RenewLeasePayload, {})
-          const renewed = yield* client.lease.renew(
-            { lease_id: lease.id, ...renewParams },
-            { headers },
+          const renewed = yield* authed(
+            client.lease.renew({ lease_id: lease.id, ...renewParams }),
           )
-          const released = yield* client.lease.release(
-            { lease_id: lease.id },
-            { headers },
+          const released = yield* authed(
+            client.lease.release({ lease_id: lease.id }),
           )
-          const secondLease = yield* client.lease.request(
-            yield* decodePayload(AcpRpcs.leaseRequest.payloadSchema, {
-              workspace_id: workspace.id,
-              work_id: work.id,
-              holder: worker.id,
-              resource: {
-                kind: 'file',
-                uri: 'file://src/app/server/native-rpc-route.work-lease.ts',
-              },
-            }),
-            { headers },
+          const secondLease = yield* authed(
+            client.lease.request(
+              yield* decodePayload(AcpRpcs.leaseRequest.payloadSchema, {
+                workspace_id: workspace.id,
+                work_id: work.id,
+                holder: worker.id,
+                resource: {
+                  kind: 'file',
+                  uri: 'file://src/app/server/native-rpc-route.work-lease.ts',
+                },
+              }),
+            ),
           )
-          const revoked = yield* client.lease.revoke(
-            { lease_id: secondLease.id },
-            { headers },
+          const revoked = yield* authed(
+            client.lease.revoke({ lease_id: secondLease.id }),
           )
-          const archived = yield* client.workspace.archive(
-            { workspace_id: workspace.id },
-            { headers },
+          const archived = yield* authed(
+            client.workspace.archive({ workspace_id: workspace.id }),
           )
 
           return {
@@ -273,64 +270,68 @@ describe('native RPC route', () => {
               'checkpoint:create',
             ]),
           )
-          const headers = { authorization: `Bearer ${session.session_id}` }
-          const workspace = yield* client.workspace.create(
-            yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
-              name: 'Native RPC Artifact Checkpoint Workspace',
-              kind: 'git_repository',
-              uri: 'git+https://example.com/acp/native-rpc-artifacts.git',
-            }),
-            { headers },
+          const authed = withAcpRpcBearer(session.session_id)
+          const workspace = yield* authed(
+            client.workspace.create(
+              yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
+                name: 'Native RPC Artifact Checkpoint Workspace',
+                kind: 'git_repository',
+                uri: 'git+https://example.com/acp/native-rpc-artifacts.git',
+              }),
+            ),
           )
-          const work = yield* client.work.create(
-            yield* decodePayload(AcpRpcs.workCreate.payloadSchema, {
-              workspace_id: workspace.id,
-              title: 'Persist artifact and checkpoint over native RPC',
-            }),
-            { headers },
+          const work = yield* authed(
+            client.work.create(
+              yield* decodePayload(AcpRpcs.workCreate.payloadSchema, {
+                workspace_id: workspace.id,
+                title: 'Persist artifact and checkpoint over native RPC',
+              }),
+            ),
           )
-          const artifact = yield* client.artifact.create(
-            yield* decodePayload(AcpRpcs.artifactCreate.payloadSchema, {
-              workspace_id: workspace.id,
-              work_id: work.id,
-              kind: 'patch',
-              summary: 'Mounted transport patch',
-              content: 'diff --git a/http-roundtrip.ts b/http-roundtrip.ts',
-            }),
-            { headers },
+          const artifact = yield* authed(
+            client.artifact.create(
+              yield* decodePayload(AcpRpcs.artifactCreate.payloadSchema, {
+                workspace_id: workspace.id,
+                work_id: work.id,
+                kind: 'patch',
+                summary: 'Mounted transport patch',
+                content: 'diff --git a/http-roundtrip.ts b/http-roundtrip.ts',
+              }),
+            ),
           )
-          const updated = yield* client.artifact.update(
-            yield* decodePayload(AcpRpcs.artifactUpdate.payloadSchema, {
-              artifact_id: artifact.id,
-              kind: 'patch',
-              summary: 'Mounted transport patch revised',
-              content:
-                'diff --git a/http-roundtrip.ts b/http-roundtrip-revised.ts',
-            }),
-            { headers },
+          const updated = yield* authed(
+            client.artifact.update(
+              yield* decodePayload(AcpRpcs.artifactUpdate.payloadSchema, {
+                artifact_id: artifact.id,
+                kind: 'patch',
+                summary: 'Mounted transport patch revised',
+                content:
+                  'diff --git a/http-roundtrip.ts b/http-roundtrip-revised.ts',
+              }),
+            ),
           )
-          const content = yield* client.artifact.content(
-            { artifact_id: artifact.id },
-            { headers },
+          const content = yield* authed(
+            client.artifact.content({ artifact_id: artifact.id }),
           )
-          const checkpoint = yield* client.checkpoint.create(
-            yield* decodePayload(AcpRpcs.checkpointCreate.payloadSchema, {
-              workspace_id: workspace.id,
-              work_id: work.id,
-              summary: 'Mounted transport checkpoint',
-              completed_steps: ['created artifact over mounted native RPC'],
-              remaining_steps: ['continue transport parity coverage'],
-              modified_resources: ['file://src/app/server/native-rpc-route.ts'],
-            }),
-            { headers },
+          const checkpoint = yield* authed(
+            client.checkpoint.create(
+              yield* decodePayload(AcpRpcs.checkpointCreate.payloadSchema, {
+                workspace_id: workspace.id,
+                work_id: work.id,
+                summary: 'Mounted transport checkpoint',
+                completed_steps: ['created artifact over mounted native RPC'],
+                remaining_steps: ['continue transport parity coverage'],
+                modified_resources: [
+                  'file://src/app/server/native-rpc-route.ts',
+                ],
+              }),
+            ),
           )
-          const latest = yield* client.checkpoint.latest_for_work(
-            { work_id: work.id },
-            { headers },
+          const latest = yield* authed(
+            client.checkpoint.latest_for_work({ work_id: work.id }),
           )
-          const artifacts = yield* client.artifact.list_for_workspace(
-            { workspace_id: workspace.id },
-            { headers },
+          const artifacts = yield* authed(
+            client.artifact.list_for_workspace({ workspace_id: workspace.id }),
           )
 
           return { artifact, artifacts, checkpoint, content, latest, updated }
@@ -366,72 +367,80 @@ describe('native RPC route', () => {
               'event:read',
             ]),
           )
-          const headers = { authorization: `Bearer ${session.session_id}` }
-          const workspace = yield* client.workspace.create(
-            yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
-              name: 'Native RPC Review Memory Workspace',
-              kind: 'git_repository',
-              uri: 'git+https://example.com/acp/native-rpc-review-memory.git',
+          const authed = withAcpRpcBearer(session.session_id)
+          const workspace = yield* authed(
+            client.workspace.create(
+              yield* decodePayload(AcpRpcs.workspaceCreate.payloadSchema, {
+                name: 'Native RPC Review Memory Workspace',
+                kind: 'git_repository',
+                uri: 'git+https://example.com/acp/native-rpc-review-memory.git',
+              }),
+            ),
+          )
+          const work = yield* authed(
+            client.work.create(
+              yield* decodePayload(AcpRpcs.workCreate.payloadSchema, {
+                workspace_id: workspace.id,
+                title: 'Review and remember over native RPC',
+              }),
+            ),
+          )
+          yield* authed(
+            client.work.claim({
+              work_id: work.id,
+              worker_id: 'agent_rpc' as WorkerId,
             }),
-            { headers },
           )
-          const work = yield* client.work.create(
-            yield* decodePayload(AcpRpcs.workCreate.payloadSchema, {
-              workspace_id: workspace.id,
-              title: 'Review and remember over native RPC',
+          const running = yield* authed(
+            client.work.update_state({ work_id: work.id, state: 'running' }),
+          )
+          const requested = yield* authed(
+            client.review.request(
+              yield* decodePayload(AcpRpcs.reviewRequest.payloadSchema, {
+                work_id: running.id,
+                requested_by: 'agent_rpc',
+                requirements: [],
+              }),
+            ),
+          )
+          const approved = yield* authed(
+            client.review.approve({
+              review_id: requested.id,
+              met_requirements: [],
             }),
-            { headers },
           )
-          yield* client.work.claim(
-            { work_id: work.id, worker_id: 'agent_rpc' as WorkerId },
-            { headers },
+          const memory = yield* authed(
+            client.memory.create(
+              yield* decodePayload(AcpRpcs.memoryCreate.payloadSchema, {
+                workspace_id: workspace.id,
+                work_id: running.id,
+                kind: 'decision',
+                key: 'rpc.http.review-memory',
+                summary: 'Mounted transport review approved.',
+                content: 'review.approve and memory.create crossed HTTP.',
+                labels: ['rpc', 'http'],
+              }),
+            ),
           )
-          const running = yield* client.work.update_state(
-            { work_id: work.id, state: 'running' },
-            { headers },
+          const memories = yield* authed(
+            client.memory.list(
+              yield* decodePayload(AcpRpcs.memoryList.payloadSchema, {
+                workspace_id: workspace.id,
+                after_seq: 0,
+              }),
+            ),
           )
-          const requested = yield* client.review.request(
-            yield* decodePayload(AcpRpcs.reviewRequest.payloadSchema, {
-              work_id: running.id,
-              requested_by: 'agent_rpc',
-              requirements: [],
-            }),
-            { headers },
+          const published = yield* authed(
+            client.work.publish_event(
+              yield* decodePayload(AcpRpcs.workPublishEvent.payloadSchema, {
+                work_id: running.id,
+                type: 'work.progressed',
+                data: { message: 'review-memory http roundtrip' },
+              }),
+            ),
           )
-          const approved = yield* client.review.approve(
-            { review_id: requested.id, met_requirements: [] },
-            { headers },
-          )
-          const memory = yield* client.memory.create(
-            yield* decodePayload(AcpRpcs.memoryCreate.payloadSchema, {
-              workspace_id: workspace.id,
-              work_id: running.id,
-              kind: 'decision',
-              key: 'rpc.http.review-memory',
-              summary: 'Mounted transport review approved.',
-              content: 'review.approve and memory.create crossed HTTP.',
-              labels: ['rpc', 'http'],
-            }),
-            { headers },
-          )
-          const memories = yield* client.memory.list(
-            yield* decodePayload(AcpRpcs.memoryList.payloadSchema, {
-              workspace_id: workspace.id,
-              after_seq: 0,
-            }),
-            { headers },
-          )
-          const published = yield* client.work.publish_event(
-            yield* decodePayload(AcpRpcs.workPublishEvent.payloadSchema, {
-              work_id: running.id,
-              type: 'work.progressed',
-              data: { message: 'review-memory http roundtrip' },
-            }),
-            { headers },
-          )
-          const events = yield* client.events.list(
-            { workspace_id: workspace.id, after_seq: 0 },
-            { headers },
+          const events = yield* authed(
+            client.events.list({ workspace_id: workspace.id, after_seq: 0 }),
           )
 
           return { approved, events, memories, memory, published, requested }
