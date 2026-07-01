@@ -17,6 +17,7 @@ import { leaseCommandHandlers } from './lease-commands.js'
 import { memoryCommandHandlers } from './memory-commands.js'
 import { sessionCommandHandlers } from './session-commands.js'
 import { workCommandHandlers } from './work-commands.js'
+import { workerCommandHandlers } from './worker-commands.js'
 import { workspaceCommandHandlers } from './workspace-commands.js'
 
 export { CliError, type CliRequest } from './command-support.js'
@@ -110,19 +111,7 @@ const commandKey = (group: string | undefined, action: string | undefined) =>
 const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
   ...sessionCommandHandlers,
 
-  'worker list': () =>
-    Either.right({
-      method: 'GET',
-      path: '/v1/workers',
-      label: 'worker list',
-    }),
-
-  'worker get': ({ positionals }) =>
-    Either.map(positional(positionals, 0, 'worker_id'), (workerId) => ({
-      method: 'GET' as const,
-      path: `/v1/workers/${encodePathSegment(workerId)}`,
-      label: 'worker get',
-    })),
+  ...workerCommandHandlers,
 
   ...workspaceCommandHandlers,
 

@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-01 · cli-worker-command-registry slice · extracted host-scoped worker
+  CLI parsing into [[cli-worker-commands]] and wired it into the additive
+  parseArgs command registry, keeping worker presence reads out of the central
+  parser file without changing CLI behavior · validation: targeted CLI parser
+  test, format, lint, typecheck, and file-size passed · risk LOW
 - 2026-07-01 · cli-work-command-registry slice · extracted work CLI parsing
   into [[cli-work-commands]] and wired it into the additive parseArgs command
   registry, reducing [[cli-commands]] file-size pressure without changing CLI
