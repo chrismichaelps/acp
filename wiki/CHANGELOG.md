@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · cli-parse-args-dispatch-refactor slice · moved
+  [[cli-commands]] unknown-command handling behind a command resolver fallback
+  so `parseArgs` composes tokenization, resolution, and execution without owning
+  dispatch branching · validation: format, lint, typecheck, file-size, and build
+  passed; focused Vitest parser suite blocked at startup by local Rolldown
+  optional native binding mismatch with no install performed · risk LOW
 - 2026-06-30 · multi-agent-production-dogfood slice · added
   `scripts/acp-codex-dogfood-multi-agent.mjs`, package script
   `dogfood:codex:multi`, and [[codex-dogfood-production-testing]] coverage for
