@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · lease-list-read-route slice · added workspace-scoped
+  `GET /v1/leases?workspace_id=…` to the HTTP contract and [[acp-router]] so
+  workers can inspect current and terminal lease state directly instead of
+  reconstructing it from replay · validation: format, lint, typecheck,
+  file-size, and build passed; focused Vitest route/contract suite blocked at
+  startup by local Rolldown optional native binding mismatch with no install
+  performed · risk LOW
 - 2026-06-30 · event-stream-auth-parity slice · aligned
   [[event-routes]] SSE authorization with replay by requiring `event:read` before
   opening `GET /v1/events/stream`, and added the route regression · validation:
