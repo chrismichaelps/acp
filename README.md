@@ -40,6 +40,14 @@ ACP_BASE_URL=http://localhost:4317 node dist/app/cli/main.js session init --work
 ACP_BASE_URL=http://localhost:4317 node dist/app/cli/main.js work create "Fix login redirect" --workspace workspace_1
 ```
 
+For production-style dogfooding, `dogfood:codex` drives a live ACP host as a
+Codex-shaped worker instead of using an in-process test fixture. It initializes a
+session, creates and claims work, exercises a lease, writes a checkpoint and
+memory record, registers a pull request artifact, publishes progress, requests
+and approves review, releases the lease, completes the work, and replays events.
+Point `ACP_BASE_URL` at the host under test and run
+`node scripts/acp-codex-dogfood-smoke.mjs`, or the matching package script.
+
 The package exposes an `acp` binary once built and linked or installed from the package. It also exposes `acp-jsonrpc-stdio`, which reads Content-Length framed JSON-RPC messages from stdin, forwards them to the local host's `POST /rpc` endpoint, and writes framed responses to stdout. Until package distribution is formalized, direct `node dist/...` entrypoints are the most explicit local smoke path.
 
 The stdio bridge targets the same `ACP_BASE_URL` and `ACP_PORT` convention as the CLI. If a long-lived stdio integration already has a session id, `ACP_RPC_TOKEN` forwards that value as a bearer token on every `/rpc` call.
