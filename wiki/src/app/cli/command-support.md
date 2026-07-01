@@ -14,10 +14,12 @@ aliases: [cli-command-support]
 
 ## Purpose
 
-Shared parser primitives for [[cli-commands]], [[cli-event-commands]], and
+Shared parser primitives for [[cli-commands]] and feature command maps such as
+[[cli-checkpoint-commands]], [[cli-event-commands]], [[cli-lease-commands]], and
 [[cli-memory-commands]]. The module owns the stable `CliRequest`/`CliError`
-contract plus small validation and encoding helpers so feature command maps can
-be split without import cycles or duplicate error classes.
+contract plus small validation, encoding, and scoped-collection helpers so
+feature command maps can be split without import cycles or duplicate error
+classes.
 
 ## Interface
 
@@ -33,6 +35,7 @@ export const optionalAs: (...)
 export const optionalQuery: (...)
 export const csvFlag: (...)
 export const encodePathSegment: (...)
+export const scopedWorkListPath: (...)
 export const integerFlag: (...)
 export const positiveIntegerFlag: (...)
 ```
@@ -44,7 +47,9 @@ flags. Required positional and flag reads return `CliError` in the `Either`
 error channel. Optional helpers only materialize fields when the flag has a
 real value, query helpers URL-encode their values, CSV values trim empty
 segments, and integer helpers reject unsafe or below-minimum values before a
-request reaches HTTP decoding.
+request reaches HTTP decoding. `scopedWorkListPath` centralizes collection routes
+that can be addressed by either `--workspace` or `--work`, so checkpoint,
+artifact, and review command maps do not duplicate that precedence rule.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -59,5 +64,5 @@ command maps while preserving a small, stable helper interface.
 
 ## Referenced by
 
-[[cli-commands]] · [[cli-event-commands]] · [[cli-memory-commands]] ·
-[[cli/_MOC]]
+[[cli-checkpoint-commands]] · [[cli-commands]] · [[cli-event-commands]] ·
+[[cli-lease-commands]] · [[cli-memory-commands]] · [[cli/_MOC]]
