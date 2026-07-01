@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · agent-production-dogfood-smoke slice · added
+  `scripts/acp-codex-dogfood-smoke.mjs`, package script `dogfood:codex`, and
+  [[codex-dogfood-production-testing]] so ACP can be exercised as a live host by
+  a Codex-shaped worker across session, workspace, work, lease, checkpoint,
+  memory, artifact, review approval, event publication, and replay paths ·
+  validation: live authenticated dogfood smoke, format, lint, typecheck,
+  file-size, and build passed; broad Vitest startup blocked by local Rolldown
+  optional native binding mismatch with no install performed · risk LOW
 - 2026-06-30 · secure-session-token-credentials slice · moved HTTP and native
   RPC `session.initialize` from observable timestamp/counter ids to
   high-entropy [[id-clock]] `secureToken` bearer credentials, tightened session

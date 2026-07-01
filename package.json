@@ -13,6 +13,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check:file-size": "node scripts/check-file-size.mjs",
+    "dogfood:codex": "node scripts/acp-codex-dogfood-smoke.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
