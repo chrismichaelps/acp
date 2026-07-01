@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-01 · environment-example-drift-check slice · added `check:env` and a
+  CI gate that fails when `.env.example` drifts from the implemented ACP
+  environment variable surface · validation: check:env, format, lint,
+  typecheck, file-size, and build passed · risk LOW
 - 2026-07-01 · documented-environment-example slice · added root
   `.env.example` for host, client, stdio bridge, and dogfood variables; aligned
   the spec config example and [[app-config]] mirror with implemented env names ·
