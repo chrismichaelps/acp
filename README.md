@@ -47,6 +47,12 @@ memory record, registers a pull request artifact, publishes progress, requests
 and approves review, releases the lease, completes the work, and replays events.
 Point `ACP_BASE_URL` at the host under test and run
 `node scripts/acp-codex-dogfood-smoke.mjs`, or the matching package script.
+`dogfood:codex:multi` extends that lane into a small production coordination
+scenario with separate planner, worker, and reviewer sessions. It proves that ACP
+can serialize a work claim race, report a lease conflict between agents, preserve
+handoff state through checkpoint and memory reads, run a request-changes review
+loop, release the held lease, complete the work, and replay a monotonic event
+history.
 
 The package exposes an `acp` binary once built and linked or installed from the package. It also exposes `acp-jsonrpc-stdio`, which reads Content-Length framed JSON-RPC messages from stdin, forwards them to the local host's `POST /rpc` endpoint, and writes framed responses to stdout. Until package distribution is formalized, direct `node dist/...` entrypoints are the most explicit local smoke path.
 

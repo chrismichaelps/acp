@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · multi-agent-production-dogfood slice · added
+  `scripts/acp-codex-dogfood-multi-agent.mjs`, package script
+  `dogfood:codex:multi`, and [[codex-dogfood-production-testing]] coverage for
+  planner/worker/reviewer sessions, work claim contention, lease conflict,
+  checkpoint and memory handoff, review changes, review approval, lease release,
+  completion, and monotonic event replay · validation: live authenticated
+  multi-agent dogfood smoke passed against a local host with 23 replayed events;
+  format, lint, typecheck, file-size, and build passed · risk LOW
 - 2026-06-30 · agent-production-dogfood-smoke slice · added
   `scripts/acp-codex-dogfood-smoke.mjs`, package script `dogfood:codex`, and
   [[codex-dogfood-production-testing]] so ACP can be exercised as a live host by
