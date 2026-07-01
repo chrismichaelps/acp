@@ -471,12 +471,37 @@ middleware is deliberately payload-blind and header-blind; it gives production
 operators correlation and failure shape without exposing patches, memory
 content, review details, or bearer credentials.
 
-The next bounded code slice should improve [[acp-rpc-client]] ergonomics without
-changing protocol behavior: provide a small URL helper for the mounted native
-route and a bearer-session wrapper so callers do not hand-build
-`{ authorization: ... }` headers at every operation. That keeps the consumer
-adoption path honest while JSON-RPC remains the compatibility surface for
-stdio/WebSocket integrations.
+The [[acp-rpc-client]] ergonomics slice is now done. `acpNativeRpcPath` and
+`acpNativeRpcUrl(baseUrl)` fix the mounted route path so [[native-rpc-route]]
+and first-party callers share one source of truth instead of duplicating the
+`/rpc/native` literal; `acpRpcBearerHeaders(sessionId)` and
+`withAcpRpcBearer(sessionId)` remove hand-built `{ authorization: ... }`
+objects from call sites; `acpRpcClientHostLayer(baseUrl)` composes the URL
+derivation with the NDJSON HTTP protocol layer so a caller supplies only the
+host base URL. [[native-rpc-route]]'s live-route regressions were migrated onto
+these helpers.
+
+With that, native RPC has reached full technical readiness by every measure
+this audit tracks: every contract method has a handler (actor-bridged, scope-
+audited), the transport is mounted over real HTTP with auth and telemetry
+middleware, and every method has *two* independent proofs — transport-less
+`RpcTest` coverage and live-mounted-HTTP coverage — across every vertical
+(worker/workspace/work/lease, artifact/checkpoint, review/memory/event). This
+closes the engineering side of [[ADR-0007-effect-rpc-adoption]].
+
+What remains is **not a code gap** — grep confirms zero non-test,
+non-`src/infrastructure/rpc/` production code imports `acp-rpc-client`. The
+CLI ([[cli-client]]), the codebase's one first-party consumer, deliberately
+targets plain REST (`/v1/...`) rather than either RPC surface, and its own
+active track (session bootstrap, bearer forwarding, PR artifact command) just
+completed independently of this one. So no in-tree code currently needs native
+RPC to function. Per the standing project decision, **retiring
+`src/infrastructure/jsonrpc/` or migrating a consumer onto native RPC should
+wait for a concretely named consumer** (an external client, an internal tool,
+or an explicit user ask) rather than being invented as a slice — inventing one
+now would mean migrating working REST call sites for no functional gain, only
+churn. The next slice in this track opens only when such a consumer is named;
+until then this audit selects no further RPC-migration work.
 
 ## Referenced by
 
