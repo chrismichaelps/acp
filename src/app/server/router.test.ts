@@ -37,7 +37,7 @@ describe('acpRouter', () => {
       host: { name: string; kind: string }
       capabilities: { supports_sse: boolean }
     }
-    expect(body.session_id).toMatch(/^session_/)
+    expect(body.session_id).toMatch(/^session_[0-9a-f]{64}$/)
     expect(body.protocol_version).toBe('0.1')
     expect(body.host.kind).toBe('local')
     expect(body.capabilities.supports_sse).toBe(true)
@@ -72,7 +72,7 @@ describe('acpRouter', () => {
       protocol_version: string
       capabilities: { supports_reviews: boolean }
     }
-    expect(body.session_id).toMatch(/^session_/)
+    expect(body.session_id).toMatch(/^session_[0-9a-f]{64}$/)
     expect(body.protocol_version).toBe('0.1')
     expect(body.capabilities.supports_reviews).toBe(true)
   })

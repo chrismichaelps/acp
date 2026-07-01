@@ -52,7 +52,8 @@ export const SessionServiceLive: Layer.Layer<SessionService, never, Storage>
 ### Governance
 
 - The caller owns identity: `create` stores the `Session` value (id minted by
-  [[id-clock]], `created_at` from the same clock); this service mints nothing.
+  [[id-clock]] as a high-entropy bearer credential, `created_at` from the same
+  clock service); this service mints nothing.
 - Session records are schema-encoded before storage and schema-decoded after
   reads for drift protection.
 - `resolveActor` is total — an unknown or malformed token yields `Option.none`,
@@ -120,12 +121,12 @@ lookup, not a state machine.
   reversible tightening once credential issuance exists.
 - **Q:** Should the bearer token be a distinct secret (`hdf_xxx` per spec §8)
   rather than the `session_id` itself?
-  **A:** No — in v0.1 the `session_id` _is_ the token. _Rationale:_ the local
-  reference host has no credential store; minting a separate opaque secret adds a
-  second identifier with no extra security at the trust boundary (a single local
-  process). _Rejected:_ a separate `token` column (premature — real secret
-  management, rotation, and hashing belong to a hardened auth slice, not the
-  reference implementation).
+  **A:** No — in v0.1 the `session_id` _is_ the token, but it is minted as an
+  opaque high-entropy credential rather than a timestamp/counter id. _Rationale:_
+  a separate secret would add a second identifier, while a predictable session id
+  would make bearer auth forgeable. _Rejected:_ a separate `token` column
+  (premature — rotation and hashing belong to a hardened auth slice); deterministic
+  `nextId` session ids (observable and guessable).
 - **Q:** Should sessions expire?
   **A:** Not in this slice. _Rationale:_ there is no clock-driven sweeper yet and
   no reconnect semantics in v0.1; an unbounded in-memory map is acceptable for a

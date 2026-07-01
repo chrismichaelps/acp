@@ -214,7 +214,7 @@ describe('executeJsonRpc — over the live router', () => {
     const session = (
       Option.getOrNull(init) as { result: { session_id: string } }
     ).result
-    expect(session.session_id).toMatch(/^session_/)
+    expect(session.session_id).toMatch(/^session_[0-9a-f]{64}$/)
 
     const created = await run(
       executeJsonRpc(

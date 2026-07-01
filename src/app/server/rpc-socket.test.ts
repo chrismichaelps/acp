@@ -83,7 +83,7 @@ describe('rpc websocket', () => {
     })
 
     expect(result.init.id).toBe(1)
-    expect(result.init.result.session_id).toMatch(/^session_/)
+    expect(result.init.result.session_id).toMatch(/^session_[0-9a-f]{64}$/)
     expect(result.created.id).toBe(2)
     expect(result.created.result.state).toBe('open')
     expect(result.restStatus).toBe(200)
