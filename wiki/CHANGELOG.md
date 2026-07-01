@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-01 · cli-review-command-registry slice · extracted review CLI parsing
+  into [[cli-review-commands]] and wired it into the additive parseArgs registry,
+  completing the feature command-map split for [[cli-commands]] without changing
+  CLI behavior · validation: targeted CLI parser test, format, lint, typecheck,
+  and file-size passed · risk LOW
 - 2026-07-01 · cli-artifact-command-registry slice · extracted artifact CLI
   parsing into [[cli-artifact-commands]], including the `artifact pr` convenience
   projection, and wired it into the additive parseArgs registry without changing
