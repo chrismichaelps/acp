@@ -27,6 +27,7 @@ const systemActor = 'worker_system' as WorkerId
 const domainTags = new Set<string>([
   'ValidationError',
   'NotFoundError',
+  'ClaimConflictError',
   'LeaseConflictError',
   'InvalidStateTransitionError',
   'UnauthorizedError',

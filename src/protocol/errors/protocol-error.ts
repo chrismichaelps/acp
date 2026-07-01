@@ -16,6 +16,11 @@ export class LeaseConflictError extends Data.TaggedError('LeaseConflictError')<{
   readonly holderWorkerId: string
 }> {}
 
+export class ClaimConflictError extends Data.TaggedError('ClaimConflictError')<{
+  readonly workId: string
+  readonly holderWorkerId: string
+}> {}
+
 export class InvalidStateTransitionError extends Data.TaggedError(
   'InvalidStateTransitionError',
 )<{
@@ -41,6 +46,7 @@ export class StorageError extends Data.TaggedError('StorageError')<{
 export type DomainError =
   | ValidationError
   | NotFoundError
+  | ClaimConflictError
   | LeaseConflictError
   | InvalidStateTransitionError
   | UnauthorizedError
@@ -101,6 +107,17 @@ export const toProtocolError = (e: DomainError): ProtocolErrorResponse => {
             'lease_conflict',
             'Resource is already leased by another worker.',
             { resource: e.resourceUri, holder: e.holderWorkerId },
+          ),
+        },
+      }
+    case 'ClaimConflictError':
+      return {
+        httpStatus: 409,
+        body: {
+          error: envelope(
+            'claim_conflict',
+            'Work is already claimed by another worker.',
+            { work_id: e.workId, holder: e.holderWorkerId },
           ),
         },
       }
