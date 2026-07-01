@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-01 · architecture-roadmap-rpc-parity-refresh slice · marked the native
+  RPC handler re-audit milestones complete in [[architecture/_MOC]] and added
+  the cross-transport lease readback parity milestone · validation: check:env,
+  format, lint, typecheck, file-size, and build passed · risk LOW
 - 2026-07-01 · transport-docs-lease-readback-parity slice · refreshed the
   README transport summary and [[jsonrpc/_MOC]] so REST, native RPC, JSON-RPC,
   and CLI lease readback are described consistently · validation: check:env,

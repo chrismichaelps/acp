@@ -133,11 +133,12 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 64. ✅ Native Effect RPC work/workspace command handlers
 65. ✅ Re-audit remaining native RPC handler gaps after work/workspace handlers
 66. ✅ Native Effect RPC lease handlers
-67. 🚧 Re-audit remaining native RPC handler gaps after lease handlers
+67. ✅ Re-audit remaining native RPC handler gaps after lease handlers
 68. ✅ Native Effect RPC artifact handlers
-69. 🚧 Re-audit remaining native RPC handler gaps after artifact handlers
+69. ✅ Re-audit remaining native RPC handler gaps after artifact handlers
 70. ✅ Native Effect RPC checkpoint handlers
-71. 🚧 Re-audit remaining native RPC handler gaps after checkpoint handlers
+71. ✅ Re-audit remaining native RPC handler gaps after checkpoint handlers
+72. ✅ Lease readback parity across REST, CLI, JSON-RPC, native RPC, and dogfood
 
 ## Referenced by
 
