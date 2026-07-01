@@ -933,6 +933,7 @@ Compatibility JSON-RPC method names:
 - `work.claim`
 - `work.update`
 - `lease.request`
+- `lease.list`
 - `lease.release`
 - `artifact.create`
 - `checkpoint.create`

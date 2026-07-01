@@ -1,7 +1,11 @@
 /** @Acp.Infra.JsonRpc.LeaseCommands — lease lifecycle method mappings */
 import { Either, Option, Schema } from 'effect'
 import { RenewLeasePayload } from '../http/index.js'
-import { LeaseId, RequestLeasePayload } from '../../protocol/schema/index.js'
+import {
+  LeaseId,
+  RequestLeasePayload,
+  WorkspaceId,
+} from '../../protocol/schema/index.js'
 import {
   decodeParams,
   encodeSegment,
@@ -16,12 +20,14 @@ import type {
 
 export const leaseMethodLabels = [
   'lease.request',
+  'lease.list',
   'lease.renew',
   'lease.release',
   'lease.revoke',
 ] as const
 
 const LeaseParams = Schema.Struct({ lease_id: LeaseId })
+const LeaseListParams = Schema.Struct({ workspace_id: WorkspaceId })
 const RenewParams = Schema.Struct({
   lease_id: LeaseId,
   ttl_seconds: RenewLeasePayload.fields.ttl_seconds,
@@ -61,6 +67,20 @@ export const commandForLease = (
           request: { method: 'POST', path: '/v1/leases', body, label: method },
         }),
       ),
+    )
+  }
+
+  if (method === 'lease.list') {
+    return Option.some(
+      Either.map(decodeParams(LeaseListParams, paramsValue, id), (params) => ({
+        id,
+        expects_response: expectsResponse,
+        request: {
+          method: 'GET',
+          path: `/v1/leases?workspace_id=${encodeURIComponent(params.workspace_id)}`,
+          label: method,
+        },
+      })),
     )
   }
 
