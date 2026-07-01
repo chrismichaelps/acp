@@ -8,10 +8,12 @@ import {
   optional,
   optionalAs,
   positional,
+  scopedWorkListPath,
   type CliRequest,
   type CommandHandler,
   type Parsed,
 } from './command-support.js'
+import { checkpointCommandHandlers } from './checkpoint-commands.js'
 import { eventCommandHandlers } from './event-commands.js'
 import { leaseCommandHandlers } from './lease-commands.js'
 import { memoryCommandHandlers } from './memory-commands.js'
@@ -75,19 +77,6 @@ const splitArgs = (argv: readonly string[]): Parsed => {
   return { flags: cursor.flags, positionals: cursor.positionals }
 }
 
-const scopedWorkListPath = (
-  flags: Readonly<Record<string, string>>,
-  collection: string,
-): Either.Either<string, CliError> =>
-  Either.gen(function* () {
-    if ('workspace' in flags) {
-      const workspaceId = yield* flag(flags, 'workspace')
-      return `/v1/workspaces/${encodePathSegment(workspaceId)}/${collection}`
-    }
-    const workId = yield* flag(flags, 'work')
-    return `/v1/work/${encodePathSegment(workId)}/${collection}`
-  })
-
 const reviewStateCommand =
   (action: 'reject' | 'request_changes' | 'cancel'): CommandHandler =>
   ({ positionals }) =>
@@ -119,45 +108,7 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
 
   ...leaseCommandHandlers,
 
-  'checkpoint create': ({ flags }) =>
-    Either.gen(function* () {
-      const workspaceId = yield* flag(flags, 'workspace')
-      const workId = yield* flag(flags, 'work')
-      const summary = yield* flag(flags, 'summary')
-      return {
-        method: 'POST',
-        path: '/v1/checkpoints',
-        body: {
-          workspace_id: workspaceId,
-          work_id: workId,
-          summary,
-          completed_steps: [],
-          remaining_steps: [],
-          modified_resources: [],
-        },
-        label: 'checkpoint create',
-      }
-    }),
-
-  'checkpoint list': ({ flags }) =>
-    Either.gen(function* () {
-      const path = yield* scopedWorkListPath(flags, 'checkpoints')
-      return {
-        method: 'GET',
-        path,
-        label: 'checkpoint list',
-      }
-    }),
-
-  'checkpoint latest': ({ flags }) =>
-    Either.gen(function* () {
-      const workId = yield* flag(flags, 'work')
-      return {
-        method: 'GET',
-        path: `/v1/work/${encodePathSegment(workId)}/checkpoints/latest`,
-        label: 'checkpoint latest',
-      }
-    }),
+  ...checkpointCommandHandlers,
 
   'artifact create': ({ flags }) =>
     Either.gen(function* () {

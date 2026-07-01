@@ -75,6 +75,19 @@ export const csvFlag = (
 export const encodePathSegment = (value: string): string =>
   encodeURIComponent(value)
 
+export const scopedWorkListPath = (
+  flags: Readonly<Record<string, string>>,
+  collection: string,
+): Either.Either<string, CliError> =>
+  Either.gen(function* () {
+    if ('workspace' in flags) {
+      const workspaceId = yield* flag(flags, 'workspace')
+      return `/v1/workspaces/${encodePathSegment(workspaceId)}/${collection}`
+    }
+    const workId = yield* flag(flags, 'work')
+    return `/v1/work/${encodePathSegment(workId)}/${collection}`
+  })
+
 export const integerFlag = (
   flags: Readonly<Record<string, string>>,
   key: string,
