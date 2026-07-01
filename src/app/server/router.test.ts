@@ -283,6 +283,16 @@ describe('acpRouter', () => {
     expect(claimed.status).toBe(200)
     expect(((await claimed.json()) as { state: string }).state).toBe('claimed')
 
+    const conflict = await handler(
+      post(`/v1/work/${id}/claim`, { worker_id: 'agent_other' }),
+    )
+    const conflictBody = (await conflict.json()) as {
+      error: { code: string; details?: { value?: { holder?: string } } }
+    }
+    expect(conflict.status).toBe(409)
+    expect(conflictBody.error.code).toBe('claim_conflict')
+    expect(conflictBody.error.details?.value?.holder).toBe('agent_claude_code')
+
     const missing = await handler(
       post('/v1/work/work_missing/claim', { worker_id: 'agent_claude_code' }),
     )

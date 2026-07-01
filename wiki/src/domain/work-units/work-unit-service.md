@@ -46,7 +46,10 @@ export interface WorkUnitServiceApi {
     now: Timestamp,
   ) => Effect<
     WorkUnit,
-    NotFoundError | InvalidStateTransitionError | StorageError
+    | NotFoundError
+    | ClaimConflictError
+    | InvalidStateTransitionError
+    | StorageError
   >
   readonly transition: (
     workId: WorkId,
@@ -76,8 +79,9 @@ export const WorkUnitServiceLive: Layer.Layer<
   `createdBy`, and `Timestamp` until dedicated seams exist.
 - Work records are schema-encoded before storage and schema-decoded after reads,
   so `Option` fields never leak as raw JSON inside the service.
-- Invalid transitions fail with `InvalidStateTransitionError`; missing work fails
-  with `NotFoundError`.
+- Claim contention on already assigned work fails with `ClaimConflictError`.
+  Other invalid transitions fail with `InvalidStateTransitionError`; missing work
+  fails with `NotFoundError`.
 
 ### Linkage
 
@@ -89,8 +93,9 @@ export const WorkUnitServiceLive: Layer.Layer<
 
 1. `create` builds an `open` WorkUnit, defaults absent priority to `normal`,
    saves it, then emits `work.created`.
-2. `claim` loads the WorkUnit, validates `open -> claimed`, sets `assigned_to`,
-   saves it, then emits `work.claimed`.
+2. `claim` loads the WorkUnit. Already assigned work fails with
+   `ClaimConflictError`; otherwise the service validates `open -> claimed`, sets
+   `assigned_to`, saves it, then emits `work.claimed`.
 3. `transition` validates the current state against the state-machine table,
    saves the updated state, and emits the corresponding work/review event.
 4. `get` returns `Option.none` for absence and decodes stored records through

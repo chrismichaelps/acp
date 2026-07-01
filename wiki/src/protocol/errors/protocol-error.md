@@ -34,6 +34,10 @@ export class LeaseConflictError extends Data.TaggedError('LeaseConflictError')<{
   readonly resourceUri: string
   readonly holderWorkerId: string
 }> {}
+export class ClaimConflictError extends Data.TaggedError('ClaimConflictError')<{
+  readonly workId: string
+  readonly holderWorkerId: string
+}> {}
 export class InvalidStateTransitionError extends Data.TaggedError(
   'InvalidStateTransitionError',
 )<{
@@ -54,6 +58,7 @@ export class StorageError extends Data.TaggedError('StorageError')<{
 export type DomainError =
   | ValidationError
   | NotFoundError
+  | ClaimConflictError
   | LeaseConflictError
   | InvalidStateTransitionError
   | UnauthorizedError
@@ -73,6 +78,7 @@ export const toProtocolError: (e: DomainError) => {
 - `ValidationError → invalid_request / 400`
 - `UnauthorizedError → unauthorized / 401`
 - `NotFoundError → not_found / 404`
+- `ClaimConflictError → claim_conflict / 409`
 - `LeaseConflictError → lease_conflict / 409`
 - `InvalidStateTransitionError → invalid_state_transition / 409`
 - `UnsupportedCapabilityError → unsupported_capability / 400`

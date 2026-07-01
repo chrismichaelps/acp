@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-01 · first-class-work-claim-conflict slice · added
+  `ClaimConflictError` / `claim_conflict` for assigned-work claim contention,
+  updated HTTP and protocol coverage, and taught the multi-agent dogfood runner
+  to expect the first-class code · validation: live authenticated multi-agent
+  dogfood smoke, check:env, format, lint, typecheck, file-size, and build passed
+  · risk LOW
 - 2026-07-01 · architecture-roadmap-rpc-parity-refresh slice · marked the native
   RPC handler re-audit milestones complete in [[architecture/_MOC]] and added
   the cross-transport lease readback parity milestone · validation: check:env,

@@ -1046,6 +1046,7 @@ Common error codes:
 - `forbidden`
 - `not_found`
 - `conflict`
+- `claim_conflict`
 - `lease_conflict`
 - `invalid_state_transition`
 - `unsupported_capability`
@@ -1261,6 +1262,11 @@ import { Data } from "effect"
 
 export class LeaseConflictError extends Data.TaggedError("LeaseConflictError")<{
   readonly resourceUri: string
+  readonly holderWorkerId: string
+}> {}
+
+export class ClaimConflictError extends Data.TaggedError("ClaimConflictError")<{
+  readonly workId: string
   readonly holderWorkerId: string
 }> {}
 

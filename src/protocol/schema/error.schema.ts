@@ -7,6 +7,7 @@ export const ErrorCode = Schema.Literal(
   'forbidden',
   'not_found',
   'conflict',
+  'claim_conflict',
   'lease_conflict',
   'invalid_state_transition',
   'unsupported_capability',

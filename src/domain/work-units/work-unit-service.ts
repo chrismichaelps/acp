@@ -3,6 +3,7 @@ import { Chunk, Context, Effect, Layer, Option, Schema } from 'effect'
 import { EventStore } from '../events/index.js'
 import { Storage } from '../../infrastructure/storage/index.js'
 import {
+  ClaimConflictError,
   InvalidStateTransitionError,
   NotFoundError,
   StorageError,
@@ -25,7 +26,13 @@ export interface CreateWorkInput {
   readonly now: Timestamp
 }
 
-export type WorkUnitServiceError =
+export type WorkUnitClaimError =
+  | NotFoundError
+  | ClaimConflictError
+  | InvalidStateTransitionError
+  | StorageError
+
+export type WorkUnitTransitionError =
   | NotFoundError
   | InvalidStateTransitionError
   | StorageError
@@ -44,13 +51,13 @@ export interface WorkUnitServiceApi {
     workId: WorkId,
     workerId: WorkerId,
     now: Timestamp,
-  ) => Effect.Effect<WorkUnit, WorkUnitServiceError>
+  ) => Effect.Effect<WorkUnit, WorkUnitClaimError>
   readonly transition: (
     workId: WorkId,
     to: WorkState,
     actor: WorkerId,
     now: Timestamp,
-  ) => Effect.Effect<WorkUnit, WorkUnitServiceError>
+  ) => Effect.Effect<WorkUnit, WorkUnitTransitionError>
 }
 
 export class WorkUnitService extends Context.Tag('WorkUnitService')<
@@ -253,9 +260,24 @@ const make = Effect.gen(function* () {
     })
 
   const claim: WorkUnitServiceApi['claim'] = (workId, workerId, now) =>
-    Effect.flatMap(requireWork(workId), (work) =>
-      transitionWork(work, 'claimed', workerId, now, Option.some(workerId)),
-    )
+    Effect.gen(function* () {
+      const work = yield* requireWork(workId)
+      if (work.state !== 'open' && Option.isSome(work.assigned_to)) {
+        return yield* Effect.fail(
+          new ClaimConflictError({
+            workId,
+            holderWorkerId: work.assigned_to.value,
+          }),
+        )
+      }
+      return yield* transitionWork(
+        work,
+        'claimed',
+        workerId,
+        now,
+        Option.some(workerId),
+      )
+    })
 
   const transition: WorkUnitServiceApi['transition'] = (
     workId,

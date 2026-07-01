@@ -102,7 +102,7 @@ const classifyClaim = (agent, result) => {
   }
   if (
     result.status === 409 &&
-    result.payload?.error?.code === 'invalid_state_transition'
+    result.payload?.error?.code === 'claim_conflict'
   ) {
     return { agent, kind: 'conflict', error: result.payload.error }
   }
