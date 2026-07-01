@@ -41,7 +41,7 @@ export const streamEvents: Effect<
 ### Routes
 
 - `GET /v1/events?workspace_id=<id>&after_seq=<n>` → `event:read`
-- `GET /v1/events/stream?workspace_id=<id>` → live SSE stream
+- `GET /v1/events/stream?workspace_id=<id>` → `event:read`, live SSE stream
 
 ### Linkage
 
@@ -55,9 +55,10 @@ export const streamEvents: Effect<
 `after_seq` query params, authorizes `event:read`, delegates to
 [[event-store]] `readAfter`, converts the returned `Chunk` to a JSON array, and
 schema-encodes each [[Event]] through [[route-support]] `ok`. `streamEvents`
-decodes the existing live query params and delegates to [[sse-event-stream]]
-without changing its wire format. Both handlers pass stable route templates to
-[[route-support]] `respond` so replay and SSE telemetry avoid raw workspace ids.
+decodes the existing live query params, authorizes the same `event:read` scope,
+and delegates to [[sse-event-stream]] without changing its wire format. Both
+handlers pass stable route templates to [[route-support]] `respond` so replay
+and SSE telemetry avoid raw workspace ids.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -80,10 +81,10 @@ streaming and replay reads out of the already-dense router composition.
   reads, and the underlying storage cursor is query-like. _Rejected:_ embedding
   workspace id in the path, which would split live and replay address shapes.
 - **Q:** Which scope gates replay?
-  **A:** `event:read`. _Rationale:_ replay exposes potentially sensitive
-  timeline history and should not reuse mutation scopes or broad workspace reads.
-  _Rejected:_ `workspace:read` (too broad) and no scope (unsafe in required-auth
-  mode).
+  **A:** `event:read`, and the same scope gates live event streams. _Rationale:_
+  replay and SSE both expose potentially sensitive timeline history and should
+  not reuse mutation scopes or broad workspace reads. _Rejected:_
+  `workspace:read` (too broad) and no scope (unsafe in required-auth mode).
 - **Q:** How large should the first replay API be?
   **A:** Cursor-only `after_seq`, no limit yet. _Rationale:_ storage already
   exposes this contract and the audit selected that exact shape; pagination can
