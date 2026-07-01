@@ -213,6 +213,9 @@ describe('native RPC route', () => {
           const released = yield* authed(
             client.lease.release({ lease_id: lease.id }),
           )
+          const releasedLeases = yield* authed(
+            client.lease.list({ workspace_id: workspace.id }),
+          )
           const secondLease = yield* authed(
             client.lease.request(
               yield* decodePayload(AcpRpcs.leaseRequest.payloadSchema, {
@@ -229,6 +232,9 @@ describe('native RPC route', () => {
           const revoked = yield* authed(
             client.lease.revoke({ lease_id: secondLease.id }),
           )
+          const finalLeases = yield* authed(
+            client.lease.list({ workspace_id: workspace.id }),
+          )
           const archived = yield* authed(
             client.workspace.archive({ workspace_id: workspace.id }),
           )
@@ -236,7 +242,10 @@ describe('native RPC route', () => {
           return {
             archived,
             claimed,
+            finalLeases,
+            lease,
             released,
+            releasedLeases,
             renewed,
             revoked,
             running,
@@ -251,6 +260,13 @@ describe('native RPC route', () => {
     expect(result.running.state).toBe('running')
     expect(result.renewed.state).toBe('active')
     expect(result.released).toBeUndefined()
+    expect(
+      result.releasedLeases.find((lease) => lease.id === result.lease.id)
+        ?.state,
+    ).toBe('released')
+    expect(
+      result.finalLeases.find((lease) => lease.id === result.revoked.id)?.state,
+    ).toBe('revoked')
     expect(result.revoked.state).toBe('revoked')
     expect(result.archived.state).toBe('archived')
   })

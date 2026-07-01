@@ -39,9 +39,11 @@ export const acpRpcTags: readonly string[]
 ```
 
 The group covers workspace, worker, session, work, lease, artifact, checkpoint,
-review, event replay, event subscription, and memory operations. `events.list`
-returns a replay array; `events.subscribe` is declared with `stream: true` so the
-generated client receives an Effect `Stream<Event, ProtocolError>`.
+review, event replay, event subscription, and memory operations. Lease readback
+is exposed as `lease.list` over a `workspace_id` payload and returns the same
+workspace-scoped `Lease[]` collection as REST. `events.list` returns a replay
+array; `events.subscribe` is declared with `stream: true` so the generated client
+receives an Effect `Stream<Event, ProtocolError>`.
 
 Every secured operation is wrapped by the local `scoped(...)` helper, which
 attaches an `AcpRpcRequiredScope` annotation and the `AcpRpcAuthMiddleware`
