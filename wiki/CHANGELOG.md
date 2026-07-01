@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-01 · readme-lease-list-command-parity slice · refreshed the README
+  CLI surface summary so lease readback is listed beside the rest of the lease
+  lifecycle commands · validation: check:env, format, lint, typecheck,
+  file-size, and build passed · risk LOW
 - 2026-07-01 · environment-example-drift-check slice · added `check:env` and a
   CI gate that fails when `.env.example` drifts from the implemented ACP
   environment variable surface · validation: check:env, format, lint,
