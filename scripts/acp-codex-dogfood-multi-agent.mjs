@@ -188,7 +188,7 @@ const main = async () => {
     'Planner created the shared ACP work item.',
     ['created workspace', 'created work item'],
   )
-  const plannerMemory = await createMemory(
+  await createMemory(
     planner,
     workspace.id,
     work.id,
@@ -280,6 +280,16 @@ const main = async () => {
     leaseHolder.token,
   )
   assert(renewed.state === 'active', 'renewed lease was not active')
+  const activeLeases = await expectPayload(
+    'GET',
+    `/v1/leases?workspace_id=${encodeURIComponent(workspace.id)}`,
+    undefined,
+    reviewer.token,
+  )
+  const activeLease = activeLeases.find(
+    (candidate) => candidate.id === lease.id,
+  )
+  assert(activeLease?.state === 'active', 'lease readback did not show active')
 
   const workerCheckpoint = await createCheckpoint(
     activeWorker,
@@ -309,7 +319,7 @@ const main = async () => {
     activeWorker.token,
     [201],
   )
-  const progress = await expectPayload(
+  await expectPayload(
     'POST',
     `/v1/work/${encodeURIComponent(work.id)}/events`,
     {
@@ -404,6 +414,19 @@ const main = async () => {
     [204],
   )
   assert(released.status === 204, 'lease release did not return 204')
+  const releasedLeases = await expectPayload(
+    'GET',
+    `/v1/leases?workspace_id=${encodeURIComponent(workspace.id)}`,
+    undefined,
+    reviewer.token,
+  )
+  const releasedLease = releasedLeases.find(
+    (candidate) => candidate.id === lease.id,
+  )
+  assert(
+    releasedLease?.state === 'released',
+    'lease readback did not show released',
+  )
 
   const completed = await expectPayload(
     'PATCH',
@@ -453,12 +476,12 @@ const main = async () => {
         lease_winner: leaseHolder.workerId,
         lease_conflict_holder: optionValue(leaseConflicts[0].error.details)
           ?.holder,
+        lease_state_after_readback: activeLease.state,
+        lease_state_after_release: releasedLease.state,
         planner_checkpoint_id: plannerCheckpoint.id,
-        planner_memory_id: plannerMemory.id,
         worker_checkpoint_id: workerCheckpoint.id,
         handoff_memory_id: handoffMemory.id,
         artifact_id: artifact.id,
-        progress_event_id: progress.id,
         first_review_state: changes.state,
         second_review_state: approved.state,
         completed_state: completed.state,
