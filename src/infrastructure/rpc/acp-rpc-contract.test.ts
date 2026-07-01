@@ -34,6 +34,7 @@ describe('AcpRpcGroup', () => {
       'checkpoint.list_for_workspace',
       'events.list',
       'events.subscribe',
+      'lease.list',
       'lease.release',
       'lease.renew',
       'lease.request',
@@ -80,6 +81,7 @@ describe('AcpRpcGroup', () => {
     expect(requiredScope(AcpRpcs.workerList)).toBe('worker:read')
     expect(requiredScope(AcpRpcs.workspaceCreate)).toBe('workspace:write')
     expect(requiredScope(AcpRpcs.workPublishEvent)).toBe('work:publish_event')
+    expect(requiredScope(AcpRpcs.leaseList)).toBe('workspace:read')
     expect(requiredScope(AcpRpcs.leaseRevoke)).toBe('lease:revoke')
     expect(requiredScope(AcpRpcs.artifactUpdate)).toBe('artifact:update')
     expect(requiredScope(AcpRpcs.checkpointCreate)).toBe('checkpoint:create')

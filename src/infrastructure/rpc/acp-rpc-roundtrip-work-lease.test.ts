@@ -100,6 +100,10 @@ describe('native RPC round-trip — worker/workspace/work/lease', () => {
         { lease_id: lease.id },
         { headers: auth },
       )
+      const releasedLeases = yield* client.lease.list(
+        { workspace_id: workspace.id },
+        { headers: auth },
+      )
 
       const lease2 = yield* client.lease.request(
         yield* decodePayload(AcpRpcs.leaseRequest.payloadSchema, {
@@ -117,14 +121,20 @@ describe('native RPC round-trip — worker/workspace/work/lease', () => {
         { lease_id: lease2.id },
         { headers: auth },
       )
+      const finalLeases = yield* client.lease.list(
+        { workspace_id: workspace.id },
+        { headers: auth },
+      )
 
       return {
         archived,
         claimed,
         fetched,
         forWorkspace,
+        finalLeases,
         lease,
         released,
+        releasedLeases,
         renewed,
         revoked,
         running,
@@ -151,6 +161,13 @@ describe('native RPC round-trip — worker/workspace/work/lease', () => {
     expect(result.archived.state).toBe('archived')
     expect(result.renewed.id).toBe(result.lease.id)
     expect(result.released).toBeUndefined()
+    expect(
+      result.releasedLeases.find((lease) => lease.id === result.lease.id)
+        ?.state,
+    ).toBe('released')
+    expect(
+      result.finalLeases.find((lease) => lease.id === result.revoked.id)?.state,
+    ).toBe('revoked')
     expect(result.revoked.state).toBe('revoked')
   })
 })
