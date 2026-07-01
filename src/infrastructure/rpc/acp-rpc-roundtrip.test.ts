@@ -56,7 +56,7 @@ describe('native RPC round-trip', () => {
     expect(result.listed.map((w) => w.id)).toContain(result.created.id)
     expect(Either.isLeft(result.denied)).toBe(true)
     if (Either.isLeft(result.denied)) {
-      expect(result.denied.left.error.code).toBe('unauthorized')
+      expect(result.denied.left.error.code).toBe('forbidden')
     }
   })
 })

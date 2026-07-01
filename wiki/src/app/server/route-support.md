@@ -59,8 +59,11 @@ export const pathParam: (
 `authorize` reads the bearer token from `Authorization`, validates it through
 [[session-service]], and enforces the requested scope when supplied. Missing
 tokens fall back to `worker_system` only when `ACP_REQUIRE_AUTH` is false.
-Action scopes are closed in [[common]], so callers cannot invent route-local
-permission strings.
+Credential failures (missing token in required-auth mode, unknown token) fail
+`UnauthorizedError` (401); an authenticated session lacking the requested scope
+fails `ForbiddenError` (403 `forbidden`, spec §15) — the caller is known, the
+action is denied. Action scopes are closed in [[common]], so callers cannot
+invent route-local permission strings.
 
 `respond(route)` catches every route failure and folds tagged domain errors
 through [[http-error-mapper]], parse/request failures into `invalid_request`, and

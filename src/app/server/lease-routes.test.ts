@@ -119,7 +119,7 @@ describe('lease routes', () => {
       post(`/v1/leases/${lease.id}/renew`, {}, token),
     )
 
-    expect(denied.status).toBe(401)
+    expect(denied.status).toBe(403)
   })
 
   it('enforces workspace:read for authenticated lease listing', async () => {
@@ -133,6 +133,6 @@ describe('lease routes', () => {
       }),
     )
 
-    expect(denied.status).toBe(401)
+    expect(denied.status).toBe(403)
   })
 })

@@ -2,6 +2,18 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-01 · protocol-conformance-hardening slice · closed the last spec-vs-code
+  gaps: [[lease-service]] `request` now emits `lease.requested` +
+  `lease.granted`/`lease.denied` as outcome pairs (spec §11 lease vocabulary fully
+  reachable), scope denial fails a new `ForbiddenError` → `403 forbidden` in
+  [[protocol-error]] across [[route-support]] and [[rpc-auth]] (credential
+  failures stay 401), and `PublishWorkEventPayload` in [[acp-http-api]] narrows
+  to the §12.6 progress vocabulary so workers cannot forge lifecycle events;
+  specs §8/§12.6 and README updated to state the semantics · validation: full
+  gate green (typecheck, lint, format, file-size, env, 596 tests incl. rebuilt
+  dist; +10 tests) · risk MEDIUM (401→403 for underscoped sessions is a
+  wire-visible change)
+
 - 2026-07-01 · cli-review-command-registry slice · extracted review CLI parsing
   into [[cli-review-commands]] and wired it into the additive parseArgs registry,
   completing the feature command-map split for [[cli-commands]] without changing

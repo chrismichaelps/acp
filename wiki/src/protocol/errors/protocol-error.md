@@ -47,6 +47,9 @@ export class InvalidStateTransitionError extends Data.TaggedError(
 export class UnauthorizedError extends Data.TaggedError('UnauthorizedError')<{
   readonly reason: string
 }> {}
+export class ForbiddenError extends Data.TaggedError('ForbiddenError')<{
+  readonly reason: string
+}> {}
 export class UnsupportedCapabilityError extends Data.TaggedError(
   'UnsupportedCapabilityError',
 )<{ readonly capability: string }> {}
@@ -62,6 +65,7 @@ export type DomainError =
   | LeaseConflictError
   | InvalidStateTransitionError
   | UnauthorizedError
+  | ForbiddenError
   | UnsupportedCapabilityError
   | StorageError
 
@@ -76,7 +80,8 @@ export const toProtocolError: (e: DomainError) => {
 `toProtocolError` is a total `switch` on `e._tag`:
 
 - `ValidationError → invalid_request / 400`
-- `UnauthorizedError → unauthorized / 401`
+- `UnauthorizedError → unauthorized / 401` (no/invalid credentials)
+- `ForbiddenError → forbidden / 403` (authenticated but lacking the required scope)
 - `NotFoundError → not_found / 404`
 - `ClaimConflictError → claim_conflict / 409`
 - `LeaseConflictError → lease_conflict / 409`
@@ -84,6 +89,11 @@ export const toProtocolError: (e: DomainError) => {
 - `UnsupportedCapabilityError → unsupported_capability / 400`
 - `StorageError → internal_error / 500`
   Exhaustiveness enforced by a `never` assertion in the default branch.
+
+Spec §15 codes `conflict` and `rate_limited` remain reserved wire vocabulary in
+[[error.schema]]: no domain error produces them yet (specific conflicts use
+`claim_conflict`/`lease_conflict`; no rate limiter exists). They are kept in the
+`ErrorCode` literal so clients accept them when a producer appears.
 
 ## Negative Logic (Prohibited Paths)
 

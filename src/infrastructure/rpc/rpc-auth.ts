@@ -3,7 +3,10 @@ import { Headers } from '@effect/platform'
 import { Context, Effect, Option } from 'effect'
 import { AppConfigTag } from '../../config/app-config.js'
 import { SessionService } from '../../domain/sessions/index.js'
-import { UnauthorizedError } from '../../protocol/errors/protocol-error.js'
+import {
+  ForbiddenError,
+  UnauthorizedError,
+} from '../../protocol/errors/protocol-error.js'
 import type {
   Permission,
   ProtocolError,
@@ -59,7 +62,7 @@ export const authorizeRpc = (
           ? Effect.succeed(s.worker_id)
           : Effect.fail(
               toRpcError(
-                new UnauthorizedError({
+                new ForbiddenError({
                   reason: `session lacks scope: ${scope}`,
                 }),
               ),

@@ -32,7 +32,8 @@ export const ArtifactPath: Schema.Struct<{ artifact_id: ArtifactId }>
 export const WorkspacePath: Schema.Struct<{ workspace_id: WorkspaceId }>
 export const WorkerPath: Schema.Struct<{ worker_id: WorkerId }>
 export const UpdateWorkStatePayload: Schema.Struct<{ state: WorkState }>
-export const PublishWorkEventPayload: Schema.Struct<{ type: EventType; data: Record<string, unknown> }>
+export const WorkProgressEventType: Schema.Literal<['work.progressed']>
+export const PublishWorkEventPayload: Schema.Struct<{ type: WorkProgressEventType; data: Record<string, unknown> }>
 export const ApproveReviewPayload: Schema.Struct<{ met_requirements: string[] }>
 export const ArtifactContentResponse: Schema.Struct<{ content: string }>
 export const RenewLeasePayload: Schema.Struct<{ ttl_seconds?: Positive }>

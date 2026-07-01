@@ -85,7 +85,7 @@ describe('workspace routes', () => {
       }),
     )
 
-    expect(denied.status).toBe(401)
+    expect(denied.status).toBe(403)
   })
 
   it('lists workspace checkpoints, artifacts, and reviews', async () => {
@@ -202,6 +202,6 @@ describe('workspace routes', () => {
       }),
     )
 
-    expect(denied.status).toBe(401)
+    expect(denied.status).toBe(403)
   })
 })

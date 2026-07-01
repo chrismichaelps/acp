@@ -73,7 +73,7 @@ describe('worker routes', () => {
       }),
     )
 
-    expect(denied.status).toBe(401)
+    expect(denied.status).toBe(403)
   })
 
   it('returns not found for an unknown worker id', async () => {

@@ -55,7 +55,7 @@ describe('AcpRpcSessionWorkerWorkspaceHandlersLive', () => {
     const result = await Effect.runPromise(Effect.provide(program, Runtime))
     expect(Either.isLeft(result)).toBe(true)
     if (Either.isLeft(result)) {
-      expect(result.left.error.code).toBe('unauthorized')
+      expect(result.left.error.code).toBe('forbidden')
     }
   })
 

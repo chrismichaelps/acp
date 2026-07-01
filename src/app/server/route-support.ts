@@ -12,6 +12,7 @@ import { toHttpErrorResponse } from '../../infrastructure/http/index.js'
 import {
   toProtocolError,
   UnauthorizedError,
+  ForbiddenError,
   ValidationError,
 } from '../../protocol/errors/protocol-error.js'
 import type { DomainError } from '../../protocol/errors/protocol-error.js'
@@ -31,6 +32,7 @@ const domainTags = new Set<string>([
   'LeaseConflictError',
   'InvalidStateTransitionError',
   'UnauthorizedError',
+  'ForbiddenError',
   'UnsupportedCapabilityError',
   'StorageError',
 ])
@@ -66,7 +68,7 @@ export const authorize = (scope?: Permission) =>
         scope === undefined || s.permissions.includes(scope)
           ? Effect.succeed(s.worker_id)
           : Effect.fail(
-              new UnauthorizedError({
+              new ForbiddenError({
                 reason: `session lacks scope: ${scope}`,
               }),
             ),

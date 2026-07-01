@@ -89,6 +89,12 @@ export const LeaseServiceLive: Layer.Layer<
   `{resource.kind, resource.uri}` in the same [[Workspace]] held by another
   [[Worker]].
 - Mutations persist state before emitting the corresponding `lease.*` [[Event]].
+- `request` records its outcome as an event pair once decided: a grant persists
+  the lease then appends `lease.requested` + `lease.granted`; a conflict appends
+  `lease.requested` + `lease.denied` (denial data names the conflicting holder)
+  before failing `LeaseConflictError`. Request-phase events carry payload-derived
+  data (no persisted lease exists on denial) — spec §11's full lease vocabulary
+  is now reachable.
 - `expireDue` (one workspace) and `expireAllDue` (every workspace, scanning all
   stored leases) lapse due active leases to `expired`, each emitting `lease.expired`;
   the [[sweeper]] calls `expireAllDue` so a lease in an unregistered workspace still
@@ -104,9 +110,10 @@ export const LeaseServiceLive: Layer.Layer<
 
 ## Algorithm
 
-1. `request` lists leases for the workspace, searches for an active unexpired
-   conflicting resource claim, fails `LeaseConflictError` when another holder owns
-   the resource, otherwise saves an `active` lease and emits `lease.granted`.
+1. `request` lists leases for the workspace and searches for an active unexpired
+   conflicting resource claim. On conflict it emits `lease.requested` +
+   `lease.denied` then fails `LeaseConflictError`; otherwise it saves an `active`
+   lease and emits `lease.requested` + `lease.granted`.
 2. `get` loads one lease by id; absence is `Option.none`.
 3. `list` decodes the `lease` collection and filters by `workspace_id`.
 4. `renew` requires the lease to still be active and unexpired at `now`, extends
@@ -122,7 +129,9 @@ export const LeaseServiceLive: Layer.Layer<
 - ❌ Do NOT grant a resource claim when another active unexpired lease owns the
   same resource in the same workspace.
 - ❌ Do NOT hardcode the default TTL; use [[app-config]].
-- ❌ Do NOT emit a lease event before the state write succeeds.
+- ❌ Do NOT emit a lease event before the command's outcome is decided: grant
+  events follow the successful state write; `lease.requested`/`lease.denied` are
+  appended only once the conflict verdict is known, never speculatively.
 - ❌ Do NOT delete expired/released/revoked leases; the history remains readable.
 
 ## Depth
@@ -135,11 +144,19 @@ logic across transport handlers and make resource coordination fragile.
 ## Grill Log
 
 - **Q:** Should `request` emit `lease.requested` before attempting the grant?
-  **A:** No in this slice. _Rationale:_ current domain services emit the durable
-  outcome after state has changed. A future audit layer can record failed attempts
-  explicitly when it owns host-scoped event semantics. _Rejected:_ appending
-  `lease.requested` before persistence (would introduce side effects for a command
-  that may still fail).
+  **A (superseded 2026-07-01):** Originally deferred to avoid side effects for a
+  command that may still fail. The protocol-conformance-hardening slice closes
+  spec §11's emission gap while honoring that concern: `lease.requested` is
+  appended only **after** the conflict verdict — paired with `lease.granted`
+  (post-persist) or `lease.denied` (pre-failure) — so events remain durable
+  outcome records, never speculative writes. _Rejected:_ emitting `requested`
+  on entry before the conflict check (the original objection stands).
+- **Q:** What data do `lease.requested`/`lease.denied` carry when no lease was
+  persisted?
+  **A:** Payload-derived data (`lease_id` from the caller-supplied id, resource
+  kind/uri, holder); `lease.denied` adds the conflicting holder. _Rejected:_
+  synthesizing a fake `Lease` value with an `active` state for the denial path —
+  it would lie about state in the event data.
 - **Q:** Should an expired active lease block a new request before `expireDue`
   runs?
   **A:** No. Conflict checks use `expires_at > now`, so an active-but-past lease is
