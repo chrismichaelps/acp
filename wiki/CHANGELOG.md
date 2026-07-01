@@ -2,6 +2,17 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · post-rpc-client-ergonomics-audit slice · refreshed
+  [[protocol-implementation-2026-06-28]] to close the client-ergonomics slice
+  (`acpNativeRpcPath`/`acpNativeRpcUrl`/`acpRpcBearerHeaders`/
+  `withAcpRpcBearer`/`acpRpcClientHostLayer`) and record that native RPC has
+  reached full technical readiness — every method actor-bridged, mounted over
+  real HTTP with auth/telemetry middleware, and double-proven (`RpcTest` +
+  live-mounted-HTTP) — with zero in-tree production consumers, since
+  [[cli-client]] deliberately targets plain REST; per the standing decision, no
+  further RPC-migration slice is selected until a consumer is concretely named
+  · docs-only validation: format, file-size, and diff whitespace checks green ·
+  risk LOW
 - 2026-06-30 · readme-cli-auth-artifact-refresh slice · refreshed
   [[README]] CLI prose to mention pull request artifact registration and the
   `session init` → `ACP_RPC_TOKEN` authenticated command flow · validation:
