@@ -1227,6 +1227,9 @@ Rules:
 - Every environment variable must have a typed Config definition.
 - Defaults must be explicit and documented.
 - Config must be provided as a Layer.
+- The repository must keep a root `.env.example` that names every implemented
+  host, client, bridge, and dogfood environment variable without embedding
+  operator secrets.
 
 Suggested folder:
 

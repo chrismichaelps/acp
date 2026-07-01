@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-01 · env-example-runtime-reference slice · clarified `.env.example` as
+  the drift-checked runtime manifest, aligned the SQLite path sample with the
+  implemented default, and documented the no-secrets rule in README/spec/wiki ·
+  validation: check:env, format:check, and file-size passed · risk LOW
 - 2026-07-01 · first-class-work-claim-conflict slice · added
   `ClaimConflictError` / `claim_conflict` for assigned-work claim contention,
   updated HTTP and protocol coverage, and taught the multi-agent dogfood runner
