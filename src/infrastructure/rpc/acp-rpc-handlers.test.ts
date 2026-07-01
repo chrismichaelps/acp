@@ -167,11 +167,13 @@ describe('AcpRpcSessionWorkerWorkspaceHandlersLive', () => {
       const workspaceCreate =
         yield* AcpRpcGroup.accessHandler('workspace.create')
       const leaseRequest = yield* AcpRpcGroup.accessHandler('lease.request')
+      const leaseList = yield* AcpRpcGroup.accessHandler('lease.list')
       const leaseRenew = yield* AcpRpcGroup.accessHandler('lease.renew')
       const leaseRelease = yield* AcpRpcGroup.accessHandler('lease.release')
       const leaseRevoke = yield* AcpRpcGroup.accessHandler('lease.revoke')
 
       const initPayload = yield* decodeInitialize([
+        'workspace:read',
         'workspace:write',
         'lease:create',
         'lease:renew',
@@ -215,6 +217,7 @@ describe('AcpRpcSessionWorkerWorkspaceHandlersLive', () => {
         headers,
       )
       const revoked = yield* leaseRevoke({ lease_id: secondLease.id }, headers)
+      const leases = yield* leaseList({ workspace_id: workspace.id }, headers)
       yield* leaseRequest(
         yield* decodePayload(AcpRpcs.leaseRequest.payloadSchema, {
           workspace_id: workspace.id,
@@ -236,13 +239,19 @@ describe('AcpRpcSessionWorkerWorkspaceHandlersLive', () => {
         ),
       )
 
-      return { conflict, firstLease, released, renewed, revoked }
+      return { conflict, firstLease, leases, released, renewed, revoked }
     })
 
     const result = await Effect.runPromise(Effect.provide(program, Runtime))
     expect(result.firstLease.state).toBe('active')
     expect(result.renewed.id).toBe(result.firstLease.id)
     expect(result.released).toBeUndefined()
+    expect(
+      result.leases.find((lease) => lease.id === result.firstLease.id)?.state,
+    ).toBe('released')
+    expect(
+      result.leases.find((lease) => lease.id === result.revoked.id)?.state,
+    ).toBe('revoked')
     expect(result.revoked.state).toBe('revoked')
     expect(Either.isLeft(result.conflict)).toBe(true)
     if (Either.isLeft(result.conflict)) {

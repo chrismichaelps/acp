@@ -44,6 +44,7 @@ export const AcpRpcSessionWorkerWorkspaceHandlersLive: Layer<
   | Rpc.Handler<'work.update_state'>
   | Rpc.Handler<'work.publish_event'>
   | Rpc.Handler<'lease.request'>
+  | Rpc.Handler<'lease.list'>
   | Rpc.Handler<'lease.renew'>
   | Rpc.Handler<'lease.release'>
   | Rpc.Handler<'lease.revoke'>
@@ -108,9 +109,10 @@ matching scopes (`work:create`, `workspace:read`, `work:claim`, `work:update`,
 `work:publish_event`), call [[work-unit-service]] directly, and append explicit
 published work events through [[event-store]].
 
-Lease handlers use `lease:create`, `lease:renew`, `lease:release`, and
-`lease:revoke`, mint request ids/timestamps through [[id-clock]], and delegate
-to [[lease-service]] so TTL defaults, active-resource conflict checks,
+Lease handlers use `lease:create`, `workspace:read`, `lease:renew`,
+`lease:release`, and `lease:revoke`, mint request ids/timestamps through
+[[id-clock]], and delegate to [[lease-service]] so TTL defaults,
+active-resource conflict checks, workspace-scoped readback,
 renew/release/revoke transitions, and lease events remain single-sourced in the
 domain layer. `lease.release` intentionally returns no RPC payload, matching the
 existing HTTP `204` behavior.

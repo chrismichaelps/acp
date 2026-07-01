@@ -22,9 +22,10 @@ after the actor-bridge sweep completed.
 
 The test initializes a session with read/write, work, and lease scopes, then
 drives the generated client through worker discovery, workspace create/update/
-archive, work create/list/get/claim/update-state, and lease request/renew/
-release/revoke. Assertions pin identity, state transitions, optional
-assignments, and void release behavior at the typed client boundary.
+archive, work create/list/get/claim/update-state, and lease
+request/list/renew/release/revoke. Assertions pin identity, state transitions,
+optional assignments, lease readback state, and void release behavior at the
+typed client boundary.
 
 ## Negative Logic (Prohibited Paths)
 

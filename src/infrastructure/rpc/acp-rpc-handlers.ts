@@ -327,6 +327,18 @@ const leaseRequestHandler = AcpRpcGroup.toLayerHandler(
     }),
 )
 
+const leaseListHandler = AcpRpcGroup.toLayerHandler(
+  'lease.list',
+  (payload, options) =>
+    Effect.gen(function* () {
+      yield* rpcActor(options.headers, 'workspace:read')
+      const service = yield* LeaseService
+      return yield* service
+        .list(payload.workspace_id)
+        .pipe(Effect.mapError(toRpcError))
+    }),
+)
+
 const leaseRenewHandler = AcpRpcGroup.toLayerHandler(
   'lease.renew',
   (payload, options) =>
@@ -384,6 +396,7 @@ export const AcpRpcSessionWorkerWorkspaceHandlersLive = Layer.mergeAll(
   workUpdateStateHandler,
   workPublishEventHandler,
   leaseRequestHandler,
+  leaseListHandler,
   leaseRenewHandler,
   leaseReleaseHandler,
   leaseRevokeHandler,

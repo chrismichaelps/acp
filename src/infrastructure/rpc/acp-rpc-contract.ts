@@ -192,6 +192,12 @@ const leaseRequest = scoped(
   rpc('lease.request').setPayload(RequestLeasePayload).setSuccess(Lease),
   'lease:create',
 )
+const leaseList = scoped(
+  rpc('lease.list')
+    .setPayload(WorkspaceIdPayload)
+    .setSuccess(Schema.Array(Lease)),
+  'workspace:read',
+)
 const leaseRenew = scoped(
   rpc('lease.renew').setPayload(LeaseRenewRpcPayload).setSuccess(Lease),
   'lease:renew',
@@ -341,6 +347,7 @@ export const AcpRpcs = {
   checkpointListForWorkspace,
   eventList,
   eventSubscribe,
+  leaseList,
   leaseRelease,
   leaseRenew,
   leaseRequest,
@@ -384,6 +391,7 @@ export const AcpRpcGroup = RpcGroup.make(
   workUpdateState,
   workPublishEvent,
   leaseRequest,
+  leaseList,
   leaseRenew,
   leaseRelease,
   leaseRevoke,
