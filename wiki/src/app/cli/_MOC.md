@@ -19,6 +19,7 @@ Mirror of `@root/src/app/cli/`. The `acp` command-line client of [[acp-router]].
 - [[cli-lease-commands]] — lease lifecycle and readback command map.
 - [[cli-memory-commands]] — workspace memory command map.
 - [[cli-work-commands]] — work lifecycle command map.
+- [[cli-worker-commands]] — worker registry command map.
 - [[cli-workspace-commands]] — workspace lifecycle command map.
 - [[cli-client]] — `HttpClient` sender against the local host.
 - [[cli-main]] — Node entrypoint; prints JSON results.
