@@ -2,6 +2,10 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-01 · documented-environment-example slice · added root
+  `.env.example` for host, client, stdio bridge, and dogfood variables; aligned
+  the spec config example and [[app-config]] mirror with implemented env names ·
+  validation: format, lint, typecheck, file-size, and build passed · risk LOW
 - 2026-07-01 · cli-lease-list-command slice · added the lease list CLI command
   as a workspace-scoped read over `GET /v1/leases`, with parser coverage and
   [[cli-commands]] / [[cli-usage]] mirrors · validation: format, lint,
