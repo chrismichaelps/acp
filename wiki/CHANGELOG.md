@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-01 · cli-workspace-command-registry slice · extracted workspace CLI
+  parsing into [[cli-workspace-commands]] and wired it into parseArgs through
+  the additive command-map registry, reducing [[cli-commands]] file-size pressure
+  without changing CLI behavior · validation: targeted CLI parser test, format,
+  lint, typecheck, and file-size passed · risk LOW
 - 2026-07-01 · cli-lease-command-registry slice · extracted lease CLI parsing
   into [[cli-lease-commands]] and wired it into the central parseArgs dispatch
   table, reducing [[cli-commands]] file-size pressure without changing CLI

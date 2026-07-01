@@ -16,6 +16,7 @@ import { eventCommandHandlers } from './event-commands.js'
 import { leaseCommandHandlers } from './lease-commands.js'
 import { memoryCommandHandlers } from './memory-commands.js'
 import { sessionCommandHandlers } from './session-commands.js'
+import { workspaceCommandHandlers } from './workspace-commands.js'
 
 export { CliError, type CliRequest } from './command-support.js'
 
@@ -122,59 +123,7 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
       label: 'worker get',
     })),
 
-  'workspace list': () =>
-    Either.right({
-      method: 'GET',
-      path: '/v1/workspaces',
-      label: 'workspace list',
-    }),
-
-  'workspace create': ({ flags }) =>
-    Either.gen(function* () {
-      const name = yield* flag(flags, 'name')
-      const kind = yield* flag(flags, 'kind')
-      const uri = yield* flag(flags, 'uri')
-      return {
-        method: 'POST',
-        path: '/v1/workspaces',
-        body: {
-          name,
-          kind,
-          uri,
-          ...optionalAs(flags, 'default-branch', 'default_branch'),
-        },
-        label: 'workspace create',
-      }
-    }),
-
-  'workspace update': ({ positionals, flags }) =>
-    Either.gen(function* () {
-      const workspaceId = yield* positional(positionals, 0, 'workspace_id')
-      const name = yield* flag(flags, 'name')
-      const kind = yield* flag(flags, 'kind')
-      const uri = yield* flag(flags, 'uri')
-      return {
-        method: 'PATCH',
-        path: `/v1/workspaces/${encodePathSegment(workspaceId)}`,
-        body: {
-          name,
-          kind,
-          uri,
-          ...optionalAs(flags, 'default-branch', 'default_branch'),
-        },
-        label: 'workspace update',
-      }
-    }),
-
-  'workspace archive': ({ positionals }) =>
-    Either.gen(function* () {
-      const workspaceId = yield* positional(positionals, 0, 'workspace_id')
-      return {
-        method: 'POST',
-        path: `/v1/workspaces/${encodePathSegment(workspaceId)}/archive`,
-        label: 'workspace archive',
-      }
-    }),
+  ...workspaceCommandHandlers,
 
   'work create': ({ positionals, flags }) =>
     Either.gen(function* () {
