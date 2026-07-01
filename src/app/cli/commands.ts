@@ -5,14 +5,13 @@ import {
   csvFlag,
   encodePathSegment,
   flag,
-  optional,
-  optionalAs,
   positional,
   scopedWorkListPath,
   type CliRequest,
   type CommandHandler,
   type Parsed,
 } from './command-support.js'
+import { artifactCommandHandlers } from './artifact-commands.js'
 import { checkpointCommandHandlers } from './checkpoint-commands.js'
 import { eventCommandHandlers } from './event-commands.js'
 import { leaseCommandHandlers } from './lease-commands.js'
@@ -110,92 +109,7 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
 
   ...checkpointCommandHandlers,
 
-  'artifact create': ({ flags }) =>
-    Either.gen(function* () {
-      const workspaceId = yield* flag(flags, 'workspace')
-      const workId = yield* flag(flags, 'work')
-      const kind = yield* flag(flags, 'kind')
-      return {
-        method: 'POST',
-        path: '/v1/artifacts',
-        body: {
-          workspace_id: workspaceId,
-          work_id: workId,
-          kind,
-          ...optional(flags, 'uri'),
-          ...optional(flags, 'summary'),
-          ...optional(flags, 'content'),
-        },
-        label: 'artifact create',
-      }
-    }),
-
-  'artifact pr': ({ flags }) =>
-    Either.gen(function* () {
-      const workspaceId = yield* flag(flags, 'workspace')
-      const workId = yield* flag(flags, 'work')
-      const uri = yield* flag(flags, 'url')
-      return {
-        method: 'POST',
-        path: '/v1/artifacts',
-        body: {
-          workspace_id: workspaceId,
-          work_id: workId,
-          kind: 'pull_request',
-          uri,
-          ...optional(flags, 'summary'),
-        },
-        label: 'artifact pr',
-      }
-    }),
-
-  'artifact update': ({ positionals, flags }) =>
-    Either.gen(function* () {
-      const artifactId = yield* positional(positionals, 0, 'artifact_id')
-      const kind = yield* flag(flags, 'kind')
-      return {
-        method: 'PATCH',
-        path: `/v1/artifacts/${encodePathSegment(artifactId)}`,
-        body: {
-          kind,
-          ...optional(flags, 'uri'),
-          ...optionalAs(flags, 'media-type', 'media_type'),
-          ...optional(flags, 'summary'),
-          ...optional(flags, 'content'),
-        },
-        label: 'artifact update',
-      }
-    }),
-
-  'artifact list': ({ flags }) =>
-    Either.gen(function* () {
-      const path = yield* scopedWorkListPath(flags, 'artifacts')
-      return {
-        method: 'GET',
-        path,
-        label: 'artifact list',
-      }
-    }),
-
-  'artifact content': ({ positionals }) =>
-    Either.gen(function* () {
-      const artifactId = yield* positional(positionals, 0, 'artifact_id')
-      return {
-        method: 'GET',
-        path: `/v1/artifacts/${encodePathSegment(artifactId)}/content`,
-        label: 'artifact content',
-      }
-    }),
-
-  'artifact delete': ({ positionals }) =>
-    Either.gen(function* () {
-      const artifactId = yield* positional(positionals, 0, 'artifact_id')
-      return {
-        method: 'DELETE',
-        path: `/v1/artifacts/${encodePathSegment(artifactId)}`,
-        label: 'artifact delete',
-      }
-    }),
+  ...artifactCommandHandlers,
 
   ...memoryCommandHandlers,
 
