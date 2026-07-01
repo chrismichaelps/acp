@@ -32,6 +32,10 @@ export class UnauthorizedError extends Data.TaggedError('UnauthorizedError')<{
   readonly reason: string
 }> {}
 
+export class ForbiddenError extends Data.TaggedError('ForbiddenError')<{
+  readonly reason: string
+}> {}
+
 export class UnsupportedCapabilityError extends Data.TaggedError(
   'UnsupportedCapabilityError',
 )<{
@@ -50,6 +54,7 @@ export type DomainError =
   | LeaseConflictError
   | InvalidStateTransitionError
   | UnauthorizedError
+  | ForbiddenError
   | UnsupportedCapabilityError
   | StorageError
 
@@ -88,6 +93,11 @@ export const toProtocolError = (e: DomainError): ProtocolErrorResponse => {
       return {
         httpStatus: 401,
         body: { error: envelope('unauthorized', e.reason) },
+      }
+    case 'ForbiddenError':
+      return {
+        httpStatus: 403,
+        body: { error: envelope('forbidden', e.reason) },
       }
     case 'NotFoundError':
       return {

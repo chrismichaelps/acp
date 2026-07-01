@@ -9,6 +9,7 @@ import {
   LeaseConflictError,
   InvalidStateTransitionError,
   UnauthorizedError,
+  ForbiddenError,
   UnsupportedCapabilityError,
   StorageError,
 } from './protocol-error.js'
@@ -18,6 +19,11 @@ describe('toProtocolError', () => {
     const cases = [
       [new ValidationError({ issues: ['bad'] }), 400, 'invalid_request'],
       [new UnauthorizedError({ reason: 'no token' }), 401, 'unauthorized'],
+      [
+        new ForbiddenError({ reason: 'session lacks scope: work:update' }),
+        403,
+        'forbidden',
+      ],
       [new NotFoundError({ entity: 'work', id: 'w1' }), 404, 'not_found'],
       [
         new ClaimConflictError({ workId: 'work_1', holderWorkerId: 'agent_a' }),

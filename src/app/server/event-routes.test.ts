@@ -89,7 +89,7 @@ describe('event routes', () => {
       }),
     )
 
-    expect(denied.status).toBe(401)
+    expect(denied.status).toBe(403)
   })
 
   it('enforces event:read for authenticated event streams', async () => {
@@ -106,6 +106,6 @@ describe('event routes', () => {
       ),
     )
 
-    expect(denied.status).toBe(401)
+    expect(denied.status).toBe(403)
   })
 })

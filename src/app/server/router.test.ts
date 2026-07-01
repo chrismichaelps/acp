@@ -126,13 +126,13 @@ describe('acpRouter', () => {
     )
   })
 
-  it('rejects a mutation when the session lacks the required scope (401)', async () => {
+  it('rejects a mutation when the session lacks the required scope (403)', async () => {
     const handler = makeHandler()
     const token = await initSession(handler, ['review:create'])
     const res = await handler(authedWork(token))
-    expect(res.status).toBe(401)
+    expect(res.status).toBe(403)
     expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
-      'unauthorized',
+      'forbidden',
     )
   })
 
@@ -431,10 +431,10 @@ describe('acpRouter', () => {
         body: JSON.stringify({ met_requirements: ['tests_pass'] }),
       }),
     )
-    expect(approved.status).toBe(401)
+    expect(approved.status).toBe(403)
     expect(
       ((await approved.json()) as { error: { code: string } }).error.code,
-    ).toBe('unauthorized')
+    ).toBe('forbidden')
   })
 })
 

@@ -45,7 +45,10 @@ Read `Authorization: Bearer <session_id>` from the RPC handler options headers.
 When no token is present, read [[app-config]] and either fail with
 `unauthorized` in required-auth mode or return `worker_system` in local mode.
 When a token is present, load the session, fail `unauthorized` if it is missing,
-and enforce the requested scope against the session permission list.
+and enforce the requested scope against the session permission list. A valid
+session that lacks the requested scope fails `forbidden` (403, spec §15) —
+mirroring [[route-support]]'s `authorize`: credential failures are 401, scope
+denials are 403.
 
 `rpcActor` first checks whether `AcpRpcActor` exists in the current Effect
 context. When native RPC is executed through [[rpc-auth-middleware]], that actor

@@ -133,28 +133,17 @@ const make = Effect.gen(function* () {
       storage.put(collection, lease.id, encoded),
     )
 
-  const appendLeaseEvent = (
-    lease: Lease,
-    actor: WorkerId,
-    timestamp: Timestamp,
-    type: EventType,
-  ) =>
+  const appendDecodedEvent = (raw: {
+    readonly id: string
+    readonly type: EventType
+    readonly workspace_id: string
+    readonly work_id: string | null
+    readonly actor: string
+    readonly timestamp: string
+    readonly data: Record<string, unknown>
+  }) =>
     Effect.flatMap(
-      Schema.decodeUnknown(Event)({
-        id: `event_${lease.id}_${type}_${timestamp}`,
-        type,
-        workspace_id: lease.workspace_id,
-        work_id: Option.getOrNull(lease.work_id),
-        actor,
-        timestamp,
-        seq: 0,
-        data: {
-          lease_id: lease.id,
-          state: lease.state,
-          resource_kind: lease.resource.kind,
-          resource_uri: lease.resource.uri,
-        },
-      }).pipe(
+      Schema.decodeUnknown(Event)({ ...raw, seq: 0 }).pipe(
         Effect.mapError(
           (error) =>
             new StorageError({
@@ -174,6 +163,47 @@ const make = Effect.gen(function* () {
           data: event.data,
         }),
     )
+
+  const appendLeaseEvent = (
+    lease: Lease,
+    actor: WorkerId,
+    timestamp: Timestamp,
+    type: EventType,
+  ) =>
+    appendDecodedEvent({
+      id: `event_${lease.id}_${type}_${timestamp}`,
+      type,
+      workspace_id: lease.workspace_id,
+      work_id: Option.getOrNull(lease.work_id),
+      actor,
+      timestamp,
+      data: {
+        lease_id: lease.id,
+        state: lease.state,
+        resource_kind: lease.resource.kind,
+        resource_uri: lease.resource.uri,
+      },
+    })
+
+  const appendRequestPhaseEvent = (
+    input: RequestLeaseInput,
+    type: EventType,
+    holder: WorkerId,
+  ) =>
+    appendDecodedEvent({
+      id: `event_${input.id}_${type}_${input.now}`,
+      type,
+      workspace_id: input.payload.workspace_id,
+      work_id: Option.getOrNull(input.payload.work_id),
+      actor: input.payload.holder,
+      timestamp: input.now,
+      data: {
+        lease_id: input.id,
+        holder,
+        resource_kind: input.payload.resource.kind,
+        resource_uri: input.payload.resource.uri,
+      },
+    })
 
   const ttlMillis = (ttlSeconds: Option.Option<number>) =>
     Option.getOrElse(
@@ -253,6 +283,12 @@ const make = Effect.gen(function* () {
       )
 
       if (conflict !== undefined) {
+        yield* appendRequestPhaseEvent(
+          input,
+          'lease.requested',
+          input.payload.holder,
+        )
+        yield* appendRequestPhaseEvent(input, 'lease.denied', conflict.holder)
         return yield* Effect.fail(
           new LeaseConflictError({
             resourceUri: input.payload.resource.uri,
@@ -275,6 +311,11 @@ const make = Effect.gen(function* () {
       }
 
       yield* save(lease)
+      yield* appendRequestPhaseEvent(
+        input,
+        'lease.requested',
+        input.payload.holder,
+      )
       yield* appendLeaseEvent(
         lease,
         input.payload.holder,

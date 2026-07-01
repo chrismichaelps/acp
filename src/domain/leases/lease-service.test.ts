@@ -74,7 +74,7 @@ const requestInput = (id = leaseId, payload = requestPayload) => ({
 })
 
 describe('LeaseService', () => {
-  it('grants a lease, persists it, and emits lease.granted', () => {
+  it('grants a lease, persists it, and emits lease.requested + lease.granted', () => {
     const result = runSync(
       Effect.gen(function* () {
         const leases = yield* LeaseService
@@ -91,7 +91,50 @@ describe('LeaseService', () => {
     expect(Option.getOrNull(result.stored)).toEqual(result.granted)
     expect(
       Chunk.toReadonlyArray(result.log).map((event: Event) => event.type),
-    ).toEqual(['lease.granted'])
+    ).toEqual(['lease.requested', 'lease.granted'])
+  })
+
+  it('emits lease.requested + lease.denied naming the holder on conflict', () => {
+    const result = runSync(
+      Effect.gen(function* () {
+        const leases = yield* LeaseService
+        const events = yield* EventStore
+        yield* leases.request(requestInput())
+        const denied = yield* Effect.either(
+          leases.request(
+            requestInput(
+              otherLeaseId,
+              Schema.decodeUnknownSync(RequestLeasePayload)({
+                workspace_id: workspaceId,
+                holder: otherWorkerId,
+                resource: requestPayload.resource,
+                ttl_seconds: 60,
+              }),
+            ),
+          ),
+        )
+        const log = yield* events.readAfter(workspaceId, 0)
+        return { denied, log }
+      }),
+    )
+
+    expect(result.denied._tag).toBe('Left')
+    const types = Chunk.toReadonlyArray(result.log).map(
+      (event: Event) => event.type,
+    )
+    expect(types).toEqual([
+      'lease.requested',
+      'lease.granted',
+      'lease.requested',
+      'lease.denied',
+    ])
+    const deniedEvent = Chunk.toReadonlyArray(result.log).at(-1)
+    expect(deniedEvent?.actor).toBe(otherWorkerId)
+    expect(deniedEvent?.data).toMatchObject({
+      lease_id: otherLeaseId,
+      holder: workerId,
+      resource_uri: requestPayload.resource.uri,
+    })
   })
 
   it('uses configured default TTL when the request omits ttl_seconds', () => {
@@ -162,7 +205,7 @@ describe('LeaseService', () => {
     expect(result.renewed.expires_at).toBe('2026-06-26T03:02:30.000Z')
     expect(
       Chunk.toReadonlyArray(result.log).map((event: Event) => event.type),
-    ).toEqual(['lease.granted', 'lease.renewed'])
+    ).toEqual(['lease.requested', 'lease.granted', 'lease.renewed'])
   })
 
   it('releases and revokes active leases', () => {
@@ -233,7 +276,13 @@ describe('LeaseService', () => {
     ])
     expect(
       Chunk.toReadonlyArray(result.log).map((event: Event) => event.type),
-    ).toEqual(['lease.granted', 'lease.granted', 'lease.expired'])
+    ).toEqual([
+      'lease.requested',
+      'lease.granted',
+      'lease.requested',
+      'lease.granted',
+      'lease.expired',
+    ])
   })
 
   it('fails release with NotFoundError for a missing lease', () => {

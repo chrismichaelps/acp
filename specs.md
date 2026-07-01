@@ -266,7 +266,10 @@ Reference hosts may run in local development mode with unauthenticated mutations
 attributed to a system actor. A hardened host should expose an explicit
 `ACP_REQUIRE_AUTH` configuration switch; when enabled, every route that mutates or
 reads scoped workspace state must reject requests without a valid bearer session
-with `401 Unauthorized`. `POST /v1/session/initialize` remains the open bootstrap
+with `401 Unauthorized`. A valid session that lacks the scope required by the
+attempted action must be rejected with `403 Forbidden` and the `forbidden`
+error code: credential failures are `unauthorized`, authorization failures are
+`forbidden`. `POST /v1/session/initialize` remains the open bootstrap
 route because it mints the bearer session used by later calls.
 
 The v0.1 permission vocabulary is closed so a host can reject unknown scopes
@@ -762,6 +765,11 @@ POST /v1/work/{work_id}/events
   }
 }
 ```
+
+The publish endpoint accepts only the progress vocabulary (`work.progressed`).
+Lifecycle events (claims, state transitions, lease and review outcomes) are
+minted exclusively by the host's domain services, so workers cannot forge
+coordination history through this route.
 
 ---
 
