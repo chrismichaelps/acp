@@ -207,6 +207,15 @@ describe('parseArgs', () => {
     }
   })
 
+  it('parses lease list as a workspace-scoped read request', () => {
+    const req = right(['lease', 'list', '--workspace', 'workspace 1'])
+    expect(req).toEqual({
+      method: 'GET',
+      path: '/v1/leases?workspace_id=workspace%201',
+      label: 'lease list',
+    })
+  })
+
   it('parses lease release without a body', () => {
     const req = right(['lease', 'release', 'lease_123'])
     expect(req.path).toBe('/v1/leases/lease_123/release')

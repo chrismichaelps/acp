@@ -58,6 +58,7 @@ export const parseArgs: (
 | `work claim <work_id> --worker <id>`                                                  | `POST /v1/work/<id>/claim`                        |
 | `work update <work_id> --state <s>`                                                   | `PATCH /v1/work/<id>`                             |
 | `lease request --workspace --holder --kind --uri [--ttl]`                             | `POST /v1/leases`                                 |
+| `lease list --workspace <id>`                                                         | `GET /v1/leases?workspace_id=`                    |
 | `lease release <lease_id>`                                                            | `POST /v1/leases/<id>/release`                    |
 | `lease renew <lease_id> [--ttl]`                                                      | `POST /v1/leases/<id>/renew`                      |
 | `lease revoke <lease_id>`                                                             | `POST /v1/leases/<id>/revoke`                     |
@@ -107,7 +108,9 @@ external pull request, commit, report, or screenshot artifacts without inline
 content. `artifact pr` is a convenience projection over the same create route:
 it requires `--url`, fixes `kind` to `pull_request`, and leaves ACP as a
 coordination ledger rather than a GitHub actor. Lease renewal accepts optional
-`--ttl` and otherwise lets the host use its default lease TTL. Worker registry
+`--ttl` and otherwise lets the host use its default lease TTL. Lease readback
+maps `lease list --workspace` onto the workspace-scoped lease collection so
+operators can inspect active and terminal lease state directly. Worker registry
 reads map `worker list` and `worker get` onto host-scoped presence endpoints.
 Work resume reads map `work list --workspace`, `work get`,
 `checkpoint list/latest --work`, `artifact list --work`,
