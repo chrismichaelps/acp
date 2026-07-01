@@ -5,6 +5,7 @@ import {
   toProtocolError,
   ValidationError,
   NotFoundError,
+  ClaimConflictError,
   LeaseConflictError,
   InvalidStateTransitionError,
   UnauthorizedError,
@@ -18,6 +19,11 @@ describe('toProtocolError', () => {
       [new ValidationError({ issues: ['bad'] }), 400, 'invalid_request'],
       [new UnauthorizedError({ reason: 'no token' }), 401, 'unauthorized'],
       [new NotFoundError({ entity: 'work', id: 'w1' }), 404, 'not_found'],
+      [
+        new ClaimConflictError({ workId: 'work_1', holderWorkerId: 'agent_a' }),
+        409,
+        'claim_conflict',
+      ],
       [
         new LeaseConflictError({
           resourceUri: 'file://x',
@@ -65,6 +71,18 @@ describe('toProtocolError', () => {
       }),
     )
     const details = Option.getOrThrow(r.body.error.details)
+    expect(details.holder).toBe('agent_codex')
+  })
+
+  it('surfaces claim conflict holder in details', () => {
+    const r = toProtocolError(
+      new ClaimConflictError({
+        workId: 'work_123',
+        holderWorkerId: 'agent_codex',
+      }),
+    )
+    const details = Option.getOrThrow(r.body.error.details)
+    expect(details.work_id).toBe('work_123')
     expect(details.holder).toBe('agent_codex')
   })
 })

@@ -88,6 +88,28 @@ describe('WorkUnitService', () => {
     expect(Option.getOrNull(claimed.assigned_to)).toBe(claimPayload.worker_id)
   })
 
+  it('returns ClaimConflictError when another worker claims assigned work', () => {
+    const error = runSync(
+      Effect.either(
+        Effect.gen(function* () {
+          const id = Schema.decodeUnknownSync(WorkId)('work_claim_conflict')
+          const otherWorker = Schema.decodeUnknownSync(WorkerId)('agent_other')
+          const work = yield* WorkUnitService
+          yield* work.create(createInput(id))
+          yield* work.claim(id, claimPayload.worker_id, later)
+          return yield* work.claim(id, otherWorker, later)
+        }),
+      ),
+    )
+
+    expect(error._tag).toBe('Left')
+    if (error._tag === 'Left') {
+      expect(error.left._tag).toBe('ClaimConflictError')
+      const conflict = error.left as { readonly holderWorkerId: string }
+      expect(conflict.holderWorkerId).toBe(claimPayload.worker_id)
+    }
+  })
+
   it('lists work units by workspace', () => {
     const listed = runSync(
       Effect.gen(function* () {
