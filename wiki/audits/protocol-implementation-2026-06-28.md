@@ -484,7 +484,7 @@ these helpers.
 With that, native RPC has reached full technical readiness by every measure
 this audit tracks: every contract method has a handler (actor-bridged, scope-
 audited), the transport is mounted over real HTTP with auth and telemetry
-middleware, and every method has *two* independent proofs — transport-less
+middleware, and every method has _two_ independent proofs — transport-less
 `RpcTest` coverage and live-mounted-HTTP coverage — across every vertical
 (worker/workspace/work/lease, artifact/checkpoint, review/memory/event). This
 closes the engineering side of [[ADR-0007-effect-rpc-adoption]].

@@ -43,8 +43,8 @@ export const acpRouter: HttpRouter.HttpRouter<
 ### Routes (spec §12)
 
 - `POST /v1/session/initialize` → register [[Worker]], mint a [[session-service]]
-  session, return `session_id` (the v0.1 bearer token) + host capabilities (spec
-  §9); accepts both full internal [[Worker]] records and draft §9
+  session with a high-entropy `session_id` bearer credential + host capabilities
+  (spec §9); accepts both full internal [[Worker]] records and draft §9
   `protocol_version` + client capability handshakes, rejecting unsupported
   versions through [[protocol-version]]
 - `GET /v1/workers` · `GET /v1/workers/:worker_id` → read host-scoped
@@ -118,8 +118,9 @@ against [[protocol-version]] and rejects unsupported client versions as
 `invalid_request`; successful responses echo the canonical
 `ACP_PROTOCOL_VERSION`. It then derives the stored [[Worker]] capability array
 from those booleans when the worker record did not already carry capabilities,
-defaults missing worker status to `online`, and preserves `permissions` as the
-host's bearer-scope extension.
+defaults missing worker status to `online`, mints the session id through
+[[id-clock]] `secureToken` rather than the timestamp/counter id path, and
+preserves `permissions` as the host's bearer-scope extension.
 
 `createArtifact` and `updateArtifact` decode the shared artifact payload schemas,
 including optional external `uri`, and delegate URI/content ownership to
@@ -193,8 +194,9 @@ composition behind a single router value. Deleting it scatters HTTP ceremony and
   **A:** A small [[id-clock]] service (counter + `Clock`), not yet a swappable
   production seam. _Rationale:_ services intentionally do not mint ids/timestamps;
   the composition root must. A `Ref` counter + `Clock.currentTimeMillis` is
-  deterministic and testable. Promote to a seam when a second strategy (UUID,
-  snowflake) is real.
+  deterministic and testable for ordinary ids; bearer sessions use `secureToken`
+  because they are credentials. Promote to a seam when a second strategy (UUID,
+  snowflake, external credential issuer) is real.
 
 ## Referenced by
 

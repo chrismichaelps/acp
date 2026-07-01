@@ -1,9 +1,12 @@
 /** @Acp.App.Server.IdClock — id + timestamp minting for the composition root */
+import { randomBytes } from 'node:crypto'
 import { Clock, Context, DateTime, Effect, Layer, Ref } from 'effect'
 import type { Timestamp } from '../../protocol/schema/index.js'
 
 export interface IdClockApi {
   readonly nextId: (prefix: string) => Effect.Effect<string>
+  // Bearer credentials must not use the observable timestamp/counter id path.
+  readonly secureToken: (prefix: string) => Effect.Effect<string>
   readonly now: Effect.Effect<Timestamp>
 }
 
@@ -19,13 +22,16 @@ const make = Effect.gen(function* () {
       return `${prefix}_${ms.toString(36)}${n.toString(36)}`
     })
 
+  const secureToken: IdClockApi['secureToken'] = (prefix) =>
+    Effect.sync(() => `${prefix}_${randomBytes(32).toString('hex')}`)
+
   const now: IdClockApi['now'] = Effect.map(
     Clock.currentTimeMillis,
     // Timestamp is an unrefined branded string; ISO formatting is the brand's intent.
     (ms) => DateTime.formatIso(DateTime.unsafeMake(ms)) as Timestamp,
   )
 
-  return { nextId, now } satisfies IdClockApi
+  return { nextId, secureToken, now } satisfies IdClockApi
 })
 
 export const IdClockLive: Layer.Layer<IdClock> = Layer.effect(IdClock, make)

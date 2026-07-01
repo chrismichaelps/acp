@@ -89,7 +89,7 @@ const sessionInitializeHandler = AcpRpcGroup.toLayerHandler(
           capabilities: [...capabilitiesFromHandshake(payload)],
         })
         .pipe(Effect.mapError(toRpcError))
-      const sessionId = (yield* idClock.nextId('session')) as SessionId
+      const sessionId = (yield* idClock.secureToken('session')) as SessionId
       const now = yield* idClock.now
       yield* sessions
         .create({
