@@ -50,13 +50,14 @@ lease, so the runner expects exactly one successful claim, one
 `lease_conflict`. The winning worker publishes checkpoint, memory, artifact, and
 progress state; the reviewer reads the latest checkpoint and handoff memory,
 requests changes once, approves a second review, and verifies replayed event
-sequence monotonicity before terminal completion.
+sequence monotonicity before terminal completion. The runner also reads
+`GET /v1/leases?workspace_id=...` after renewal and release, proving current and
+terminal lease state can be inspected without reconstructing it from replay.
 
 This scenario intentionally exposes current protocol pressure points. Claim
 contention is reported as a generic invalid state transition rather than a
-first-class claim conflict, lease verification depends on command responses and
-event replay because there is no lease read route, and actor identity is still
-session-scoped rather than enforced against every actor-like payload field.
+first-class claim conflict, and actor identity is still session-scoped rather
+than enforced against every actor-like payload field.
 
 ## Referenced by
 

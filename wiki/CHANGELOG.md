@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · multi-agent-dogfood-lease-readback slice · updated the
+  multi-agent dogfood runner and [[codex-dogfood-production-testing]] to verify
+  active and released lease state through `GET /v1/leases?workspace_id=…`,
+  closing the readback gap exposed by the first multi-agent run · validation:
+  live authenticated multi-agent dogfood smoke, format, lint, typecheck,
+  file-size, and build passed · risk LOW
 - 2026-06-30 · lease-list-read-route slice · added workspace-scoped
   `GET /v1/leases?workspace_id=…` to the HTTP contract and [[acp-router]] so
   workers can inspect current and terminal lease state directly instead of
