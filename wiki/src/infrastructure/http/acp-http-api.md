@@ -75,6 +75,7 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 - `GET /v1/work/{work_id}/checkpoints/latest`
 - `GET /v1/work/{work_id}/artifacts`
 - `GET /v1/work/{work_id}/reviews`
+- `GET /v1/leases?workspace_id=...`
 - `POST /v1/leases`
 - `POST /v1/leases/{lease_id}/renew`
 - `POST /v1/leases/{lease_id}/release`

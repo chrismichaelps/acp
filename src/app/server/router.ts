@@ -4,7 +4,7 @@ import {
   HttpServerRequest,
   HttpServerResponse,
 } from '@effect/platform'
-import { Effect, Option } from 'effect'
+import { Effect, Option, Schema } from 'effect'
 import { ArtifactService } from '../../domain/artifacts/index.js'
 import { CheckpointService } from '../../domain/checkpoints/index.js'
 import { EventStore } from '../../domain/events/index.js'
@@ -17,6 +17,7 @@ import {
   ApproveReviewPayload,
   InitializeSessionPayload,
   InitializeSessionResponse,
+  LeaseListParams,
   PublishWorkEventPayload,
   RenewLeasePayload,
   UpdateWorkStatePayload,
@@ -237,6 +238,16 @@ const requestLease = respond('POST /v1/leases')(
   }),
 )
 
+const listLeases = respond('GET /v1/leases')(
+  Effect.gen(function* () {
+    const service = yield* LeaseService
+    const params = yield* HttpServerRequest.schemaSearchParams(LeaseListParams)
+    yield* authorize('workspace:read')
+    const leases = yield* service.list(params.workspace_id)
+    return yield* ok(200)(Schema.Array(Lease), leases)
+  }),
+)
+
 const releaseLease = respond('POST /v1/leases/:lease_id/release')(
   Effect.gen(function* () {
     const service = yield* LeaseService
@@ -443,6 +454,7 @@ const workRouter = HttpRouter.empty.pipe(
 )
 
 const leaseRouter = workRouter.pipe(
+  HttpRouter.get('/v1/leases', listLeases),
   HttpRouter.post('/v1/leases', requestLease),
   HttpRouter.post('/v1/leases/:lease_id/renew', renewLease),
   HttpRouter.post('/v1/leases/:lease_id/release', releaseLease),

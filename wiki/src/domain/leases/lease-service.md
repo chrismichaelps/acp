@@ -98,7 +98,8 @@ export const LeaseServiceLive: Layer.Layer<
 
 - **Requires:** [[storage]], [[event-store]], [[app-config]], [[lease.schema]],
   [[common]], [[protocol-error]]
-- **Consumed by:** [[acp-router]] (`/v1/leases`, spec §12), CLI, and the
+- **Consumed by:** [[acp-router]] (`/v1/leases`, spec §12), CLI, dogfood
+  runners, and the
   [[sweeper]] (`expireAllDue`).
 
 ## Algorithm

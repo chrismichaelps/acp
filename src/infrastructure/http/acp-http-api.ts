@@ -52,6 +52,11 @@ export const LeasePath = Schema.Struct({
 })
 export type LeasePath = typeof LeasePath.Type
 
+export const LeaseListParams = Schema.Struct({
+  workspace_id: WorkspaceId,
+})
+export type LeaseListParams = typeof LeaseListParams.Type
+
 export const ReviewPath = Schema.Struct({
   review_id: HttpApiSchema.param('review_id', ReviewId),
 })
@@ -345,6 +350,12 @@ export const WorkGroup = HttpApiGroup.make('work')
   )
 
 export const LeaseGroup = HttpApiGroup.make('leases')
+  .add(
+    HttpApiEndpoint.get('listLeases', '/v1/leases')
+      .setUrlParams(LeaseListParams)
+      .addSuccess(Schema.Array(Lease))
+      .addError(ProtocolError, protocolError(401)),
+  )
   .add(
     HttpApiEndpoint.post('requestLease', '/v1/leases')
       .setPayload(RequestLeasePayload)

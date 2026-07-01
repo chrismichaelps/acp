@@ -185,6 +185,12 @@ describe('AcpHttpApi', () => {
       },
       {
         group: 'leases',
+        name: 'listLeases',
+        method: 'GET',
+        path: '/v1/leases',
+      },
+      {
+        group: 'leases',
         name: 'requestLease',
         method: 'POST',
         path: '/v1/leases',
