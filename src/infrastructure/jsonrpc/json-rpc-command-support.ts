@@ -32,6 +32,7 @@ export type JsonRpcMethod =
   | 'work.update'
   | 'work.publish_event'
   | 'lease.request'
+  | 'lease.list'
   | 'lease.renew'
   | 'lease.release'
   | 'lease.revoke'

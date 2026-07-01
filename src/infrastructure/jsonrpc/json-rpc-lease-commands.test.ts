@@ -11,6 +11,23 @@ const expectRight = <A, E>(value: Either.Either<A, E>): A => {
 }
 
 describe('JSON-RPC lease command mapping', () => {
+  it('maps lease list to the workspace-scoped lease collection', () => {
+    const command = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_lease_list',
+        method: 'lease.list',
+        params: { workspace_id: 'workspace/main' },
+      }),
+    )
+
+    expect(command.request).toEqual({
+      method: 'GET',
+      path: '/v1/leases?workspace_id=workspace%2Fmain',
+      label: 'lease.list',
+    })
+  })
+
   it('maps lease renew and revoke commands', () => {
     const renew = expectRight(
       parseJsonRpcCommand({

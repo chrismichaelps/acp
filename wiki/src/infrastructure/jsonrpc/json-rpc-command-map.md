@@ -24,7 +24,7 @@ The split keeps [[json-rpc]] focused on envelope parsing,
 [[json-rpc-command-support]] focused on reusable JSON-RPC mechanics,
 [[json-rpc-worker-commands]] focused on host-scoped worker reads,
 [[json-rpc-resume-commands]] focused on work-scoped read/query commands,
-[[json-rpc-lease-commands]] focused on lease lifecycle commands,
+[[json-rpc-lease-commands]] focused on lease readback and lifecycle commands,
 [[json-rpc-event-commands]] focused on event replay/live commands, and this
 module focused on the remaining ACP command table. It exists to satisfy the
 spec's file-size rule without weakening method compatibility tests.
@@ -73,7 +73,7 @@ export const commandFor: (
 
 Validate the method label against the closed method set. Host worker reads
 delegate to [[json-rpc-worker-commands]], work-scoped resume methods delegate to
-[[json-rpc-resume-commands]], and lease lifecycle methods delegate to
+[[json-rpc-resume-commands]], and lease readback/lifecycle methods delegate to
 [[json-rpc-lease-commands]]. Event replay/live methods delegate to
 [[json-rpc-event-commands]]. Full-body methods (`session.initialize`,
 `workspace.create`, `work.create`, `artifact.create`, `checkpoint.create`,
