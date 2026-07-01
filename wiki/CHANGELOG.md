@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-01 · cli-lease-list-command slice · added the lease list CLI command
+  as a workspace-scoped read over `GET /v1/leases`, with parser coverage and
+  [[cli-commands]] / [[cli-usage]] mirrors · validation: format, lint,
+  typecheck, file-size, and build passed; focused Vitest parser run blocked by
+  missing local Rolldown optional native binding · risk LOW
 - 2026-06-30 · multi-agent-dogfood-lease-readback slice · updated the
   multi-agent dogfood runner and [[codex-dogfood-production-testing]] to verify
   active and released lease state through `GET /v1/leases?workspace_id=…`,

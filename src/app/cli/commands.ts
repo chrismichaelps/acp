@@ -268,6 +268,16 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
       }
     }),
 
+  'lease list': ({ flags }) =>
+    Either.gen(function* () {
+      const workspaceId = yield* flag(flags, 'workspace')
+      return {
+        method: 'GET',
+        path: `/v1/leases?workspace_id=${encodeURIComponent(workspaceId)}`,
+        label: 'lease list',
+      }
+    }),
+
   'lease release': leaseStateCommand('release'),
 
   'lease renew': ({ positionals, flags }) =>
