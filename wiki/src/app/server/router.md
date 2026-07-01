@@ -65,7 +65,8 @@ export const acpRouter: HttpRouter.HttpRouter<
   · `GET /v1/work/:work_id/checkpoints/latest`
   · `GET /v1/work/:work_id/artifacts`
   · `GET /v1/work/:work_id/reviews`
-- `POST /v1/leases` · `POST /v1/leases/:lease_id/renew`
+- `GET /v1/leases?workspace_id=…` · `POST /v1/leases`
+  · `POST /v1/leases/:lease_id/renew`
   · `POST /v1/leases/:lease_id/release` (→ 204)
   · `POST /v1/leases/:lease_id/revoke`
 - `POST /v1/artifacts` · `PATCH /v1/artifacts/:artifact_id`
@@ -130,9 +131,9 @@ lets the service emit `artifact.updated`. `deleteArtifact` delegates to
 service emit `artifact.deleted`. A missing artifact maps through the shared domain
 error path to `404`.
 
-Backed mutations and sensitive reads require their matching session scope when a bearer token is
-present: worker reads, event replay, work update/event publication, lease
-renew/release/revoke, artifact update/delete, and review
+Backed mutations and sensitive reads require their matching session scope when a
+bearer token is present: worker reads, event replay/streaming, lease listing,
+work update/event publication, lease renew/release/revoke, artifact update/delete, and review
 approve/reject/request-changes/cancel each call [[route-support]] `authorize`
 with the specific action scope. Missing tokens still follow the local-host
 `worker_system` fallback unless

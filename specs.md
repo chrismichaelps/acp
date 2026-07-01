@@ -786,7 +786,19 @@ POST /v1/leases
 
 ---
 
-### 12.8 Release Lease
+### 12.8 List Leases
+
+```http
+GET /v1/leases?workspace_id=workspace_123
+```
+
+Returns all leases for the workspace and requires `workspace:read` when the host
+requires authenticated reads. This read path lets workers inspect current and
+terminal lease state without reconstructing it from event replay.
+
+---
+
+### 12.9 Release Lease
 
 ```http
 POST /v1/leases/{lease_id}/release
@@ -794,7 +806,7 @@ POST /v1/leases/{lease_id}/release
 
 ---
 
-### 12.9 Create Artifact
+### 12.10 Create Artifact
 
 ```http
 POST /v1/artifacts
@@ -813,7 +825,7 @@ POST /v1/artifacts
 
 ---
 
-### 12.10 Create Checkpoint
+### 12.11 Create Checkpoint
 
 ```http
 POST /v1/checkpoints
@@ -832,7 +844,7 @@ POST /v1/checkpoints
 
 ---
 
-### 12.11 Request Review
+### 12.12 Request Review
 
 ```http
 POST /v1/reviews
@@ -849,7 +861,7 @@ POST /v1/reviews
 
 ---
 
-### 12.12 Cancel Review
+### 12.13 Cancel Review
 
 ```http
 POST /v1/reviews/{review_id}/cancel
@@ -861,7 +873,7 @@ emits `review.cancelled`.
 
 ---
 
-### 12.13 Create Memory
+### 12.14 Create Memory
 
 ```http
 POST /v1/memory
@@ -884,7 +896,7 @@ and emits `memory.created`.
 
 ---
 
-### 12.14 List Memory
+### 12.15 List Memory
 
 ```http
 GET /v1/memory?workspace_id=workspace_123&after_seq=0&limit=100
@@ -896,7 +908,7 @@ workspace memory reads as generic collection scans.
 
 ---
 
-### 12.15 Subscribe to Events
+### 12.16 Subscribe to Events
 
 ```http
 GET /v1/events/stream?workspace_id=workspace_123

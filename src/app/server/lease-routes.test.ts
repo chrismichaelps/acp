@@ -54,6 +54,26 @@ const requestLease = (token?: string) =>
   )
 
 describe('lease routes', () => {
+  it('lists leases in a workspace with workspace:read', async () => {
+    const handler = makeHandler()
+    const token = await initSession(handler, ['lease:create', 'workspace:read'])
+    const created = await handler(requestLease(token))
+    expect(created.status).toBe(201)
+    const lease = (await created.json()) as { id: string }
+
+    const listed = await handler(
+      new Request('http://acp.test/v1/leases?workspace_id=workspace_1', {
+        method: 'GET',
+        headers: { authorization: `Bearer ${token}` },
+      }),
+    )
+
+    expect(listed.status).toBe(200)
+    expect(
+      ((await listed.json()) as { id: string }[]).map((item) => item.id),
+    ).toEqual([lease.id])
+  })
+
   it('requests a lease and 404s releasing a missing one', async () => {
     const handler = makeHandler()
     const lease = await handler(requestLease())
@@ -97,6 +117,20 @@ describe('lease routes', () => {
 
     const denied = await handler(
       post(`/v1/leases/${lease.id}/renew`, {}, token),
+    )
+
+    expect(denied.status).toBe(401)
+  })
+
+  it('enforces workspace:read for authenticated lease listing', async () => {
+    const handler = makeHandler()
+    const token = await initSession(handler, [])
+
+    const denied = await handler(
+      new Request('http://acp.test/v1/leases?workspace_id=workspace_1', {
+        method: 'GET',
+        headers: { authorization: `Bearer ${token}` },
+      }),
     )
 
     expect(denied.status).toBe(401)
