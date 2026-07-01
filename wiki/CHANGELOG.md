@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-01 · jsonrpc-lease-list-command slice · added JSON-RPC `lease.list`
+  as a workspace-scoped projection of `GET /v1/leases?workspace_id=…`, with
+  parser coverage and spec/wiki parity · validation: check:env, format, lint,
+  typecheck, file-size, and build passed; focused Vitest run blocked by missing
+  local Rolldown optional native binding · risk LOW
 - 2026-07-01 · readme-lease-list-command-parity slice · refreshed the README
   CLI surface summary so lease readback is listed beside the rest of the lease
   lifecycle commands · validation: check:env, format, lint, typecheck,
