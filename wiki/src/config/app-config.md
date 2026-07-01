@@ -62,10 +62,12 @@ Each field is a `Config.*` with `Config.withDefault`:
 - `ACP_REQUIRE_AUTH` boolean → false (when true, [[acp-router]] `authorize` rejects
   _unauthenticated_ mutations with `401` instead of degrading to `worker_system`)
 
-The repository root `.env.example` mirrors these host variables and also names
-the client-only `ACP_BASE_URL` / `ACP_RPC_TOKEN` values used by [[cli-main]] and
-[[stdio-main]]. Keep the example file aligned with this page whenever runtime
-configuration changes.
+The repository root `.env.example` is the drift-checked runtime manifest. It
+mirrors these host variables, names the client-only `ACP_BASE_URL` /
+`ACP_RPC_TOKEN` values used by [[cli-main]] and [[stdio-main]], and includes the
+dogfood smoke metadata variables read by `scripts/`. Keep the example file
+aligned with this page whenever runtime configuration changes, and keep bearer
+tokens empty in committed examples.
 
 `AppConfigLive = Layer.effect(AppConfigTag, Effect.orDie(<composed Config>))` —
 invalid configuration is fatal at startup, so the `ConfigError` channel is
