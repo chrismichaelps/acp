@@ -18,7 +18,9 @@ JSON-RPC remains the compatibility transport rather than the center of new first
 
 ## Working Locally
 
-The local server binds to `ACP_PORT`, defaulting to `4317`.
+The root `.env.example` lists the host, client, stdio bridge, and dogfood
+variables that ACP reads today. The local server binds to `ACP_PORT`, defaulting
+to `4317`.
 
 ```bash
 ACP_PORT=4317 node dist/app/server/main.js
