@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-01 · cli-checkpoint-command-registry slice · extracted checkpoint CLI
+  parsing into [[cli-checkpoint-commands]], moved shared work/workspace collection
+  path construction into [[cli-command-support]], and wired checkpoint handlers
+  into the additive parseArgs registry without changing CLI behavior ·
+  validation: targeted CLI parser test, format, lint, typecheck, and file-size
+  passed · risk LOW
 - 2026-07-01 · cli-worker-command-registry slice · extracted host-scoped worker
   CLI parsing into [[cli-worker-commands]] and wired it into the additive
   parseArgs command registry, keeping worker presence reads out of the central
