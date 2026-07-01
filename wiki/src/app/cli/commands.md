@@ -20,9 +20,9 @@ the CLI; [[cli-client]] sends what it returns. Shared request/error primitives
 live in [[cli-command-support]], and feature command maps such as
 [[cli-session-commands]], [[cli-artifact-commands]],
 [[cli-checkpoint-commands]], [[cli-event-commands]], [[cli-lease-commands]],
-[[cli-memory-commands]], [[cli-work-commands]], [[cli-worker-commands]], and
-[[cli-workspace-commands]] extend the central dispatch table without growing the
-parser file.
+[[cli-memory-commands]], [[cli-review-commands]], [[cli-work-commands]],
+[[cli-worker-commands]], and [[cli-workspace-commands]] extend the central
+dispatch table without growing the parser file.
 
 ## Interface
 
@@ -116,7 +116,8 @@ commands. Checkpoint handlers are registered by [[cli-checkpoint-commands]] and
 share scoped work/workspace collection path construction through
 [[cli-command-support]]. Artifact handlers are registered by
 [[cli-artifact-commands]], including the `artifact pr` projection over artifact
-creation.
+creation. Review handlers are registered by [[cli-review-commands]] so human-gate
+workflow parsing is isolated from the central parser.
 `--default-branch` and `--media-type` normalize to the schema's snake_case JSON
 fields. Artifact create/update forward optional `--uri` so the CLI can register
 external pull request, commit, report, or screenshot artifacts without inline
@@ -136,9 +137,9 @@ route with an optional non-negative `--after` cursor. `review approve --met` is 
 comma-separated list that becomes `met_requirements`. `review cancel` maps to the
 dedicated review cancellation route so withdrawal is not expressed as rejection.
 `events stream` sets `stream: true`. Session, artifact, checkpoint, event, lease,
-memory, work, worker, and workspace handlers are registered by spreading their
-feature command maps into the central table, preserving one dispatch point while
-keeping the parser below the file-size gate.
+memory, review, work, worker, and workspace handlers are registered by spreading
+their feature command maps into the central table, preserving one dispatch point
+while keeping the parser below the file-size gate.
 The parser regression suite pins the tokenizer edge where a valueless flag is
 followed by another flag token so future command additions do not accidentally
 consume the next flag as a value.
@@ -175,6 +176,6 @@ parser remains trivially testable without a server.
 [[cli-index]] · [[cli-client]] · [[cli-main]] · [[cli-usage]] ·
 [[cli-artifact-commands]] · [[cli-checkpoint-commands]] ·
 [[cli-event-commands]] · [[cli-lease-commands]] · [[cli-memory-commands]] ·
-[[cli-session-commands]] · [[cli-work-commands]] · [[cli-worker-commands]] ·
-[[cli-workspace-commands]] ·
+[[cli-review-commands]] · [[cli-session-commands]] · [[cli-work-commands]] ·
+[[cli-worker-commands]] · [[cli-workspace-commands]] ·
 [[artifact-pr-command-test]] · [[Transport]] · [[src/_MOC]]
