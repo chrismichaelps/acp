@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · event-stream-auth-parity slice · aligned
+  [[event-routes]] SSE authorization with replay by requiring `event:read` before
+  opening `GET /v1/events/stream`, and added the route regression · validation:
+  format, lint, typecheck, file-size, and build passed; focused Vitest route
+  suite blocked at startup by local Rolldown optional native binding mismatch
+  with no install performed · risk LOW
 - 2026-06-30 · cli-parse-args-dispatch-refactor slice · moved
   [[cli-commands]] unknown-command handling behind a command resolver fallback
   so `parseArgs` composes tokenization, resolution, and execution without owning

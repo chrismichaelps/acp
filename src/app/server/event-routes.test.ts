@@ -91,4 +91,21 @@ describe('event routes', () => {
 
     expect(denied.status).toBe(401)
   })
+
+  it('enforces event:read for authenticated event streams', async () => {
+    const handler = makeHandler()
+    const token = await initSession(handler, [])
+
+    const denied = await handler(
+      new Request(
+        'http://acp.test/v1/events/stream?workspace_id=workspace_events',
+        {
+          method: 'GET',
+          headers: { authorization: `Bearer ${token}` },
+        },
+      ),
+    )
+
+    expect(denied.status).toBe(401)
+  })
 })
