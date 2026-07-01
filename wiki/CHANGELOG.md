@@ -2,6 +2,11 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-01 · cli-lease-command-registry slice · extracted lease CLI parsing
+  into [[cli-lease-commands]] and wired it into the central parseArgs dispatch
+  table, reducing [[cli-commands]] file-size pressure without changing CLI
+  behavior · validation: targeted CLI parser test, format, lint, typecheck, and
+  file-size passed · risk LOW
 - 2026-07-01 · env-example-runtime-reference slice · clarified `.env.example` as
   the drift-checked runtime manifest, aligned the SQLite path sample with the
   implemented default, and documented the no-secrets rule in README/spec/wiki ·
