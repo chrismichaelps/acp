@@ -30,6 +30,10 @@ interface ArgTokenParser {
   readonly read: (argv: readonly string[], cursor: ArgCursor) => ArgCursor
 }
 
+interface CommandResolver {
+  readonly resolve: (argv: readonly string[]) => CommandHandler
+}
+
 const isFlagToken = (token: string): boolean => token.startsWith('--')
 
 const argTokenParsers: readonly ArgTokenParser[] = [
@@ -101,6 +105,11 @@ const reviewStateCommand =
 
 const unknown = (argv: readonly string[]): Either.Either<never, CliError> =>
   Either.left(new CliError({ message: `unknown command: ${argv.join(' ')}` }))
+
+const unknownCommandHandler =
+  (argv: readonly string[]): CommandHandler =>
+  () =>
+    unknown(argv)
 
 const commandKey = (group: string | undefined, action: string | undefined) =>
   `${group ?? ''} ${action ?? ''}`
@@ -457,11 +466,15 @@ const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
   ...eventCommandHandlers,
 }
 
+const commandResolver: CommandResolver = {
+  resolve: (argv) =>
+    commandHandlers[commandKey(argv[0], argv[1])] ??
+    unknownCommandHandler(argv),
+}
+
 export const parseArgs = (
   argv: readonly string[],
 ): Either.Either<CliRequest, CliError> => {
   const parsed = splitArgs(argv.slice(2))
-  const handler = commandHandlers[commandKey(argv[0], argv[1])]
-
-  return handler === undefined ? unknown(argv) : handler(parsed)
+  return commandResolver.resolve(argv)(parsed)
 }

@@ -95,8 +95,10 @@ then resolved through the command handler table. Each handler receives the
 parsed positionals and flags, validates its own required inputs (missing →
 `CliError`) and assembles a `CliRequest` with encoded route parameters and query
 values. Unknown keys never fall through a conditional chain; they return the same
-`CliError` as any unsupported command. Numeric lease TTLs are validated as
-positive safe integers before HTTP decoding.
+`CliError` as any unsupported command through the command resolver's fallback
+handler. `parseArgs` is therefore only a composition point: tokenize, resolve a
+handler, execute the handler. Numeric lease TTLs are validated as positive safe
+integers before HTTP decoding.
 Session bootstrap is registered by [[cli-session-commands]] so authenticated CLI
 operators can mint a bearer session before exporting `ACP_RPC_TOKEN`.
 `--default-branch` and `--media-type` normalize to the schema's snake_case JSON
@@ -130,10 +132,10 @@ consume the next flag as a value.
 
 ## Depth
 
-DEEP (0.7). Hides the whole argv→request mapping behind one pure function and a
-small handler registry; adding a command is an additive table entry instead of a
-new branch in the parser's dispatch path. The parser remains trivially testable
-without a server.
+DEEP (0.7). Hides the whole argv→request mapping behind one pure function, a
+small handler registry, and a command resolver fallback; adding a command is an
+additive table entry instead of a new branch in the parser's dispatch path. The
+parser remains trivially testable without a server.
 
 ## Grill Log
 
