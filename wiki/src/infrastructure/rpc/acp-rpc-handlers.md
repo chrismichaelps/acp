@@ -87,7 +87,8 @@ export const AcpRpcSessionWorkerWorkspaceHandlersLive: Layer<
 `session.initialize` mirrors [[acp-router]] bootstrap behavior: validate
 `protocol_version`, register the worker, derive capabilities from the draft
 handshake booleans when the worker did not send an explicit capability list,
-mint a session id and timestamp through [[id-clock]], persist the session, and
+mint a high-entropy session bearer credential through [[id-clock]]
+`secureToken`, read the timestamp through [[id-clock]], persist the session, and
 return the host descriptor and capability flags.
 
 All authorizing handlers check scopes through [[rpc-auth]] `rpcActor`, which

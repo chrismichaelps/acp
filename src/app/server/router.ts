@@ -130,7 +130,7 @@ const initializeSession = respond('POST /v1/session/initialize')(
       ...payload.worker,
       capabilities: [...capabilitiesFromHandshake(payload)],
     })
-    const sessionId = (yield* idClock.nextId('session')) as SessionId
+    const sessionId = (yield* idClock.secureToken('session')) as SessionId
     const now = yield* idClock.now
     yield* sessions.create({
       id: sessionId,

@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-06-30 · secure-session-token-credentials slice · moved HTTP and native
+  RPC `session.initialize` from observable timestamp/counter ids to
+  high-entropy [[id-clock]] `secureToken` bearer credentials, tightened session
+  token shape regressions, and refreshed [[specs.md]], [[README]],
+  [[session-service]], [[acp-router]], and [[acp-rpc-handlers]] docs so session
+  ids are treated as opaque credentials · validation: format, lint, typecheck,
+  file-size, focused identity/session transport tests, and 285-test non-socket
+  suite green · risk LOW
 - 2026-06-30 · post-rpc-client-ergonomics-audit slice · refreshed
   [[protocol-implementation-2026-06-28]] to close the client-ergonomics slice
   (`acpNativeRpcPath`/`acpNativeRpcUrl`/`acpRpcBearerHeaders`/

@@ -253,7 +253,9 @@ need that framing.
 
 ## 8. Authentication
 
-ACP v0.1 supports bearer tokens.
+ACP v0.1 supports bearer tokens. Session ids are bearer credentials, not
+ordinary sequential resource identifiers; hosts must mint them from
+cryptographically secure randomness and treat them as opaque values.
 
 ```http
 Authorization: Bearer acp_xxx
@@ -335,7 +337,7 @@ POST /v1/session/initialize
 
 ```json
 {
-  "session_id": "session_abc123",
+  "session_id": "session_4f9d2a8c1b0e3d5f6a7b8c9d0e1f2233445566778899aabbccddeeff00112233",
   "protocol_version": "0.1",
   "host": {
     "name": "ACP Local",

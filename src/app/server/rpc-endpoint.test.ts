@@ -46,7 +46,7 @@ describe('POST /rpc', () => {
       result: { session_id: string; protocol_version: string }
     }
     expect(init.id).toBe(1)
-    expect(init.result.session_id).toMatch(/^session_/)
+    expect(init.result.session_id).toMatch(/^session_[0-9a-f]{64}$/)
     expect(init.result.protocol_version).toBe('0.1')
 
     const workRes = await handler(

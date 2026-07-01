@@ -70,7 +70,7 @@ describe('live boot', () => {
     })
 
     expect(result.initStatus).toBe(200)
-    expect(result.sessionId).toMatch(/^session_/)
+    expect(result.sessionId).toMatch(/^session_[0-9a-f]{64}$/)
     expect(result.protocolVersion).toBe('0.1')
     expect(result.workStatus).toBe(201)
     expect(result.work.state).toBe('open')
