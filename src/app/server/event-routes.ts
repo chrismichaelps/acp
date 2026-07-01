@@ -28,6 +28,7 @@ export const streamEvents = respond('GET /v1/events/stream')(
   Effect.gen(function* () {
     const params =
       yield* HttpServerRequest.schemaSearchParams(EventsStreamParams)
+    yield* authorize('event:read')
     return yield* workspaceSseResponse(params.workspace_id)
   }),
 )
