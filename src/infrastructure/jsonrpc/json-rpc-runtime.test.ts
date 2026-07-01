@@ -237,7 +237,7 @@ describe('executeJsonRpc — over the live router', () => {
     expect(work.created_by).toBe('agent_claude_code')
   })
 
-  it('surfaces a scope denial (401) as a -32603 error', async () => {
+  it('surfaces a scope denial (403 forbidden) as a -32603 error', async () => {
     const dispatch = liveDispatch()
 
     const init = await run(

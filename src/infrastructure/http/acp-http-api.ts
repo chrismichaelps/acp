@@ -17,7 +17,6 @@ import {
   CreateWorkPayload,
   CreateWorkspacePayload,
   Event,
-  EventType,
   Lease,
   LeaseId,
   Permission,
@@ -154,8 +153,11 @@ export const UpdateWorkStatePayload = Schema.Struct({
 })
 export type UpdateWorkStatePayload = typeof UpdateWorkStatePayload.Type
 
+export const WorkProgressEventType = Schema.Literal('work.progressed')
+export type WorkProgressEventType = typeof WorkProgressEventType.Type
+
 export const PublishWorkEventPayload = Schema.Struct({
-  type: EventType,
+  type: WorkProgressEventType,
   data: Schema.Record({ key: Schema.String, value: Schema.Unknown }),
 })
 export type PublishWorkEventPayload = typeof PublishWorkEventPayload.Type

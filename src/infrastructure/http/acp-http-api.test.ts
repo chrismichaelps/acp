@@ -2,7 +2,11 @@
 import { describe, expect, it } from 'vitest'
 import { HttpApi } from '@effect/platform'
 import { Schema } from 'effect'
-import { AcpHttpApi, InitializeSessionPayload } from './index.js'
+import {
+  AcpHttpApi,
+  InitializeSessionPayload,
+  PublishWorkEventPayload,
+} from './index.js'
 
 interface ReflectedEndpoint {
   readonly group: string
@@ -64,6 +68,14 @@ describe('AcpHttpApi', () => {
     })
 
     expect(payload.protocol_version).toBe('0.2')
+  })
+
+  it('limits published work events to progress vocabulary (spec §12.6)', () => {
+    const decode = Schema.decodeUnknownEither(PublishWorkEventPayload)
+    expect(decode({ type: 'work.progressed', data: {} })._tag).toBe('Right')
+    expect(decode({ type: 'work.claimed', data: {} })._tag).toBe('Left')
+    expect(decode({ type: 'lease.granted', data: {} })._tag).toBe('Left')
+    expect(decode({ type: 'review.approved', data: {} })._tag).toBe('Left')
   })
 
   it('declares the v0.1 REST routes from spec section 12', () => {

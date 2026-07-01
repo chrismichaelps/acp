@@ -211,7 +211,7 @@ describe('resume routes', () => {
         headers: { authorization: `Bearer ${token}` },
       }),
     )
-    expect(denied.status).toBe(401)
+    expect(denied.status).toBe(403)
   })
 
   it('returns 404 for latest checkpoint when work has none', async () => {
