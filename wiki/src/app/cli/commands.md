@@ -18,10 +18,11 @@ Pure parser turning `process.argv` tokens into a `CliRequest` (method · path ·
 body · stream) for the spec §21 CLI. No I/O — the parser is the testable core of
 the CLI; [[cli-client]] sends what it returns. Shared request/error primitives
 live in [[cli-command-support]], and feature command maps such as
-[[cli-session-commands]], [[cli-checkpoint-commands]], [[cli-event-commands]],
-[[cli-lease-commands]], [[cli-memory-commands]], [[cli-work-commands]],
-[[cli-worker-commands]], and [[cli-workspace-commands]] extend the central
-dispatch table without growing the parser file.
+[[cli-session-commands]], [[cli-artifact-commands]],
+[[cli-checkpoint-commands]], [[cli-event-commands]], [[cli-lease-commands]],
+[[cli-memory-commands]], [[cli-work-commands]], [[cli-worker-commands]], and
+[[cli-workspace-commands]] extend the central dispatch table without growing the
+parser file.
 
 ## Interface
 
@@ -113,7 +114,9 @@ parser file. Worker registry reads are registered by [[cli-worker-commands]] so
 host-scoped presence commands stay separate from workspace and work lifecycle
 commands. Checkpoint handlers are registered by [[cli-checkpoint-commands]] and
 share scoped work/workspace collection path construction through
-[[cli-command-support]].
+[[cli-command-support]]. Artifact handlers are registered by
+[[cli-artifact-commands]], including the `artifact pr` projection over artifact
+creation.
 `--default-branch` and `--media-type` normalize to the schema's snake_case JSON
 fields. Artifact create/update forward optional `--uri` so the CLI can register
 external pull request, commit, report, or screenshot artifacts without inline
@@ -132,10 +135,10 @@ for workspace-level aggregate resume reads. `events list` maps to the JSON repla
 route with an optional non-negative `--after` cursor. `review approve --met` is a
 comma-separated list that becomes `met_requirements`. `review cancel` maps to the
 dedicated review cancellation route so withdrawal is not expressed as rejection.
-`events stream` sets `stream: true`. Session, checkpoint, event, lease, memory,
-work, worker, and workspace handlers are registered by spreading their feature
-command maps into the central table, preserving one dispatch point while keeping
-the parser below the file-size gate.
+`events stream` sets `stream: true`. Session, artifact, checkpoint, event, lease,
+memory, work, worker, and workspace handlers are registered by spreading their
+feature command maps into the central table, preserving one dispatch point while
+keeping the parser below the file-size gate.
 The parser regression suite pins the tokenizer edge where a valueless flag is
 followed by another flag token so future command additions do not accidentally
 consume the next flag as a value.
@@ -170,7 +173,8 @@ parser remains trivially testable without a server.
 ## Referenced by
 
 [[cli-index]] · [[cli-client]] · [[cli-main]] · [[cli-usage]] ·
-[[cli-checkpoint-commands]] · [[cli-event-commands]] · [[cli-lease-commands]] ·
-[[cli-memory-commands]] · [[cli-session-commands]] · [[cli-work-commands]] ·
-[[cli-worker-commands]] · [[cli-workspace-commands]] ·
+[[cli-artifact-commands]] · [[cli-checkpoint-commands]] ·
+[[cli-event-commands]] · [[cli-lease-commands]] · [[cli-memory-commands]] ·
+[[cli-session-commands]] · [[cli-work-commands]] · [[cli-worker-commands]] ·
+[[cli-workspace-commands]] ·
 [[artifact-pr-command-test]] · [[Transport]] · [[src/_MOC]]
