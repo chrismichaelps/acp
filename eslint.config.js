@@ -38,7 +38,7 @@ export default tseslint.config(
   },
   // Disable type-aware linting for Node utility files outside src/.
   {
-    files: ['eslint.config.js', 'scripts/*.mjs'],
+    files: ['eslint.config.js', 'scripts/**/*.mjs'],
     ...tseslint.configs.disableTypeChecked,
     languageOptions: {
       parserOptions: {
