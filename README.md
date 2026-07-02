@@ -1,79 +1,357 @@
-# Agent Coordination Protocol
+# Agent Coordination Protocol (ACP)
 
-Agent Coordination Protocol, or ACP, is a coordination layer for autonomous software workers operating in shared engineering workspaces. The protocol is concerned with state, ownership, recovery, and review. It does not prescribe how an agent reasons, edits files, calls models, or talks to a human; it defines the workspace facts that let independent workers cooperate without relying on conversational memory.
+**ACP is a coordination layer for autonomous software workers that share an
+engineering workspace.** It defines the durable facts — who is working, what work
+exists, which resources are claimed, what progress is recoverable, and what still
+needs human review — that let independent agents cooperate without a shared
+conversation or shared memory.
 
-This repository is the TypeScript reference implementation for ACP v0.1. It is intentionally still in development, but it already contains the core host, domain services, storage seam, in-memory and SQLite storage adapters, REST transport, Server-Sent Events stream, first-party native Effect RPC over `/rpc/native`, JSON-RPC over `POST /rpc`, JSON-RPC over `GET /rpc` WebSocket, a stdio JSON-RPC bridge, and a local `acp` command-line client. The implementation is suitable for protocol design work, adapter development, and local integration experiments. It should not yet be treated as a production coordination server.
+ACP deliberately says nothing about _how_ an agent reasons, edits files, calls a
+model, or talks to a human. It only defines the workspace state that makes
+cooperation safe: state, ownership, recovery, and review.
 
-## Current Shape
+This repository is the **TypeScript reference implementation of ACP v0.1**. It is
+suitable for protocol design, adapter development, and local integration
+experiments — not yet a production coordination server.
 
-ACP models a workspace as durable protocol state: workers register, work units move through explicit lifecycle transitions, leases protect resources, checkpoints make partial progress resumable, artifacts preserve outputs, reviews gate human decisions, and events record what happened over time. Review cancellation is represented as its own lifecycle event, `review.cancelled`, not as a rejection; cancelling a requested review withdraws the gate and lets the associated work continue. Worker presence is intentionally host-scoped rather than workspace event history: current worker records and statuses are readable through `GET /v1/workers`, `GET /v1/workers/:worker_id`, JSON-RPC `worker.list` and `worker.get`, and the matching CLI commands. Workspace event history is replayable through `GET /v1/events?workspace_id=...&after_seq=...`, JSON-RPC `events.list`, and `events list`, so a recovering worker can catch up before opening a live subscription. The implementation keeps those concepts in domain services behind an Effect Layer graph, with storage and transport held as seams rather than baked into the domain.
+> **Status:** v0.1, in active development. The full protocol surface is
+> implemented and spec-conformant across every transport, but distribution and
+> operational hardening are still in progress.
 
-Storage is selected at the host boundary. The in-memory adapter keeps the default local path simple and deterministic, while the SQLite adapter provides durable state without changing domain behavior. SQLite uses the same storage port as memory, so persistence is an adapter concern rather than a protocol concern. That distinction matters for ACP because agents may hand off thousands of remembered facts, events, checkpoints, artifacts, and lease records over time; the database path has to preserve append order, replay efficiently, and keep queries scoped by workspace and key prefix rather than growing into a conversational-memory dump.
+---
 
-The HTTP server exposes the v0.1 REST surface and an SSE endpoint for workspace-scoped events. Bearer sessions are optional in local mode and can be required with configuration for hardened hosts; `session.initialize` remains the open bootstrap route because it mints the session used by later scoped calls. When a bearer session is presented, mutation routes enforce scoped permissions for work, leases, artifacts, checkpoints, reviews, and workspace changes, including destructive and review-outcome actions, while worker registry reads use `worker:read` and event replay uses `event:read`. Lease lifecycle and readback are fully transport-backed: beyond request and release, long-running workers can extend an advisory claim through `POST /v1/leases/:lease_id/renew`, supervisors can reclaim a stale or unsafe lease through `POST /v1/leases/:lease_id/revoke`, and operators can inspect workspace lease state through `GET /v1/leases?workspace_id=...`. Review cancellation is also transport-backed through `POST /v1/reviews/:review_id/cancel`, JSON-RPC `review.cancel`, and CLI `review cancel`, with a dedicated `review:cancel` scope. The CLI is a thin HTTP client of that local host, which means separate invocations share state through the running server instead of rebuilding an isolated application graph per command.
+## Why ACP
 
-Native RPC is the first-party TypeScript transport for ACP consumers that can use Effect directly. The host mounts the generated `@effect/rpc` contract at `/rpc/native` with NDJSON framing so unary calls and `events.subscribe` streaming share one protocol path. The native route uses the same application graph as REST, JSON-RPC, WebSocket JSON-RPC, and the sweeper, so sessions, workspaces, leases, events, memory, checkpoints, artifacts, and reviews remain shared across transports. The native client and mounted HTTP route are covered across the implemented handler verticals, including lease readback through `lease.list`, and every native RPC operation carries structured Effect telemetry with operation name, outcome, duration, client id, and stable ACP error code when one exists.
+Multiple agents in one repo step on each other: two workers edit the same file, a
+crashed agent loses its progress, a reviewer can't tell what an agent actually
+did. Conversational memory doesn't survive a process restart and can't be shared
+between two different agents.
 
-JSON-RPC remains the compatibility transport rather than the center of new first-party client work. `POST /rpc` executes JSON-RPC 2.0 envelopes against the shared router, preserving request correlation, batch handling, and notification semantics; every REST mutation has a paired method, including `lease.renew` and `lease.revoke`, and workspace lease readback is available through `lease.list`. The `acp-jsonrpc-stdio` bridge reads Content-Length framed messages from stdin and forwards them to that same endpoint, so stdio integrations do not need a separate domain runtime. `GET /rpc` upgrades to a WebSocket and frames the same JSON-RPC surface over a persistent connection: each text frame is one request, the reply is one text frame, and the connection's bearer token comes from the handshake `Authorization` header or a `?token=` query parameter for browser clients that cannot set handshake headers. A single `events.subscribe` request on that WebSocket acknowledges the subscription and delivers later workspace events as JSON-RPC `events.event` notifications; SSE remains the HTTP live-event channel.
+ACP moves those facts _out_ of any single agent and into durable, replayable
+protocol state:
 
-## Working Locally
+| Concept        | What it gives you                                                        |
+| -------------- | ------------------------------------------------------------------------ |
+| **Workspace**  | The shared context (a repo, worktree, directory, container, CI job).     |
+| **Worker**     | A registered actor (agent, bot, human, CI) with an identity and status.  |
+| **Work unit**  | A task with an explicit lifecycle state machine.                         |
+| **Lease**      | An advisory, TTL'd claim on a resource (e.g. a file) — prevents clashes. |
+| **Checkpoint** | A resumable snapshot of partial progress, so a handoff survives a crash. |
+| **Memory**     | Append-only, workspace-scoped facts for handoff between actors.          |
+| **Artifact**   | A preserved output (a PR, a diff, a file) tied to a work unit.           |
+| **Review**     | A gate for human (or agent) decisions on a work unit.                    |
+| **Event**      | The append-only, per-workspace history of everything above.              |
 
-The root `.env.example` is the drift-checked runtime manifest for the host, CLI,
-stdio bridge, and dogfood scripts. It is meant to be copied for local operation
-or used as the source of truth for a process supervisor; secrets such as
-`ACP_RPC_TOKEN` should be injected by the operator shell rather than committed.
-The local server binds to `ACP_PORT`, defaulting to `4317`.
+Every mutation appends a monotonic event, so a recovering worker can replay
+history and catch up before it acts.
+
+---
+
+## Quickstart
+
+Requirements: Node (current LTS or newer — the SQLite adapter uses the built-in
+`node:sqlite`), and `pnpm` for dependency install.
 
 ```bash
+pnpm install
+pnpm build          # tsc -> dist/
+```
+
+### 1. Run a host
+
+```bash
+# In-memory storage, no auth — the simplest local path.
 ACP_PORT=4317 node dist/app/server/main.js
 ```
 
-By default the host uses in-memory storage. To use SQLite, set `ACP_STORAGE_ADAPTER=sqlite` and provide `ACP_SQLITE_PATH`; the adapter creates its schema on startup and stores protocol state and append-only events in the configured database file.
+For durable state, use SQLite (same protocol behavior, different adapter):
 
 ```bash
-ACP_STORAGE_ADAPTER=sqlite ACP_SQLITE_PATH=.acp/acp.sqlite node dist/app/server/main.js
+ACP_STORAGE_ADAPTER=sqlite ACP_SQLITE_PATH=.acp/acp.sqlite \
+  ACP_PORT=4317 node dist/app/server/main.js
 ```
 
-Local development allows unauthenticated requests unless `ACP_REQUIRE_AUTH=true` is set. With auth required, callers first initialize a session and then pass the returned session id as a bearer token on scoped routes. Session ids are opaque high-entropy credentials, not timestamp or counter ids. The CLI forwards `ACP_RPC_TOKEN` as that bearer token for ordinary requests and event streams, matching the stdio bridge convention for long-lived integrations. Session permissions are explicit strings such as `work:create`, `artifact:delete`, and `review:approve`; presenting a token without the required scope returns `403 Forbidden` with the `forbidden` error code, while missing or invalid credentials return `401 Unauthorized`. Runtime logs are emitted through Effect's structured logger; `ACP_LOG_LEVEL` accepts `debug`, `info`, `warn`, or `error`, defaulting to `info`.
+### 2. Drive it with the CLI
 
-The CLI targets `ACP_BASE_URL` when provided, otherwise it uses `http://localhost:$ACP_PORT`. It covers the local command surface for session bootstrap, worker registry reads, workspace create/update/archive, work creation and lifecycle updates, lease request/list/renew/revoke/release, artifact create/update/delete, pull request artifact registration, checkpoint creation, review request/approve/reject/request-changes/cancel, event replay, and event streaming. In authenticated mode, `session init` returns the bearer session id; exporting that value as `ACP_RPC_TOKEN` makes later CLI commands and event streams use the same scoped session without storing credentials inside ACP.
+The `acp` CLI is a thin HTTP client of the running host. Point it at the host with
+`ACP_BASE_URL` (it defaults to `http://localhost:$ACP_PORT`). All commands print
+JSON on stdout. Below, `acp` is shorthand for `node dist/app/cli/main.js`.
 
 ```bash
-ACP_BASE_URL=http://localhost:4317 node dist/app/cli/main.js workspace list
-ACP_BASE_URL=http://localhost:4317 node dist/app/cli/main.js session init --worker agent_codex --name Codex --permissions workspace:read,work:create
-ACP_BASE_URL=http://localhost:4317 node dist/app/cli/main.js work create "Fix login redirect" --workspace workspace_1
+export ACP_BASE_URL=http://localhost:4317
+
+# Register a session (returns a session_id used as a bearer token when auth is on).
+acp session init --worker agent_codex --name Codex --kind agent \
+  --permissions workspace:read,workspace:write,work:create
+
+# Create a workspace (kind is one of: git_repository, git_worktree, directory,
+# container, cloud_sandbox, ci_job).
+acp workspace create --name my-repo --kind git_repository \
+  --uri "file:///path/to/repo" --default-branch main
+# -> { "id": "workspace_...", ... }
+
+# Create work in that workspace.
+acp work create "Fix login redirect" --workspace workspace_xxx --priority high
+# -> { "id": "work_...", "state": "open", ... }
 ```
 
-For production-style dogfooding, `dogfood:codex` drives a live ACP host as a
-Codex-shaped worker instead of using an in-process test fixture. It initializes a
-session, creates and claims work, exercises a lease, writes a checkpoint and
-memory record, registers a pull request artifact, publishes progress, requests
-and approves review, releases the lease, completes the work, and replays events.
-Point `ACP_BASE_URL` at the host under test and run
-`node scripts/acp-codex-dogfood-smoke.mjs`, or the matching package script.
-`dogfood:codex:multi` extends that lane into a small production coordination
-scenario with separate planner, worker, and reviewer sessions. It proves that ACP
-can serialize a work claim race, report a lease conflict between agents, preserve
-handoff state through checkpoint and memory reads, run a request-changes review
-loop, release the held lease, complete the work, and replay a monotonic event
-history.
+### 3. A full worker lifecycle
 
-The package exposes an `acp` binary once built and linked or installed from the package. It also exposes `acp-jsonrpc-stdio`, which reads Content-Length framed JSON-RPC messages from stdin, forwards them to the local host's `POST /rpc` endpoint, and writes framed responses to stdout. Until package distribution is formalized, direct `node dist/...` entrypoints are the most explicit local smoke path.
+This is the sequence a real worker follows — claim, protect the resource, record
+progress, get reviewed, finish. It is exactly what the live-agent test harness
+(below) exercises with autonomous agents.
 
-The stdio bridge targets the same `ACP_BASE_URL` and `ACP_PORT` convention as the CLI. If a long-lived stdio integration already has a session id, `ACP_RPC_TOKEN` forwards that value as a bearer token on every `/rpc` call.
+```bash
+# Claim the work and lease the file you're about to edit.
+acp work claim work_xxx --worker agent_codex
+acp lease request --workspace workspace_xxx --holder agent_codex \
+  --kind file --uri "file:///path/to/repo/src/login.ts" --ttl 300
+#   -> a second worker requesting the same lease gets 409 lease_conflict.
 
-The normal verification path is TypeScript typechecking, ESLint, targeted subsystem tests, and the full Vitest suite. The SQLite adapter uses Node's `node:sqlite` module, so current Node releases print an experimental SQLite warning during storage tests; that warning is expected and is not a test failure.
+# Move into progress and record recoverable state.
+acp work update work_xxx --state running
+acp checkpoint create --workspace workspace_xxx --work work_xxx \
+  --summary "patched redirect target, tests green"
+acp memory create --workspace workspace_xxx --work work_xxx \
+  --kind handoff --key login-fix --summary "done" --content "details for the reviewer"
 
-## Design Record
+# Register the output and request review.
+acp artifact pr --workspace workspace_xxx --work work_xxx \
+  --url "https://github.com/org/repo/pull/42" --summary "Fix login redirect"
+acp review request --work work_xxx --by agent_codex   # performs running -> needs_review
 
-The repository is governed wiki-first. The canonical design record lives under `wiki/`, not in scattered comments or implied conventions. `wiki/00-INDEX.md` is the front door, `wiki/architecture/_MOC.md` tracks layer topology and build order, `wiki/CHANGELOG.md` records each logic slice, and `wiki/src/` mirrors `src/` one-for-one for source modules. The tracked `specs.md` file is the working draft of the protocol; the wiki records how each implementation slice interprets and narrows that draft.
+# ...reviewer approves (see below)... then finish and release.
+acp work update work_xxx --state completed
+acp lease release lease_xxx
+```
 
-The architecture follows the accepted foundation in `wiki/decisions/ADR-0001-architecture-foundation.md`: ACP is the canonical protocol name, Effect Layers compose the runtime, Storage and Transport are explicit seams, and schemas define the wire surface. Node-specific runtime adapters live under `src/infrastructure/platform-node`; application entrypoints provide those adapters rather than constructing raw Node resources inline.
+### 4. Review and replay
 
-## Repository Layout
+```bash
+# A reviewer session.
+acp session init --worker agent_reviewer --name Reviewer --kind agent \
+  --permissions workspace:read,event:read,memory:read,review:approve,review:request_changes
+acp review list --workspace workspace_xxx
+acp review request-changes review_xxx             # -> work goes to changes_requested
+acp review approve review_xxx --met "correctness" # -> work goes to approved
 
-The protocol schema lives in `src/protocol/schema`, with tagged protocol errors in `src/protocol/errors`. Domain behavior lives in `src/domain`, split by ACP concept. Infrastructure adapters live in `src/infrastructure`, including the storage seam, memory and SQLite stores, HTTP API declarations, JSON-RPC mapping, error mapping, SSE rendering, and Node platform adapters for server sockets and process IO. Application entrypoints live in `src/app`, where `app-live` composes the host, `server` launches HTTP, `stdio` bridges JSON-RPC framing, and `cli` provides the local command-line client.
+# Replay the full history, or stream live.
+acp events list --workspace workspace_xxx --after 0
+acp events stream --workspace workspace_xxx
+```
+
+---
+
+## Core concepts
+
+### Work lifecycle
+
+Work units move through an explicit state machine. Illegal jumps return
+`invalid_state_transition` (HTTP 409).
+
+```
+open ─▶ claimed ─▶ running ─▶ needs_review ─▶ approved ─▶ completed
+                      ▲            │
+                      └── changes_requested ◀┘
+```
+
+`review request` is what performs `running -> needs_review`; a reviewer's
+`request-changes` moves the work to `changes_requested`, from which the worker
+returns to `running`, writes a new checkpoint, and re-requests review. `blocked`,
+`rejected`, and `cancelled` are the other terminal/holding states.
+
+### Leases
+
+A lease is an **advisory** TTL'd claim on a resource identified by `kind` + `uri`.
+Requesting a lease already held by another worker returns `409 lease_conflict`.
+Long-running work can `renew` a lease; a supervisor can `revoke` a stale one; and
+workspace lease state is inspectable with `lease list`. Leases coordinate; they do
+not lock the filesystem.
+
+### Reviews
+
+A review gates a decision on a work unit. Cancellation is its own lifecycle event
+(`review.cancelled`), distinct from rejection: cancelling a requested review
+withdraws the gate and lets the work continue, rather than failing it.
+
+### Events
+
+Every workspace has an append-only, strictly monotonic event log
+(`workspace_id, seq`). It is the source of truth for ordering and the recovery
+mechanism: a returning worker replays `events list --after <seq>` before opening a
+live subscription. Worker presence, by contrast, is host-scoped current state
+(`worker list` / `worker get`), not derived from event history.
+
+---
+
+## Transports
+
+Every transport runs against the **same** application graph, so sessions,
+workspaces, leases, events, memory, checkpoints, artifacts, and reviews are shared
+regardless of how a client connects.
+
+| Transport           | Endpoint / entry           | Use it for                                             |
+| ------------------- | -------------------------- | ------------------------------------------------------ |
+| **REST**            | `/v1/...`                  | The primary HTTP surface; what the CLI speaks.         |
+| **SSE**             | `GET /v1/events/stream`    | Workspace-scoped live events over HTTP.                |
+| **Native RPC**      | `/rpc/native` (NDJSON)     | First-party TypeScript clients using `@effect/rpc`.    |
+| **JSON-RPC (POST)** | `POST /rpc`                | Compatibility; 2.0 envelopes, batch, notifications.    |
+| **JSON-RPC (WS)**   | `GET /rpc` (upgrade)       | The same JSON-RPC surface over a persistent socket.    |
+| **stdio bridge**    | `acp-jsonrpc-stdio` binary | Content-Length framed JSON-RPC for stdio integrations. |
+
+**Native RPC** is the recommended path for new first-party TypeScript consumers:
+it mounts the generated `@effect/rpc` contract with NDJSON framing so unary calls
+and `events.subscribe` streaming share one path, and every operation carries
+structured Effect telemetry (operation, outcome, duration, client id, ACP error
+code). **JSON-RPC** is the compatibility surface — every REST mutation has a paired
+method — rather than the focus of new client work. On the WebSocket, a single
+`events.subscribe` request delivers later workspace events as `events.event`
+notifications; the bearer token comes from the `Authorization` handshake header or
+a `?token=` query parameter for browsers that can't set handshake headers.
+
+---
+
+## Storage
+
+Storage is selected at the host boundary behind a single port, so persistence is
+an adapter concern, not a protocol concern.
+
+- **In-memory** (default) — deterministic, simple, ephemeral. Good for the local
+  happy path and tests.
+- **SQLite** (`ACP_STORAGE_ADAPTER=sqlite`, `ACP_SQLITE_PATH=...`) — durable state
+  and an append-only event table, created on startup. Preserves append order and
+  keeps queries scoped by workspace and key prefix.
+
+---
+
+## Authentication and scopes
+
+Local mode allows unauthenticated requests. Set `ACP_REQUIRE_AUTH=true` to require
+bearer sessions on scoped routes.
+
+- `session.initialize` is the open bootstrap route; it mints the session id used
+  as the bearer token on later calls.
+- Session ids are opaque, high-entropy credentials (not counters or timestamps).
+- Permissions are explicit strings — `work:create`, `lease:create`,
+  `artifact:delete`, `review:approve`, `event:read`, and so on.
+- Missing/invalid credentials return `401 Unauthorized`; a valid token lacking the
+  required scope returns `403 Forbidden` with the `forbidden` error code.
+
+The CLI and stdio bridge both forward `ACP_RPC_TOKEN` as the bearer token, so an
+integration can `export ACP_RPC_TOKEN=$(...)` once and reuse the scoped session
+without ACP storing any credentials.
+
+---
+
+## Configuration
+
+`.env.example` is the drift-checked runtime manifest for the host, CLI, stdio
+bridge, and scripts. Copy it for local use; inject secrets from the operator shell
+rather than committing them.
+
+| Variable                   | Purpose                                                 |
+| -------------------------- | ------------------------------------------------------- |
+| `ACP_PORT`                 | Host bind port (default `4317`).                        |
+| `ACP_BASE_URL`             | Target host for the CLI / stdio bridge.                 |
+| `ACP_STORAGE_ADAPTER`      | `memory` (default) or `sqlite`.                         |
+| `ACP_SQLITE_PATH`          | SQLite database path (required for the sqlite adapter). |
+| `ACP_REQUIRE_AUTH`         | `true` to require bearer sessions on scoped routes.     |
+| `ACP_RPC_TOKEN`            | Bearer token forwarded by the CLI / stdio bridge.       |
+| `ACP_LOG_LEVEL`            | `debug` \| `info` (default) \| `warn` \| `error`.       |
+| `ACP_DEFAULT_LEASE_TTL`    | Default lease TTL when a request omits one.             |
+| `ACP_SESSION_TTL`          | Session lifetime.                                       |
+| `ACP_SWEEP_INTERVAL`       | Background sweeper cadence (expiring leases/sessions).  |
+| `ACP_SSE_HEARTBEAT`        | SSE keepalive interval.                                 |
+| `ACP_EVENT_RETENTION_DAYS` | Event history retention window.                         |
+| `ACP_MAX_ARTIFACT_SIZE_MB` | Inline artifact content size cap.                       |
+
+---
+
+## CLI command reference
+
+```
+session init      --worker <id> --name <n> [--kind <k>] [--vendor <v>] [--capabilities <csv>] [--permissions <csv>]
+worker  list | get <worker_id>
+workspace create | update <id> | archive <id> | list
+work    create <title> --workspace <id> [--priority <p>] [--description <d>]
+work    list --workspace <id> | get <id> | claim <id> --worker <id> | update <id> --state <state>
+lease   request --workspace <id> --holder <id> --kind <k> --uri <u> [--ttl <n>]
+lease   list --workspace <id> | renew <id> [--ttl <n>] | revoke <id> | release <id>
+checkpoint create --workspace <id> --work <id> --summary <s> | list | latest --work <id>
+artifact create | pr | update <id> | list | content <id> | delete <id>
+review  request --work <id> --by <id> | list | approve <id> --met <csv> | reject <id> | request-changes <id>
+memory  create --workspace <id> --kind <k> --key <k> --summary <s> --content <c> [--work <id>] [--labels <csv>]
+memory  list --workspace <id> [--after <seq>] [--limit <n>] [--work <id>] [--kind <k>] [--key <k>] [--label <l>]
+events  list --workspace <id> [--after <seq>] | stream --workspace <id>
+```
+
+Run `node dist/app/cli/main.js` with no arguments to print the full usage text.
+
+---
+
+## Testing and dogfooding
+
+The verification path is TypeScript typechecking, ESLint, and the full Vitest
+suite:
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test
+```
+
+(The SQLite adapter prints Node's experimental-`node:sqlite` warning during
+storage tests; that is expected, not a failure.)
+
+Beyond unit tests, three lanes exercise ACP against a _live_ host:
+
+- **`pnpm dogfood:codex`** — a single Codex-shaped worker runs a full lifecycle
+  (session, claim, lease, checkpoint, memory, PR artifact, progress, review,
+  release, complete, replay) against a running host.
+- **`pnpm dogfood:codex:multi`** — separate planner/worker/reviewer sessions prove
+  ACP can serialize a claim race, report a lease conflict, preserve handoff state,
+  run a request-changes loop, and replay a monotonic history.
+- **`scripts/live-test/`** — the real-agent coordination harness: genuinely
+  autonomous agents (planner / two workers / reviewer), each given only a role and
+  the `acp` CLI, coordinate through a live SQLite-backed, auth-on host. A verifier
+  then asserts six invariants — monotonic append-only event seq, real lease
+  contention, a request-changes→approve review loop, terminal states with no
+  dangling leases, cross-actor handoff, and API↔SQLite durability parity — reading
+  the history back both via the CLI and directly from the database file. See
+  `docs/superpowers/specs/2026-07-02-live-agent-coordination-test-design.md`.
+
+The package also exposes an `acp-jsonrpc-stdio` binary that reads Content-Length
+framed JSON-RPC from stdin, forwards it to the host's `POST /rpc`, and writes
+framed responses to stdout.
+
+---
+
+## Repository layout
+
+```
+src/
+  protocol/schema   Wire-surface schemas
+  protocol/errors   Tagged protocol errors
+  domain/           Behavior per ACP concept (work, leases, reviews, events, ...)
+  infrastructure/   Storage seam (memory + sqlite), HTTP/JSON-RPC/RPC, SSE, node adapters
+  app/              Entrypoints: app-live (host graph), server, stdio, cli
+scripts/            Dogfood + live-test harnesses
+wiki/               Canonical, wiki-first design record
+specs.md            Working draft of the protocol
+```
+
+## Design record
+
+The repository is governed **wiki-first**: the canonical design record lives under
+`wiki/`, not in scattered comments. `wiki/00-INDEX.md` is the front door,
+`wiki/architecture/_MOC.md` tracks layer topology and build order,
+`wiki/CHANGELOG.md` records each logic slice, and `wiki/src/` mirrors `src/`
+one-for-one. `specs.md` is the working protocol draft; the wiki records how each
+implementation slice interprets it. The architecture follows
+`wiki/decisions/ADR-0001-architecture-foundation.md`: Effect Layers compose the
+runtime, Storage and Transport are explicit seams, and schemas define the wire
+surface.
 
 ## License
 
-ACP is licensed under Apache-2.0. See `LICENSE`.
+Apache-2.0. See [`LICENSE`](LICENSE).
