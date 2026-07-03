@@ -20,6 +20,10 @@ tags: [moc, adr]
 - [[ADR-0007-effect-rpc-adoption]] — ACCEPTED — adopt @effect/rpc over the domain
   services and retire the hand-mapped JSON-RPC layer; clients are first-party
   Effect/TS, so JSON-RPC 2.0 wire compatibility is dropped.
+- [[ADR-0008-deployment-storage-topology]] — ACCEPTED — one binary, three
+  config-selected seams (Storage / EventBroker / Auth) and named deployment
+  profiles; add a Postgres storage adapter and a cross-process event broker
+  (Postgres LISTEN/NOTIFY); serverless is out for the runtime.
 
 ## Referenced by
 

@@ -51,6 +51,14 @@ ADR: [[ADR-0001-architecture-foundation]],
 for SSE; WebSocket unsubscribe is connection close until the protocol defines an
 explicit unsubscribe method.
 
+> **Cross-process fan-out (planned, [[ADR-0008-deployment-storage-topology]]).**
+> The single in-process `PubSub` is process-local: a subscriber only receives
+> events published by the same process, so live SSE/WebSocket fan-out is
+> single-node today. ADR-0008 extracts an `EventBroker` `Context.Tag` behind the
+> PubSub with `in-process` (current), `pg-notify` (Postgres `LISTEN/NOTIFY`, HA
+> with no extra dependency), and optional `redis` adapters. The SSE/WebSocket
+> adapters above are unchanged — they render whatever the broker yields.
+
 ## Referenced by
 
 [[Event]] · [[event-store]] · [[sse-event-stream]] · [[architecture/_MOC]] ·

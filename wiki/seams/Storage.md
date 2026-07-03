@@ -37,6 +37,7 @@ for the ordered per-workspace [[Event]] log.
 | -------- | ---------- | --------------------------------------------------- | ------------- | -------- |
 | InMemory | production | @root/src/infrastructure/storage/in-memory-store.ts | 2026-06-25    | CURRENT  |
 | SQLite   | production | @root/src/infrastructure/storage/sqlite-store.ts    | 2026-06-27    | VERIFIED |
+| Postgres | planned    | (via `@effect/sql-pg`; ADR-0008)                    | —             | PLANNED  |
 | Stub     | test       | (reuses InMemory)                                   | —             | —        |
 
 ## Health
