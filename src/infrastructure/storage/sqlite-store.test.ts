@@ -5,7 +5,12 @@ import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { afterEach, describe, expect, it } from 'vitest'
 import { Chunk, Effect, Option, Schema } from 'effect'
-import { Event, Memory, ReadMemoryQuery } from '../../protocol/schema/index.js'
+import {
+  Event,
+  Memory,
+  ReadMemoryQuery,
+  Timestamp,
+} from '../../protocol/schema/index.js'
 import {
   makeSqliteStorageLive,
   SqliteMemoryStorageLive,
@@ -357,5 +362,59 @@ describe('SQLite storage — file persistence', () => {
 
     expect(collectionPlan).toContain('USING PRIMARY KEY')
     expect(eventPlan).toContain('USING PRIMARY KEY')
+  })
+})
+
+describe('SQLite storage — event retention pruning', () => {
+  const draftAt = (workspace: string, timestamp: string) => ({
+    ...draft(workspace),
+    timestamp: Schema.decodeUnknownSync(Timestamp)(timestamp),
+  })
+
+  it('prunes aged events, keeps the newest as seq watermark', () => {
+    const outcome = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* s.appendEvent('ws1', draftAt('ws1', '2000-01-01T00:00:00Z'))
+        yield* s.appendEvent('ws1', draftAt('ws1', '2000-06-01T00:00:00Z'))
+        yield* s.appendEvent('ws1', draftAt('ws1', '2100-01-01T00:00:00Z'))
+        const pruned = yield* s.pruneEventsBefore('2050-01-01T00:00:00Z')
+        const remaining = yield* s.readEventsAfter('ws1', 0)
+        const next = yield* s.appendEvent(
+          'ws1',
+          draftAt('ws1', '2100-02-01T00:00:00Z'),
+        )
+        return {
+          pruned,
+          remainingSeqs: Chunk.toReadonlyArray(remaining).map((e) => e.seq),
+          nextSeq: next.seq,
+        }
+      }),
+    )
+    expect(outcome.pruned).toBe(2)
+    expect(outcome.remainingSeqs).toEqual([3])
+    expect(outcome.nextSeq).toBe(4)
+  })
+
+  it('keeps exactly the newest event when all are aged out, per workspace', () => {
+    const outcome = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* s.appendEvent('wsA', draftAt('wsA', '2000-01-01T00:00:00Z'))
+        yield* s.appendEvent('wsA', draftAt('wsA', '2000-02-01T00:00:00Z'))
+        yield* s.appendEvent('wsB', draftAt('wsB', '2100-01-01T00:00:00Z'))
+        const pruned = yield* s.pruneEventsBefore('2050-01-01T00:00:00Z')
+        const a = yield* s.readEventsAfter('wsA', 0)
+        const b = yield* s.readEventsAfter('wsB', 0)
+        return {
+          pruned,
+          aSeqs: Chunk.toReadonlyArray(a).map((e) => e.seq),
+          bCount: Chunk.size(b),
+        }
+      }),
+    )
+    expect(outcome.pruned).toBe(1)
+    expect(outcome.aSeqs).toEqual([2])
+    expect(outcome.bCount).toBe(1)
   })
 })

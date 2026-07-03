@@ -1,9 +1,11 @@
 /** @Acp.App.Server.Sweeper.Test — one deterministic sweep over a seeded store */
 import { describe, expect, it } from 'vitest'
-import { Effect, Layer, Option, Schema } from 'effect'
+import { Chunk, Effect, Layer, Option, Schema } from 'effect'
+import { EventStore } from '../../domain/events/index.js'
 import { LeaseService } from '../../domain/leases/index.js'
 import { SessionService } from '../../domain/sessions/index.js'
 import {
+  Event,
   LeaseId,
   RequestLeasePayload,
   Session,
@@ -81,5 +83,50 @@ describe('sweepOnce', () => {
     )
     expect(result.evictedSessions).toEqual([])
     expect(result.expiredLeases).toEqual([])
+    expect(result.prunedEvents).toBe(0)
+  })
+
+  it('prunes events older than the configured retention window', async () => {
+    const eventDraft = (workspace: string, timestamp: string) => {
+      const full = Schema.decodeUnknownSync(Event)({
+        id: `event_${timestamp}`,
+        type: 'work.progressed',
+        workspace_id: workspace,
+        actor: 'agent_claude_code',
+        timestamp,
+        seq: 0,
+        data: {},
+      })
+      return {
+        id: full.id,
+        type: full.type,
+        workspace_id: full.workspace_id,
+        work_id: full.work_id,
+        actor: full.actor,
+        timestamp: full.timestamp,
+        data: full.data,
+      }
+    }
+
+    const program = Effect.gen(function* () {
+      const events = yield* EventStore
+      // Far older than the 1h/30-day defaults; the newest is "now".
+      yield* events.append(
+        eventDraft('workspace_retain', '2000-01-01T00:00:00Z'),
+      )
+      const recent = yield* events.append(
+        eventDraft('workspace_retain', new Date().toISOString()),
+      )
+      const result = yield* sweepOnce
+      const remaining = yield* events.readAfter('workspace_retain', 0)
+      return { result, recent, remaining }
+    }).pipe(Effect.provide(Runtime))
+
+    const { result, recent, remaining } = await Effect.runPromise(program)
+
+    expect(result.prunedEvents).toBe(1)
+    expect(Chunk.toReadonlyArray(remaining).map((e) => e.id)).toEqual([
+      recent.id,
+    ])
   })
 })

@@ -28,8 +28,10 @@ and change frequency justifies heavier governance.
 
 A keyed, append-aware persistence port. Pure interface (`Context.Tag`), no Effect
 construction leaked. Returns `Option` for absence, typed `StorageError` on failure.
-Operations: `put`, `get`, `list`, `remove`, and `appendEvent`/`readEventsAfter`
-for the ordered per-workspace [[Event]] log.
+Operations: `put`, `get`, `list`, `remove`, `appendEvent`/`readEventsAfter`
+for the ordered per-workspace [[Event]] log, and `pruneEventsBefore` (retention:
+delete events older than a cutoff, always sparing each workspace's newest event so
+the append `seq` high-water-mark never resets).
 
 ## Adapters
 
