@@ -1,5 +1,5 @@
 /** @Acp.Config.App — typed, defaulted runtime configuration */
-import { Config, Context, Duration, Effect, Layer } from 'effect'
+import { Config, Context, Duration, Effect, Layer, Option } from 'effect'
 
 export type AppLogLevel = 'debug' | 'info' | 'warn' | 'error'
 
@@ -29,13 +29,28 @@ export class AppConfigTag extends Context.Tag('AppConfig')<
   AppConfig
 >() {}
 
+// A deployment profile (ACP_PROFILE) is a one-variable preset over the
+// individual knobs — see [[ADR-0008-deployment-storage-topology]]. Explicit
+// ACP_* variables always override the profile's defaults. `hosted` and
+// `self-host-ha` arrive with the Postgres storage adapter; until then only
+// `local` and `single-node` are valid, and any other value fails fast at boot.
+const profileDefaults = (profile: Option.Option<'local' | 'single-node'>) =>
+  Option.getOrNull(profile) === 'single-node'
+    ? { storageAdapter: 'sqlite' as const, requireAuth: true }
+    : { storageAdapter: 'memory' as const, requireAuth: false }
+
 const load = Effect.gen(function* () {
   const port = yield* Config.integer('ACP_PORT').pipe(Config.withDefault(4317))
   const logLevel = yield* appLogLevelConfig
+  const profile = yield* Config.literal(
+    'local',
+    'single-node',
+  )('ACP_PROFILE').pipe(Config.option)
+  const defaults = profileDefaults(profile)
   const storageAdapter = yield* Config.literal(
     'memory',
     'sqlite',
-  )('ACP_STORAGE_ADAPTER').pipe(Config.withDefault('memory' as const))
+  )('ACP_STORAGE_ADAPTER').pipe(Config.withDefault(defaults.storageAdapter))
   const sqlitePath = yield* Config.string('ACP_SQLITE_PATH').pipe(
     Config.withDefault('acp.sqlite'),
   )
@@ -58,7 +73,7 @@ const load = Effect.gen(function* () {
     Config.withDefault(Duration.seconds(60)),
   )
   const requireAuth = yield* Config.boolean('ACP_REQUIRE_AUTH').pipe(
-    Config.withDefault(false),
+    Config.withDefault(defaults.requireAuth),
   )
   return {
     port,

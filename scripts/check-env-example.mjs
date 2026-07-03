@@ -11,6 +11,7 @@ const expectedVariables = new Set([
   'ACP_LOG_LEVEL',
   'ACP_MAX_ARTIFACT_SIZE_MB',
   'ACP_PORT',
+  'ACP_PROFILE',
   'ACP_REQUIRE_AUTH',
   'ACP_RPC_TOKEN',
   'ACP_SESSION_TTL',

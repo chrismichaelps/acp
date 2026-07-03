@@ -23,6 +23,32 @@ describe('AppConfig', () => {
     expect(cfg.requireAuth).toBe(false)
   })
 
+  it('applies the single-node profile preset (sqlite storage, auth on)', () => {
+    const cfg = run([['ACP_PROFILE', 'single-node']])
+    expect(cfg.storageAdapter).toBe('sqlite')
+    expect(cfg.requireAuth).toBe(true)
+  })
+
+  it('applies the local profile preset (memory storage, no auth)', () => {
+    const cfg = run([['ACP_PROFILE', 'local']])
+    expect(cfg.storageAdapter).toBe('memory')
+    expect(cfg.requireAuth).toBe(false)
+  })
+
+  it('lets explicit variables override the profile preset', () => {
+    const cfg = run([
+      ['ACP_PROFILE', 'single-node'],
+      ['ACP_STORAGE_ADAPTER', 'memory'],
+      ['ACP_REQUIRE_AUTH', 'false'],
+    ])
+    expect(cfg.storageAdapter).toBe('memory')
+    expect(cfg.requireAuth).toBe(false)
+  })
+
+  it('fails fast on an unsupported profile', () => {
+    expect(() => run([['ACP_PROFILE', 'hosted']])).toThrow()
+  })
+
   it('reads overrides from the environment', () => {
     const cfg = run([
       ['ACP_PORT', '8080'],
