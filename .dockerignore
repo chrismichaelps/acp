@@ -1,0 +1,30 @@
+# Build context hygiene — keep the image small and the build deterministic.
+node_modules
+dist
+build
+out
+coverage
+.nyc_output
+*.tsbuildinfo
+
+# Version control & tooling
+.git
+.gitignore
+.eslintcache
+.claude
+
+# Local/dev-only and non-runtime material
+wiki
+scripts/live-test
+*.log
+logs
+.acp
+*.sqlite
+.env
+.env.*
+!.env.example
+
+# Docs the runtime does not need
+README.md
+specs.md
+SKILL.md

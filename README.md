@@ -225,6 +225,22 @@ exists:
 A passing `/health` with a failing `/ready` distinguishes "process alive" from
 "dependencies reachable". Point your platform's health check at `/ready`.
 
+### Deploying
+
+The host is a single long-lived process, so it runs on any **persistent container
+platform** (Railway, Fly.io, Render, a VM, Kubernetes) — not serverless. A
+multi-stage [`Dockerfile`](./Dockerfile) builds a non-root image whose
+`HEALTHCHECK` targets `/ready`:
+
+```bash
+docker build -t acp .
+docker run -p 4317:4317 acp
+```
+
+The same image runs every deployment profile; only environment differs. See
+[`wiki/references/deployment.md`](./wiki/references/deployment.md) for the
+platform-by-platform runbook and storage-adapter guidance.
+
 ---
 
 ## Storage
