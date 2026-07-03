@@ -1,10 +1,11 @@
 /** @Acp.Domain.Events.EventStore — persisted event append + live fan-out */
-import { Context, Effect, Layer, PubSub, Stream } from 'effect'
+import { Context, Effect, Layer, Stream } from 'effect'
 import type { Chunk, Scope } from 'effect'
 import { Storage } from '../../infrastructure/storage/index.js'
 import type { EventDraft as StorageEventDraft } from '../../infrastructure/storage/index.js'
 import type { StorageError } from '../../protocol/errors/protocol-error.js'
 import type { Event } from '../../protocol/schema/index.js'
+import { EventBroker } from './event-broker.js'
 
 export type EventDraft = StorageEventDraft
 
@@ -26,12 +27,12 @@ export class EventStore extends Context.Tag('EventStore')<
 
 const make = Effect.gen(function* () {
   const storage = yield* Storage
-  const pubsub = yield* PubSub.unbounded<Event>()
+  const broker = yield* EventBroker
 
   const append: EventStoreApi['append'] = (draft) =>
     Effect.gen(function* () {
       const event = yield* storage.appendEvent(draft.workspace_id, draft)
-      yield* PubSub.publish(pubsub, event)
+      yield* broker.publish(event)
       return event
     })
 
@@ -40,7 +41,7 @@ const make = Effect.gen(function* () {
 
   const subscribe: EventStoreApi['subscribe'] = (workspaceId) =>
     Effect.map(
-      Stream.fromPubSub(pubsub, { scoped: true }),
+      broker.subscribe(),
       Stream.filter((event) => event.workspace_id === workspaceId),
     )
 
@@ -51,5 +52,8 @@ const make = Effect.gen(function* () {
   } satisfies EventStoreApi
 })
 
-export const EventStoreLive: Layer.Layer<EventStore, never, Storage> =
-  Layer.effect(EventStore, make)
+export const EventStoreLive: Layer.Layer<
+  EventStore,
+  never,
+  Storage | EventBroker
+> = Layer.effect(EventStore, make)
