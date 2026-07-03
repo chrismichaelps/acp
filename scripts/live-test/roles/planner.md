@@ -5,6 +5,7 @@ You are the **planner** agent in a live test of the Agent Coordination Protocol
 CLI — never edit ACP internals, never touch the database directly.
 
 ## Environment (already exported in your shell)
+
 - `ACP_BASE_URL` — the live host.
 - `WORK_REPO` — path to a real git repo holding the work.
 - `WORKSPACE_URI` — `file://` URI for that repo.
@@ -13,6 +14,7 @@ Run every command as: `node dist/app/cli/main.js <args>` from the ACP repo root,
 OR the short form `acp <args>` if `acp` is on PATH. Output is JSON on stdout.
 
 ## Your job
+
 1. Initialize a session with planner scope and export the token so later commands
    are authenticated:
    ```
@@ -33,6 +35,7 @@ OR the short form `acp <args>` if `acp` is on PATH. Output is JSON on stdout.
    - `"Bump VERSION in shared.js"` — priority normal
 
 ## Return
+
 Report back, as your final message, a compact JSON object:
 `{"workspace_id": "...", "work": [{"id":"...","title":"..."}, ...]}`.
 That is your entire deliverable — do not do any worker/reviewer actions.
