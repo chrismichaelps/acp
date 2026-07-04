@@ -110,18 +110,30 @@ describe('ReviewService', () => {
         yield* prepareWorkForReview()
         const reviews = yield* ReviewService
         const work = yield* WorkUnitService
+        const events = yield* EventStore
         yield* reviews.request(requestReviewInput())
         const approved = yield* reviews.approve(reviewId, reviewerId, later, [
           'diff_review',
           'tests_pass',
         ])
         const reviewedWork = yield* work.get(workId)
-        return { approved, reviewedWork }
+        const log = yield* events.readAfter('workspace_review', 0)
+        return { approved, reviewedWork, log }
       }),
     )
 
     expect(result.approved.state).toBe('approved')
     expect(Option.getOrNull(result.reviewedWork)?.state).toBe('approved')
+    expect(
+      Chunk.toReadonlyArray(result.log).map((event: Event) => event.type),
+    ).toEqual([
+      'work.created',
+      'work.claimed',
+      'work.started',
+      'review.requested',
+      'work.needs_review',
+      'review.approved',
+    ])
   })
 
   it('rejects approval with unmet requirements', () => {
@@ -150,6 +162,7 @@ describe('ReviewService', () => {
         yield* prepareWorkForReview()
         const reviews = yield* ReviewService
         const work = yield* WorkUnitService
+        const events = yield* EventStore
         yield* reviews.request(requestReviewInput())
         const review = yield* reviews.requestChanges(
           reviewId,
@@ -157,7 +170,8 @@ describe('ReviewService', () => {
           later,
         )
         const reviewedWork = yield* work.get(workId)
-        return { review, reviewedWork }
+        const log = yield* events.readAfter('workspace_review', 0)
+        return { review, reviewedWork, log }
       }),
     )
 
@@ -165,6 +179,16 @@ describe('ReviewService', () => {
     expect(Option.getOrNull(result.reviewedWork)?.state).toBe(
       'changes_requested',
     )
+    expect(
+      Chunk.toReadonlyArray(result.log).map((event: Event) => event.type),
+    ).toEqual([
+      'work.created',
+      'work.claimed',
+      'work.started',
+      'review.requested',
+      'work.needs_review',
+      'review.changes_requested',
+    ])
   })
 
   it('cancels a requested review, emits review.cancelled, and resumes work', () => {
