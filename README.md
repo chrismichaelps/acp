@@ -368,6 +368,11 @@ Beyond unit tests, three lanes exercise ACP against a _live_ host:
   the history back both via the CLI and directly from the database file. See
   `docs/superpowers/specs/2026-07-02-live-agent-coordination-test-design.md`.
 
+For hosted-policy dogfood, set `ACP_DOGFOOD_WORKSPACE_ID` to a provisioned
+workspace id. The Codex smoke and multi-agent runners will bind every session to
+that workspace and skip local workspace creation, which lets the same scripts run
+against hosts with `ACP_REQUIRE_WORKSPACE_BINDINGS=true`.
+
 The package also exposes an `acp-jsonrpc-stdio` binary that reads Content-Length
 framed JSON-RPC from stdin, forwards it to the host's `POST /rpc`, and writes
 framed responses to stdout.

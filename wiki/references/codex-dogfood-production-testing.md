@@ -35,6 +35,12 @@ run id for correlation, `ACP_DOGFOOD_WORKER_ID` can select a different worker
 identity, and `ACP_DOGFOOD_PR_URL` can attach a real pull request URL instead of
 the default placeholder reference.
 
+When a target host enforces workspace-bound sessions, set
+`ACP_DOGFOOD_WORKSPACE_ID` to a pre-provisioned workspace id. The smoke and
+multi-agent runners include that id in every `session.initialize` call and skip
+workspace creation. Without the variable, they keep the local flow and create an
+ephemeral workspace themselves.
+
 The expected output is a compact JSON object containing the workspace, work,
 lease, checkpoint, memory, artifact, review, event ids, and event replay count.
 A successful run means ACP can coordinate a Codex-shaped worker through the core

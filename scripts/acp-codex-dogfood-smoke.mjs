@@ -6,6 +6,7 @@ const baseUrl = (process.env.ACP_BASE_URL ?? 'http://localhost:4317').replace(
 )
 const runId = process.env.ACP_DOGFOOD_RUN_ID ?? Date.now().toString(36)
 const workerId = process.env.ACP_DOGFOOD_WORKER_ID ?? 'agent_codex_dogfood'
+const workspaceId = process.env.ACP_DOGFOOD_WORKSPACE_ID?.trim() || undefined
 
 const permissions = [
   'workspace:read',
@@ -69,21 +70,25 @@ const main = async () => {
       ],
     },
     permissions,
+    ...(workspaceId === undefined ? {} : { workspace_ids: [workspaceId] }),
   })
   const token = session.session_id
 
-  const workspace = await request(
-    'POST',
-    '/v1/workspaces',
-    {
-      name: `acp/codex-dogfood-${runId}`,
-      kind: 'git_repository',
-      uri: 'git+https://github.com/chrismichaelps/acp.git',
-      default_branch: 'main',
-    },
-    token,
-    [201],
-  )
+  const workspace =
+    workspaceId === undefined
+      ? await request(
+          'POST',
+          '/v1/workspaces',
+          {
+            name: `acp/codex-dogfood-${runId}`,
+            kind: 'git_repository',
+            uri: 'git+https://github.com/chrismichaelps/acp.git',
+            default_branch: 'main',
+          },
+          token,
+          [201],
+        )
+      : { id: workspaceId }
 
   const work = await request(
     'POST',
