@@ -24,6 +24,8 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
   registration on the host layer router.
 - [[http-app]] — socket-agnostic host layer (router + sweeper over app + id-clock).
 - [[sweeper]] — background TTL eviction daemon (stale sessions, due leases).
+- [[sweeper-leadership]] — in-process or Postgres advisory-lock guard for
+  replicated sweeper ticks.
 - [[server-main]] — Node `HttpServer` entrypoint on `ACP_PORT` with structured
   Effect logging.
 

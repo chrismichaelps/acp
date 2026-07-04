@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · postgres-sweeper-leader-election slice · added
+  [[sweeper-leadership]] and wrapped [[sweeper]] daemon ticks in
+  in-process/Postgres-selected leadership so replicated Postgres hosts take a
+  transaction-scoped advisory lock before lease expiry or event-retention
+  mutation · validation: full local gate passed (check:env, format, lint,
+  typecheck, file-size, build, 634 tests; 14 skipped) · risk MEDIUM
+
 - 2026-07-03 · pg-notify-event-broker slice · added
   `ACP_EVENT_BROKER=in-process|pg-notify`, selected EventBroker adapters through
   [[event-broker-live]], and implemented [[pg-notify-event-broker]] with

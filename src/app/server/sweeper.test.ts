@@ -14,9 +14,16 @@ import {
 } from '../../protocol/schema/index.js'
 import { AppLive } from '../index.js'
 import { IdClockLive } from './identity.js'
-import { sweepOnce } from './sweeper.js'
+import { sweepOnce, sweepOnceWithLeadership } from './sweeper.js'
+import {
+  InProcessSweeperLeadershipLive,
+  SweeperLeadership,
+} from './sweeper-leadership.js'
 
 const Runtime = Layer.mergeAll(AppLive, IdClockLive)
+const NoLeadership = Layer.succeed(SweeperLeadership, {
+  run: () => Effect.succeed(Option.none()),
+})
 
 const session = (id: string, createdAt: string) =>
   Schema.decodeUnknownSync(Session)({
@@ -84,6 +91,56 @@ describe('sweepOnce', () => {
     expect(result.evictedSessions).toEqual([])
     expect(result.expiredLeases).toEqual([])
     expect(result.prunedEvents).toBe(0)
+  })
+
+  it('does not mutate state when another replica holds leadership', async () => {
+    const program = Effect.gen(function* () {
+      const leases = yield* LeaseService
+
+      yield* leases.request({
+        id: Schema.decodeUnknownSync(LeaseId)('lease_not_leader'),
+        payload: stalePayload,
+        now: Schema.decodeUnknownSync(Timestamp)('2000-01-01T00:00:00.000Z'),
+      })
+
+      const result = yield* sweepOnceWithLeadership
+      const stored = yield* leases.get(
+        Schema.decodeUnknownSync(LeaseId)('lease_not_leader'),
+      )
+      return { result, stored }
+    }).pipe(Effect.provide(Layer.mergeAll(Runtime, NoLeadership)))
+
+    const { result, stored } = await Effect.runPromise(program)
+
+    expect(Option.isNone(result)).toBe(true)
+    expect(Option.getOrNull(stored)?.state).toBe('active')
+  })
+
+  it('runs the sweep when local leadership is granted', async () => {
+    const program = Effect.gen(function* () {
+      const leases = yield* LeaseService
+
+      yield* leases.request({
+        id: Schema.decodeUnknownSync(LeaseId)('lease_local_leader'),
+        payload: stalePayload,
+        now: Schema.decodeUnknownSync(Timestamp)('2000-01-01T00:00:00.000Z'),
+      })
+
+      const result = yield* sweepOnceWithLeadership
+      const stored = yield* leases.get(
+        Schema.decodeUnknownSync(LeaseId)('lease_local_leader'),
+      )
+      return { result, stored }
+    }).pipe(
+      Effect.provide(Layer.mergeAll(Runtime, InProcessSweeperLeadershipLive)),
+    )
+
+    const { result, stored } = await Effect.runPromise(program)
+
+    expect(Option.getOrNull(result)?.expiredLeases.map((l) => l.id)).toEqual([
+      'lease_local_leader',
+    ])
+    expect(Option.getOrNull(stored)?.state).toBe('expired')
   })
 
   it('prunes events older than the configured retention window', async () => {
