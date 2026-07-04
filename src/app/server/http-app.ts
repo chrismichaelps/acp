@@ -7,6 +7,7 @@ import { AppLive } from '../index.js'
 import { IdClockLive } from './identity.js'
 import { AcpHttpRoutesLive } from './native-rpc-route.js'
 import { SweeperLive } from './sweeper.js'
+import { SweeperLeadershipLive } from './sweeper-leadership.js'
 
 /**
  * The running ACP host as one socket-agnostic layer: REST, legacy JSON-RPC, and
@@ -20,10 +21,16 @@ import { SweeperLive } from './sweeper.js'
  * Keeping this import-safe (no `Layer.launch`) lets tests reuse the exact
  * composition without running a server on import.
  */
+const AppRuntimeLive = Layer.mergeAll(AppLive, IdClockLive)
+const ServerRuntimeLive = Layer.provideMerge(
+  SweeperLeadershipLive,
+  AppRuntimeLive,
+)
+
 export const HttpAppLive: Layer.Layer<
   never,
   StorageError,
   HttpServerType.HttpServer
 > = Layer.mergeAll(HttpLayerRouter.serve(AcpHttpRoutesLive), SweeperLive).pipe(
-  Layer.provide(Layer.mergeAll(AppLive, IdClockLive)),
+  Layer.provide(ServerRuntimeLive),
 )

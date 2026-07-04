@@ -62,7 +62,9 @@ deployment-shaping ones:
   volume, since a redeploy on most platforms wipes the container filesystem.
 - **`postgres`** — the network-durable adapter for multi-replica / managed
   hosting. Pair it with `ACP_EVENT_BROKER=pg-notify` when more than one host
-  process serves live SSE/WebSocket subscribers.
+  process serves live SSE/WebSocket subscribers. The sweeper takes a Postgres
+  advisory transaction lock before expiring leases or pruning old events, so
+  only one replica emits expiry side effects per tick.
 
 ## Health checks
 

@@ -14,15 +14,18 @@ aliases: [sweeper, expiry-sweeper]
 
 ## Purpose
 
-The background **TTL eviction** daemon (spec §8 sessions, §11 leases). Periodically
-evicts expired [[session.schema]] sessions and lapses overdue [[Lease]]s so the
-in-memory host does not accumulate dead credentials or stale resource holds. Two
-parts:
+The background **TTL eviction** daemon (spec §8 sessions, §11 leases).
+Periodically evicts expired [[session.schema]] sessions, lapses overdue
+[[Lease]]s, and prunes old event history. Two parts:
 
 - `sweepOnce` — one deterministic sweep step (the unit of work and of test).
 - `SweeperLive` — a `Layer` that forks `sweepOnce` on an interval as a daemon
   scoped to the host, so it lives exactly as long as the server and is interrupted
   when the host scope closes.
+
+Replicated Postgres hosts run `sweepOnce` through [[sweeper-leadership]], which
+uses a Postgres advisory transaction lock so only one replica emits lease expiry
+events and event-retention deletes per tick.
 
 ## Interface
 
@@ -38,22 +41,39 @@ export interface SweepResult {
 export const sweepOnce: Effect.Effect<
   SweepResult,
   StorageError,
-  SessionService | LeaseService | AppConfigTag | IdClock
+  SessionService | LeaseService | EventStore | AppConfigTag | IdClock
+>
+
+export const sweepOnceWithLeadership: Effect.Effect<
+  Option.Option<SweepResult>,
+  StorageError,
+  | SessionService
+  | LeaseService
+  | EventStore
+  | AppConfigTag
+  | IdClock
+  | SweeperLeadership
 >
 
 // Forks `sweepOnce` every `sweepInterval` as a scoped daemon.
 export const SweeperLive: Layer.Layer<
   never,
   never,
-  SessionService | LeaseService | AppConfigTag | IdClock
+  | SessionService
+  | LeaseService
+  | EventStore
+  | AppConfigTag
+  | IdClock
+  | SweeperLeadership
 >
 ```
 
 ### Linkage
 
 - **Requires:** [[session-service]] (`evictExpired`), [[lease-service]]
-  (`expireAllDue`), [[app-config]] (`sessionTtl`, `sweepInterval`), [[id-clock]]
-  (`now`).
+  (`expireAllDue`), [[event-store]] (`pruneBefore`), [[app-config]]
+  (`sessionTtl`, `eventRetentionDays`, `sweepInterval`), [[id-clock]] (`now`),
+  and [[sweeper-leadership]] when running as the daemon.
 - **Consumed by:** [[http-app]] — merged into the host layer over the shared
   `AppLive ⊕ IdClockLive` so the sweeper and the HTTP router act on the **same**
   in-memory store.
@@ -67,17 +87,24 @@ export const SweeperLive: Layer.Layer<
 3. `expiredLeases ← LeaseService.expireAllDue(systemActor, now)` — lapses every
    due active lease across all workspaces, each emitting `lease.expired`.
 
+`sweepOnceWithLeadership`: asks [[sweeper-leadership]] to guard `sweepOnce`.
+`Option.some(result)` means this replica ran the tick; `Option.none()` means
+another replica held leadership, so no mutation occurred.
+
 `SweeperLive` (`Layer.scopedDiscard`): `forkScoped` a loop that sleeps
-`config.sweepInterval`, runs `sweepOnce`, and swallows+logs any failure cause so a
-single bad sweep never kills the daemon. Successful sweeps log at debug level
-with counts for evicted sessions and expired leases; failures log at error level
-inside the server's [[app-logging]] annotations.
+`config.sweepInterval`, runs `sweepOnceWithLeadership`, and swallows+logs any
+failure cause so a single bad sweep never kills the daemon. Successful sweeps log
+at debug level with counts for evicted sessions, expired leases, and pruned
+events; failures log at error level inside the server's [[app-logging]]
+annotations.
 
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT provide a second `AppLive` to the sweeper — it must share the HTTP
   server's instance (see [[http-app]]); a separate provision is a separate store.
 - ❌ Do NOT let a sweep failure terminate the loop — catch the cause and continue.
+- ❌ Do NOT run replicated Postgres sweeps without [[sweeper-leadership]]; every
+  host process owns a daemon, but only the elected tick should mutate state.
 - ❌ Do NOT mint ids/timestamps here — `now` comes from [[id-clock]].
 - ❌ Do NOT enumerate workspaces to find leases — [[lease-service]] `expireAllDue`
   scans all leases directly, so a lease in an unregistered workspace still lapses.
@@ -86,10 +113,11 @@ inside the server's [[app-logging]] annotations.
 
 ## Depth
 
-MEDIUM (0.6). `sweepOnce` is unit-tested deterministically (seed an expired session
-and a past-due lease, run one sweep, assert eviction + `expired` state + that a
-fresh session survives). The interval fiber is thin glue — excluded from unit tests
-like other composition-root wiring ([[server-main]]).
+MEDIUM (0.6). `sweepOnce` is unit-tested deterministically (seed an expired
+session and a past-due lease, run one sweep, assert eviction + `expired` state +
+that a fresh session survives). `sweepOnceWithLeadership` is covered for both
+granted and skipped leadership. The interval fiber is thin glue — excluded from
+unit tests like other composition-root wiring ([[server-main]]).
 
 ## Grill Log
 
@@ -115,4 +143,5 @@ like other composition-root wiring ([[server-main]]).
 ## Referenced by
 
 [[http-app]] · [[server-index]] · [[session-service]] · [[lease-service]]
-· [[app-config]] · [[Transport]] · [[src/_MOC]]
+· [[event-store]] · [[sweeper-leadership]] · [[app-config]] · [[Transport]]
+· [[src/_MOC]]

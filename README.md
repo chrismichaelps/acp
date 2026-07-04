@@ -258,6 +258,8 @@ an adapter concern, not a protocol concern.
   migrations run on startup) for multi-replica / managed hosting. Per-workspace
   event `seq` is allocated atomically, so concurrent writers across processes
   never collide. The host fails fast at boot if `ACP_DATABASE_URL` is unset.
+  Background lease/session sweeping is guarded by a Postgres advisory lock in
+  this mode, so replicated hosts do not emit duplicate lease-expiry events.
 
 Live event fan-out is selected separately. `ACP_EVENT_BROKER=in-process` is the
 default single-node broker; `ACP_EVENT_BROKER=pg-notify` uses the same Postgres

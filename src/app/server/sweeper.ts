@@ -1,5 +1,5 @@
 /** @Acp.App.Server.Sweeper — background TTL eviction daemon */
-import { DateTime, Effect, Layer } from 'effect'
+import { DateTime, Effect, Layer, type Option } from 'effect'
 import { AppConfigTag } from '../../config/app-config.js'
 import { EventStore } from '../../domain/events/index.js'
 import { LeaseService } from '../../domain/leases/index.js'
@@ -7,6 +7,7 @@ import { SessionService } from '../../domain/sessions/index.js'
 import type { StorageError } from '../../protocol/errors/protocol-error.js'
 import type { Lease, Session, WorkerId } from '../../protocol/schema/index.js'
 import { IdClock } from './identity.js'
+import { SweeperLeadership } from './sweeper-leadership.js'
 
 const systemActor = 'worker_system' as WorkerId
 
@@ -61,6 +62,20 @@ export const sweepOnce: Effect.Effect<
   return { evictedSessions, expiredLeases, prunedEvents }
 })
 
+export const sweepOnceWithLeadership: Effect.Effect<
+  Option.Option<SweepResult>,
+  StorageError,
+  | SessionService
+  | LeaseService
+  | EventStore
+  | AppConfigTag
+  | IdClock
+  | SweeperLeadership
+> = Effect.gen(function* () {
+  const leadership = yield* SweeperLeadership
+  return yield* leadership.run(sweepOnce)
+})
+
 /**
  * Forks {@link sweepOnce} on a `config.sweepInterval` cadence as a daemon scoped
  * to the layer (the host). A failed sweep is logged and swallowed so a single bad
@@ -70,11 +85,16 @@ export const sweepOnce: Effect.Effect<
 export const SweeperLive: Layer.Layer<
   never,
   never,
-  SessionService | LeaseService | EventStore | AppConfigTag | IdClock
+  | SessionService
+  | LeaseService
+  | EventStore
+  | AppConfigTag
+  | IdClock
+  | SweeperLeadership
 > = Layer.scopedDiscard(
   Effect.gen(function* () {
     const config = yield* AppConfigTag
-    const tick = sweepOnce.pipe(
+    const tick = sweepOnceWithLeadership.pipe(
       Effect.catchAllCause((cause) =>
         Effect.logError('sweep failed', cause).pipe(
           Effect.annotateLogs({ component: 'sweeper' }),

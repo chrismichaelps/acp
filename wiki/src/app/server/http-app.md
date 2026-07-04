@@ -17,8 +17,9 @@ aliases: [http-app, http-app-live]
 The running ACP **host** as one import-safe `Layer`: [[native-rpc-route]]
 registers REST/JSON-RPC routes plus `/rpc/native` over the full application
 ([[app-live]]) and id/clock minting ([[id-clock]]), **plus the background
-[[sweeper]] daemon merged over the same shared app** so every transport and the
-TTL eviction loop act on one `Storage` instance. It is socket-agnostic — the
+[[sweeper]] daemon and [[sweeper-leadership]] merged over the same shared app**
+so every transport and the TTL eviction loop act on one `Storage` instance. It is
+socket-agnostic — the
 listening socket is supplied separately so the exact same composition runs in
 two places:
 
@@ -56,9 +57,11 @@ export const HttpAppLive: Layer.Layer<
 
 1. `Layer.mergeAll(HttpLayerRouter.serve(AcpHttpRoutesLive), SweeperLive)` — the
    route request loop and the [[sweeper]] daemon, both as scoped forked fibers.
-2. `Layer.provide(AppLive ⊕ IdClockLive)` — one memoized app runtime satisfies
-   REST, legacy JSON-RPC, native RPC, and the sweeper service contexts, leaving
-   only `HttpServer.HttpServer` outstanding.
+2. Build `ServerRuntimeLive` as `AppLive ⊕ IdClockLive ⊕ SweeperLeadershipLive`.
+   `SweeperLeadershipLive` is provided from the same app runtime so Postgres
+   leader election reads the same config as storage.
+3. Provide `ServerRuntimeLive`, leaving only `HttpServer.HttpServer`
+   outstanding.
 
 No behavior of its own; pure composition.
 
