@@ -237,6 +237,25 @@ docker build -t acp .
 docker run -p 4317:4317 acp
 ```
 
+The runtime image also contains the compiled `acp` CLI. In a running container,
+the CLI can target the host over loopback, which is useful for smoke testing a
+deployment with the same binary users will operate later:
+
+```bash
+docker exec -e ACP_BASE_URL=http://127.0.0.1:4317 <container> \
+  node dist/app/cli/main.js session init \
+  --worker agent_ops --name "Ops Agent" \
+  --capabilities can_edit_files,supports_checkpoints \
+  --permissions workspace:read,workspace:write,work:create,event:read
+```
+
+That path is not a synthetic health check. It exercises the HTTP router, schema
+decoding, session issuance, permission vocabulary, state machine, event log, and
+CLI request builder from inside the production image. A realistic validation run
+should create a workspace, open and claim work, move it to `running`, write a
+checkpoint or memory record, request review, approve it, complete the work, and
+replay `events list` for the workspace before promoting the image.
+
 The same image runs every deployment profile; only environment differs. See
 [`wiki/references/deployment.md`](./wiki/references/deployment.md) for the
 platform-by-platform runbook and storage-adapter guidance.
