@@ -24,6 +24,9 @@ tags: [moc, adr]
   config-selected seams (Storage / EventBroker / Auth) and named deployment
   profiles; add a Postgres storage adapter and a cross-process event broker
   (Postgres LISTEN/NOTIFY); serverless is out for the runtime.
+- [[ADR-0009-workspace-scoped-sessions]] — ACCEPTED — hosted ACP sessions carry
+  optional workspace bindings; permission scopes say what a session may do,
+  workspace bindings say where it may do it.
 
 ## Referenced by
 
