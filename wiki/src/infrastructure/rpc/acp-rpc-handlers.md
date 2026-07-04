@@ -111,8 +111,10 @@ does not exist until the handler mints it. Work command handlers use their
 matching scopes (`work:create`, `workspace:read`, `work:claim`, `work:update`,
 `work:publish_event`), call [[work-unit-service]] directly, and append explicit
 published work events through [[event-store]]. `work.create` and
-`work.list_for_workspace` now enforce direct workspace bindings; by-id work
-handlers are intentionally left for the derived-resource RPC slice.
+`work.list_for_workspace` enforce direct workspace bindings. `work.get`,
+`work.claim`, `work.update_state`, and `work.publish_event` use
+[[rpc-resource-workspace-auth]] to derive the target workspace from the stored
+work unit before read or mutation.
 
 Lease handlers use `lease:create`, `workspace:read`, `lease:renew`,
 `lease:release`, and `lease:revoke`, mint request ids/timestamps through
@@ -120,9 +122,10 @@ Lease handlers use `lease:create`, `workspace:read`, `lease:renew`,
 active-resource conflict checks, workspace-scoped readback,
 renew/release/revoke transitions, and lease events remain single-sourced in the
 domain layer. `lease.request` and `lease.list` enforce direct workspace
-bindings; by-id lease mutations are intentionally left for the derived-resource
-RPC slice. `lease.release` intentionally returns no RPC payload, matching the
-existing HTTP `204` behavior.
+bindings. `lease.renew`, `lease.release`, and `lease.revoke` use
+[[rpc-resource-workspace-auth]] to derive the target workspace from the stored
+lease before mutation. `lease.release` intentionally returns no RPC payload,
+matching the existing HTTP `204` behavior.
 
 Artifact handlers live in [[acp-rpc-artifact-handlers]] and merge into this
 aggregate layer. They preserve [[artifact-service]] validation, content storage,

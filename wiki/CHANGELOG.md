@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · rpc-work-lease-workspace-authorization slice · added
+  [[rpc-resource-workspace-auth]] and enforced ADR-0009 workspace bindings on
+  native RPC work get/claim/update/publish handlers and lease renew/release/revoke
+  handlers whose target workspace is derived from the stored resource id ·
+  validation: targeted native RPC handler tests passed (8 tests) · risk MEDIUM
+
 - 2026-07-04 · rpc-workspace-auth-primitive slice · added native RPC
   `authorizeRpcActor`/`authorizeRpcWorkspace`/`rpcWorkspaceActor` and applied
   ADR-0009 workspace bindings to direct-workspace RPC handlers for workspace
