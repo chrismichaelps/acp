@@ -1801,16 +1801,25 @@ An agent may use MCP tools while reporting its work through ACP.
 ## 22. Example CLI
 
 ```bash
-acp init
-acp workspace add .
-acp work create "Fix login redirect bug"
-acp work claim work_123 --worker claude
-acp lease request work_123 file://src/auth/callback.ts
-acp checkpoint create work_123 --summary "Found async redirect issue"
-acp artifact create work_123 --kind patch --file fix.patch
-acp review request work_123 --reviewer human_chris
-acp review cancel review_123
-acp events stream
+acp session init --worker agent_codex --name "Codex" \
+  --capabilities can_edit_files,supports_checkpoints \
+  --permissions workspace:read,workspace:write,work:create,work:claim,work:update,lease:create,checkpoint:create,artifact:create,memory:create,review:create,review:approve,event:read
+export ACP_RPC_TOKEN=session_...
+
+acp workspace create --name acp-demo --kind git_repository --uri file:///repo
+acp work create "Fix login redirect bug" --workspace workspace_123
+acp work claim work_123 --worker agent_codex
+acp work update work_123 --state running
+acp lease request --workspace workspace_123 --holder agent_codex --kind file --uri file://src/auth/callback.ts
+acp checkpoint create --workspace workspace_123 --work work_123 --summary "Found async redirect issue"
+acp memory create --workspace workspace_123 --work work_123 --kind decision --key auth.redirect.async-session --summary "Redirect waits for session creation" --content "Session creation is async; redirect must happen after persistence."
+acp artifact create --workspace workspace_123 --work work_123 --kind patch --summary "Auth redirect fix" --content "$(cat fix.patch)"
+acp review request --work work_123 --by agent_codex --reviewer human_chris
+acp review approve review_123 --met tests_pass,diff_review
+# If the requesting agent withdraws a pending review instead:
+acp review cancel review_456
+acp events list --workspace workspace_123
+acp events stream --workspace workspace_123
 ```
 
 ---

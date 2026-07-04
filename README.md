@@ -346,7 +346,7 @@ lease   request --workspace <id> --holder <id> --kind <k> --uri <u> [--ttl <n>]
 lease   list --workspace <id> | renew <id> [--ttl <n>] | revoke <id> | release <id>
 checkpoint create --workspace <id> --work <id> --summary <s> | list | latest --work <id>
 artifact create | pr | update <id> | list | content <id> | delete <id>
-review  request --work <id> --by <id> | list | approve <id> --met <csv> | reject <id> | request-changes <id>
+review  request --work <id> --by <id> | list | approve <id> --met <csv> | reject <id> | request-changes <id> | cancel <id>
 memory  create --workspace <id> --kind <k> --key <k> --summary <s> --content <c> [--work <id>] [--labels <csv>]
 memory  list --workspace <id> [--after <seq>] [--limit <n>] [--work <id>] [--kind <k>] [--key <k>] [--label <l>]
 events  list --workspace <id> [--after <seq>] | stream --workspace <id>
