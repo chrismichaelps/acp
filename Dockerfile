@@ -10,7 +10,7 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@11.7.0 --activate
 
 # Install with a warm store cache; copy manifests first for layer caching.
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 
@@ -26,7 +26,7 @@ ENV NODE_ENV=production \
 
 RUN corepack enable && corepack prepare pnpm@11.7.0 --activate
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm install --prod --frozen-lockfile
 

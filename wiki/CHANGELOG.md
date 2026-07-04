@@ -2,6 +2,16 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · cli-dogfood-file-size slice · split the multi-agent CLI dogfood
+  harness into `cli-dogfood-support.ts`, leaving the test focused on the
+  lifecycle assertions while keeping the real `parseArgs` + `runCliRequest`
+  execution path intact. Docker validation also corrected pnpm 11 build-script
+  approvals by moving them to `pnpm-workspace.yaml`, copied that policy into the
+  image install layers, and mounted `/health` + `/ready` in the served HTTP layer
+  so the Docker healthcheck exercises the same host composition as production ·
+  validation: focused live-socket tests passed (4 tests), Docker build passed,
+  and container `/health` + `/ready` probes returned 200 · risk LOW
+
 - 2026-07-04 · cli-dogfood-multi-agent slice · proved the entire `acp` CLI
   end-to-end with four racing agent identities (planner, two workers, reviewer)
   across the full v0.1 loop — session bootstrap, workspace/work, claim race
