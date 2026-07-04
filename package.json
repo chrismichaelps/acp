@@ -16,6 +16,7 @@
     "check:file-size": "node scripts/check-file-size.mjs",
     "dogfood:codex": "node scripts/acp-codex-dogfood-smoke.mjs",
     "dogfood:codex:multi": "node scripts/acp-codex-dogfood-multi-agent.mjs",
+    "dogfood:cli": "node scripts/acp-cli-dogfood-multi-agent.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
