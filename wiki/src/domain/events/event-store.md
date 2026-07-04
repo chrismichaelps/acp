@@ -17,7 +17,7 @@ aliases: [event-store, EventStore]
 
 The domain service for append-only [[Event]] history. It is the single place that
 turns an event draft into a sequenced event, persists it through [[Storage]], and
-fans the persisted event out to live subscribers through Effect `PubSub`.
+fans the persisted event out to live subscribers through [[event-broker]].
 
 ## Interface
 
@@ -41,7 +41,11 @@ export class EventStore extends Context.Tag('EventStore')<
   EventStore,
   EventStoreApi
 >() {}
-export const EventStoreLive: Layer.Layer<EventStore, never, Storage>
+export const EventStoreLive: Layer.Layer<
+  EventStore,
+  never,
+  Storage | EventBroker
+>
 ```
 
 ### Governance
@@ -54,19 +58,19 @@ export const EventStoreLive: Layer.Layer<EventStore, never, Storage>
 
 ### Linkage
 
-- **Requires:** [[storage]], [[event.schema]], [[protocol-error]]
+- **Requires:** [[storage]], [[event-broker]], [[event.schema]], [[protocol-error]]
 - **Consumed by:** WorkUnit/Lease/Artifact/Checkpoint/Review services,
   [[event-routes]], and the [[EventStream]] transport adapter.
 
 ## Algorithm
 
-1. Construct one unbounded `PubSub<Event>` in `EventStoreLive`.
+1. Resolve [[storage]] and [[event-broker]] from the Layer graph.
 2. `append(draft)` calls `Storage.appendEvent(draft.workspace_id, draft)`.
-3. After persistence succeeds, publish the returned full event to the PubSub and
+3. After persistence succeeds, publish the returned full event to the broker and
    return it to the caller.
 4. `readAfter(workspaceId, seq)` delegates to `Storage.readEventsAfter`.
-5. `subscribe(workspaceId)` acquires `Stream.fromPubSub(pubsub, { scoped: true })`
-   and filters by `event.workspace_id`.
+5. `subscribe(workspaceId)` acquires the broker stream and filters by
+   `event.workspace_id`.
 
 ## Negative Logic (Prohibited Paths)
 

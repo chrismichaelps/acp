@@ -1,0 +1,15 @@
+---
+type: moc
+tags: [moc, src, infrastructure, events]
+---
+
+# Infrastructure Events MOC
+
+Concrete event fan-out adapters behind the domain [[EventBroker]] seam.
+
+- [[pg-notify-event-broker]] — Postgres LISTEN/NOTIFY broker for multi-replica
+  live event fan-out.
+
+## Referenced by
+
+[[infrastructure/_MOC]] · [[src/_MOC]]

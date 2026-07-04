@@ -11,6 +11,7 @@ Application modules compose runtime Layers for server and CLI entrypoints.
 
 - [[app-live-index]] — opaque app layer barrel.
 - [[app-live]] — application Layer composition.
+- [[event-broker-live]] — config-driven EventBroker adapter selection.
 - [[app-logging]] — Effect JSON logger setup and ACP log-level translation.
 - [[storage-live]] — config-driven Storage adapter selection.
 

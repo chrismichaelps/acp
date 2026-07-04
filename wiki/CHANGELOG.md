@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-03 · pg-notify-event-broker slice · added
+  `ACP_EVENT_BROKER=in-process|pg-notify`, selected EventBroker adapters through
+  [[event-broker-live]], and implemented [[pg-notify-event-broker]] with
+  Postgres LISTEN/NOTIFY pointer fan-out over durable event storage · validation:
+  full local gate passed (check:env, format, lint, typecheck, file-size, build,
+  626 tests; 14 skipped including pg integrations without `ACP_TEST_DATABASE_URL`)
+  · risk MEDIUM
+
 - 2026-07-01 · protocol-conformance-hardening slice · closed the last spec-vs-code
   gaps: [[lease-service]] `request` now emits `lease.requested` +
   `lease.granted`/`lease.denied` as outcome pairs (spec §11 lease vocabulary fully

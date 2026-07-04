@@ -15,20 +15,21 @@ aliases: [event-store-index]
 ## Purpose
 
 Opaque public entry point for the events domain service. Callers import
-`EventStore`, `EventStoreLive`, and `EventDraft` from here rather than reaching
-into the implementation file.
+`EventBroker`, `EventStore`, `EventStoreLive`, and `EventDraft` from here rather
+than reaching into implementation files.
 
 ## Interface
 
 ### Signatures
 
 ```typescript
+export * from './event-broker.js'
 export * from './event-store.js'
 ```
 
 ### Linkage
 
-- **Requires:** [[event-store]]
+- **Requires:** [[event-broker]], [[event-store]]
 - **Consumed by:** future domain services and transport wiring.
 
 ## Algorithm

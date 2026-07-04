@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach } from 'vitest'
 import { describe, expect, it } from 'vitest'
-import { ConfigProvider, Effect, Option, Schema } from 'effect'
+import { Cause, ConfigProvider, Effect, Exit, Option, Schema } from 'effect'
 import { AppConfigTag } from '../config/app-config.js'
 import { ArtifactService } from '../domain/artifacts/index.js'
 import { CheckpointService } from '../domain/checkpoints/index.js'
@@ -92,5 +92,26 @@ describe('AppLive', () => {
     )
 
     expect(Option.getOrNull(stored)?.id).toBe(workerId)
+  })
+
+  it('fails fast when pg-notify is selected without a database url', () => {
+    const exit = Effect.runSyncExit(
+      Effect.provide(EventStore, AppLive).pipe(
+        Effect.withConfigProvider(
+          ConfigProvider.fromMap(new Map([['ACP_EVENT_BROKER', 'pg-notify']])),
+        ),
+      ),
+    )
+    const failure = Option.getOrNull(
+      Option.flatMap(Exit.causeOption(exit), Cause.failureOption),
+    )
+
+    if (failure?._tag !== 'StorageError') {
+      throw new Error('Expected pg-notify startup to fail with StorageError')
+    }
+    expect(failure.op).toBe('connect')
+    expect(failure.cause).toContain(
+      'ACP_DATABASE_URL is required for the pg-notify broker',
+    )
   })
 })

@@ -8,7 +8,8 @@ tags: [moc, src, domain, events]
 Mirror of `@root/src/domain/events/`.
 
 - [[event-store-index]] — opaque public events service exports.
-- [[event-store]] — persisted append + PubSub live fan-out service.
+- [[event-broker]] — live event fan-out seam and in-process adapter.
+- [[event-store]] — persisted append + broker-backed live fan-out service.
 
 ## Referenced by
 

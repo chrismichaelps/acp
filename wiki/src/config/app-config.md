@@ -27,8 +27,10 @@ export type AppLogLevel = 'debug' | 'info' | 'warn' | 'error'
 export interface AppConfig {
   readonly port: number
   readonly logLevel: AppLogLevel
-  readonly storageAdapter: 'memory' | 'sqlite'
+  readonly storageAdapter: 'memory' | 'sqlite' | 'postgres'
+  readonly eventBroker: 'in-process' | 'pg-notify'
   readonly sqlitePath: string
+  readonly databaseUrl: Option.Option<string>
   readonly defaultLeaseTtl: Duration.Duration
   readonly eventRetentionDays: number
   readonly maxArtifactSizeBytes: number
@@ -51,8 +53,10 @@ Each field is a `Config.*` with `Config.withDefault`:
 - `ACP_PORT` int → 4317
 - `ACP_LOG_LEVEL` literal → 'info' ([[app-logging]] maps it to Effect
   `LogLevel`)
-- `ACP_STORAGE_ADAPTER` literal (`memory` | `sqlite`) → 'memory'
+- `ACP_STORAGE_ADAPTER` literal (`memory` | `sqlite` | `postgres`) → profile default
+- `ACP_EVENT_BROKER` literal (`in-process` | `pg-notify`) → 'in-process'
 - `ACP_SQLITE_PATH` string → `acp.sqlite`
+- `ACP_DATABASE_URL` optional string → none
 - `ACP_DEFAULT_LEASE_TTL` duration → 15 minutes
 - `ACP_EVENT_RETENTION_DAYS` int → 30
 - `ACP_MAX_ARTIFACT_SIZE_MB` int → 16 (stored as bytes)

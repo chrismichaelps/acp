@@ -8,6 +8,10 @@ tags: [moc, src, infrastructure]
 Runtime adapters and platform edges. Infrastructure owns Effect `Layer`
 construction and hides it behind narrow service tags.
 
+## events/
+
+- [[events/_MOC|Events MOC]] — concrete EventBroker adapters.
+
 ## storage/
 
 - [[storage/_MOC|Storage MOC]] — persistence seam interface and InMemory/SQLite adapters.

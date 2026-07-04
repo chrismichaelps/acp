@@ -9,9 +9,9 @@ import type { Event } from '../../protocol/schema/index.js'
  * Workspace filtering is domain logic and stays in {@link EventStore}, so a
  * broker adapter only moves bytes between processes.
  *
- * Adapters: `in-process` (Effect `PubSub`, single node) today; `pg-notify`
- * (Postgres `LISTEN/NOTIFY`) and `redis` behind the same Tag for multi-replica
- * fan-out — see [[ADR-0008-deployment-storage-topology]].
+ * Adapters: `in-process` (Effect `PubSub`, single node) and `pg-notify`
+ * (Postgres `LISTEN/NOTIFY`) today; `redis` can fit behind the same Tag later
+ * for deployments that choose a second broker dependency.
  */
 export interface EventBrokerApi {
   readonly publish: (event: Event) => Effect.Effect<void>
