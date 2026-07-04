@@ -58,6 +58,12 @@ export interface WorkUnitServiceApi {
     actor: WorkerId,
     now: Timestamp,
   ) => Effect.Effect<WorkUnit, WorkUnitTransitionError>
+  readonly transitionSilently: (
+    workId: WorkId,
+    to: WorkState,
+    actor: WorkerId,
+    now: Timestamp,
+  ) => Effect.Effect<WorkUnit, WorkUnitTransitionError>
 }
 
 export class WorkUnitService extends Context.Tag('WorkUnitService')<
@@ -234,6 +240,7 @@ const make = Effect.gen(function* () {
     actor: WorkerId,
     now: Timestamp,
     assignedTo: Option.Option<WorkerId> = work.assigned_to,
+    emitEvent = true,
   ) =>
     Effect.gen(function* () {
       if (!allowedTransitions[work.state].has(to)) {
@@ -250,12 +257,14 @@ const make = Effect.gen(function* () {
       }
 
       yield* save(next)
-      yield* appendWorkEvent(
-        next,
-        actor,
-        now,
-        eventTypeForTransition(work.state, to),
-      )
+      if (emitEvent) {
+        yield* appendWorkEvent(
+          next,
+          actor,
+          now,
+          eventTypeForTransition(work.state, to),
+        )
+      }
       return next
     })
 
@@ -289,12 +298,23 @@ const make = Effect.gen(function* () {
       transitionWork(work, to, actor, now),
     )
 
+  const transitionSilently: WorkUnitServiceApi['transitionSilently'] = (
+    workId,
+    to,
+    actor,
+    now,
+  ) =>
+    Effect.flatMap(requireWork(workId), (work) =>
+      transitionWork(work, to, actor, now, work.assigned_to, false),
+    )
+
   return {
     create,
     get,
     listForWorkspace,
     claim,
     transition,
+    transitionSilently,
   } satisfies WorkUnitServiceApi
 })
 

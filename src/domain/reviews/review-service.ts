@@ -304,7 +304,12 @@ const make = Effect.gen(function* () {
         }
 
         const approved = yield* transitionReview(review, actor, now, 'approved')
-        yield* workUnits.transition(review.work_id, 'approved', actor, now)
+        yield* workUnits.transitionSilently(
+          review.work_id,
+          'approved',
+          actor,
+          now,
+        )
         return approved
       }),
     )
@@ -313,7 +318,12 @@ const make = Effect.gen(function* () {
     Effect.flatMap(requireReview(reviewId), (review) =>
       Effect.gen(function* () {
         const rejected = yield* transitionReview(review, actor, now, 'rejected')
-        yield* workUnits.transition(review.work_id, 'rejected', actor, now)
+        yield* workUnits.transitionSilently(
+          review.work_id,
+          'rejected',
+          actor,
+          now,
+        )
         return rejected
       }),
     )
@@ -331,7 +341,7 @@ const make = Effect.gen(function* () {
           now,
           'changes_requested',
         )
-        yield* workUnits.transition(
+        yield* workUnits.transitionSilently(
           review.work_id,
           'changes_requested',
           actor,

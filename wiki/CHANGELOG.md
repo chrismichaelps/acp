@@ -2,6 +2,15 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · review-event-deduplication slice · fixed duplicate
+  `review.approved` / `review.rejected` / `review.changes_requested` emissions
+  by letting `ReviewService` own the review event while moving the coupled work
+  state through a silent internal transition. Approval and request-changes tests
+  now pin the exact event history, matching the duplicate caught by the
+  Docker-hosted CLI dogfood runner · validation: targeted review/work-unit tests
+  passed (15 tests), plus check:env, format, lint, typecheck, file-size, and
+  build; Docker rerun blocked by usage-limit guard · risk MEDIUM
+
 - 2026-07-04 · docker-cli-dogfood-runner slice · added
   `scripts/acp-docker-cli-dogfood.mjs` and `npm run dogfood:docker-cli` so ACP
   can repeatedly build its production Docker image, run the host container, drive
