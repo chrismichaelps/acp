@@ -24,11 +24,27 @@ script_dir="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
 repo_root="$(cd "$script_dir/.." >/dev/null 2>&1 && pwd)"
 
 compose="$repo_root/docker-compose.yml"
-service="${ACP_COMPOSE_SERVICE:-acp}"
 
-if [ -z "$(docker compose -f "$compose" ps -q "$service" 2>/dev/null)" ]; then
-  echo "acp: the '$service' host container is not running. Start it with:" >&2
-  echo "  docker compose -f \"$compose\" up -d --build" >&2
+# Auto-detect the running host service across profiles: `acp` (sqlite daily
+# driver) or `acp-ha` (Postgres). Override with ACP_COMPOSE_SERVICE if needed.
+pick_service() {
+  if [ -n "${ACP_COMPOSE_SERVICE:-}" ]; then
+    echo "$ACP_COMPOSE_SERVICE"
+    return
+  fi
+  for candidate in acp acp-ha; do
+    if [ -n "$(docker compose -f "$compose" ps -q "$candidate" 2>/dev/null)" ]; then
+      echo "$candidate"
+      return
+    fi
+  done
+}
+
+service="$(pick_service)"
+if [ -z "$service" ]; then
+  echo "acp: no ACP host container is running. Start one with:" >&2
+  echo "  npm run acp:up       # sqlite daily driver" >&2
+  echo "  npm run acp:ha:up    # Postgres + pg-notify" >&2
   exit 1
 fi
 

@@ -292,8 +292,22 @@ docker compose down -v    # stop and wipe all state
 ```
 
 The wrapper resolves symlinks (so PATH installs work), refuses to run with a clear
-hint if the host isn't up, and forwards `ACP_RPC_TOKEN` if you enable auth. Switch
-to Postgres/HA by changing only the environment in `docker-compose.yml`.
+hint if the host isn't up, and forwards `ACP_RPC_TOKEN` if you enable auth.
+
+For a network-durable, scale-ready host, use the **`ha` Compose profile** — the
+ADR-0008 `self-host-ha` stack with Postgres storage and `pg-notify` cross-replica
+event fan-out:
+
+```bash
+npm run acp:ha:up      # docker compose --profile ha up -d --build (Postgres + host)
+acp work create ...    # ./bin/acp auto-detects the acp-ha host service
+npm run acp:ha:down
+```
+
+Run one profile at a time (both hosts publish `4317`). The
+[`docker.yml`](./.github/workflows/docker.yml) CI workflow guards both paths on
+every PR: it runs the Docker-hosted CLI dogfood and proves Postgres state survives
+a host restart.
 
 The same image runs every deployment profile; only environment differs. See
 [`wiki/references/deployment.md`](./wiki/references/deployment.md) for the
