@@ -261,6 +261,40 @@ builds the Docker image, starts the host, drives the compiled CLI inside the
 container through the same lifecycle, verifies replayed event types, and stops
 the container on exit.
 
+#### Daily driver: `docker compose` + the `acp` wrapper
+
+To actually _use_ ACP from your terminal — coordinating real feature work, not
+just smoke testing — run the host as a persistent container and drive it with the
+[`bin/acp`](./bin/acp) wrapper. [`docker-compose.yml`](./docker-compose.yml) boots
+the production image with **durable SQLite on a named volume**, so all state
+survives restarts, and the `local` profile with `ACP_REQUIRE_AUTH=false` means no
+token juggling (mutations run as `worker_system`).
+
+```bash
+# Start the persistent host (builds the image on first run).
+npm run acp:up            # == docker compose up -d --build
+
+# Optional: put the wrapper on your PATH so `acp ...` works anywhere.
+ln -s "$(pwd)/bin/acp" /usr/local/bin/acp
+
+# Now use it like the native CLI — every command runs inside the container.
+acp workspace create --name my-repo --kind git_repository --uri file:///repo
+acp work create "Build the login feature" --workspace <id> --priority high
+acp work list --workspace <id>
+
+# State is durable: restart and your work is still there.
+docker compose restart acp
+acp work list --workspace <id>   # unchanged
+
+npm run acp:logs          # tail host logs
+npm run acp:down          # stop (keeps the volume)
+docker compose down -v    # stop and wipe all state
+```
+
+The wrapper resolves symlinks (so PATH installs work), refuses to run with a clear
+hint if the host isn't up, and forwards `ACP_RPC_TOKEN` if you enable auth. Switch
+to Postgres/HA by changing only the environment in `docker-compose.yml`.
+
 The same image runs every deployment profile; only environment differs. See
 [`wiki/references/deployment.md`](./wiki/references/deployment.md) for the
 platform-by-platform runbook and storage-adapter guidance.

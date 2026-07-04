@@ -2,6 +2,19 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · docker-daily-driver slice · packaged the full ACP host as a
+  persistent Docker service for terminal-first feature work: `docker-compose.yml`
+  runs the production image with durable SQLite on a named volume (`local`
+  profile, auth off → mutations as `worker_system`), a `bin/acp` wrapper drives
+  the compiled CLI inside the container (symlink-safe for PATH installs, forwards
+  `ACP_RPC_TOKEN`, refuses with a hint when the host is down), a Dockerfile
+  `/data` mount point owned by the `node` user makes the volume writable
+  non-root, and `acp:up`/`acp:down`/`acp:logs` npm scripts plus a README section
+  document it · validation: `docker compose up -d --build` → host healthy, drove
+  `acp workspace/work create + list` via the wrapper, and confirmed state
+  survives `docker compose restart` (work read back by id after restart) ·
+  risk LOW
+
 - 2026-07-04 · docker-dogfood-event-sequence slice · tightened
   `npm run dogfood:docker-cli` from set-style required event checks to an exact
   event sequence assertion, so duplicate review lifecycle emissions and
