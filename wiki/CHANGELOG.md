@@ -2,6 +2,15 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · spec-cli-parity slice · refreshed `specs.md` §22 from the old
+  placeholder CLI (`acp init`, `workspace add`, positional lease/checkpoint
+  calls) to the implemented session-first, workspace-scoped grammar, including
+  memory, artifact content, review approval/cancellation, event replay, and event
+  streaming. Also added `review cancel` to the runtime CLI usage text and README
+  command reference so every visible command surface matches the parser ·
+  validation: full local gate passed (check:env, format, lint, typecheck,
+  file-size, build, 688 tests; 14 skipped) · risk LOW
+
 - 2026-07-04 · docker-dogfood-readme slice · documented that the production
   Docker image contains the compiled `acp` CLI and can smoke-test itself from
   inside the running container over `ACP_BASE_URL=http://127.0.0.1:4317`. The
