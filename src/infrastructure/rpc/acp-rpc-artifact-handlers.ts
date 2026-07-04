@@ -7,7 +7,7 @@ import { IdClock } from '../../app/server/identity.js'
 import { NotFoundError } from '../../protocol/errors/protocol-error.js'
 import type { ArtifactId } from '../../protocol/schema/index.js'
 import { AcpRpcGroup } from './acp-rpc-contract.js'
-import { rpcActor } from './rpc-auth.js'
+import { rpcActor, rpcWorkspaceActor } from './rpc-auth.js'
 import { toRpcError } from './rpc-error.js'
 
 const requireArtifact = (
@@ -32,7 +32,11 @@ const artifactCreateHandler = AcpRpcGroup.toLayerHandler(
   'artifact.create',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* rpcActor(options.headers, 'artifact:create')
+      const actor = yield* rpcWorkspaceActor(
+        options.headers,
+        'artifact:create',
+        payload.workspace_id,
+      )
       const artifacts = yield* ArtifactService
       const idClock = yield* IdClock
       const id = (yield* idClock.nextId('artifact')) as ArtifactId
@@ -125,7 +129,11 @@ const artifactListForWorkspaceHandler = AcpRpcGroup.toLayerHandler(
   'artifact.list_for_workspace',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* rpcActor(options.headers, 'workspace:read')
+      yield* rpcWorkspaceActor(
+        options.headers,
+        'workspace:read',
+        payload.workspace_id,
+      )
       const artifacts = yield* ArtifactService
       return yield* artifacts
         .listForWorkspace(payload.workspace_id)

@@ -37,20 +37,21 @@ export const AcpRpcArtifactHandlersLive: Layer<
 
 ## Algorithm
 
-Handlers authorize through [[rpc-auth]] `rpcActor`, consuming an `AcpRpcActor`
-provided by native RPC middleware when available and falling back to bearer
-headers for direct `accessHandler` tests. Mutation handlers check
-`artifact:create`, `artifact:update`, or `artifact:delete`, mint ids/timestamps
-through [[id-clock]], and delegate to [[artifact-service]]. That preserves
-content-size validation, host-stored `acp://artifacts/{id}` content, external
-URI references, and artifact lifecycle events.
+Handlers authorize through [[rpc-auth]] `rpcActor` or `rpcWorkspaceActor`,
+consuming an `AcpRpcActor` provided by native RPC middleware when available and
+falling back to bearer headers for direct `accessHandler` tests. `artifact.create`
+checks both `artifact:create` and the payload workspace binding before minting an
+id/timestamp through [[id-clock]] and delegating to [[artifact-service]]. That
+preserves content-size validation, host-stored `acp://artifacts/{id}` content,
+external URI references, and artifact lifecycle events. Artifact update/delete
+remain by-id derived-resource authorization work for a later slice.
 
 Read handlers check `workspace:read`. `artifact.content` first proves the
 artifact exists, then reads host-stored content and returns `not_found` for
 external or deleted content. `artifact.list_for_work` mirrors the HTTP resume
 route by proving the WorkUnit exists through [[work-unit-service]] before
-listing metadata. `artifact.list_for_workspace` remains a workspace-scoped
-collection read.
+listing metadata. `artifact.list_for_workspace` uses `rpcWorkspaceActor` against
+its explicit `workspace_id`.
 
 ## Negative Logic (Prohibited Paths)
 
