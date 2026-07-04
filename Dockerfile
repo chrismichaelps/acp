@@ -32,6 +32,11 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
 
 COPY --from=builder /app/dist ./dist
 
+# Durable-storage mount point for the sqlite adapter. Created and owned by the
+# runtime `node` user so a named/bind volume mounted here is writable without
+# running as root (Docker seeds an empty named volume with this dir's ownership).
+RUN mkdir -p /data && chown node:node /data
+
 # Drop privileges: the stock `node` user ships with the base image.
 USER node
 

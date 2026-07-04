@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# acp — drive the ACP CLI inside the Dockerized host (compose service `acp`).
+#
+# Use it exactly like the native binary once the host is up:
+#   docker compose up -d --build
+#   acp workspace create --name demo --kind git_repository --uri file:///repo
+#   acp work create "Ship feature X" --workspace <id> --priority high
+#
+# Put it on your PATH so `acp ...` works from any directory:
+#   ln -s "$(pwd)/bin/acp" /usr/local/bin/acp
+#
+# With the default local profile (ACP_REQUIRE_AUTH=false) no token is needed.
+# If you enable auth, export ACP_RPC_TOKEN and this wrapper forwards it.
+set -euo pipefail
+
+# Resolve this script's real path, following symlinks, so PATH installs work.
+source="${BASH_SOURCE[0]}"
+while [ -L "$source" ]; do
+  dir="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
+  source="$(readlink "$source")"
+  case "$source" in /*) ;; *) source="$dir/$source" ;; esac
+done
+script_dir="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd)"
+repo_root="$(cd "$script_dir/.." >/dev/null 2>&1 && pwd)"
+
+compose="$repo_root/docker-compose.yml"
+service="${ACP_COMPOSE_SERVICE:-acp}"
+
+if [ -z "$(docker compose -f "$compose" ps -q "$service" 2>/dev/null)" ]; then
+  echo "acp: the '$service' host container is not running. Start it with:" >&2
+  echo "  docker compose -f \"$compose\" up -d --build" >&2
+  exit 1
+fi
+
+# ACP_PORT is set in the container, so the CLI defaults to http://localhost:4317
+# inside it — no ACP_BASE_URL needed. -T keeps stdout clean for JSON piping.
+if [ -n "${ACP_RPC_TOKEN:-}" ]; then
+  exec docker compose -f "$compose" exec -T \
+    --env "ACP_RPC_TOKEN=$ACP_RPC_TOKEN" \
+    "$service" node dist/app/cli/main.js "$@"
+else
+  exec docker compose -f "$compose" exec -T \
+    "$service" node dist/app/cli/main.js "$@"
+fi
