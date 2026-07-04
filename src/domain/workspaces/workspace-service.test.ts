@@ -1,7 +1,11 @@
 /** @Acp.Domain.Workspaces.Service.Test — Workspace registry + events */
 import { describe, expect, it } from 'vitest'
 import { Chunk, Effect, Layer, Option, Schema } from 'effect'
-import { EventStore, EventStoreLive } from '../events/index.js'
+import {
+  EventStore,
+  EventStoreLive,
+  InProcessEventBrokerLive,
+} from '../events/index.js'
 import { InMemoryStorageLive } from '../../infrastructure/storage/index.js'
 import {
   Timestamp,
@@ -14,7 +18,7 @@ import type { Event } from '../../protocol/schema/index.js'
 
 const StorageAndEventsLive = Layer.provideMerge(
   EventStoreLive,
-  InMemoryStorageLive,
+  Layer.merge(InMemoryStorageLive, InProcessEventBrokerLive),
 )
 const TestLive = Layer.provideMerge(WorkspaceServiceLive, StorageAndEventsLive)
 

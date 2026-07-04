@@ -3,11 +3,15 @@ import { describe, expect, it } from 'vitest'
 import { Chunk, Effect, Fiber, Layer, Option, Schema, Stream } from 'effect'
 import { InMemoryStorageLive } from '../../infrastructure/storage/index.js'
 import { Event } from '../../protocol/schema/index.js'
-import { EventStore, EventStoreLive } from './index.js'
+import {
+  EventStore,
+  EventStoreLive,
+  InProcessEventBrokerLive,
+} from './index.js'
 import type { EventDraft } from './index.js'
 
 const TestEventStoreLive = EventStoreLive.pipe(
-  Layer.provide(InMemoryStorageLive),
+  Layer.provide(Layer.merge(InMemoryStorageLive, InProcessEventBrokerLive)),
 )
 
 const runSync = <A, E>(program: Effect.Effect<A, E, EventStore>): A =>

@@ -2,7 +2,11 @@
 import { describe, expect, it } from 'vitest'
 import { Chunk, Duration, Effect, Layer, Option, Schema } from 'effect'
 import { AppConfigTag } from '../../config/app-config.js'
-import { EventStore, EventStoreLive } from '../events/index.js'
+import {
+  EventStore,
+  EventStoreLive,
+  InProcessEventBrokerLive,
+} from '../events/index.js'
 import { InMemoryStorageLive } from '../../infrastructure/storage/index.js'
 import {
   ArtifactId,
@@ -32,7 +36,7 @@ const TestConfigLive = Layer.succeed(AppConfigTag, {
 
 const StorageAndEventsLive = Layer.provideMerge(
   EventStoreLive,
-  InMemoryStorageLive,
+  Layer.merge(InMemoryStorageLive, InProcessEventBrokerLive),
 )
 const ArtifactDependenciesLive = Layer.provideMerge(
   StorageAndEventsLive,

@@ -1,7 +1,11 @@
 /** @Acp.Domain.Memory.Service.Test — workspace recall records */
 import { describe, expect, it } from 'vitest'
 import { Chunk, Effect, Layer, Schema } from 'effect'
-import { EventStore, EventStoreLive } from '../events/index.js'
+import {
+  EventStore,
+  EventStoreLive,
+  InProcessEventBrokerLive,
+} from '../events/index.js'
 import { InMemoryStorageLive } from '../../infrastructure/storage/index.js'
 import {
   CreateMemoryPayload,
@@ -14,7 +18,7 @@ import { MemoryService, MemoryServiceLive } from './index.js'
 
 const StorageAndEventsLive = Layer.provideMerge(
   EventStoreLive,
-  InMemoryStorageLive,
+  Layer.merge(InMemoryStorageLive, InProcessEventBrokerLive),
 )
 const TestLive = Layer.provideMerge(MemoryServiceLive, StorageAndEventsLive)
 

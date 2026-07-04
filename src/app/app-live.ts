@@ -3,7 +3,10 @@ import { Layer } from 'effect'
 import { AppConfigLive } from '../config/app-config.js'
 import { ArtifactServiceLive } from '../domain/artifacts/index.js'
 import { CheckpointServiceLive } from '../domain/checkpoints/index.js'
-import { EventStoreLive } from '../domain/events/index.js'
+import {
+  EventStoreLive,
+  InProcessEventBrokerLive,
+} from '../domain/events/index.js'
 import { LeaseServiceLive } from '../domain/leases/index.js'
 import { MemoryServiceLive } from '../domain/memory/index.js'
 import { ReviewServiceLive } from '../domain/reviews/index.js'
@@ -17,7 +20,7 @@ const StorageProvidedLive = Layer.provide(StorageLive, AppConfigLive)
 const StorageAndConfigLive = Layer.merge(StorageProvidedLive, AppConfigLive)
 const EventStoreProvidedLive = Layer.provideMerge(
   EventStoreLive,
-  StorageProvidedLive,
+  Layer.merge(StorageProvidedLive, InProcessEventBrokerLive),
 )
 
 const WorkUnitProvidedLive = Layer.provideMerge(
