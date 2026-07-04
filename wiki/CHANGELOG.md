@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · docker-dogfood-event-sequence slice · tightened
+  `npm run dogfood:docker-cli` from set-style required event checks to an exact
+  event sequence assertion, so duplicate review lifecycle emissions and
+  out-of-order replay drift fail the production-image dogfood lane immediately ·
+  validation: script syntax check, format, lint, typecheck, file-size, and build
+  passed; Docker execution blocked locally by usage-limit guard · risk LOW
+
 - 2026-07-04 · review-event-deduplication slice · fixed duplicate
   `review.approved` / `review.rejected` / `review.changes_requested` emissions
   by letting `ReviewService` own the review event while moving the coupled work

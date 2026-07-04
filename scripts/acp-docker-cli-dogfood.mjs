@@ -13,7 +13,7 @@ const container =
 const runId = process.env.ACP_DOGFOOD_RUN_ID ?? Date.now().toString(36)
 const baseUrl = 'http://127.0.0.1:4317'
 
-const requiredEvents = [
+const expectedEventTypes = [
   'workspace.created',
   'work.created',
   'work.claimed',
@@ -257,9 +257,10 @@ const main = async () => {
       workspace.id,
     ])
     const eventTypes = events.map((event) => event.type)
-    for (const type of requiredEvents) {
-      assert(eventTypes.includes(type), `missing event ${type}`)
-    }
+    assert(
+      JSON.stringify(eventTypes) === JSON.stringify(expectedEventTypes),
+      `unexpected event sequence: ${JSON.stringify(eventTypes)}`,
+    )
 
     console.log(
       JSON.stringify(
