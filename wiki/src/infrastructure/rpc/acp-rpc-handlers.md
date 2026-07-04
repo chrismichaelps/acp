@@ -92,11 +92,12 @@ mint a high-entropy session bearer credential through [[id-clock]]
 `secureToken`, read the timestamp through [[id-clock]], persist the session, and
 return the host descriptor and capability flags.
 
-All authorizing handlers check scopes through [[rpc-auth]] `rpcActor`, which
-consumes a middleware-provided `AcpRpcActor` when [[rpc-auth-middleware]] has
-already authenticated the request and falls back to bearer headers for direct
-`accessHandler` tests — this is now the only call style in the module;
-`authorizeRpc` is no longer referenced here directly.
+All authorizing handlers check scopes through [[rpc-auth]] `rpcActor` or
+`rpcWorkspaceActor`. The former handles host-wide operations and routes whose
+tenant must be derived in a later slice. The latter enforces both the action
+scope and an explicit workspace id for direct-workspace handlers while still
+consuming a middleware-provided `AcpRpcActor` when [[rpc-auth-middleware]] has
+already authenticated the request.
 
 `worker.list`, `worker.get`, and `workspace.list` check their read scopes, then
 delegate directly to [[worker-service]] or [[workspace-service]]. `worker.get`
@@ -104,17 +105,23 @@ maps absence to `not_found` through [[rpc-error]].
 
 Workspace command handlers use `workspace:write`, mint ids/timestamps through
 [[id-clock]], and delegate to [[workspace-service]] create/update/archive so the
-same workspace events are emitted as REST. Work command handlers use their
+same workspace events are emitted as REST. Update and archive authorize against
+their target `workspace_id`; create remains host-scoped because the workspace id
+does not exist until the handler mints it. Work command handlers use their
 matching scopes (`work:create`, `workspace:read`, `work:claim`, `work:update`,
 `work:publish_event`), call [[work-unit-service]] directly, and append explicit
-published work events through [[event-store]].
+published work events through [[event-store]]. `work.create` and
+`work.list_for_workspace` now enforce direct workspace bindings; by-id work
+handlers are intentionally left for the derived-resource RPC slice.
 
 Lease handlers use `lease:create`, `workspace:read`, `lease:renew`,
 `lease:release`, and `lease:revoke`, mint request ids/timestamps through
 [[id-clock]], and delegate to [[lease-service]] so TTL defaults,
 active-resource conflict checks, workspace-scoped readback,
 renew/release/revoke transitions, and lease events remain single-sourced in the
-domain layer. `lease.release` intentionally returns no RPC payload, matching the
+domain layer. `lease.request` and `lease.list` enforce direct workspace
+bindings; by-id lease mutations are intentionally left for the derived-resource
+RPC slice. `lease.release` intentionally returns no RPC payload, matching the
 existing HTTP `204` behavior.
 
 Artifact handlers live in [[acp-rpc-artifact-handlers]] and merge into this

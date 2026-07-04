@@ -7,6 +7,7 @@ import {
   InitializeSessionPayload,
   type InitializeSessionPayload as InitializeSessionPayloadType,
 } from '../http/acp-http-api.js'
+import type { WorkspaceId } from '../../protocol/schema/index.js'
 import { AcpRpcSessionWorkerWorkspaceHandlersLive } from './acp-rpc-handlers.js'
 
 export const Runtime = AcpRpcSessionWorkerWorkspaceHandlersLive.pipe(
@@ -15,6 +16,7 @@ export const Runtime = AcpRpcSessionWorkerWorkspaceHandlersLive.pipe(
 
 export const decodeInitialize = (
   permissions: InitializeSessionPayloadType['permissions'],
+  workspaceIds?: readonly WorkspaceId[],
 ) =>
   Schema.decodeUnknown(InitializeSessionPayload)({
     worker: {
@@ -31,6 +33,7 @@ export const decodeInitialize = (
       supports_leases: false,
     },
     permissions,
+    ...(workspaceIds === undefined ? {} : { workspace_ids: workspaceIds }),
   })
 
 export const bearer = (sessionId: string) =>

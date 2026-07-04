@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { AppLive } from '../../app/index.js'
 import { IdClockLive } from '../../app/server/identity.js'
 import { SessionService } from '../../domain/sessions/index.js'
-import type { WorkerId } from '../../protocol/schema/index.js'
+import type { WorkerId, WorkspaceId } from '../../protocol/schema/index.js'
 import { InitializeSessionPayload } from '../http/index.js'
 import { AcpRpcGroup, AcpRpcs } from './acp-rpc-contract.js'
 import { AcpRpcSessionWorkerWorkspaceHandlersLive } from './acp-rpc-handlers.js'
@@ -93,6 +93,96 @@ describe('AcpRpcSessionWorkerWorkspaceHandlersLive', () => {
 
     expect(Option.getOrThrow(Option.getOrThrow(stored).workspace_ids)).toEqual([
       'workspace_rpc',
+    ])
+  })
+
+  it('rejects direct workspace RPC calls outside the session binding', async () => {
+    const program = Effect.gen(function* () {
+      const initialize = yield* AcpRpcGroup.accessHandler('session.initialize')
+      const workspaceUpdate =
+        yield* AcpRpcGroup.accessHandler('workspace.update')
+      const workspaceArchive =
+        yield* AcpRpcGroup.accessHandler('workspace.archive')
+      const workCreate = yield* AcpRpcGroup.accessHandler('work.create')
+      const workList = yield* AcpRpcGroup.accessHandler(
+        'work.list_for_workspace',
+      )
+      const leaseRequest = yield* AcpRpcGroup.accessHandler('lease.request')
+      const leaseList = yield* AcpRpcGroup.accessHandler('lease.list')
+      const payload = yield* decodeInitialize(
+        ['workspace:read', 'workspace:write', 'work:create', 'lease:create'],
+        ['workspace_other' as WorkspaceId],
+      )
+      const session = yield* initialize(payload, rpcOptions())
+      const headers = rpcOptions(bearer(session.session_id))
+      const workspaceId = 'workspace_rpc_target' as WorkspaceId
+
+      const update = yield* Effect.either(
+        workspaceUpdate(
+          yield* decodePayload(AcpRpcs.workspaceUpdate.payloadSchema, {
+            workspace_id: workspaceId,
+            name: 'Denied Workspace',
+            kind: 'git_repository',
+            uri: 'git+https://example.com/acp/denied.git',
+          }),
+          headers,
+        ),
+      )
+      const archive = yield* Effect.either(
+        workspaceArchive({ workspace_id: workspaceId }, headers),
+      )
+      const work = yield* Effect.either(
+        workCreate(
+          yield* decodePayload(AcpRpcs.workCreate.payloadSchema, {
+            workspace_id: workspaceId,
+            title: 'Denied work',
+          }),
+          headers,
+        ),
+      )
+      const listedWork = yield* Effect.either(
+        workList({ workspace_id: workspaceId }, headers),
+      )
+      const lease = yield* Effect.either(
+        leaseRequest(
+          yield* decodePayload(AcpRpcs.leaseRequest.payloadSchema, {
+            workspace_id: workspaceId,
+            holder: 'agent_rpc',
+            resource: { kind: 'file', uri: 'file://src/rpc/denied.ts' },
+          }),
+          headers,
+        ),
+      )
+      const leases = yield* Effect.either(
+        leaseList({ workspace_id: workspaceId }, headers),
+      )
+
+      const code = (result: unknown) => {
+        const denied = result as Either.Either<
+          unknown,
+          { readonly error: { readonly code: string } }
+        >
+        return Either.isLeft(denied) ? denied.left.error.code : 'right'
+      }
+
+      return [
+        code(update),
+        code(archive),
+        code(work),
+        code(listedWork),
+        code(lease),
+        code(leases),
+      ]
+    })
+
+    const result = await Effect.runPromise(Effect.provide(program, Runtime))
+    expect(result).toEqual([
+      'forbidden',
+      'forbidden',
+      'forbidden',
+      'forbidden',
+      'forbidden',
+      'forbidden',
     ])
   })
 

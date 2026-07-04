@@ -10,14 +10,22 @@ import {
 import type {
   Permission,
   ProtocolError,
+  Session,
   SessionId,
   WorkerId,
+  WorkspaceId,
 } from '../../protocol/schema/index.js'
 import { toRpcError } from './rpc-error.js'
 
 const systemActor = 'worker_system' as WorkerId
 
 export const AcpRpcActor = Context.GenericTag<WorkerId>('@acp/rpc/Actor')
+
+export interface AuthorizedRpcActor {
+  readonly worker_id: WorkerId
+  readonly permissions: readonly Permission[]
+  readonly workspace_ids: Session['workspace_ids']
+}
 
 const bearerToken = (headers: Headers.Headers): string =>
   Option.match(Headers.get(headers, 'authorization'), {
@@ -32,6 +40,16 @@ export const authorizeRpc = (
   headers: Headers.Headers,
   scope?: Permission,
 ): Effect.Effect<WorkerId, ProtocolError, AppConfigTag | SessionService> =>
+  Effect.map(authorizeRpcActor(headers, scope), (actor) => actor.worker_id)
+
+export const authorizeRpcActor = (
+  headers: Headers.Headers,
+  scope?: Permission,
+): Effect.Effect<
+  AuthorizedRpcActor,
+  ProtocolError,
+  AppConfigTag | SessionService
+> =>
   Effect.gen(function* () {
     const token = bearerToken(headers)
     if (token === '') {
@@ -43,7 +61,11 @@ export const authorizeRpc = (
           ),
         )
       }
-      return systemActor
+      return {
+        worker_id: systemActor,
+        permissions: [],
+        workspace_ids: Option.none(),
+      } satisfies AuthorizedRpcActor
     }
 
     const sessions = yield* SessionService
@@ -59,7 +81,11 @@ export const authorizeRpc = (
         ),
       onSome: (s) =>
         scope === undefined || s.permissions.includes(scope)
-          ? Effect.succeed(s.worker_id)
+          ? Effect.succeed({
+              worker_id: s.worker_id,
+              permissions: s.permissions,
+              workspace_ids: s.workspace_ids,
+            } satisfies AuthorizedRpcActor)
           : Effect.fail(
               toRpcError(
                 new ForbiddenError({
@@ -68,6 +94,33 @@ export const authorizeRpc = (
               ),
             ),
     })
+  })
+
+const hasWorkspace = (
+  workspaceIds: Session['workspace_ids'],
+  workspaceId: WorkspaceId,
+) =>
+  Option.match(workspaceIds, {
+    onNone: () => true,
+    onSome: (workspaceIds) => workspaceIds.includes(workspaceId),
+  })
+
+export const authorizeRpcWorkspace = (
+  headers: Headers.Headers,
+  scope: Permission,
+  workspaceId: WorkspaceId,
+): Effect.Effect<WorkerId, ProtocolError, AppConfigTag | SessionService> =>
+  Effect.gen(function* () {
+    const actor = yield* authorizeRpcActor(headers, scope)
+    if (hasWorkspace(actor.workspace_ids, workspaceId)) {
+      return actor.worker_id
+    }
+
+    return yield* Effect.fail(
+      toRpcError(
+        new ForbiddenError({ reason: 'session is not scoped to workspace' }),
+      ),
+    )
   })
 
 export const rpcActor = (
@@ -80,4 +133,17 @@ export const rpcActor = (
       return actor.value
     }
     return yield* authorizeRpc(headers, scope)
+  })
+
+export const rpcWorkspaceActor = (
+  headers: Headers.Headers,
+  scope: Permission,
+  workspaceId: WorkspaceId,
+): Effect.Effect<WorkerId, ProtocolError, AppConfigTag | SessionService> =>
+  Effect.gen(function* () {
+    const actor = yield* Effect.serviceOption(AcpRpcActor)
+    if (Option.isSome(actor)) {
+      return actor.value
+    }
+    return yield* authorizeRpcWorkspace(headers, scope, workspaceId)
   })
