@@ -35,6 +35,29 @@ describe('SessionService', () => {
     expect(Option.getOrNull(result.stored)).toEqual(result.created)
   })
 
+  it('persists workspace-bound sessions', () => {
+    const result = runSync(
+      Effect.gen(function* () {
+        const sessions = yield* SessionService
+        const created = yield* sessions.create(
+          Schema.decodeUnknownSync(Session)({
+            id: 'session_abc123',
+            worker_id: 'agent_claude_code',
+            created_at: '2026-06-26T00:00:00.000Z',
+            permissions: ['workspace:read'],
+            workspace_ids: ['workspace_a', 'workspace_b'],
+          }),
+        )
+        return yield* sessions.get(created.id)
+      }),
+    )
+
+    expect(Option.getOrThrow(Option.getOrThrow(result).workspace_ids)).toEqual([
+      'workspace_a',
+      'workspace_b',
+    ])
+  })
+
   it('resolves the actor (worker_id) from a session token', () => {
     const actor = runSync(
       Effect.gen(function* () {

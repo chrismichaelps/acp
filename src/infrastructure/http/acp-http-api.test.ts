@@ -1,7 +1,7 @@
 /** @Acp.Infra.Http.Api.Test — reflected route contract */
 import { describe, expect, it } from 'vitest'
 import { HttpApi } from '@effect/platform'
-import { Schema } from 'effect'
+import { Option, Schema } from 'effect'
 import {
   AcpHttpApi,
   InitializeSessionPayload,
@@ -55,6 +55,22 @@ describe('AcpHttpApi', () => {
     expect(payload.worker.status).toBe('online')
     expect(payload.worker.capabilities).toEqual([])
     expect(payload.capabilities.can_review).toBe(true)
+  })
+
+  it('accepts optional workspace bindings during session initialization', () => {
+    const payload = Schema.decodeUnknownSync(InitializeSessionPayload)({
+      worker: {
+        id: 'agent_hosted',
+        name: 'Hosted Agent',
+        kind: 'agent',
+      },
+      permissions: ['workspace:read'],
+      workspace_ids: ['workspace_hosted'],
+    })
+
+    expect(Option.getOrThrow(payload.workspace_ids)).toEqual([
+      'workspace_hosted',
+    ])
   })
 
   it('keeps protocol version compatibility as runtime negotiation', () => {

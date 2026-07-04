@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · session-workspace-bindings slice · added ADR-0009
+  `workspace_ids` bindings to [[session.schema]] and
+  `session.initialize` payloads, preserving host-wide sessions as
+  `Option.none` while persisting explicit workspace lists through HTTP/RPC
+  initialization · validation: full local gate passed (check:env, format, lint,
+  typecheck, file-size, build, 644 tests; 14 skipped) · risk MEDIUM
+
 - 2026-07-04 · adr-0009-workspace-scoped-sessions slice · accepted
   [[ADR-0009-workspace-scoped-sessions]], deciding that hosted ACP sessions gain
   optional workspace bindings while permission scopes remain action-oriented;

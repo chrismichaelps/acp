@@ -11,10 +11,12 @@ import {
   CreateMemoryPayload,
   ReadMemoryQuery,
   CreateWorkPayload,
+  Session,
 } from './index.js'
 
 const decodeWorker = Schema.decodeUnknownSync(Worker)
 const decodeWork = Schema.decodeUnknownSync(WorkUnit)
+const decodeSession = Schema.decodeUnknownSync(Session)
 
 describe('Worker schema', () => {
   it('decodes a valid worker and brands the id', () => {
@@ -52,6 +54,34 @@ describe('Worker schema', () => {
         capabilities: [],
       }),
     ).toThrow()
+  })
+})
+
+describe('Session schema', () => {
+  it('defaults workspace binding to Option.none for existing sessions', () => {
+    const session = decodeSession({
+      id: 'session_abc',
+      worker_id: 'agent_codex',
+      created_at: '2026-07-04T00:00:00Z',
+      permissions: ['work:create'],
+    })
+
+    expect(Option.isNone(session.workspace_ids)).toBe(true)
+  })
+
+  it('decodes explicit workspace bindings', () => {
+    const session = decodeSession({
+      id: 'session_bound',
+      worker_id: 'agent_codex',
+      created_at: '2026-07-04T00:00:00Z',
+      permissions: ['workspace:read'],
+      workspace_ids: ['workspace_a', 'workspace_b'],
+    })
+
+    expect(Option.getOrThrow(session.workspace_ids)).toEqual([
+      'workspace_a',
+      'workspace_b',
+    ])
   })
 })
 

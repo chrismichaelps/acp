@@ -272,6 +272,12 @@ error code: credential failures are `unauthorized`, authorization failures are
 `forbidden`. `POST /v1/session/initialize` remains the open bootstrap
 route because it mints the bearer session used by later calls.
 
+Sessions may also carry optional `workspace_ids` bindings. When omitted, the
+session is host-wide, preserving local and single-node self-host behavior. When
+present, the session's action permissions apply only inside those workspaces; a
+valid token bound to a different workspace must fail with `403 forbidden` without
+revealing whether the target workspace exists.
+
 The v0.1 permission vocabulary is closed so a host can reject unknown scopes
 during session initialization instead of silently accepting misspelled or
 future-version authority. Permissions are intentionally action-oriented rather
@@ -332,7 +338,8 @@ POST /v1/session/initialize
     "can_review": true,
     "supports_checkpoints": true,
     "supports_leases": true
-  }
+  },
+  "workspace_ids": ["workspace_hosted"]
 }
 ```
 
@@ -694,7 +701,10 @@ can be shared across agents without full table scans.
 POST /v1/session/initialize
 ```
 
-Creates a worker session and negotiates capabilities.
+Creates a worker session and negotiates capabilities. Hosts that implement
+workspace-scoped sessions accept optional `workspace_ids` during initialization;
+hosted profiles require a binding before later workspace-scoped actions can
+authorize.
 
 ---
 
