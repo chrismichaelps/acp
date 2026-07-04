@@ -4,196 +4,22 @@
  * four racing agent identities across the full v0.1 loop. This is the CI-safe
  * twin of scripts/acp-cli-dogfood-multi-agent.mjs (which spawns the compiled
  * binary): no dist build and no tsx are needed, so it is a permanent regression
- * guard on the CLI. See wiki/references/cli-dogfood-multi-agent.md.
+ * guard on the CLI. Harness lives in cli-dogfood-support.ts. See
+ * wiki/references/cli-dogfood-multi-agent.md.
  */
 import { describe, expect, it } from 'vitest'
-import { HttpServer } from '@effect/platform'
-import { NodeHttpClient } from '@effect/platform-node'
-import { Effect, Either } from 'effect'
-import { nodeHttpServerLayer } from '../../infrastructure/platform-node/index.js'
-import { HttpAppLive } from '../server/http-app.js'
-import { parseArgs } from './commands.js'
-import { runCliRequest } from './client.js'
-
-const EphemeralServerLive = nodeHttpServerLayer(0)
-
-interface CliOutcome {
-  readonly ok: boolean
-  readonly status: number
-  readonly payload: unknown
-}
-
-// Run one `acp` command exactly as the binary does — parse the argv a user would
-// type, then send it with the same client main.ts uses. Bad argv is a test bug,
-// not a protocol outcome, so it throws; HTTP status is surfaced for the caller.
-const runCli = (
-  baseUrl: string,
-  argv: readonly string[],
-  token = '',
-): Promise<CliOutcome> => {
-  const parsed = parseArgs(argv)
-  if (Either.isLeft(parsed)) {
-    throw new Error(
-      `unparseable argv: ${argv.join(' ')} (${parsed.left.message})`,
-    )
-  }
-  return Effect.runPromise(
-    runCliRequest(parsed.right, baseUrl, token).pipe(
-      Effect.provide(NodeHttpClient.layer),
-    ),
-  ).then((result) => ({
-    ok: result.status < 400,
-    status: result.status,
-    payload:
-      result.body === '' ? undefined : (JSON.parse(result.body) as unknown),
-  }))
-}
-
-const expectOk = async (
-  baseUrl: string,
-  label: string,
-  argv: readonly string[],
-  token: string,
-): Promise<Record<string, unknown>> => {
-  const result = await runCli(baseUrl, argv, token)
-  if (!result.ok) {
-    throw new Error(
-      `${label} failed (${String(result.status)}): ${JSON.stringify(result.payload)}`,
-    )
-  }
-  return result.payload as Record<string, unknown>
-}
-
-const onLiveServer = <A>(use: (baseUrl: string) => Promise<A>) =>
-  Effect.runPromise(
-    HttpServer.addressWith((address) => {
-      const port = address._tag === 'TcpAddress' ? address.port : 0
-      return Effect.promise(() => use(`http://127.0.0.1:${port.toString()}`))
-    }).pipe(
-      Effect.provide(HttpAppLive),
-      Effect.provide(EphemeralServerLive),
-      Effect.scoped,
-    ),
-  )
-
-// parseArgs resolves the command from argv[0]/argv[1] and reads flags/positionals
-// from argv.slice(2) — exactly the bare tokens a shell hands the binary after
-// `acp`, so `['work','claim',id,'--worker',x]` maps to the `work claim` handler.
-
-const shared = ['workspace:read', 'event:read']
-const plannerPerms = [
-  ...shared,
-  'workspace:write',
-  'work:create',
-  'checkpoint:create',
-  'memory:create',
-]
-const workerPerms = [
-  ...shared,
-  'work:claim',
-  'work:update',
-  'lease:create',
-  'lease:renew',
-  'lease:release',
-  'checkpoint:create',
-  'memory:create',
-  'memory:read',
-  'artifact:create',
-  'review:create',
-]
-const reviewerPerms = [
-  ...shared,
-  'memory:read',
-  'review:request_changes',
-  'review:approve',
-]
-
-const requiredEvents = [
-  'work.created',
-  'checkpoint.created',
-  'memory.created',
-  'work.claimed',
-  'work.started',
-  'lease.granted',
-  'lease.renewed',
-  'review.requested',
-  'review.changes_requested',
-  'work.unblocked',
-  'review.approved',
-  'lease.released',
-  'work.completed',
-]
-
-interface Agent {
-  readonly role: string
-  readonly workerId: string
-  readonly token: string
-}
-
-const initAgent = async (
-  baseUrl: string,
-  runId: string,
-  role: string,
-  perms: readonly string[],
-  caps: readonly string[],
-): Promise<Agent> => {
-  const workerId = `agent_cli_${role}_${runId}`.replace(/[^a-zA-Z0-9_]/g, '_')
-  const session = await expectOk(
-    baseUrl,
-    `session init (${role})`,
-    [
-      'session',
-      'init',
-      '--worker',
-      workerId,
-      '--name',
-      `CLI ${role}`,
-      '--kind',
-      'agent',
-      '--vendor',
-      'anthropic',
-      '--capabilities',
-      caps.join(','),
-      '--permissions',
-      perms.join(','),
-    ],
-    '',
-  )
-  return { role, workerId, token: session.session_id as string }
-}
-
-interface RaceResult {
-  readonly agent: Agent
-  readonly kind: 'winner' | 'conflict'
-  readonly payload: Record<string, unknown>
-}
-
-const classifyRace = (
-  agent: Agent,
-  result: CliOutcome,
-  conflictCode: string,
-): RaceResult => {
-  if (result.ok)
-    return {
-      agent,
-      kind: 'winner',
-      payload: result.payload as Record<string, unknown>,
-    }
-  const payload = result.payload as { error?: { code?: string } } | undefined
-  if (payload?.error?.code === conflictCode) {
-    return { agent, kind: 'conflict', payload }
-  }
-  throw new Error(
-    `unexpected race result for ${agent.role}: ${JSON.stringify(result.payload)}`,
-  )
-}
-
-// Narrow an Array.find result without a non-null assertion; a missing winner or
-// conflict is a real protocol regression, so surface it as a thrown failure.
-const must = <T>(value: T | undefined, message: string): T => {
-  if (value === undefined) throw new Error(message)
-  return value
-}
+import {
+  classifyRace,
+  expectOk,
+  initAgent,
+  must,
+  onLiveServer,
+  plannerPerms,
+  requiredEvents,
+  reviewerPerms,
+  runCli,
+  workerPerms,
+} from './cli-dogfood-support.js'
 
 describe('multi-agent CLI dogfood', () => {
   it('drives the whole acp CLI through a racing planner/worker/reviewer loop', async () => {
@@ -233,6 +59,7 @@ describe('multi-agent CLI dogfood', () => {
         ],
         planner.token,
       )
+      const workspaceId = workspace.id as string
       const work = await expectOk(
         baseUrl,
         'work create',
@@ -241,7 +68,7 @@ describe('multi-agent CLI dogfood', () => {
           'create',
           `Multi-agent CLI dogfood ${runId}`,
           '--workspace',
-          workspace.id as string,
+          workspaceId,
           '--priority',
           'high',
           '--description',
@@ -250,7 +77,6 @@ describe('multi-agent CLI dogfood', () => {
         planner.token,
       )
       const workId = work.id as string
-      const workspaceId = workspace.id as string
 
       const plannerCheckpoint = await expectOk(
         baseUrl,
