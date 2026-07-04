@@ -95,7 +95,10 @@ export const parseArgs: (
 Split `argv` through a small token parser registry rather than a branch chain:
 flag tokens own `--key value` and valueless `--key` handling, while the fallback
 token parser records positionals. The public `<group> <action>` command key is
-then resolved through the command handler table. Each handler receives the
+then resolved through a `ReadonlyMap` built from feature command tables by
+`buildCommandRegistry`. That builder rejects duplicate command keys during
+module initialization, so command ownership remains additive without silently
+shadowing another module's handler. Each handler receives the
 parsed positionals and flags, validates its own required inputs (missing →
 `CliError`) and assembles a `CliRequest` with encoded route parameters and query
 values. Unknown keys never fall through a conditional chain; they return the same
@@ -153,9 +156,9 @@ consume the next flag as a value.
 ## Depth
 
 DEEP (0.7). Hides the whole argv→request mapping behind one pure function, a
-small handler registry, and a command resolver fallback; adding a command is an
-additive table entry instead of a new branch in the parser's dispatch path. The
-parser remains trivially testable without a server.
+duplicate-checked handler registry, and a command resolver fallback; adding a
+command is an additive table entry instead of a new branch in the parser's
+dispatch path. The parser remains trivially testable without a server.
 
 ## Grill Log
 
