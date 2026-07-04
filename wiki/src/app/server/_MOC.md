@@ -13,6 +13,8 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
 - [[acp-router]] — `HttpRouter` wiring all v0.1 routes to services + SSE + `/rpc`.
 - [[route-support]] — shared authorization, response encoding, route error
   folding, and request lifecycle logging.
+- [[resource-workspace-auth]] — derived workspace authorization for by-id HTTP
+  mutation routes.
 - [[workspace-routes]] — workspace list/create/update HTTP handlers.
 - [[worker-routes]] — host-scoped worker registry read handlers.
 - [[resume-routes]] — work-scoped read handlers for handoff and recovery.

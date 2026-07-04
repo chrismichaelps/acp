@@ -138,9 +138,12 @@ Backed mutations and sensitive reads require their matching session scope when a
 bearer token is present. Routes with an explicit workspace in the path, query, or
 body use [[route-support]] `authorizeWorkspace`, including work, lease, memory,
 event, workspace aggregate, artifact creation, and checkpoint creation routes.
-Routes whose workspace is stored behind a resource id are moving to the same
-derived workspace check in staged slices. Missing tokens still follow the
-local-host `worker_system` fallback unless `ACP_REQUIRE_AUTH=true`.
+Routes whose workspace is stored behind a work, lease, artifact, or review id use
+[[resource-workspace-auth]] to load the owning record before authorization, so
+claim/update/event publication, lease renew/release/revoke, artifact
+update/delete, review creation, and review decisions all enforce the same
+workspace binding before mutation. Missing tokens still follow the local-host
+`worker_system` fallback unless `ACP_REQUIRE_AUTH=true`.
 
 Every inline handler is wrapped with [[route-support]] `respond` using a stable
 `METHOD /template/:param` route label. Request lifecycle logs therefore carry
