@@ -8,14 +8,14 @@ import {
 } from '../../infrastructure/http/index.js'
 import { workspaceSseResponse } from '../../infrastructure/sse/index.js'
 import { Event } from '../../protocol/schema/index.js'
-import { authorize, ok, respond } from './route-support.js'
+import { authorizeWorkspace, ok, respond } from './route-support.js'
 
 export const replayEvents = respond('GET /v1/events')(
   Effect.gen(function* () {
     const events = yield* EventStore
     const params =
       yield* HttpServerRequest.schemaSearchParams(EventsReplayParams)
-    yield* authorize('event:read')
+    yield* authorizeWorkspace('event:read', params.workspace_id)
     const replay = yield* events.readAfter(
       params.workspace_id,
       params.after_seq,
@@ -28,7 +28,7 @@ export const streamEvents = respond('GET /v1/events/stream')(
   Effect.gen(function* () {
     const params =
       yield* HttpServerRequest.schemaSearchParams(EventsStreamParams)
-    yield* authorize('event:read')
+    yield* authorizeWorkspace('event:read', params.workspace_id)
     return yield* workspaceSseResponse(params.workspace_id)
   }),
 )

@@ -19,8 +19,10 @@ import type { DomainError } from '../../protocol/errors/protocol-error.js'
 import type { ErrorCode } from '../../protocol/schema/error.schema.js'
 import type {
   Permission,
+  Session,
   SessionId,
   WorkerId,
+  WorkspaceId,
 } from '../../protocol/schema/index.js'
 
 const systemActor = 'worker_system' as WorkerId
@@ -47,7 +49,25 @@ const bearerToken = Effect.map(HttpServerRequest.HttpServerRequest, (req) =>
   }),
 )
 
-export const authorize = (scope?: Permission) =>
+export interface AuthorizedActor {
+  readonly worker_id: WorkerId
+  readonly permissions: readonly Permission[]
+  readonly workspace_ids: Session['workspace_ids']
+}
+
+const hasScope = (session: Session, scope?: Permission) =>
+  scope === undefined || session.permissions.includes(scope)
+
+const hasWorkspace = (
+  workspaceIds: Session['workspace_ids'],
+  workspaceId: WorkspaceId,
+) =>
+  Option.match(workspaceIds, {
+    onNone: () => true,
+    onSome: (workspaceIds) => workspaceIds.includes(workspaceId),
+  })
+
+export const authorizeActor = (scope?: Permission) =>
   Effect.gen(function* () {
     const token = yield* bearerToken
     if (token === '') {
@@ -57,7 +77,11 @@ export const authorize = (scope?: Permission) =>
           new UnauthorizedError({ reason: 'authentication required' }),
         )
       }
-      return systemActor
+      return {
+        worker_id: systemActor,
+        permissions: [],
+        workspace_ids: Option.none(),
+      } satisfies AuthorizedActor
     }
     const sessions = yield* SessionService
     const session = yield* sessions.get(token as SessionId)
@@ -65,14 +89,40 @@ export const authorize = (scope?: Permission) =>
       onNone: () =>
         Effect.fail(new UnauthorizedError({ reason: 'invalid session token' })),
       onSome: (s) =>
-        scope === undefined || s.permissions.includes(scope)
-          ? Effect.succeed(s.worker_id)
+        hasScope(s, scope)
+          ? Effect.succeed({
+              worker_id: s.worker_id,
+              permissions: s.permissions,
+              workspace_ids: s.workspace_ids,
+            } satisfies AuthorizedActor)
           : Effect.fail(
               new ForbiddenError({
-                reason: `session lacks scope: ${scope}`,
+                reason: `session lacks scope: ${String(scope)}`,
               }),
             ),
     })
+  })
+
+export const authorize = (scope?: Permission) =>
+  Effect.map(authorizeActor(scope), (actor) => actor.worker_id)
+
+export const authorizeWorkspace = (
+  scope: Permission,
+  workspaceId: WorkspaceId,
+) =>
+  Effect.gen(function* () {
+    const actor = yield* authorizeActor(scope)
+    if (Option.isNone(actor.workspace_ids)) {
+      return actor.worker_id
+    }
+
+    if (hasWorkspace(actor.workspace_ids, workspaceId)) {
+      return actor.worker_id
+    }
+
+    return yield* Effect.fail(
+      new ForbiddenError({ reason: 'session is not scoped to workspace' }),
+    )
   })
 
 const errorToResponse = (

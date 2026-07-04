@@ -17,7 +17,13 @@ import {
 } from '../../protocol/schema/index.js'
 import type { WorkspaceId } from '../../protocol/schema/index.js'
 import { IdClock } from './identity.js'
-import { authorize, ok, pathParam, respond } from './route-support.js'
+import {
+  authorize,
+  authorizeWorkspace,
+  ok,
+  pathParam,
+  respond,
+} from './route-support.js'
 
 export const listWorkspaces = respond('GET /v1/workspaces')(
   Effect.gen(function* () {
@@ -34,7 +40,7 @@ export const listWorkspaceWork = respond(
   Effect.gen(function* () {
     const work = yield* WorkUnitService
     const workspaceId = (yield* pathParam('workspace_id')) as WorkspaceId
-    yield* authorize('workspace:read')
+    yield* authorizeWorkspace('workspace:read', workspaceId)
     const all = yield* work.listForWorkspace(workspaceId)
     return yield* ok(200)(Schema.Array(WorkUnit), all)
   }),
@@ -46,7 +52,7 @@ export const listWorkspaceCheckpoints = respond(
   Effect.gen(function* () {
     const checkpoints = yield* CheckpointService
     const workspaceId = (yield* pathParam('workspace_id')) as WorkspaceId
-    yield* authorize('workspace:read')
+    yield* authorizeWorkspace('workspace:read', workspaceId)
     const all = yield* checkpoints.listForWorkspace(workspaceId)
     return yield* ok(200)(Schema.Array(Checkpoint), all)
   }),
@@ -58,7 +64,7 @@ export const listWorkspaceArtifacts = respond(
   Effect.gen(function* () {
     const artifacts = yield* ArtifactService
     const workspaceId = (yield* pathParam('workspace_id')) as WorkspaceId
-    yield* authorize('workspace:read')
+    yield* authorizeWorkspace('workspace:read', workspaceId)
     const all = yield* artifacts.listForWorkspace(workspaceId)
     return yield* ok(200)(Schema.Array(Artifact), all)
   }),
@@ -70,7 +76,7 @@ export const listWorkspaceReviews = respond(
   Effect.gen(function* () {
     const reviews = yield* ReviewService
     const workspaceId = (yield* pathParam('workspace_id')) as WorkspaceId
-    yield* authorize('workspace:read')
+    yield* authorizeWorkspace('workspace:read', workspaceId)
     const all = yield* reviews.listForWorkspace(workspaceId)
     return yield* ok(200)(Schema.Array(Review), all)
   }),
@@ -104,7 +110,7 @@ export const updateWorkspace = respond('PATCH /v1/workspaces/:workspace_id')(
       UpdateWorkspacePayload,
     )
     const now = yield* idClock.now
-    const actor = yield* authorize('workspace:write')
+    const actor = yield* authorizeWorkspace('workspace:write', workspaceId)
     const workspace = yield* workspaces.update(
       { id: workspaceId, state: 'active', ...payload },
       actor,

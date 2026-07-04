@@ -67,7 +67,13 @@ import type {
   WorkId,
 } from '../../protocol/schema/index.js'
 import { IdClock } from './identity.js'
-import { authorize, ok, pathParam, respond } from './route-support.js'
+import {
+  authorize,
+  authorizeWorkspace,
+  ok,
+  pathParam,
+  respond,
+} from './route-support.js'
 import {
   archiveWorkspace,
   createWorkspace,
@@ -157,7 +163,7 @@ const createWork = respond('POST /v1/work')(
     const payload = yield* HttpServerRequest.schemaBodyJson(CreateWorkPayload)
     const id = (yield* idClock.nextId('work')) as WorkId
     const now = yield* idClock.now
-    const actor = yield* authorize('work:create')
+    const actor = yield* authorizeWorkspace('work:create', payload.workspace_id)
     const work = yield* service.create({
       id,
       payload,
@@ -234,7 +240,7 @@ const requestLease = respond('POST /v1/leases')(
     const payload = yield* HttpServerRequest.schemaBodyJson(RequestLeasePayload)
     const id = (yield* idClock.nextId('lease')) as LeaseId
     const now = yield* idClock.now
-    yield* authorize('lease:create')
+    yield* authorizeWorkspace('lease:create', payload.workspace_id)
     const lease = yield* service.request({ id, payload, now })
     return yield* ok(201)(Lease, lease)
   }),
@@ -244,7 +250,7 @@ const listLeases = respond('GET /v1/leases')(
   Effect.gen(function* () {
     const service = yield* LeaseService
     const params = yield* HttpServerRequest.schemaSearchParams(LeaseListParams)
-    yield* authorize('workspace:read')
+    yield* authorizeWorkspace('workspace:read', params.workspace_id)
     const leases = yield* service.list(params.workspace_id)
     return yield* ok(200)(Schema.Array(Lease), leases)
   }),
@@ -486,10 +492,6 @@ const v1Router = commandRouter.pipe(
   HttpRouter.get('/v1/events/stream', streamEvents),
 )
 
-// Add the spec §13 JSON-RPC framing, which dispatches into v1Router in the same
-// service context (one shared store — no second AppLive). `POST /rpc` frames it
-// over HTTP; `GET /rpc` upgrades to a WebSocket and frames it per spec §7. Both
-// dispatch into v1Router, so HTTP, WebSocket, and REST share one store.
 export const acpRouter = v1Router.pipe(
   HttpRouter.get('/health', livenessProbe),
   HttpRouter.get('/ready', readinessProbe),

@@ -21,12 +21,17 @@ const worker = {
 const initSession = async (
   handler: (req: Request) => Promise<Response>,
   permissions: readonly string[],
+  workspaceIds?: readonly string[],
 ) => {
   const res = await handler(
     new Request('http://acp.test/v1/session/initialize', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ worker, permissions }),
+      body: JSON.stringify({
+        worker,
+        permissions,
+        ...(workspaceIds === undefined ? {} : { workspace_ids: workspaceIds }),
+      }),
     }),
   )
   return ((await res.json()) as { session_id: string }).session_id
@@ -80,6 +85,24 @@ describe('workspace routes', () => {
 
     const denied = await handler(
       new Request('http://acp.test/v1/workspaces/workspace_index/work', {
+        method: 'GET',
+        headers: { authorization: `Bearer ${token}` },
+      }),
+    )
+
+    expect(denied.status).toBe(403)
+  })
+
+  it('rejects workspace indexes outside the session workspace binding', async () => {
+    const handler = makeHandler()
+    const token = await initSession(
+      handler,
+      ['workspace:read'],
+      ['workspace_allowed'],
+    )
+
+    const denied = await handler(
+      new Request('http://acp.test/v1/workspaces/workspace_denied/work', {
         method: 'GET',
         headers: { authorization: `Bearer ${token}` },
       }),

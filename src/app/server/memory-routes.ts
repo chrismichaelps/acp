@@ -6,7 +6,7 @@ import { MemoryListParams } from '../../infrastructure/http/index.js'
 import type { MemoryId } from '../../protocol/schema/index.js'
 import { CreateMemoryPayload, Memory } from '../../protocol/schema/index.js'
 import { IdClock } from './identity.js'
-import { authorize, ok, respond } from './route-support.js'
+import { authorizeWorkspace, ok, respond } from './route-support.js'
 
 export const createMemory = respond('POST /v1/memory')(
   Effect.gen(function* () {
@@ -15,7 +15,10 @@ export const createMemory = respond('POST /v1/memory')(
     const payload = yield* HttpServerRequest.schemaBodyJson(CreateMemoryPayload)
     const id = (yield* idClock.nextId('memory')) as MemoryId
     const now = yield* idClock.now
-    const actor = yield* authorize('memory:create')
+    const actor = yield* authorizeWorkspace(
+      'memory:create',
+      payload.workspace_id,
+    )
     const created = yield* memory.create({
       id,
       payload,
@@ -33,7 +36,7 @@ export const listMemory = respond('GET /v1/memory')(
     // shape (Option-wrapped fields, NumberFromString for after_seq/limit), so it
     // feeds memory.read directly — re-decoding the Option values would fail.
     const query = yield* HttpServerRequest.schemaSearchParams(MemoryListParams)
-    yield* authorize('memory:read')
+    yield* authorizeWorkspace('memory:read', query.workspace_id)
     const records = yield* memory.read(query)
     return yield* ok(200)(Schema.Array(Memory), records)
   }),
