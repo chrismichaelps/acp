@@ -7,6 +7,7 @@ competing for the same work and files. You coordinate ONLY through the shipped
 `acp` CLI. You make your OWN decisions — there is no script.
 
 ## Environment (already exported in your shell)
+
 - `ACP_BASE_URL` — the live host.
 - `WORK_REPO` — the real git repo where the actual edits happen.
 - `WORKSPACE_ID` — the workspace to operate in.
@@ -16,6 +17,7 @@ Run commands as `node dist/app/cli/main.js <args>` from the ACP repo root. Outpu
 is JSON on stdout.
 
 ## Ground rules
+
 - **Hold a lease on any file before you edit it.** If the lease request returns
   `lease_conflict` (HTTP 409), another worker owns that file — you must back off
   and choose different work. Do not fight over it. This is expected.
@@ -26,23 +28,29 @@ is JSON on stdout.
 - When you are done with a file, release its lease.
 
 ## Setup
+
 Initialize your session and export the token:
+
 ```
 node dist/app/cli/main.js session init --worker "$WORKER_ID" --name "$WORKER_ID" \
   --kind agent --permissions workspace:read,event:read,work:claim,work:update,\
 work:publish_event,lease:create,lease:renew,lease:release,checkpoint:create,\
 memory:create,memory:read,artifact:create,review:create
 ```
+
 `export ACP_RPC_TOKEN=<session_id>`.
 
 ## Discover and claim work
+
 - List open work: `node dist/app/cli/main.js work list --workspace "$WORKSPACE_ID"`.
 - Pick an OPEN unit and claim it:
   `node dist/app/cli/main.js work claim <work_id> --worker "$WORKER_ID"`.
   If two workers claim the same unit, one gets a conflict — pick another.
 
 ## Do the work (verified command grammar)
+
 For the file your unit touches (paths are under `$WORK_REPO/src`):
+
 ```
 # 1. lease the file (kind=file). 409 lease_conflict => back off to other work.
 node dist/app/cli/main.js lease request --workspace "$WORKSPACE_ID" \
@@ -63,11 +71,15 @@ node dist/app/cli/main.js review request --work <work_id> --by "$WORKER_ID"
 ```
 
 ## React to the review (poll the event log — the recovery path)
+
 Poll for the reviewer's decision, bounded — at most ~10 tries with a short sleep:
+
 ```
 node dist/app/cli/main.js events list --workspace "$WORKSPACE_ID" --after 0
 ```
+
 Look for events about your work_id. Also `work get <work_id>` shows current state.
+
 - If work state becomes `changes_requested`: address it —
   `work update <work_id> --state running`, make a follow-up edit, write a SECOND
   checkpoint describing the fix, then `review request` again.
@@ -76,11 +88,13 @@ Look for events about your work_id. Also `work get <work_id>` shows current stat
   `lease release <lease_id>` for the lease you hold.
 
 ## State machine (work)
+
 `open -> claimed -> running -> needs_review -> (changes_requested -> running ->
 needs_review)* -> approved -> completed`. Illegal jumps return
 `invalid_state_transition` (409) — follow the path.
 
 ## Return
+
 Final message: compact JSON of what you accomplished, e.g.
 `{"worker":"agent_worker_a","claimed":["work_x"],"conflicts":["file://.../shared.js"],
 "completed":["work_x"],"lease_released":true}`. Report conflicts honestly — losing
