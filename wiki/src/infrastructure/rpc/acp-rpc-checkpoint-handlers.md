@@ -34,20 +34,21 @@ export const AcpRpcCheckpointHandlersLive: Layer<
 
 ## Algorithm
 
-Handlers authorize through [[rpc-auth]] `rpcActor`, which consumes a
-middleware-provided `AcpRpcActor` when [[rpc-auth-middleware]] has already
-authenticated the request and falls back to bearer headers for direct
-`accessHandler` tests. `checkpoint.create` uses that actor, mints an id and
-timestamp through [[id-clock]], and delegates to [[checkpoint-service]] so
-append-only persistence and `checkpoint.created` event emission remain
-domain-owned.
+Handlers authorize through [[rpc-auth]] `rpcActor` or `rpcWorkspaceActor`, which
+consume a middleware-provided `AcpRpcActor` when [[rpc-auth-middleware]] has
+already authenticated the request and fall back to bearer headers for direct
+`accessHandler` tests. `checkpoint.create` checks both `checkpoint:create` and
+the payload workspace binding, mints an id and timestamp through [[id-clock]],
+and delegates to [[checkpoint-service]] so append-only persistence and
+`checkpoint.created` event emission remain domain-owned.
 
 Read handlers check `workspace:read` through the same bridge. Work-scoped
 reads first prove the WorkUnit exists through [[work-unit-service]], matching
 the HTTP resume route. `checkpoint.list_for_work` and
 `checkpoint.list_for_workspace` preserve newest-first ordering from
-[[checkpoint-service]]. `checkpoint.latest_for_work` maps an empty checkpoint
-history to `not_found`.
+[[checkpoint-service]]; the workspace list also checks the explicit
+`workspace_id` binding through `rpcWorkspaceActor`. `checkpoint.latest_for_work`
+maps an empty checkpoint history to `not_found`.
 
 ## Negative Logic (Prohibited Paths)
 

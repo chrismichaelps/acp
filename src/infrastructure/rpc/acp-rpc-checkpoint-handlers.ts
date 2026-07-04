@@ -7,7 +7,7 @@ import { IdClock } from '../../app/server/identity.js'
 import { NotFoundError } from '../../protocol/errors/protocol-error.js'
 import type { CheckpointId, WorkId } from '../../protocol/schema/index.js'
 import { AcpRpcGroup } from './acp-rpc-contract.js'
-import { rpcActor } from './rpc-auth.js'
+import { rpcActor, rpcWorkspaceActor } from './rpc-auth.js'
 import { toRpcError } from './rpc-error.js'
 
 const requireWork = (workUnits: WorkUnitServiceApi, workId: WorkId) =>
@@ -27,7 +27,11 @@ const checkpointCreateHandler = AcpRpcGroup.toLayerHandler(
   'checkpoint.create',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* rpcActor(options.headers, 'checkpoint:create')
+      const actor = yield* rpcWorkspaceActor(
+        options.headers,
+        'checkpoint:create',
+        payload.workspace_id,
+      )
       const checkpoints = yield* CheckpointService
       const idClock = yield* IdClock
       const id = (yield* idClock.nextId('checkpoint')) as CheckpointId
@@ -82,7 +86,11 @@ const checkpointListForWorkspaceHandler = AcpRpcGroup.toLayerHandler(
   'checkpoint.list_for_workspace',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* rpcActor(options.headers, 'workspace:read')
+      yield* rpcWorkspaceActor(
+        options.headers,
+        'workspace:read',
+        payload.workspace_id,
+      )
       const checkpoints = yield* CheckpointService
       return yield* checkpoints
         .listForWorkspace(payload.workspace_id)

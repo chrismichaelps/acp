@@ -35,20 +35,22 @@ export const AcpRpcMemoryEventHandlersLive: Layer<
 
 ## Algorithm
 
-Handlers authorize through [[rpc-auth]] `rpcActor`, which consumes
+Handlers authorize through [[rpc-auth]] `rpcWorkspaceActor`, which consumes
 `AcpRpcActor` when native RPC middleware has already authenticated the request
 and falls back to bearer headers for direct `accessHandler` tests.
-`memory.create` uses that actor, mints a memory id and timestamp through
-[[id-clock]], and delegates to [[memory-service]] so seq assignment and
-`memory.created` event emission remain domain-owned. `memory.list` checks
-`memory:read` and forwards the decoded `ReadMemoryQuery` (Option-wrapped cursor,
-kind, key, and label filters) straight to `memory.read` — the RPC payload is
-already the native query shape, so no URL re-decode is needed unlike the
-[[json-rpc-memory-commands]] HTTP bridge.
+`memory.create` checks both `memory:create` and the payload workspace binding,
+mints a memory id and timestamp through [[id-clock]], and delegates to
+[[memory-service]] so seq assignment and `memory.created` event emission remain
+domain-owned. `memory.list` checks `memory:read` plus the explicit
+`workspace_id` binding and forwards the decoded `ReadMemoryQuery`
+(Option-wrapped cursor, kind, key, and label filters) straight to `memory.read` —
+the RPC payload is already the native query shape, so no URL re-decode is needed
+unlike the [[json-rpc-memory-commands]] HTTP bridge.
 
-`events.list` checks `event:read`, reads through `EventStore.readAfter`, and
-converts the returned `Chunk` to a readonly array, matching the HTTP replay
-route. `events.subscribe` checks `event:read` and returns the scoped
+`events.list` checks `event:read` plus the explicit workspace binding, reads
+through `EventStore.readAfter`, and converts the returned `Chunk` to a readonly
+array, matching the HTTP replay route. `events.subscribe` checks `event:read`
+plus the explicit workspace binding and returns the scoped
 `EventStore.subscribe(workspace_id)` stream directly to `@effect/rpc`, so the
 native NDJSON HTTP route can deliver future workspace events as stream chunks.
 
