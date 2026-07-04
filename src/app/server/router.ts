@@ -35,10 +35,7 @@ import {
 import { createMemory, listMemory } from './memory-routes.js'
 import { makeRpcHandler } from './rpc-endpoint.js'
 import { makeRpcSocketHandler } from './rpc-socket.js'
-import {
-  NotFoundError,
-  ValidationError,
-} from '../../protocol/errors/protocol-error.js'
+import { ValidationError } from '../../protocol/errors/protocol-error.js'
 import {
   ACP_PROTOCOL_VERSION,
   Artifact,
@@ -68,12 +65,12 @@ import type {
 } from '../../protocol/schema/index.js'
 import { IdClock } from './identity.js'
 import {
-  authorize,
   authorizeWorkspace as authorizeWs,
   ok,
   pathParam,
   respond,
 } from './route-support.js'
+import * as target from './resource-workspace-auth.js'
 import {
   archiveWorkspace,
   createWorkspace,
@@ -181,7 +178,7 @@ const claimWork = respond('POST /v1/work/:work_id/claim')(
     const workId = (yield* pathParam('work_id')) as WorkId
     const payload = yield* HttpServerRequest.schemaBodyJson(ClaimWorkPayload)
     const now = yield* idClock.now
-    yield* authorize('work:claim')
+    yield* target.work('work:claim', workId)
     const work = yield* service.claim(workId, payload.worker_id, now)
     return yield* ok(200)(WorkUnit, work)
   }),
@@ -196,7 +193,7 @@ const updateWorkState = respond('PATCH /v1/work/:work_id')(
       UpdateWorkStatePayload,
     )
     const now = yield* idClock.now
-    const actor = yield* authorize('work:update')
+    const { actor } = yield* target.work('work:update', workId)
     const work = yield* service.transition(workId, payload.state, actor, now)
     return yield* ok(200)(WorkUnit, work)
   }),
@@ -204,22 +201,15 @@ const updateWorkState = respond('PATCH /v1/work/:work_id')(
 
 const publishWorkEvent = respond('POST /v1/work/:work_id/events')(
   Effect.gen(function* () {
-    const service = yield* WorkUnitService
     const events = yield* EventStore
     const idClock = yield* IdClock
     const workId = (yield* pathParam('work_id')) as WorkId
     const payload = yield* HttpServerRequest.schemaBodyJson(
       PublishWorkEventPayload,
     )
-    const stored = yield* service.get(workId)
-    const work = yield* Option.match(stored, {
-      onNone: () =>
-        Effect.fail(new NotFoundError({ entity: 'work', id: workId })),
-      onSome: Effect.succeed,
-    })
+    const { actor, work } = yield* target.work('work:publish_event', workId)
     const id = (yield* idClock.nextId('event')) as EventId
     const now = yield* idClock.now
-    const actor = yield* authorize('work:publish_event')
     const event = yield* events.append({
       id,
       type: payload.type,
@@ -262,7 +252,7 @@ const releaseLease = respond('POST /v1/leases/:lease_id/release')(
     const idClock = yield* IdClock
     const leaseId = (yield* pathParam('lease_id')) as LeaseId
     const now = yield* idClock.now
-    const actor = yield* authorize('lease:release')
+    const { actor } = yield* target.lease('lease:release', leaseId)
     yield* service.release(leaseId, actor, now)
     return HttpServerResponse.empty({ status: 204 })
   }),
@@ -275,7 +265,7 @@ const renewLease = respond('POST /v1/leases/:lease_id/renew')(
     const leaseId = (yield* pathParam('lease_id')) as LeaseId
     const payload = yield* HttpServerRequest.schemaBodyJson(RenewLeasePayload)
     const now = yield* idClock.now
-    const actor = yield* authorize('lease:renew')
+    const { actor } = yield* target.lease('lease:renew', leaseId)
     const lease = yield* service.renew(leaseId, actor, now, payload.ttl_seconds)
     return yield* ok(200)(Lease, lease)
   }),
@@ -287,7 +277,7 @@ const revokeLease = respond('POST /v1/leases/:lease_id/revoke')(
     const idClock = yield* IdClock
     const leaseId = (yield* pathParam('lease_id')) as LeaseId
     const now = yield* idClock.now
-    const actor = yield* authorize('lease:revoke')
+    const { actor } = yield* target.lease('lease:revoke', leaseId)
     const lease = yield* service.revoke(leaseId, actor, now)
     return yield* ok(200)(Lease, lease)
   }),
@@ -319,7 +309,7 @@ const deleteArtifact = respond('DELETE /v1/artifacts/:artifact_id')(
     const idClock = yield* IdClock
     const artifactId = (yield* pathParam('artifact_id')) as ArtifactId
     const now = yield* idClock.now
-    const actor = yield* authorize('artifact:delete')
+    const { actor } = yield* target.artifact('artifact:delete', artifactId)
     const artifact = yield* service.remove(artifactId, actor, now)
     return yield* ok(200)(Artifact, artifact)
   }),
@@ -334,7 +324,7 @@ const updateArtifact = respond('PATCH /v1/artifacts/:artifact_id')(
       UpdateArtifactPayload,
     )
     const now = yield* idClock.now
-    const actor = yield* authorize('artifact:update')
+    const { actor } = yield* target.artifact('artifact:update', artifactId)
     const artifact = yield* service.update(artifactId, payload, actor, now)
     return yield* ok(200)(Artifact, artifact)
   }),
@@ -368,7 +358,7 @@ const requestReview = respond('POST /v1/reviews')(
       yield* HttpServerRequest.schemaBodyJson(RequestReviewPayload)
     const id = (yield* idClock.nextId('review')) as ReviewId
     const now = yield* idClock.now
-    yield* authorize('review:create')
+    yield* target.reviewRequest('review:create', payload.work_id)
     const review = yield* service.request({ id, payload, now })
     return yield* ok(201)(Review, review)
   }),
@@ -382,7 +372,7 @@ const approveReview = respond('POST /v1/reviews/:review_id/approve')(
     const payload =
       yield* HttpServerRequest.schemaBodyJson(ApproveReviewPayload)
     const now = yield* idClock.now
-    const actor = yield* authorize('review:approve')
+    const { actor } = yield* target.review('review:approve', reviewId)
     const review = yield* service.approve(
       reviewId,
       actor,
@@ -399,7 +389,7 @@ const rejectReview = respond('POST /v1/reviews/:review_id/reject')(
     const idClock = yield* IdClock
     const reviewId = (yield* pathParam('review_id')) as ReviewId
     const now = yield* idClock.now
-    const actor = yield* authorize('review:reject')
+    const { actor } = yield* target.review('review:reject', reviewId)
     const review = yield* service.reject(reviewId, actor, now)
     return yield* ok(200)(Review, review)
   }),
@@ -413,7 +403,7 @@ const requestReviewChanges = respond(
     const idClock = yield* IdClock
     const reviewId = (yield* pathParam('review_id')) as ReviewId
     const now = yield* idClock.now
-    const actor = yield* authorize('review:request_changes')
+    const { actor } = yield* target.review('review:request_changes', reviewId)
     const review = yield* service.requestChanges(reviewId, actor, now)
     return yield* ok(200)(Review, review)
   }),
@@ -425,7 +415,7 @@ const cancelReview = respond('POST /v1/reviews/:review_id/cancel')(
     const idClock = yield* IdClock
     const reviewId = (yield* pathParam('review_id')) as ReviewId
     const now = yield* idClock.now
-    const actor = yield* authorize('review:cancel')
+    const { actor } = yield* target.review('review:cancel', reviewId)
     const review = yield* service.cancel(reviewId, actor, now)
     return yield* ok(200)(Review, review)
   }),

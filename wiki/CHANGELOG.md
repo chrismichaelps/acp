@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · http-mutation-workspace-authorization slice · added
+  [[resource-workspace-auth]] and enforced ADR-0009 workspace bindings on HTTP
+  mutation routes whose workspace is derived from work, lease, artifact, or
+  review ids, including review creation from `work_id` · validation: targeted
+  mutation/workspace-scope route tests passed (8 tests) · risk MEDIUM
+
 - 2026-07-04 · http-creation-workspace-authorization slice · enforced
   ADR-0009 workspace bindings on HTTP artifact and checkpoint creation, so a
   bearer session with `artifact:create` or `checkpoint:create` still cannot write
