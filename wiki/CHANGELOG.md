@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · http-creation-workspace-authorization slice · enforced
+  ADR-0009 workspace bindings on HTTP artifact and checkpoint creation, so a
+  bearer session with `artifact:create` or `checkpoint:create` still cannot write
+  into an unbound workspace · validation: targeted workspace-scope route test
+  passed (4 tests) · risk MEDIUM
+
 - 2026-07-04 · http-derived-workspace-authorization slice · enforced
   ADR-0009 workspace bindings on HTTP read routes whose target workspace is
   derived from a work or artifact id, including work resume reads, work-scoped
