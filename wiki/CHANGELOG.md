@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · cli-command-dispatch-refactor slice · replaced the central CLI
+  command spread object with a `buildCommandRegistry` composition step that
+  assembles feature command tables into a `ReadonlyMap`, rejects duplicate keys
+  at module initialization, and keeps `parseArgs` on the tokenize → resolve →
+  execute path as the CLI grows · validation: full local gate passed (check:env,
+  format, lint, typecheck, file-size, build, 688 tests; 14 skipped) · risk LOW
+
 - 2026-07-04 · cli-dogfood-file-size slice · split the multi-agent CLI dogfood
   harness into `cli-dogfood-support.ts`, leaving the test focused on the
   lifecycle assertions while keeping the real `parseArgs` + `runCliRequest`

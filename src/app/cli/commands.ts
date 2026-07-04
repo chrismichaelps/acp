@@ -34,6 +34,8 @@ interface CommandResolver {
   readonly resolve: (argv: readonly string[]) => CommandHandler
 }
 
+type CommandHandlerTable = Readonly<Record<string, CommandHandler | undefined>>
+
 const isFlagToken = (token: string): boolean => token.startsWith('--')
 
 const argTokenParsers: readonly ArgTokenParser[] = [
@@ -83,31 +85,38 @@ const unknownCommandHandler =
 const commandKey = (group: string | undefined, action: string | undefined) =>
   `${group ?? ''} ${action ?? ''}`
 
-const commandHandlers: Readonly<Record<string, CommandHandler | undefined>> = {
-  ...sessionCommandHandlers,
-
-  ...workerCommandHandlers,
-
-  ...workspaceCommandHandlers,
-
-  ...workCommandHandlers,
-
-  ...leaseCommandHandlers,
-
-  ...checkpointCommandHandlers,
-
-  ...artifactCommandHandlers,
-
-  ...memoryCommandHandlers,
-
-  ...reviewCommandHandlers,
-
-  ...eventCommandHandlers,
+export const buildCommandRegistry = (
+  tables: readonly CommandHandlerTable[],
+): ReadonlyMap<string, CommandHandler> => {
+  const registry = new Map<string, CommandHandler>()
+  for (const table of tables) {
+    for (const [key, handler] of Object.entries(table)) {
+      if (handler === undefined) continue
+      if (registry.has(key)) {
+        throw new Error(`duplicate CLI command handler: ${key}`)
+      }
+      registry.set(key, handler)
+    }
+  }
+  return registry
 }
+
+const commandRegistry = buildCommandRegistry([
+  sessionCommandHandlers,
+  workerCommandHandlers,
+  workspaceCommandHandlers,
+  workCommandHandlers,
+  leaseCommandHandlers,
+  checkpointCommandHandlers,
+  artifactCommandHandlers,
+  memoryCommandHandlers,
+  reviewCommandHandlers,
+  eventCommandHandlers,
+])
 
 const commandResolver: CommandResolver = {
   resolve: (argv) =>
-    commandHandlers[commandKey(argv[0], argv[1])] ??
+    commandRegistry.get(commandKey(argv[0], argv[1])) ??
     unknownCommandHandler(argv),
 }
 
