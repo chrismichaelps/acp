@@ -97,6 +97,7 @@ const sessionInitializeHandler = AcpRpcGroup.toLayerHandler(
           worker_id: worker.id,
           created_at: now,
           permissions: payload.permissions,
+          workspace_ids: payload.workspace_ids,
         })
         .pipe(Effect.mapError(toRpcError))
 

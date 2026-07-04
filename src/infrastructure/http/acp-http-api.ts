@@ -122,6 +122,10 @@ export const InitializeSessionPayload = Schema.Struct({
   permissions: Schema.optionalWith(Schema.Array(Permission), {
     default: () => [],
   }),
+  workspace_ids: Schema.optionalWith(Schema.Array(WorkspaceId), {
+    as: 'Option',
+    nullable: true,
+  }),
 })
 export type InitializeSessionPayload = typeof InitializeSessionPayload.Type
 

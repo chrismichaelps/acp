@@ -139,6 +139,7 @@ const initializeSession = respond('POST /v1/session/initialize')(
       worker_id: worker.id,
       created_at: now,
       permissions: payload.permissions,
+      workspace_ids: payload.workspace_ids,
     })
     return yield* ok(200)(InitializeSessionResponse, {
       session_id: sessionId,

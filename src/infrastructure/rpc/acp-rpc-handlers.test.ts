@@ -1,8 +1,13 @@
 /** @Acp.Infra.Rpc.Handlers.Test — native RPC domain handlers */
-import { Effect, Either } from 'effect'
+import { Effect, Either, Layer, Option } from 'effect'
 import { describe, expect, it } from 'vitest'
+import { AppLive } from '../../app/index.js'
+import { IdClockLive } from '../../app/server/identity.js'
+import { SessionService } from '../../domain/sessions/index.js'
 import type { WorkerId } from '../../protocol/schema/index.js'
+import { InitializeSessionPayload } from '../http/index.js'
 import { AcpRpcGroup, AcpRpcs } from './acp-rpc-contract.js'
+import { AcpRpcSessionWorkerWorkspaceHandlersLive } from './acp-rpc-handlers.js'
 import { AcpRpcActor } from './rpc-auth.js'
 import {
   Runtime,
@@ -11,6 +16,11 @@ import {
   decodePayload,
   rpcOptions,
 } from './acp-rpc-test-support.js'
+
+const RuntimeWithApp = Layer.provideMerge(
+  AcpRpcSessionWorkerWorkspaceHandlersLive,
+  Layer.mergeAll(AppLive, IdClockLive),
+)
 
 describe('AcpRpcSessionWorkerWorkspaceHandlersLive', () => {
   it('initializes a session and serves scoped worker/workspace reads', async () => {
@@ -57,6 +67,33 @@ describe('AcpRpcSessionWorkerWorkspaceHandlersLive', () => {
     if (Either.isLeft(result)) {
       expect(result.left.error.code).toBe('forbidden')
     }
+  })
+
+  it('persists workspace bindings from session initialization', async () => {
+    const program = Effect.gen(function* () {
+      const initialize = yield* AcpRpcGroup.accessHandler('session.initialize')
+      const sessions = yield* SessionService
+      const payload = yield* decodePayload(InitializeSessionPayload, {
+        worker: {
+          id: 'agent_bound',
+          name: 'Bound Agent',
+          kind: 'agent',
+        },
+        permissions: ['workspace:read'],
+        workspace_ids: ['workspace_rpc'],
+      })
+
+      const session = yield* initialize(payload, rpcOptions())
+      return yield* sessions.get(session.session_id)
+    })
+
+    const stored = await Effect.runPromise(
+      Effect.provide(program, RuntimeWithApp),
+    )
+
+    expect(Option.getOrThrow(Option.getOrThrow(stored).workspace_ids)).toEqual([
+      'workspace_rpc',
+    ])
   })
 
   it('runs workspace and work command handlers directly', async () => {
