@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · adr-0009-workspace-scoped-sessions slice · accepted
+  [[ADR-0009-workspace-scoped-sessions]], deciding that hosted ACP sessions gain
+  optional workspace bindings while permission scopes remain action-oriented;
+  implementation is explicitly staged after the ADR · validation: full local gate
+  passed (check:env, format, lint, typecheck, file-size, 634 tests; 14 skipped)
+  · risk LOW
+
 - 2026-07-04 · postgres-sweeper-leader-election slice · added
   [[sweeper-leadership]] and wrapped [[sweeper]] daemon ticks in
   in-process/Postgres-selected leadership so replicated Postgres hosts take a
