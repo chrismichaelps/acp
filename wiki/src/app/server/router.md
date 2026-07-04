@@ -123,21 +123,24 @@ defaults missing worker status to `online`, mints the session id through
 [[id-clock]] `secureToken` rather than the timestamp/counter id path, and
 preserves `permissions` as the host's bearer-scope extension.
 
-`createArtifact` and `updateArtifact` decode the shared artifact payload schemas,
-including optional external `uri`, and delegate URI/content ownership to
-[[artifact-service]]. `updateArtifact` returns the updated metadata at `200` and
-lets the service emit `artifact.updated`. `deleteArtifact` delegates to
-[[artifact-service]] `remove`, returns the deleted metadata at `200`, and lets the
-service emit `artifact.deleted`. A missing artifact maps through the shared domain
-error path to `404`.
+`createArtifact` and `createCheckpoint` authorize both the action scope and the
+payload `workspace_id` before delegating, so a workspace-bound bearer session
+cannot create resume evidence outside its tenant. `createArtifact` and
+`updateArtifact` decode the shared artifact payload schemas, including optional
+external `uri`, and delegate URI/content ownership to [[artifact-service]].
+`updateArtifact` returns the updated metadata at `200` and lets the service emit
+`artifact.updated`. `deleteArtifact` delegates to [[artifact-service]] `remove`,
+returns the deleted metadata at `200`, and lets the service emit
+`artifact.deleted`. A missing artifact maps through the shared domain error path
+to `404`.
 
 Backed mutations and sensitive reads require their matching session scope when a
-bearer token is present: worker reads, event replay/streaming, lease listing,
-work update/event publication, lease renew/release/revoke, artifact update/delete, and review
-approve/reject/request-changes/cancel each call [[route-support]] `authorize`
-with the specific action scope. Missing tokens still follow the local-host
-`worker_system` fallback unless
-`ACP_REQUIRE_AUTH=true`.
+bearer token is present. Routes with an explicit workspace in the path, query, or
+body use [[route-support]] `authorizeWorkspace`, including work, lease, memory,
+event, workspace aggregate, artifact creation, and checkpoint creation routes.
+Routes whose workspace is stored behind a resource id are moving to the same
+derived workspace check in staged slices. Missing tokens still follow the
+local-host `worker_system` fallback unless `ACP_REQUIRE_AUTH=true`.
 
 Every inline handler is wrapped with [[route-support]] `respond` using a stable
 `METHOD /template/:param` route label. Request lifecycle logs therefore carry
@@ -177,9 +180,9 @@ composition behind a single router value. Deleting it scatters HTTP ceremony and
   local-host mode), or `401 unauthorized` when `requireAuth` is true; a token with no
   matching session, or a session lacking the required scope → `401 unauthorized`;
   otherwise the session's worker id. Scoped routes pass their spec §8 scope
-  (`createWork`→`work:create`, `listWorkspaces`→`workspace:read`, …); the
-  unlisted mutations (`PATCH state`, `events`, `release`, review decisions) call
-  `authorize()` with no scope (attribute-only). _Rationale:_ attributes mutations
+  (`createWork`→`work:create`, `listWorkspaces`→`workspace:read`, …), and
+  workspace-targeted routes use `authorizeWorkspace` when the route already
+  carries or derives a concrete workspace id. _Rationale:_ attributes mutations
   to the real worker and enforces declared scopes while keeping the local host
   usable without a credential store; `requireAuth` is the reversible tightening
   for a hardened deployment. _Rejected:_ inventing a body field not in the wire

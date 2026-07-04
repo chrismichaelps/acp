@@ -69,7 +69,7 @@ import type {
 import { IdClock } from './identity.js'
 import {
   authorize,
-  authorizeWorkspace,
+  authorizeWorkspace as authorizeWs,
   ok,
   pathParam,
   respond,
@@ -163,7 +163,7 @@ const createWork = respond('POST /v1/work')(
     const payload = yield* HttpServerRequest.schemaBodyJson(CreateWorkPayload)
     const id = (yield* idClock.nextId('work')) as WorkId
     const now = yield* idClock.now
-    const actor = yield* authorizeWorkspace('work:create', payload.workspace_id)
+    const actor = yield* authorizeWs('work:create', payload.workspace_id)
     const work = yield* service.create({
       id,
       payload,
@@ -240,7 +240,7 @@ const requestLease = respond('POST /v1/leases')(
     const payload = yield* HttpServerRequest.schemaBodyJson(RequestLeasePayload)
     const id = (yield* idClock.nextId('lease')) as LeaseId
     const now = yield* idClock.now
-    yield* authorizeWorkspace('lease:create', payload.workspace_id)
+    yield* authorizeWs('lease:create', payload.workspace_id)
     const lease = yield* service.request({ id, payload, now })
     return yield* ok(201)(Lease, lease)
   }),
@@ -250,7 +250,7 @@ const listLeases = respond('GET /v1/leases')(
   Effect.gen(function* () {
     const service = yield* LeaseService
     const params = yield* HttpServerRequest.schemaSearchParams(LeaseListParams)
-    yield* authorizeWorkspace('workspace:read', params.workspace_id)
+    yield* authorizeWs('workspace:read', params.workspace_id)
     const leases = yield* service.list(params.workspace_id)
     return yield* ok(200)(Schema.Array(Lease), leases)
   }),
@@ -302,7 +302,7 @@ const createArtifact = respond('POST /v1/artifacts')(
     )
     const id = (yield* idClock.nextId('artifact')) as ArtifactId
     const now = yield* idClock.now
-    const actor = yield* authorize('artifact:create')
+    const actor = yield* authorizeWs('artifact:create', payload.workspace_id)
     const artifact = yield* service.create({
       id,
       payload,
@@ -349,7 +349,7 @@ const createCheckpoint = respond('POST /v1/checkpoints')(
     )
     const id = (yield* idClock.nextId('checkpoint')) as CheckpointId
     const now = yield* idClock.now
-    const actor = yield* authorize('checkpoint:create')
+    const actor = yield* authorizeWs('checkpoint:create', payload.workspace_id)
     const checkpoint = yield* service.create({
       id,
       payload,

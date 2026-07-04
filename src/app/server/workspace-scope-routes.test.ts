@@ -31,11 +31,12 @@ const post = (path: string, body: unknown, token?: string) =>
 const initSession = async (
   handler: (req: Request) => Promise<Response>,
   workspaceIds: readonly string[],
+  permissions: readonly string[] = ['work:create'],
 ) => {
   const res = await handler(
     post('/v1/session/initialize', {
       worker,
-      permissions: ['work:create'],
+      permissions,
       workspace_ids: workspaceIds,
     }),
   )
@@ -65,6 +66,60 @@ describe('HTTP workspace-bound sessions', () => {
     const handler = makeHandler()
     const token = await initSession(handler, ['workspace_2'])
     const res = await handler(createWork(token, 'workspace_1'))
+
+    expect(res.status).toBe(403)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
+      'forbidden',
+    )
+  })
+
+  it('rejects artifact creation outside the session workspace binding', async () => {
+    const handler = makeHandler()
+    const token = await initSession(
+      handler,
+      ['workspace_2'],
+      ['artifact:create'],
+    )
+    const res = await handler(
+      post(
+        '/v1/artifacts',
+        {
+          workspace_id: 'workspace_1',
+          work_id: 'work_1',
+          kind: 'markdown',
+          content: 'Outside the bound workspace',
+        },
+        token,
+      ),
+    )
+
+    expect(res.status).toBe(403)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
+      'forbidden',
+    )
+  })
+
+  it('rejects checkpoint creation outside the session workspace binding', async () => {
+    const handler = makeHandler()
+    const token = await initSession(
+      handler,
+      ['workspace_2'],
+      ['checkpoint:create'],
+    )
+    const res = await handler(
+      post(
+        '/v1/checkpoints',
+        {
+          workspace_id: 'workspace_1',
+          work_id: 'work_1',
+          summary: 'Outside the bound workspace',
+          completed_steps: [],
+          remaining_steps: ['stay scoped'],
+          modified_resources: [],
+        },
+        token,
+      ),
+    )
 
     expect(res.status).toBe(403)
     expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
