@@ -2,6 +2,21 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · cli-dogfood-multi-agent slice · proved the entire `acp` CLI
+  end-to-end with four racing agent identities (planner, two workers, reviewer)
+  across the full v0.1 loop — session bootstrap, workspace/work, claim race
+  (one winner + one `claim_conflict`), lease race (one winner + one
+  `lease_conflict`), renew/read-back, checkpoint/memory/artifact handoff, review
+  gate with a changes-requested round trip, lease release, terminal completion,
+  and event replay. Two independent proofs: a CI-gated in-process test
+  (`src/app/cli/cli-dogfood-multi-agent.test.ts`, real `parseArgs` +
+  `runCliRequest` over an ephemeral socket) and a runnable lane
+  (`npm run dogfood:cli`) that self-boots the compiled server and spawns the real
+  `dist/app/cli/main.js` binary per command. CLI has no event-forge verb by
+  design, so only domain-emitted events are asserted · validation: full gate
+  passed (lint, format, typecheck, file-size, env, 685 tests; 14 skipped) plus a
+  green `npm run dogfood:cli` real-binary run (25 events replayed) · risk LOW
+
 - 2026-07-04 · hosted-codex-dogfood-sessions slice · added
   `ACP_DOGFOOD_WORKSPACE_ID` so Codex smoke and multi-agent dogfood runners can
   bind every session to a provisioned workspace and run against hosts with
