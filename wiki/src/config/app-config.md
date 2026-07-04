@@ -38,6 +38,7 @@ export interface AppConfig {
   readonly sessionTtl: Duration.Duration
   readonly sweepInterval: Duration.Duration
   readonly requireAuth: boolean
+  readonly requireWorkspaceBindings: boolean
 }
 export class AppConfigTag extends Context.Tag('AppConfig')<
   AppConfigTag,
@@ -54,7 +55,7 @@ Each field is a `Config.*` with `Config.withDefault`:
 - `ACP_LOG_LEVEL` literal → 'info' ([[app-logging]] maps it to Effect
   `LogLevel`)
 - `ACP_STORAGE_ADAPTER` literal (`memory` | `sqlite` | `postgres`) → profile default
-- `ACP_EVENT_BROKER` literal (`in-process` | `pg-notify`) → 'in-process'
+- `ACP_EVENT_BROKER` literal (`in-process` | `pg-notify`) → profile default
 - `ACP_SQLITE_PATH` string → `acp.sqlite`
 - `ACP_DATABASE_URL` optional string → none
 - `ACP_DEFAULT_LEASE_TTL` duration → 15 minutes
@@ -65,6 +66,15 @@ Each field is a `Config.*` with `Config.withDefault`:
 - `ACP_SWEEP_INTERVAL` duration → 60 seconds ([[sweeper]] poll cadence)
 - `ACP_REQUIRE_AUTH` boolean → false (when true, [[acp-router]] `authorize` rejects
   _unauthenticated_ mutations with `401` instead of degrading to `worker_system`)
+- `ACP_REQUIRE_WORKSPACE_BINDINGS` boolean → profile default (when true,
+  `session.initialize` must include at least one `workspace_ids` entry before
+  the host persists a bearer session)
+
+`ACP_PROFILE` is a typed preset over storage, event fan-out, auth, and workspace
+binding policy. `local` keeps memory storage, in-process events, auth off, and
+host-wide sessions. `single-node` uses SQLite and auth while preserving host-wide
+sessions for isolated self-hosting. `hosted` and `self-host-ha` select Postgres,
+pg-notify, auth, and workspace-bound sessions.
 
 The repository root `.env.example` is the drift-checked runtime manifest. It
 mirrors these host variables, names the client-only `ACP_BASE_URL` /

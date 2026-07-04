@@ -68,6 +68,7 @@ import {
   authorizeWorkspace as authorizeWs,
   ok,
   pathParam,
+  requireSessionWorkspaceBinding,
   respond,
 } from './route-support.js'
 import * as target from './resource-workspace-auth.js'
@@ -131,6 +132,7 @@ const initializeSession = respond('POST /v1/session/initialize')(
         }),
       )
     }
+    yield* requireSessionWorkspaceBinding(payload.workspace_ids)
     const worker = yield* workers.register({
       ...payload.worker,
       capabilities: [...capabilitiesFromHandshake(payload)],

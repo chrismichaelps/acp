@@ -22,18 +22,39 @@ describe('AppConfig', () => {
     expect(cfg.eventRetentionDays).toBe(30)
     expect(cfg.maxArtifactSizeBytes).toBe(16 * 1024 * 1024)
     expect(cfg.requireAuth).toBe(false)
+    expect(cfg.requireWorkspaceBindings).toBe(false)
   })
 
   it('applies the single-node profile preset (sqlite storage, auth on)', () => {
     const cfg = run([['ACP_PROFILE', 'single-node']])
     expect(cfg.storageAdapter).toBe('sqlite')
+    expect(cfg.eventBroker).toBe('in-process')
     expect(cfg.requireAuth).toBe(true)
+    expect(cfg.requireWorkspaceBindings).toBe(false)
   })
 
   it('applies the local profile preset (memory storage, no auth)', () => {
     const cfg = run([['ACP_PROFILE', 'local']])
     expect(cfg.storageAdapter).toBe('memory')
+    expect(cfg.eventBroker).toBe('in-process')
     expect(cfg.requireAuth).toBe(false)
+    expect(cfg.requireWorkspaceBindings).toBe(false)
+  })
+
+  it('applies hosted profile presets for multi-tenant deployments', () => {
+    const cfg = run([['ACP_PROFILE', 'hosted']])
+    expect(cfg.storageAdapter).toBe('postgres')
+    expect(cfg.eventBroker).toBe('pg-notify')
+    expect(cfg.requireAuth).toBe(true)
+    expect(cfg.requireWorkspaceBindings).toBe(true)
+  })
+
+  it('applies self-host-ha profile presets for replicated deployments', () => {
+    const cfg = run([['ACP_PROFILE', 'self-host-ha']])
+    expect(cfg.storageAdapter).toBe('postgres')
+    expect(cfg.eventBroker).toBe('pg-notify')
+    expect(cfg.requireAuth).toBe(true)
+    expect(cfg.requireWorkspaceBindings).toBe(true)
   })
 
   it('lets explicit variables override the profile preset', () => {
@@ -41,13 +62,15 @@ describe('AppConfig', () => {
       ['ACP_PROFILE', 'single-node'],
       ['ACP_STORAGE_ADAPTER', 'memory'],
       ['ACP_REQUIRE_AUTH', 'false'],
+      ['ACP_REQUIRE_WORKSPACE_BINDINGS', 'true'],
     ])
     expect(cfg.storageAdapter).toBe('memory')
     expect(cfg.requireAuth).toBe(false)
+    expect(cfg.requireWorkspaceBindings).toBe(true)
   })
 
   it('fails fast on an unsupported profile', () => {
-    expect(() => run([['ACP_PROFILE', 'hosted']])).toThrow()
+    expect(() => run([['ACP_PROFILE', 'staging']])).toThrow()
   })
 
   it('reads overrides from the environment', () => {
@@ -59,6 +82,7 @@ describe('AppConfig', () => {
       ['ACP_SQLITE_PATH', '/tmp/acp.sqlite'],
       ['ACP_MAX_ARTIFACT_SIZE_MB', '4'],
       ['ACP_REQUIRE_AUTH', 'true'],
+      ['ACP_REQUIRE_WORKSPACE_BINDINGS', 'true'],
     ])
     expect(cfg.port).toBe(8080)
     expect(cfg.logLevel).toBe('debug')
@@ -67,5 +91,6 @@ describe('AppConfig', () => {
     expect(cfg.sqlitePath).toBe('/tmp/acp.sqlite')
     expect(cfg.maxArtifactSizeBytes).toBe(4 * 1024 * 1024)
     expect(cfg.requireAuth).toBe(true)
+    expect(cfg.requireWorkspaceBindings).toBe(true)
   })
 })

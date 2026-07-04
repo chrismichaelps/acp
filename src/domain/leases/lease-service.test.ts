@@ -33,6 +33,7 @@ const TestConfigLive = Layer.succeed(AppConfigTag, {
   sessionTtl: Duration.hours(1),
   sweepInterval: Duration.seconds(60),
   requireAuth: false,
+  requireWorkspaceBindings: false,
 })
 
 const StorageAndEventsLive = Layer.provideMerge(

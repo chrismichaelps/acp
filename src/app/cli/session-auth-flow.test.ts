@@ -24,6 +24,7 @@ const requireAuthConfig = Layer.succeed(AppConfigTag, {
   sessionTtl: Duration.hours(1),
   sweepInterval: Duration.seconds(60),
   requireAuth: true,
+  requireWorkspaceBindings: false,
 })
 
 const right = (argv: readonly string[]): CliRequest => {

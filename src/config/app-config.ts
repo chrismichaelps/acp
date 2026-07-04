@@ -17,6 +17,7 @@ export interface AppConfig {
   readonly sessionTtl: Duration.Duration
   readonly sweepInterval: Duration.Duration
   readonly requireAuth: boolean
+  readonly requireWorkspaceBindings: boolean
 }
 
 export const appLogLevelConfig: Config.Config<AppLogLevel> = Config.literal(
@@ -31,15 +32,38 @@ export class AppConfigTag extends Context.Tag('AppConfig')<
   AppConfig
 >() {}
 
+type AppProfile = 'local' | 'single-node' | 'hosted' | 'self-host-ha'
+
 // A deployment profile (ACP_PROFILE) is a one-variable preset over the
 // individual knobs — see [[ADR-0008-deployment-storage-topology]]. Explicit
-// ACP_* variables always override the profile's defaults. `hosted` and
-// `self-host-ha` arrive with the Postgres storage adapter; until then only
-// `local` and `single-node` are valid, and any other value fails fast at boot.
-const profileDefaults = (profile: Option.Option<'local' | 'single-node'>) =>
-  Option.getOrNull(profile) === 'single-node'
-    ? { storageAdapter: 'sqlite' as const, requireAuth: true }
-    : { storageAdapter: 'memory' as const, requireAuth: false }
+// ACP_* variables still override profile defaults for self-hosting, but hosted
+// profile defaults keep auth and workspace-bound sessions on.
+const profileDefaults = (profile: Option.Option<AppProfile>) => {
+  switch (Option.getOrElse(profile, () => 'local' as const)) {
+    case 'single-node':
+      return {
+        storageAdapter: 'sqlite' as const,
+        eventBroker: 'in-process' as const,
+        requireAuth: true,
+        requireWorkspaceBindings: false,
+      }
+    case 'hosted':
+    case 'self-host-ha':
+      return {
+        storageAdapter: 'postgres' as const,
+        eventBroker: 'pg-notify' as const,
+        requireAuth: true,
+        requireWorkspaceBindings: true,
+      }
+    case 'local':
+      return {
+        storageAdapter: 'memory' as const,
+        eventBroker: 'in-process' as const,
+        requireAuth: false,
+        requireWorkspaceBindings: false,
+      }
+  }
+}
 
 const load = Effect.gen(function* () {
   const port = yield* Config.integer('ACP_PORT').pipe(Config.withDefault(4317))
@@ -47,6 +71,8 @@ const load = Effect.gen(function* () {
   const profile = yield* Config.literal(
     'local',
     'single-node',
+    'hosted',
+    'self-host-ha',
   )('ACP_PROFILE').pipe(Config.option)
   const defaults = profileDefaults(profile)
   const storageAdapter = yield* Config.literal(
@@ -57,7 +83,7 @@ const load = Effect.gen(function* () {
   const eventBroker = yield* Config.literal(
     'in-process',
     'pg-notify',
-  )('ACP_EVENT_BROKER').pipe(Config.withDefault('in-process' as const))
+  )('ACP_EVENT_BROKER').pipe(Config.withDefault(defaults.eventBroker))
   const sqlitePath = yield* Config.string('ACP_SQLITE_PATH').pipe(
     Config.withDefault('acp.sqlite'),
   )
@@ -85,6 +111,9 @@ const load = Effect.gen(function* () {
   const requireAuth = yield* Config.boolean('ACP_REQUIRE_AUTH').pipe(
     Config.withDefault(defaults.requireAuth),
   )
+  const requireWorkspaceBindings = yield* Config.boolean(
+    'ACP_REQUIRE_WORKSPACE_BINDINGS',
+  ).pipe(Config.withDefault(defaults.requireWorkspaceBindings))
   return {
     port,
     logLevel,
@@ -99,6 +128,7 @@ const load = Effect.gen(function* () {
     sessionTtl,
     sweepInterval,
     requireAuth,
+    requireWorkspaceBindings,
   }
 })
 

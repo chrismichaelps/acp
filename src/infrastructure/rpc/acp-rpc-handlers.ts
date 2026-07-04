@@ -6,6 +6,7 @@ import { SessionService } from '../../domain/sessions/index.js'
 import { WorkUnitService } from '../../domain/work-units/index.js'
 import { WorkerService } from '../../domain/workers/index.js'
 import { WorkspaceService } from '../../domain/workspaces/index.js'
+import { AppConfigTag } from '../../config/app-config.js'
 import {
   NotFoundError,
   ValidationError,
@@ -41,6 +42,34 @@ const hostCapabilities = {
   supports_memory: true,
   supports_sse: true,
 } as const
+
+const hasWorkspaceBinding = (
+  workspaceIds: InitializeSessionPayload['workspace_ids'],
+) =>
+  Option.match(workspaceIds, {
+    onNone: () => false,
+    onSome: (ids) => ids.length > 0,
+  })
+
+const requireSessionWorkspaceBinding = (
+  workspaceIds: InitializeSessionPayload['workspace_ids'],
+) =>
+  Effect.gen(function* () {
+    const config = yield* AppConfigTag
+    if (!config.requireWorkspaceBindings || hasWorkspaceBinding(workspaceIds)) {
+      return
+    }
+
+    return yield* Effect.fail(
+      toRpcError(
+        new ValidationError({
+          issues: [
+            'workspace_ids must include at least one workspace when workspace-bound sessions are required',
+          ],
+        }),
+      ),
+    )
+  })
 
 const capabilityFlags: readonly (readonly [
   keyof InitializeSessionPayload['capabilities'],
@@ -80,6 +109,7 @@ const sessionInitializeHandler = AcpRpcGroup.toLayerHandler(
           ),
         )
       }
+      yield* requireSessionWorkspaceBinding(payload.workspace_ids)
 
       const workers = yield* WorkerService
       const sessions = yield* SessionService

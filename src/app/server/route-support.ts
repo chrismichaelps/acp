@@ -67,6 +67,30 @@ const hasWorkspace = (
     onSome: (workspaceIds) => workspaceIds.includes(workspaceId),
   })
 
+const hasWorkspaceBinding = (workspaceIds: Session['workspace_ids']) =>
+  Option.match(workspaceIds, {
+    onNone: () => false,
+    onSome: (ids) => ids.length > 0,
+  })
+
+export const requireSessionWorkspaceBinding = (
+  workspaceIds: Session['workspace_ids'],
+) =>
+  Effect.gen(function* () {
+    const config = yield* AppConfigTag
+    if (!config.requireWorkspaceBindings || hasWorkspaceBinding(workspaceIds)) {
+      return
+    }
+
+    return yield* Effect.fail(
+      new ValidationError({
+        issues: [
+          'workspace_ids must include at least one workspace when workspace-bound sessions are required',
+        ],
+      }),
+    )
+  })
+
 export const authorizeActor = (scope?: Permission) =>
   Effect.gen(function* () {
     const token = yield* bearerToken
