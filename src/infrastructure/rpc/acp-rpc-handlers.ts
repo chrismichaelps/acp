@@ -29,7 +29,7 @@ import { AcpRpcArtifactHandlersLive } from './acp-rpc-artifact-handlers.js'
 import { AcpRpcCheckpointHandlersLive } from './acp-rpc-checkpoint-handlers.js'
 import { AcpRpcMemoryEventHandlersLive } from './acp-rpc-memory-event-handlers.js'
 import { AcpRpcReviewHandlersLive } from './acp-rpc-review-handlers.js'
-import { rpcActor } from './rpc-auth.js'
+import { rpcActor, rpcWorkspaceActor } from './rpc-auth.js'
 import { toRpcError } from './rpc-error.js'
 
 const host = { name: 'ACP Local', kind: 'local' } as const
@@ -173,7 +173,11 @@ const workspaceUpdateHandler = AcpRpcGroup.toLayerHandler(
   'workspace.update',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* rpcActor(options.headers, 'workspace:write')
+      const actor = yield* rpcWorkspaceActor(
+        options.headers,
+        'workspace:write',
+        payload.workspace_id,
+      )
       const workspaces = yield* WorkspaceService
       const idClock = yield* IdClock
       const now = yield* idClock.now
@@ -191,7 +195,11 @@ const workspaceArchiveHandler = AcpRpcGroup.toLayerHandler(
   'workspace.archive',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* rpcActor(options.headers, 'workspace:write')
+      const actor = yield* rpcWorkspaceActor(
+        options.headers,
+        'workspace:write',
+        payload.workspace_id,
+      )
       const workspaces = yield* WorkspaceService
       const idClock = yield* IdClock
       const now = yield* idClock.now
@@ -205,7 +213,11 @@ const workCreateHandler = AcpRpcGroup.toLayerHandler(
   'work.create',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* rpcActor(options.headers, 'work:create')
+      const actor = yield* rpcWorkspaceActor(
+        options.headers,
+        'work:create',
+        payload.workspace_id,
+      )
       const service = yield* WorkUnitService
       const idClock = yield* IdClock
       const id = (yield* idClock.nextId('work')) as WorkId
@@ -220,7 +232,11 @@ const workListForWorkspaceHandler = AcpRpcGroup.toLayerHandler(
   'work.list_for_workspace',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* rpcActor(options.headers, 'workspace:read')
+      yield* rpcWorkspaceActor(
+        options.headers,
+        'workspace:read',
+        payload.workspace_id,
+      )
       const service = yield* WorkUnitService
       return yield* service
         .listForWorkspace(payload.workspace_id)
@@ -317,7 +333,11 @@ const leaseRequestHandler = AcpRpcGroup.toLayerHandler(
   'lease.request',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* rpcActor(options.headers, 'lease:create')
+      yield* rpcWorkspaceActor(
+        options.headers,
+        'lease:create',
+        payload.workspace_id,
+      )
       const service = yield* LeaseService
       const idClock = yield* IdClock
       const id = (yield* idClock.nextId('lease')) as LeaseId
@@ -332,7 +352,11 @@ const leaseListHandler = AcpRpcGroup.toLayerHandler(
   'lease.list',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* rpcActor(options.headers, 'workspace:read')
+      yield* rpcWorkspaceActor(
+        options.headers,
+        'workspace:read',
+        payload.workspace_id,
+      )
       const service = yield* LeaseService
       return yield* service
         .list(payload.workspace_id)

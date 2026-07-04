@@ -26,14 +26,37 @@ preserves the local no-token `worker_system` fallback unless
 ## Interface
 
 ```typescript
+export interface AuthorizedRpcActor {
+  readonly worker_id: WorkerId
+  readonly permissions: readonly Permission[]
+  readonly workspace_ids: Session['workspace_ids']
+}
+
+export const authorizeRpcActor: (
+  headers: Headers,
+  scope?: Permission,
+) => Effect<AuthorizedRpcActor, ProtocolError, AppConfigTag | SessionService>
+
 export const authorizeRpc: (
   headers: Headers,
   scope?: Permission,
 ) => Effect<WorkerId, ProtocolError, AppConfigTag | SessionService>
 
+export const authorizeRpcWorkspace: (
+  headers: Headers,
+  scope: Permission,
+  workspaceId: WorkspaceId,
+) => Effect<WorkerId, ProtocolError, AppConfigTag | SessionService>
+
 export const rpcActor: (
   headers: Headers,
   scope?: Permission,
+) => Effect<WorkerId, ProtocolError, AppConfigTag | SessionService>
+
+export const rpcWorkspaceActor: (
+  headers: Headers,
+  scope: Permission,
+  workspaceId: WorkspaceId,
 ) => Effect<WorkerId, ProtocolError, AppConfigTag | SessionService>
 
 export const AcpRpcActor: Context.Tag<WorkerId>
@@ -45,10 +68,13 @@ Read `Authorization: Bearer <session_id>` from the RPC handler options headers.
 When no token is present, read [[app-config]] and either fail with
 `unauthorized` in required-auth mode or return `worker_system` in local mode.
 When a token is present, load the session, fail `unauthorized` if it is missing,
-and enforce the requested scope against the session permission list. A valid
-session that lacks the requested scope fails `forbidden` (403, spec §15) —
-mirroring [[route-support]]'s `authorize`: credential failures are 401, scope
-denials are 403.
+and enforce the requested scope against the session permission list.
+`authorizeRpcActor` preserves the resolved worker id, permission list, and
+ADR-0009 workspace binding so `authorizeRpcWorkspace` can reject a valid session
+whose `workspace_ids` do not contain the requested workspace. A valid session
+that lacks either the requested scope or workspace binding fails `forbidden`
+(403, spec §15), mirroring [[route-support]]: credential failures are 401,
+authorization denials are 403.
 
 `rpcActor` first checks whether `AcpRpcActor` exists in the current Effect
 context. When native RPC is executed through [[rpc-auth-middleware]], that actor
@@ -56,6 +82,11 @@ has already passed the contract-level scope check, so handlers can use it
 without reparsing headers. When a direct `accessHandler` test runs without
 middleware, `rpcActor` delegates to `authorizeRpc`, preserving the old test and
 fallback behavior.
+
+`rpcWorkspaceActor` follows the same middleware-aware shape. If an `AcpRpcActor`
+is already present, the handler treats it as a host-level actor supplied by the
+middleware layer. Otherwise it delegates to `authorizeRpcWorkspace` and enforces
+both the action scope and concrete workspace binding from the bearer session.
 
 ## Negative Logic (Prohibited Paths)
 
