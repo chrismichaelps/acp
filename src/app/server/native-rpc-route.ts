@@ -13,6 +13,8 @@ export const nativeRpcPath = acpNativeRpcPath
 
 const legacyV1Routes = HttpLayerRouter.add('*', '/v1/*', acpRouter)
 const legacyJsonRpcRoute = HttpLayerRouter.add('*', '/rpc', acpRouter)
+const livenessRoute = HttpLayerRouter.add('GET', '/health', acpRouter)
+const readinessRoute = HttpLayerRouter.add('GET', '/ready', acpRouter)
 
 export const AcpNativeRpcRouteLive = RpcServer.layerHttpRouter({
   group: AcpRpcGroup,
@@ -24,6 +26,8 @@ export const AcpNativeRpcRouteLive = RpcServer.layerHttpRouter({
 )
 
 export const AcpHttpRoutesLive = Layer.mergeAll(
+  livenessRoute,
+  readinessRoute,
   legacyV1Routes,
   legacyJsonRpcRoute,
   AcpNativeRpcRouteLive,

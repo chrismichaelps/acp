@@ -34,6 +34,8 @@ const onLiveServer = <A>(use: (baseUrl: string) => Promise<A>) =>
 describe('live boot', () => {
   it('binds a real socket and round-trips initialize → scoped createWork', async () => {
     const result = await onLiveServer(async (baseUrl) => {
+      const healthRes = await fetch(`${baseUrl}/health`)
+      const readyRes = await fetch(`${baseUrl}/ready`)
       const initRes = await fetch(`${baseUrl}/v1/session/initialize`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -61,6 +63,8 @@ describe('live boot', () => {
       }
 
       return {
+        healthStatus: healthRes.status,
+        readyStatus: readyRes.status,
         initStatus: initRes.status,
         sessionId: init.session_id,
         protocolVersion: init.protocol_version,
@@ -69,6 +73,8 @@ describe('live boot', () => {
       }
     })
 
+    expect(result.healthStatus).toBe(200)
+    expect(result.readyStatus).toBe(200)
     expect(result.initStatus).toBe(200)
     expect(result.sessionId).toMatch(/^session_[0-9a-f]{64}$/)
     expect(result.protocolVersion).toBe('0.1')
