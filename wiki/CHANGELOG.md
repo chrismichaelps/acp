@@ -2,6 +2,16 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · docker-dogfood-readme slice · documented that the production
+  Docker image contains the compiled `acp` CLI and can smoke-test itself from
+  inside the running container over `ACP_BASE_URL=http://127.0.0.1:4317`. The
+  update is backed by a real Docker-hosted ACP workflow: built image, green
+  `/health` and `/ready`, then built CLI sessions for planner/worker/reviewer
+  created a workspace, work item, claim, `running` transition, checkpoint,
+  memory, markdown artifact, review request, review approval, completion, and
+  event replay with 12 events · validation: Docker build passed and container
+  dogfood completed for `workspace_mr6rga48d` / `work_mr6rgakge` · risk LOW
+
 - 2026-07-04 · cli-command-dispatch-refactor slice · replaced the central CLI
   command spread object with a `buildCommandRegistry` composition step that
   assembles feature command tables into a `ReadonlyMap`, rejects duplicate keys
