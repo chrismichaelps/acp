@@ -38,6 +38,15 @@ export interface StorageApi {
     workspaceId: string,
     afterSeq: number,
   ) => Effect.Effect<Chunk.Chunk<Event>, StorageError>
+  /**
+   * Delete events whose `timestamp` is strictly before `cutoff` (an ISO-8601
+   * UTC instant), returning how many were removed. The newest event per
+   * workspace (highest `seq`) is always retained so the append `seq`
+   * high-water-mark never resets — see [[ADR-0008-deployment-storage-topology]].
+   */
+  readonly pruneEventsBefore: (
+    cutoff: string,
+  ) => Effect.Effect<number, StorageError>
   readonly appendMemory: (
     workspaceId: string,
     draft: MemoryDraft,

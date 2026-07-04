@@ -1,0 +1,5 @@
+# Generated lockfile — owned by pnpm, not Prettier.
+pnpm-lock.yaml
+
+# Build output.
+dist

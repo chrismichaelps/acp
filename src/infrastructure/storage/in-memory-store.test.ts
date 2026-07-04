@@ -3,7 +3,12 @@ import { describe, it, expect } from 'vitest'
 import { Chunk, Effect, Option, Schema } from 'effect'
 import { Storage, InMemoryStorageLive } from './index.js'
 import type { EventDraft, MemoryDraft } from './index.js'
-import { Event, Memory, ReadMemoryQuery } from '../../protocol/schema/index.js'
+import {
+  Event,
+  Memory,
+  ReadMemoryQuery,
+  Timestamp,
+} from '../../protocol/schema/index.js'
 
 const run = <A, E>(program: Effect.Effect<A, E, Storage>): A =>
   Effect.runSync(Effect.provide(program, InMemoryStorageLive))
@@ -174,5 +179,68 @@ describe('InMemory storage — workspace memory', () => {
       }),
     )
     expect(keys).toEqual(['b', 'b'])
+  })
+})
+
+const draftAt = (workspace: string, timestamp: string): EventDraft => ({
+  ...draft(workspace),
+  timestamp: Schema.decodeUnknownSync(Timestamp)(timestamp),
+})
+
+describe('InMemory storage — event retention pruning', () => {
+  it('prunes events older than the cutoff, keeps the newest as seq watermark', () => {
+    const outcome = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* s.appendEvent('ws1', draftAt('ws1', '2000-01-01T00:00:00Z'))
+        yield* s.appendEvent('ws1', draftAt('ws1', '2000-06-01T00:00:00Z'))
+        yield* s.appendEvent('ws1', draftAt('ws1', '2100-01-01T00:00:00Z'))
+        const pruned = yield* s.pruneEventsBefore('2050-01-01T00:00:00Z')
+        const remaining = yield* s.readEventsAfter('ws1', 0)
+        // Next append must continue the high-water-mark, not reuse a seq.
+        const next = yield* s.appendEvent(
+          'ws1',
+          draftAt('ws1', '2100-02-01T00:00:00Z'),
+        )
+        return {
+          pruned,
+          remainingSeqs: Chunk.toReadonlyArray(remaining).map((e) => e.seq),
+          nextSeq: next.seq,
+        }
+      }),
+    )
+    expect(outcome.pruned).toBe(2)
+    expect(outcome.remainingSeqs).toEqual([3])
+    expect(outcome.nextSeq).toBe(4)
+  })
+
+  it('keeps exactly the newest event when every event is aged out', () => {
+    const remaining = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* s.appendEvent('ws1', draftAt('ws1', '2000-01-01T00:00:00Z'))
+        yield* s.appendEvent('ws1', draftAt('ws1', '2000-02-01T00:00:00Z'))
+        const pruned = yield* s.pruneEventsBefore('2050-01-01T00:00:00Z')
+        const tail = yield* s.readEventsAfter('ws1', 0)
+        return { pruned, seqs: Chunk.toReadonlyArray(tail).map((e) => e.seq) }
+      }),
+    )
+    expect(remaining.pruned).toBe(1)
+    expect(remaining.seqs).toEqual([2])
+  })
+
+  it('isolates pruning per workspace', () => {
+    const kept = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* s.appendEvent('wsA', draftAt('wsA', '2000-01-01T00:00:00Z'))
+        yield* s.appendEvent('wsA', draftAt('wsA', '2100-01-01T00:00:00Z'))
+        yield* s.appendEvent('wsB', draftAt('wsB', '2100-01-01T00:00:00Z'))
+        yield* s.pruneEventsBefore('2050-01-01T00:00:00Z')
+        const b = yield* s.readEventsAfter('wsB', 0)
+        return Chunk.size(b)
+      }),
+    )
+    expect(kept).toBe(1)
   })
 })

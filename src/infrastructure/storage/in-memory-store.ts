@@ -43,14 +43,37 @@ const make = Effect.gen(function* () {
       }),
     )
 
+  // seq is a per-workspace high-water-mark (max existing seq + 1), not a row
+  // count, so pruning old events never lowers it or reuses a seq.
+  const maxSeq = (chunk: Chunk.Chunk<Event>): number =>
+    Chunk.reduce(chunk, 0, (max, event) => (event.seq > max ? event.seq : max))
+
   const appendEvent: StorageApi['appendEvent'] = (workspaceId, draft) =>
     Ref.modify(events, (es) => {
       const chunk = Option.getOrElse(HashMap.get(es, workspaceId), () =>
         Chunk.empty<Event>(),
       )
-      const full: Event = { ...draft, seq: Chunk.size(chunk) + 1 }
+      const full: Event = { ...draft, seq: maxSeq(chunk) + 1 }
       const next = HashMap.set(es, workspaceId, Chunk.append(chunk, full))
       return [full, next]
+    })
+
+  const pruneEventsBefore: StorageApi['pruneEventsBefore'] = (cutoff) =>
+    Ref.modify(events, (es) => {
+      const cutoffMs = Date.parse(cutoff)
+      let pruned = 0
+      const next = HashMap.map(es, (chunk) => {
+        const newest = maxSeq(chunk)
+        // Keep the newest event (seq watermark) and anything not yet aged out.
+        const kept = Chunk.filter(
+          chunk,
+          (event) =>
+            event.seq >= newest || Date.parse(event.timestamp) >= cutoffMs,
+        )
+        pruned += Chunk.size(chunk) - Chunk.size(kept)
+        return kept
+      })
+      return [pruned, next]
     })
 
   const readEventsAfter: StorageApi['readEventsAfter'] = (
@@ -117,6 +140,7 @@ const make = Effect.gen(function* () {
     remove,
     appendEvent,
     readEventsAfter,
+    pruneEventsBefore,
     appendMemory,
     readMemory,
   } satisfies StorageApi

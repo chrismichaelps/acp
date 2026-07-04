@@ -19,6 +19,11 @@ review.*` are emitted by the v0.1 reference host when backed by persisted
   [[ADR-0005-worker-presence-scope]] keeps presence out of workspace event logs.
 - **Delivery:** persisted via the [[Storage]] seam, fanned out live via the
   [[EventStore]] service, then rendered by the [[EventStream]] seam (SSE in v0.1).
+- **Retention:** the background sweeper prunes events older than
+  `ACP_EVENT_RETENTION_DAYS` (default 30; `<= 0` disables it) so a durable backend
+  does not grow without bound. Pruning always spares each workspace's newest event,
+  keeping the `seq` high-water-mark stable; a worker whose replay cursor predates
+  the window sees history from the oldest surviving event forward.
 - **Example:** `event_123` type `work.claimed`, actor `agent_claude_code`.
 
 ## Referenced by

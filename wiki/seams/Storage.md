@@ -5,7 +5,7 @@ capacity_score: 6
 lifecycle: CRITICAL
 drift_score: 0
 drift_status: HEALTHY
-production_adapters: 2
+production_adapters: 3
 change_freq_per_quarter: 1
 tags: [seam, critical]
 aliases: [Storage, StorageLayer]
@@ -16,20 +16,22 @@ aliases: [Storage, StorageLayer]
 ## Classification
 
 CRITICAL — storage sits on a core path; every domain service depends on it, so its
-failure is system failure. Two production adapters now exist (InMemory and
-SQLite), but the seam is not BACKBONE until both are exercised through host wiring
-and change frequency justifies heavier governance.
+failure is system failure. Three production adapters now exist (InMemory, SQLite,
+and Postgres), all selected by `ACP_STORAGE_ADAPTER`. The Postgres adapter is the
+network-durable path for multi-replica hosting (ADR-0008).
 
-> Capacity remains 6, not BACKBONE yet: SQLite is verified as an adapter, but
-> application wiring still defaults to InMemory and the seam has not shown
-> sustained multi-adapter change pressure.
+> Capacity remains 6, not BACKBONE yet: three adapters share one contract, but the
+> seam has not shown sustained multi-adapter change pressure and default wiring is
+> still InMemory.
 
 ## Interface
 
 A keyed, append-aware persistence port. Pure interface (`Context.Tag`), no Effect
 construction leaked. Returns `Option` for absence, typed `StorageError` on failure.
-Operations: `put`, `get`, `list`, `remove`, and `appendEvent`/`readEventsAfter`
-for the ordered per-workspace [[Event]] log.
+Operations: `put`, `get`, `list`, `remove`, `appendEvent`/`readEventsAfter`
+for the ordered per-workspace [[Event]] log, and `pruneEventsBefore` (retention:
+delete events older than a cutoff, always sparing each workspace's newest event so
+the append `seq` high-water-mark never resets).
 
 ## Adapters
 
@@ -37,7 +39,7 @@ for the ordered per-workspace [[Event]] log.
 | -------- | ---------- | --------------------------------------------------- | ------------- | -------- |
 | InMemory | production | @root/src/infrastructure/storage/in-memory-store.ts | 2026-06-25    | CURRENT  |
 | SQLite   | production | @root/src/infrastructure/storage/sqlite-store.ts    | 2026-06-27    | VERIFIED |
-| Postgres | planned    | (via `@effect/sql-pg`; ADR-0008)                    | —             | PLANNED  |
+| Postgres | production | @root/src/infrastructure/storage/postgres-store.ts  | 2026-07-03    | VERIFIED |
 | Stub     | test       | (reuses InMemory)                                   | —             | —        |
 
 ## Health

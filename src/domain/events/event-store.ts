@@ -18,6 +18,7 @@ export interface EventStoreApi {
   readonly subscribe: (
     workspaceId: string,
   ) => Effect.Effect<Stream.Stream<Event>, never, Scope.Scope>
+  readonly pruneBefore: (cutoff: string) => Effect.Effect<number, StorageError>
 }
 
 export class EventStore extends Context.Tag('EventStore')<
@@ -39,6 +40,9 @@ const make = Effect.gen(function* () {
   const readAfter: EventStoreApi['readAfter'] = (workspaceId, afterSeq) =>
     storage.readEventsAfter(workspaceId, afterSeq)
 
+  const pruneBefore: EventStoreApi['pruneBefore'] = (cutoff) =>
+    storage.pruneEventsBefore(cutoff)
+
   const subscribe: EventStoreApi['subscribe'] = (workspaceId) =>
     Effect.map(
       broker.subscribe(),
@@ -49,6 +53,7 @@ const make = Effect.gen(function* () {
     append,
     readAfter,
     subscribe,
+    pruneBefore,
   } satisfies EventStoreApi
 })
 

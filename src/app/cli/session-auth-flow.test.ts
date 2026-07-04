@@ -1,6 +1,6 @@
 /** @Acp.App.Cli.SessionAuthFlow.Test — CLI bootstrap plus bearer forwarding */
 import { HttpApp, HttpClient, HttpClientResponse } from '@effect/platform'
-import { Duration, Effect, Either, Layer } from 'effect'
+import { Duration, Effect, Either, Layer, Option } from 'effect'
 import { describe, expect, it } from 'vitest'
 import { AppConfigTag } from '../../config/app-config.js'
 import { AppLive } from '../index.js'
@@ -15,6 +15,7 @@ const requireAuthConfig = Layer.succeed(AppConfigTag, {
   logLevel: 'info' as const,
   storageAdapter: 'memory' as const,
   sqlitePath: 'acp.sqlite',
+  databaseUrl: Option.none(),
   defaultLeaseTtl: Duration.minutes(15),
   eventRetentionDays: 30,
   maxArtifactSizeBytes: 16 * 1024 * 1024,

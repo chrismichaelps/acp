@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 
 const expectedVariables = new Set([
   'ACP_BASE_URL',
+  'ACP_DATABASE_URL',
   'ACP_DEFAULT_LEASE_TTL',
   'ACP_DOGFOOD_PR_URL',
   'ACP_DOGFOOD_RUN_ID',

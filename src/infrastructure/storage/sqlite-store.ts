@@ -179,6 +179,16 @@ const make = (path: string) =>
        WHERE workspace_id = ? AND seq > ?
        ORDER BY seq ASC`,
     )
+    // Delete aged events but never a workspace's newest row, so MAX(seq) — the
+    // append high-water-mark — is preserved even after a full-history sweep.
+    const pruneEventsStmt = db.prepare(
+      `DELETE FROM events
+       WHERE json_extract(value, '$.timestamp') < ?
+         AND seq < (
+           SELECT MAX(seq) FROM events AS newest
+           WHERE newest.workspace_id = events.workspace_id
+         )`,
+    )
     const nextMemorySeqStmt = db.prepare(
       'SELECT COALESCE(MAX(seq), 0) + 1 AS seq FROM memory WHERE workspace_id = ?',
     )
@@ -259,6 +269,11 @@ const make = (path: string) =>
           throw cause
         }
       })
+
+    const pruneEventsBefore: StorageApi['pruneEventsBefore'] = (cutoff) =>
+      storageTry('prune_events_before', () =>
+        Number(pruneEventsStmt.run(cutoff).changes),
+      )
 
     const readEventsAfter: StorageApi['readEventsAfter'] = (
       workspaceId,
@@ -353,6 +368,7 @@ const make = (path: string) =>
       remove,
       appendEvent,
       readEventsAfter,
+      pruneEventsBefore,
       appendMemory,
       readMemory,
     } satisfies StorageApi

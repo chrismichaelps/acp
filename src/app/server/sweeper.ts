@@ -1,6 +1,7 @@
 /** @Acp.App.Server.Sweeper — background TTL eviction daemon */
-import { Effect, Layer } from 'effect'
+import { DateTime, Effect, Layer } from 'effect'
 import { AppConfigTag } from '../../config/app-config.js'
+import { EventStore } from '../../domain/events/index.js'
 import { LeaseService } from '../../domain/leases/index.js'
 import { SessionService } from '../../domain/sessions/index.js'
 import type { StorageError } from '../../protocol/errors/protocol-error.js'
@@ -9,9 +10,12 @@ import { IdClock } from './identity.js'
 
 const systemActor = 'worker_system' as WorkerId
 
+const MS_PER_DAY = 86_400_000
+
 export interface SweepResult {
   readonly evictedSessions: readonly Session[]
   readonly expiredLeases: readonly Lease[]
+  readonly prunedEvents: number
 }
 
 /**
@@ -22,24 +26,39 @@ export interface SweepResult {
 export const sweepOnce: Effect.Effect<
   SweepResult,
   StorageError,
-  SessionService | LeaseService | AppConfigTag | IdClock
+  SessionService | LeaseService | EventStore | AppConfigTag | IdClock
 > = Effect.gen(function* () {
   const idClock = yield* IdClock
   const config = yield* AppConfigTag
   const sessions = yield* SessionService
   const leases = yield* LeaseService
+  const events = yield* EventStore
 
   const now = yield* idClock.now
   const evictedSessions = yield* sessions.evictExpired(now, config.sessionTtl)
   const expiredLeases = yield* leases.expireAllDue(systemActor, now)
+
+  // A retention of <= 0 days disables event pruning entirely.
+  const prunedEvents =
+    config.eventRetentionDays > 0
+      ? yield* events.pruneBefore(
+          DateTime.formatIso(
+            DateTime.unsafeMake(
+              Date.parse(now) - config.eventRetentionDays * MS_PER_DAY,
+            ),
+          ),
+        )
+      : 0
+
   yield* Effect.logDebug('sweep completed').pipe(
     Effect.annotateLogs({
       evictedSessions: evictedSessions.length,
       expiredLeases: expiredLeases.length,
+      prunedEvents,
     }),
   )
 
-  return { evictedSessions, expiredLeases }
+  return { evictedSessions, expiredLeases, prunedEvents }
 })
 
 /**
@@ -51,7 +70,7 @@ export const sweepOnce: Effect.Effect<
 export const SweeperLive: Layer.Layer<
   never,
   never,
-  SessionService | LeaseService | AppConfigTag | IdClock
+  SessionService | LeaseService | EventStore | AppConfigTag | IdClock
 > = Layer.scopedDiscard(
   Effect.gen(function* () {
     const config = yield* AppConfigTag
