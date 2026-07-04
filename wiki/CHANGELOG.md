@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · docker-cli-dogfood-runner slice · added
+  `scripts/acp-docker-cli-dogfood.mjs` and `npm run dogfood:docker-cli` so ACP
+  can repeatedly build its production Docker image, run the host container, drive
+  the compiled CLI inside that container, verify the workspace/work/review event
+  lifecycle, and tear the container down automatically · validation:
+  `npm run dogfood:docker-cli` passed with `workspace_mr6rwfvt1` /
+  `work_mr6rwgr82` and 12 replayed events · risk LOW
+
 - 2026-07-04 · spec-cli-parity slice · refreshed `specs.md` §22 from the old
   placeholder CLI (`acp init`, `workspace add`, positional lease/checkpoint
   calls) to the implemented session-first, workspace-scoped grammar, including

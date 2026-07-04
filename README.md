@@ -256,6 +256,11 @@ should create a workspace, open and claim work, move it to `running`, write a
 checkpoint or memory record, request review, approve it, complete the work, and
 replay `events list` for the workspace before promoting the image.
 
+For a repeatable version of that check, run `npm run dogfood:docker-cli`. It
+builds the Docker image, starts the host, drives the compiled CLI inside the
+container through the same lifecycle, verifies replayed event types, and stops
+the container on exit.
+
 The same image runs every deployment profile; only environment differs. See
 [`wiki/references/deployment.md`](./wiki/references/deployment.md) for the
 platform-by-platform runbook and storage-adapter guidance.
@@ -378,6 +383,9 @@ Beyond unit tests, three lanes exercise ACP against a _live_ host:
 - **`pnpm dogfood:codex:multi`** — separate planner/worker/reviewer sessions prove
   ACP can serialize a claim race, report a lease conflict, preserve handoff state,
   run a request-changes loop, and replay a monotonic history.
+- **`npm run dogfood:docker-cli`** — builds the production Docker image, runs ACP
+  as a container, and uses the compiled CLI inside that container to complete a
+  workspace/work/review lifecycle against the hosted process.
 - **`scripts/live-test/`** — the real-agent coordination harness: genuinely
   autonomous agents (planner / two workers / reviewer), each given only a role and
   the `acp` CLI, coordinate through a live SQLite-backed, auth-on host. A verifier
