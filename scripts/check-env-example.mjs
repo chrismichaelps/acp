@@ -15,6 +15,7 @@ const expectedVariables = new Set([
   'ACP_PORT',
   'ACP_PROFILE',
   'ACP_REQUIRE_AUTH',
+  'ACP_REQUIRE_WORKSPACE_BINDINGS',
   'ACP_RPC_TOKEN',
   'ACP_SESSION_TTL',
   'ACP_SQLITE_PATH',

@@ -1,8 +1,9 @@
 /** @Acp.Infra.Rpc.Handlers.Test — native RPC domain handlers */
-import { Effect, Either, Layer, Option } from 'effect'
+import { Duration, Effect, Either, Layer, Option } from 'effect'
 import { describe, expect, it } from 'vitest'
 import { AppLive } from '../../app/index.js'
 import { IdClockLive } from '../../app/server/identity.js'
+import { AppConfigTag } from '../../config/app-config.js'
 import { SessionService } from '../../domain/sessions/index.js'
 import type { WorkerId, WorkspaceId } from '../../protocol/schema/index.js'
 import { InitializeSessionPayload } from '../http/index.js'
@@ -20,6 +21,28 @@ import {
 const RuntimeWithApp = Layer.provideMerge(
   AcpRpcSessionWorkerWorkspaceHandlersLive,
   Layer.mergeAll(AppLive, IdClockLive),
+)
+
+const requireWorkspaceBindingsConfig = Layer.succeed(AppConfigTag, {
+  port: 4317,
+  logLevel: 'info' as const,
+  storageAdapter: 'postgres' as const,
+  eventBroker: 'pg-notify' as const,
+  sqlitePath: 'acp.sqlite',
+  databaseUrl: Option.some('postgres://acp.example/acp'),
+  defaultLeaseTtl: Duration.minutes(15),
+  eventRetentionDays: 30,
+  maxArtifactSizeBytes: 16 * 1024 * 1024,
+  sseHeartbeat: Duration.seconds(15),
+  sessionTtl: Duration.hours(1),
+  sweepInterval: Duration.seconds(60),
+  requireAuth: true,
+  requireWorkspaceBindings: true,
+})
+
+const RuntimeWithWorkspaceBindings = Layer.provideMerge(
+  AcpRpcSessionWorkerWorkspaceHandlersLive,
+  Layer.mergeAll(AppLive, IdClockLive, requireWorkspaceBindingsConfig),
 )
 
 describe('AcpRpcSessionWorkerWorkspaceHandlersLive', () => {
@@ -94,6 +117,41 @@ describe('AcpRpcSessionWorkerWorkspaceHandlersLive', () => {
     expect(Option.getOrThrow(Option.getOrThrow(stored).workspace_ids)).toEqual([
       'workspace_rpc',
     ])
+  })
+
+  it('requires workspace bindings during session initialization when configured', async () => {
+    const program = Effect.gen(function* () {
+      const initialize = yield* AcpRpcGroup.accessHandler('session.initialize')
+      const missing = yield* Effect.either(
+        initialize(yield* decodeInitialize(['work:create']), rpcOptions()),
+      )
+      const empty = yield* Effect.either(
+        initialize(yield* decodeInitialize(['work:create'], []), rpcOptions()),
+      )
+      const bound = yield* initialize(
+        yield* decodeInitialize(
+          ['work:create'],
+          ['workspace_bound' as WorkspaceId],
+        ),
+        rpcOptions(),
+      )
+
+      return { bound, empty, missing }
+    })
+
+    const result = await Effect.runPromise(
+      Effect.provide(program, RuntimeWithWorkspaceBindings),
+    )
+
+    expect(Either.isLeft(result.missing)).toBe(true)
+    if (Either.isLeft(result.missing)) {
+      expect(result.missing.left.error.code).toBe('invalid_request')
+    }
+    expect(Either.isLeft(result.empty)).toBe(true)
+    if (Either.isLeft(result.empty)) {
+      expect(result.empty.left.error.code).toBe('invalid_request')
+    }
+    expect(result.bound.session_id).toMatch(/^session_[0-9a-f]{64}$/)
   })
 
   it('rejects direct workspace RPC calls outside the session binding', async () => {

@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · hosted-workspace-binding-policy slice · added hosted and
+  self-host-ha `ACP_PROFILE` presets with Postgres, pg-notify, auth, and
+  workspace-bound session defaults, plus `ACP_REQUIRE_WORKSPACE_BINDINGS`
+  enforcement at HTTP and native RPC `session.initialize` · validation: targeted
+  config/router/RPC tests passed (33 tests) · risk MEDIUM
+
 - 2026-07-04 · rpc-review-workspace-authorization slice · enforced ADR-0009
   workspace bindings on native RPC review request, approve, reject,
   request_changes, cancel, work list, and workspace list handlers, deriving
