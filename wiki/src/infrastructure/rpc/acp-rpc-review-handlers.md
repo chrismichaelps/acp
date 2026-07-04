@@ -37,30 +37,34 @@ export const AcpRpcReviewHandlersLive: Layer<
 
 ## Algorithm
 
-Handlers authorize through [[rpc-auth]] `rpcActor`, which consumes a
-middleware-provided `AcpRpcActor` when [[rpc-auth-middleware]] has already
-authenticated the request and falls back to bearer headers for direct
-`accessHandler` tests. `review.request` checks `review:create`, mints an id and
-timestamp through [[id-clock]], and delegates to [[review-service]] so WorkUnit
-transition to `needs_review` and `review.requested` event emission remain
-domain-owned.
+Handlers authorize through [[rpc-resource-workspace-auth]] or direct
+[[rpc-auth]] `rpcWorkspaceActor`, both of which consume a middleware-provided
+`AcpRpcActor` when [[rpc-auth-middleware]] has already authenticated the request
+and fall back to bearer headers for direct `accessHandler` tests.
+`review.request` derives workspace scope from the parent work id before checking
+`review:create`, then mints an id and timestamp through [[id-clock]] and
+delegates to [[review-service]] so WorkUnit transition to `needs_review` and
+`review.requested` event emission remain domain-owned.
 
-Outcome handlers check their dedicated review scopes through the same bridge,
-mint timestamps through [[id-clock]], and delegate to [[review-service]] for
-requirement validation, legal state transitions, WorkUnit outcome coupling, and
-`review.*` event emission. `review.cancel` remains a withdrawal path that
-returns the WorkUnit to `running`, not a rejection alias.
+Outcome handlers load the review, derive workspace scope through its parent work,
+check their dedicated review scopes, mint timestamps through [[id-clock]], and
+delegate to [[review-service]] for requirement validation, legal state
+transitions, WorkUnit outcome coupling, and `review.*` event emission.
+`review.cancel` remains a withdrawal path that returns the WorkUnit to
+`running`, not a rejection alias.
 
-Read handlers check `workspace:read` through the same bridge.
-`review.list_for_work` first proves the WorkUnit exists through
-[[work-unit-service]], matching the HTTP resume route. `review.list_for_workspace`
-delegates workspace resolution to [[review-service]] because review records
-derive workspace scope through their WorkUnit.
+Read handlers check `workspace:read` through the same workspace-aware bridge.
+`review.list_for_work` derives scope from the WorkUnit before listing reviews,
+matching the HTTP resume route. `review.list_for_workspace` checks the explicit
+workspace id directly before delegating to [[review-service]], where review
+records still resolve workspace through their WorkUnit.
 
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT duplicate review state-transition rules in RPC handlers.
 - ❌ Do NOT treat cancellation as rejection.
+- ❌ Do NOT authorize review outcomes from permission alone; derive the review's
+  parent work workspace first.
 - ❌ Do NOT dispatch through HTTP, JSON-RPC, stdio, or WebSocket adapters.
 
 ## Depth

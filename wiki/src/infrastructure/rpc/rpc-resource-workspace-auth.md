@@ -15,7 +15,7 @@ aliases: [rpc-resource-workspace-auth]
 ## Purpose
 
 Authorize native RPC handlers whose workspace is stored behind a resource id.
-The helper loads the target work unit, lease, or artifact, derives its
+The helper loads the target work unit, lease, artifact, or review, derives its
 `workspace_id`, and then delegates to [[rpc-auth]] `rpcWorkspaceActor` so bearer
 sessions must hold both the action permission and the tenant binding before a
 handler mutates or reads the resource.
@@ -26,8 +26,10 @@ handler mutates or reads the resource.
 [[work-unit-service]] record. `lease(headers, scope, leaseId)` returns the
 authorized actor and loaded [[lease-service]] record. `artifact(headers, scope,
 artifactId)` returns the authorized actor and loaded [[artifact-service]] record.
-All helpers map absent resources through [[rpc-error]] to canonical `not_found`
-responses, while workspace mismatches remain `forbidden`.
+`review(headers, scope, reviewId)` returns the authorized actor plus the loaded
+[[review-service]] record and parent [[work-unit-service]] record. All helpers
+map absent resources through [[rpc-error]] to canonical `not_found` responses,
+while workspace mismatches remain `forbidden`.
 
 ## Algorithm
 
@@ -36,15 +38,17 @@ does not receive a workspace id. Host-wide sessions and middleware-provided
 `AcpRpcActor` values retain the semantics defined in [[rpc-auth]]. Workspace-bound
 bearer sessions must include the loaded resource's workspace id; otherwise the
 handler fails before claim, state transition, event publication, lease renewal,
-release, revocation, artifact mutation, or evidence read.
+release, revocation, artifact mutation, evidence read, or review outcome.
 
 ## Negative Logic (Prohibited Paths)
 
-- ❌ Do NOT duplicate resource loading in each work, lease, or artifact RPC handler.
+- ❌ Do NOT duplicate resource loading in each work, lease, artifact, or review
+  RPC handler.
 - ❌ Do NOT turn a valid cross-workspace request into `not_found`; the caller is
   authenticated but not authorized.
 - ❌ Do NOT bypass [[rpc-auth]] workspace checks for by-id mutations.
 
 ## Referenced by
 
-[[acp-rpc-handlers]] · [[acp-rpc-artifact-handlers]] · [[rpc-auth]]
+[[acp-rpc-handlers]] · [[acp-rpc-artifact-handlers]] ·
+[[acp-rpc-review-handlers]] · [[rpc-auth]]

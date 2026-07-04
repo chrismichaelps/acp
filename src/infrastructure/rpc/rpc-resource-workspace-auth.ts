@@ -3,12 +3,14 @@ import type { Headers } from '@effect/platform'
 import { Effect, Option } from 'effect'
 import { ArtifactService } from '../../domain/artifacts/index.js'
 import { LeaseService } from '../../domain/leases/index.js'
+import { ReviewService } from '../../domain/reviews/index.js'
 import { WorkUnitService } from '../../domain/work-units/index.js'
 import { NotFoundError } from '../../protocol/errors/protocol-error.js'
 import type {
   ArtifactId,
   LeaseId,
   Permission,
+  ReviewId,
   WorkId,
 } from '../../protocol/schema/index.js'
 import { rpcWorkspaceActor } from './rpc-auth.js'
@@ -65,4 +67,24 @@ export const artifact = (
     )
     const actor = yield* rpcWorkspaceActor(headers, scope, found.workspace_id)
     return { actor, artifact: found }
+  })
+
+export const review = (
+  headers: Headers.Headers,
+  scope: Permission,
+  reviewId: ReviewId,
+) =>
+  Effect.gen(function* () {
+    const reviews = yield* ReviewService
+    const workUnits = yield* WorkUnitService
+    const found = yield* Effect.flatMap(
+      reviews.get(reviewId).pipe(Effect.mapError(toRpcError)),
+      fromOption('review', reviewId),
+    )
+    const parent = yield* Effect.flatMap(
+      workUnits.get(found.work_id).pipe(Effect.mapError(toRpcError)),
+      fromOption('work', found.work_id),
+    )
+    const actor = yield* rpcWorkspaceActor(headers, scope, parent.workspace_id)
+    return { actor, review: found, work: parent }
   })
