@@ -1,33 +1,22 @@
 /** @Acp.Infra.Rpc.ReviewHandlers — native RPC review handlers */
-import { Effect, Layer, Option } from 'effect'
+import { Effect, Layer } from 'effect'
 import { ReviewService } from '../../domain/reviews/index.js'
-import { WorkUnitService } from '../../domain/work-units/index.js'
-import type { WorkUnitServiceApi } from '../../domain/work-units/index.js'
 import { IdClock } from '../../app/server/identity.js'
-import { NotFoundError } from '../../protocol/errors/protocol-error.js'
-import type { ReviewId, WorkId } from '../../protocol/schema/index.js'
+import type { ReviewId } from '../../protocol/schema/index.js'
 import { AcpRpcGroup } from './acp-rpc-contract.js'
-import { rpcActor } from './rpc-auth.js'
+import { rpcWorkspaceActor } from './rpc-auth.js'
 import { toRpcError } from './rpc-error.js'
-
-const requireWork = (workUnits: WorkUnitServiceApi, workId: WorkId) =>
-  Effect.flatMap(
-    workUnits.get(workId).pipe(Effect.mapError(toRpcError)),
-    (work) =>
-      Option.match(work, {
-        onNone: () =>
-          Effect.fail(
-            toRpcError(new NotFoundError({ entity: 'work', id: workId })),
-          ),
-        onSome: Effect.succeed,
-      }),
-  )
+import * as resourceScope from './rpc-resource-workspace-auth.js'
 
 const reviewRequestHandler = AcpRpcGroup.toLayerHandler(
   'review.request',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* rpcActor(options.headers, 'review:create')
+      yield* resourceScope.work(
+        options.headers,
+        'review:create',
+        payload.work_id,
+      )
       const reviews = yield* ReviewService
       const idClock = yield* IdClock
       const id = (yield* idClock.nextId('review')) as ReviewId
@@ -42,7 +31,11 @@ const reviewApproveHandler = AcpRpcGroup.toLayerHandler(
   'review.approve',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* rpcActor(options.headers, 'review:approve')
+      const { actor } = yield* resourceScope.review(
+        options.headers,
+        'review:approve',
+        payload.review_id,
+      )
       const reviews = yield* ReviewService
       const idClock = yield* IdClock
       const now = yield* idClock.now
@@ -56,7 +49,11 @@ const reviewRejectHandler = AcpRpcGroup.toLayerHandler(
   'review.reject',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* rpcActor(options.headers, 'review:reject')
+      const { actor } = yield* resourceScope.review(
+        options.headers,
+        'review:reject',
+        payload.review_id,
+      )
       const reviews = yield* ReviewService
       const idClock = yield* IdClock
       const now = yield* idClock.now
@@ -70,7 +67,11 @@ const reviewRequestChangesHandler = AcpRpcGroup.toLayerHandler(
   'review.request_changes',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* rpcActor(options.headers, 'review:request_changes')
+      const { actor } = yield* resourceScope.review(
+        options.headers,
+        'review:request_changes',
+        payload.review_id,
+      )
       const reviews = yield* ReviewService
       const idClock = yield* IdClock
       const now = yield* idClock.now
@@ -84,7 +85,11 @@ const reviewCancelHandler = AcpRpcGroup.toLayerHandler(
   'review.cancel',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* rpcActor(options.headers, 'review:cancel')
+      const { actor } = yield* resourceScope.review(
+        options.headers,
+        'review:cancel',
+        payload.review_id,
+      )
       const reviews = yield* ReviewService
       const idClock = yield* IdClock
       const now = yield* idClock.now
@@ -98,9 +103,11 @@ const reviewListForWorkHandler = AcpRpcGroup.toLayerHandler(
   'review.list_for_work',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* rpcActor(options.headers, 'workspace:read')
-      const workUnits = yield* WorkUnitService
-      yield* requireWork(workUnits, payload.work_id)
+      yield* resourceScope.work(
+        options.headers,
+        'workspace:read',
+        payload.work_id,
+      )
       const reviews = yield* ReviewService
       return yield* reviews
         .listForWork(payload.work_id)
@@ -112,7 +119,11 @@ const reviewListForWorkspaceHandler = AcpRpcGroup.toLayerHandler(
   'review.list_for_workspace',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* rpcActor(options.headers, 'workspace:read')
+      yield* rpcWorkspaceActor(
+        options.headers,
+        'workspace:read',
+        payload.workspace_id,
+      )
       const reviews = yield* ReviewService
       return yield* reviews
         .listForWorkspace(payload.workspace_id)
