@@ -13,6 +13,7 @@ const baseUrl = (process.env.ACP_BASE_URL ?? 'http://localhost:4317').replace(
   '',
 )
 const runId = process.env.ACP_DOGFOOD_RUN_ID ?? Date.now().toString(36)
+const workspaceId = process.env.ACP_DOGFOOD_WORKSPACE_ID?.trim() || undefined
 
 const sharedPermissions = ['workspace:read', 'event:read']
 const plannerPermissions = [
@@ -58,6 +59,7 @@ const initAgent = async (role, permissions, capabilities) => {
       capabilities,
     },
     permissions,
+    ...(workspaceId === undefined ? {} : { workspace_ids: [workspaceId] }),
   })
 
   return { role, workerId, token: session.session_id }
@@ -155,18 +157,21 @@ const main = async () => {
     initAgent('reviewer', reviewerPermissions, ['can_review']),
   ])
 
-  const workspace = await expectPayload(
-    'POST',
-    '/v1/workspaces',
-    {
-      name: `acp/multi-agent-dogfood-${runId}`,
-      kind: 'git_repository',
-      uri: 'git+https://github.com/chrismichaelps/acp.git',
-      default_branch: 'main',
-    },
-    planner.token,
-    [201],
-  )
+  const workspace =
+    workspaceId === undefined
+      ? await expectPayload(
+          'POST',
+          '/v1/workspaces',
+          {
+            name: `acp/multi-agent-dogfood-${runId}`,
+            kind: 'git_repository',
+            uri: 'git+https://github.com/chrismichaelps/acp.git',
+            default_branch: 'main',
+          },
+          planner.token,
+          [201],
+        )
+      : { id: workspaceId }
   const work = await expectPayload(
     'POST',
     '/v1/work',

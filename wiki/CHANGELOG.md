@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · hosted-codex-dogfood-sessions slice · added
+  `ACP_DOGFOOD_WORKSPACE_ID` so Codex smoke and multi-agent dogfood runners can
+  bind every session to a provisioned workspace and run against hosts with
+  `ACP_REQUIRE_WORKSPACE_BINDINGS=true` while preserving local workspace creation
+  by default · validation: full local gate passed (check:env, format, lint,
+  typecheck, file-size, build, 684 tests; 14 skipped) · risk LOW
+
 - 2026-07-04 · hosted-workspace-binding-policy slice · added hosted and
   self-host-ha `ACP_PROFILE` presets with Postgres, pg-notify, auth, and
   workspace-bound session defaults, plus `ACP_REQUIRE_WORKSPACE_BINDINGS`
