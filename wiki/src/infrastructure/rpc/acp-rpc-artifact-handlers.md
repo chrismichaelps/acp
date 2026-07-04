@@ -43,20 +43,22 @@ falling back to bearer headers for direct `accessHandler` tests. `artifact.creat
 checks both `artifact:create` and the payload workspace binding before minting an
 id/timestamp through [[id-clock]] and delegating to [[artifact-service]]. That
 preserves content-size validation, host-stored `acp://artifacts/{id}` content,
-external URI references, and artifact lifecycle events. Artifact update/delete
-remain by-id derived-resource authorization work for a later slice.
+external URI references, and artifact lifecycle events.
 
-Read handlers check `workspace:read`. `artifact.content` first proves the
-artifact exists, then reads host-stored content and returns `not_found` for
-external or deleted content. `artifact.list_for_work` mirrors the HTTP resume
-route by proving the WorkUnit exists through [[work-unit-service]] before
-listing metadata. `artifact.list_for_workspace` uses `rpcWorkspaceActor` against
-its explicit `workspace_id`.
+By-id update, delete, and content handlers authorize through
+[[rpc-resource-workspace-auth]], which loads the stored artifact, derives its
+workspace id, and then applies the requested permission. Work-scoped reads use
+the same helper through the parent work id. `artifact.content` still returns
+`not_found` for external or deleted content after the workspace check passes.
+`artifact.list_for_workspace` uses `rpcWorkspaceActor` directly against its
+explicit `workspace_id`.
 
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT inline artifact storage/content rules in RPC handlers.
 - ❌ Do NOT return external artifact URIs from `artifact.content`.
+- ❌ Do NOT authorize by-id artifact routes from permission alone; derive the
+  stored artifact workspace first.
 - ❌ Do NOT dispatch through HTTP, JSON-RPC, stdio, or WebSocket adapters.
 
 ## Depth

@@ -1,27 +1,13 @@
 /** @Acp.Infra.Rpc.CheckpointHandlers — native RPC checkpoint handlers */
 import { Effect, Layer, Option } from 'effect'
 import { CheckpointService } from '../../domain/checkpoints/index.js'
-import { WorkUnitService } from '../../domain/work-units/index.js'
-import type { WorkUnitServiceApi } from '../../domain/work-units/index.js'
 import { IdClock } from '../../app/server/identity.js'
 import { NotFoundError } from '../../protocol/errors/protocol-error.js'
-import type { CheckpointId, WorkId } from '../../protocol/schema/index.js'
+import type { CheckpointId } from '../../protocol/schema/index.js'
 import { AcpRpcGroup } from './acp-rpc-contract.js'
-import { rpcActor, rpcWorkspaceActor } from './rpc-auth.js'
+import { rpcWorkspaceActor } from './rpc-auth.js'
 import { toRpcError } from './rpc-error.js'
-
-const requireWork = (workUnits: WorkUnitServiceApi, workId: WorkId) =>
-  Effect.flatMap(
-    workUnits.get(workId).pipe(Effect.mapError(toRpcError)),
-    (work) =>
-      Option.match(work, {
-        onNone: () =>
-          Effect.fail(
-            toRpcError(new NotFoundError({ entity: 'work', id: workId })),
-          ),
-        onSome: Effect.succeed,
-      }),
-  )
+import * as resourceScope from './rpc-resource-workspace-auth.js'
 
 const checkpointCreateHandler = AcpRpcGroup.toLayerHandler(
   'checkpoint.create',
@@ -46,9 +32,11 @@ const checkpointListForWorkHandler = AcpRpcGroup.toLayerHandler(
   'checkpoint.list_for_work',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* rpcActor(options.headers, 'workspace:read')
-      const workUnits = yield* WorkUnitService
-      yield* requireWork(workUnits, payload.work_id)
+      yield* resourceScope.work(
+        options.headers,
+        'workspace:read',
+        payload.work_id,
+      )
       const checkpoints = yield* CheckpointService
       return yield* checkpoints
         .listForWork(payload.work_id)
@@ -60,9 +48,11 @@ const checkpointLatestForWorkHandler = AcpRpcGroup.toLayerHandler(
   'checkpoint.latest_for_work',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* rpcActor(options.headers, 'workspace:read')
-      const workUnits = yield* WorkUnitService
-      yield* requireWork(workUnits, payload.work_id)
+      yield* resourceScope.work(
+        options.headers,
+        'workspace:read',
+        payload.work_id,
+      )
       const checkpoints = yield* CheckpointService
       const latest = yield* checkpoints
         .latestForWork(payload.work_id)

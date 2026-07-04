@@ -1,32 +1,13 @@
 /** @Acp.Infra.Rpc.ArtifactHandlers — native RPC artifact handlers */
 import { Effect, Layer, Option } from 'effect'
 import { ArtifactService } from '../../domain/artifacts/index.js'
-import type { ArtifactServiceApi } from '../../domain/artifacts/index.js'
-import { WorkUnitService } from '../../domain/work-units/index.js'
 import { IdClock } from '../../app/server/identity.js'
 import { NotFoundError } from '../../protocol/errors/protocol-error.js'
 import type { ArtifactId } from '../../protocol/schema/index.js'
 import { AcpRpcGroup } from './acp-rpc-contract.js'
-import { rpcActor, rpcWorkspaceActor } from './rpc-auth.js'
+import { rpcWorkspaceActor } from './rpc-auth.js'
 import { toRpcError } from './rpc-error.js'
-
-const requireArtifact = (
-  artifacts: ArtifactServiceApi,
-  artifactId: ArtifactId,
-) =>
-  Effect.flatMap(
-    artifacts.get(artifactId).pipe(Effect.mapError(toRpcError)),
-    (artifact) =>
-      Option.match(artifact, {
-        onNone: () =>
-          Effect.fail(
-            toRpcError(
-              new NotFoundError({ entity: 'artifact', id: artifactId }),
-            ),
-          ),
-        onSome: Effect.succeed,
-      }),
-  )
+import * as resourceScope from './rpc-resource-workspace-auth.js'
 
 const artifactCreateHandler = AcpRpcGroup.toLayerHandler(
   'artifact.create',
@@ -51,7 +32,11 @@ const artifactUpdateHandler = AcpRpcGroup.toLayerHandler(
   'artifact.update',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* rpcActor(options.headers, 'artifact:update')
+      const { actor } = yield* resourceScope.artifact(
+        options.headers,
+        'artifact:update',
+        payload.artifact_id,
+      )
       const artifacts = yield* ArtifactService
       const idClock = yield* IdClock
       const now = yield* idClock.now
@@ -65,7 +50,11 @@ const artifactDeleteHandler = AcpRpcGroup.toLayerHandler(
   'artifact.delete',
   (payload, options) =>
     Effect.gen(function* () {
-      const actor = yield* rpcActor(options.headers, 'artifact:delete')
+      const { actor } = yield* resourceScope.artifact(
+        options.headers,
+        'artifact:delete',
+        payload.artifact_id,
+      )
       const artifacts = yield* ArtifactService
       const idClock = yield* IdClock
       const now = yield* idClock.now
@@ -79,9 +68,12 @@ const artifactContentHandler = AcpRpcGroup.toLayerHandler(
   'artifact.content',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* rpcActor(options.headers, 'workspace:read')
+      yield* resourceScope.artifact(
+        options.headers,
+        'workspace:read',
+        payload.artifact_id,
+      )
       const artifacts = yield* ArtifactService
-      yield* requireArtifact(artifacts, payload.artifact_id)
       const content = yield* artifacts
         .readContent(payload.artifact_id)
         .pipe(Effect.mapError(toRpcError))
@@ -104,20 +96,11 @@ const artifactListForWorkHandler = AcpRpcGroup.toLayerHandler(
   'artifact.list_for_work',
   (payload, options) =>
     Effect.gen(function* () {
-      yield* rpcActor(options.headers, 'workspace:read')
-      const workUnits = yield* WorkUnitService
-      const work = yield* workUnits
-        .get(payload.work_id)
-        .pipe(Effect.mapError(toRpcError))
-      yield* Option.match(work, {
-        onNone: () =>
-          Effect.fail(
-            toRpcError(
-              new NotFoundError({ entity: 'work', id: payload.work_id }),
-            ),
-          ),
-        onSome: Effect.succeed,
-      })
+      yield* resourceScope.work(
+        options.headers,
+        'workspace:read',
+        payload.work_id,
+      )
       const artifacts = yield* ArtifactService
       return yield* artifacts
         .listForWork(payload.work_id)

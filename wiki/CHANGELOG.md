@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · rpc-derived-evidence-workspace-authorization slice · enforced
+  ADR-0009 workspace bindings on native RPC artifact update/delete/content,
+  artifact work lists, checkpoint work lists, and latest checkpoint reads whose
+  workspace is derived from a stored artifact or parent work id · validation:
+  targeted native RPC derived evidence tests passed (6 tests) · risk MEDIUM
+
 - 2026-07-04 · rpc-evidence-memory-event-workspace-authorization slice · enforced
   ADR-0009 workspace bindings on native RPC artifact/checkpoint creation,
   artifact/checkpoint workspace lists, memory create/list, and event
