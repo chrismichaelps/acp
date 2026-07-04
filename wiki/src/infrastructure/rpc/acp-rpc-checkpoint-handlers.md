@@ -42,10 +42,11 @@ the payload workspace binding, mints an id and timestamp through [[id-clock]],
 and delegates to [[checkpoint-service]] so append-only persistence and
 `checkpoint.created` event emission remain domain-owned.
 
-Read handlers check `workspace:read` through the same bridge. Work-scoped
-reads first prove the WorkUnit exists through [[work-unit-service]], matching
-the HTTP resume route. `checkpoint.list_for_work` and
-`checkpoint.list_for_workspace` preserve newest-first ordering from
+Read handlers check `workspace:read` through the same bridge. Work-scoped reads
+authorize through [[rpc-resource-workspace-auth]], which proves the parent
+WorkUnit exists, derives its workspace id, and rejects sessions bound to a
+different workspace before checkpoint rows are listed. `checkpoint.list_for_work`
+and `checkpoint.list_for_workspace` preserve newest-first ordering from
 [[checkpoint-service]]; the workspace list also checks the explicit
 `workspace_id` binding through `rpcWorkspaceActor`. `checkpoint.latest_for_work`
 maps an empty checkpoint history to `not_found`.
@@ -54,6 +55,8 @@ maps an empty checkpoint history to `not_found`.
 
 - ❌ Do NOT update, overwrite, or delete checkpoints from RPC.
 - ❌ Do NOT compute latest ordering inside the handler.
+- ❌ Do NOT authorize work-scoped checkpoint reads from permission alone; derive
+  the parent work workspace first.
 - ❌ Do NOT dispatch through HTTP, JSON-RPC, stdio, or WebSocket adapters.
 
 ## Depth
