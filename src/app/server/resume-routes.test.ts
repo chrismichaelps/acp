@@ -21,12 +21,17 @@ const worker = {
 const initSession = async (
   handler: (req: Request) => Promise<Response>,
   permissions: readonly string[],
+  workspaceIds?: readonly string[],
 ) => {
   const res = await handler(
     new Request('http://acp.test/v1/session/initialize', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ worker, permissions }),
+      body: JSON.stringify({
+        worker,
+        permissions,
+        ...(workspaceIds === undefined ? {} : { workspace_ids: workspaceIds }),
+      }),
     }),
   )
   return ((await res.json()) as { session_id: string }).session_id
@@ -209,6 +214,31 @@ describe('resume routes', () => {
       new Request(`http://acp.test/v1/work/${work.id}`, {
         method: 'GET',
         headers: { authorization: `Bearer ${token}` },
+      }),
+    )
+    expect(denied.status).toBe(403)
+  })
+
+  it('rejects resume reads outside the session workspace binding', async () => {
+    const handler = makeHandler()
+    const writer = await initSession(handler, ['work:create'])
+    const reader = await initSession(
+      handler,
+      ['workspace:read'],
+      ['workspace_other'],
+    )
+    const created = await handler(
+      authedJson(writer, '/v1/work', {
+        workspace_id: 'workspace_1',
+        title: 'Workspace-bound private work',
+      }),
+    )
+    const work = (await created.json()) as { id: string }
+
+    const denied = await handler(
+      new Request(`http://acp.test/v1/work/${work.id}`, {
+        method: 'GET',
+        headers: { authorization: `Bearer ${reader}` },
       }),
     )
     expect(denied.status).toBe(403)

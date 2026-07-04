@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · http-derived-workspace-authorization slice · enforced
+  ADR-0009 workspace bindings on HTTP read routes whose target workspace is
+  derived from a work or artifact id, including work resume reads, work-scoped
+  checkpoint/artifact/review indexes, latest checkpoint lookup, and artifact
+  content reads · validation: full local gate passed (check:env, format, lint,
+  typecheck, file-size, build, 654 tests; 14 skipped) · risk MEDIUM
+
 - 2026-07-04 · http-workspace-scope-authorization slice · added
   [[route-support]] `authorizeActor`/`authorizeWorkspace` and enforced
   ADR-0009 workspace bindings on HTTP routes whose target workspace is explicit
