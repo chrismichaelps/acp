@@ -7,6 +7,7 @@ export interface AppConfig {
   readonly port: number
   readonly logLevel: AppLogLevel
   readonly storageAdapter: 'memory' | 'sqlite' | 'postgres'
+  readonly eventBroker: 'in-process' | 'pg-notify'
   readonly sqlitePath: string
   readonly databaseUrl: Option.Option<string>
   readonly defaultLeaseTtl: Duration.Duration
@@ -53,6 +54,10 @@ const load = Effect.gen(function* () {
     'sqlite',
     'postgres',
   )('ACP_STORAGE_ADAPTER').pipe(Config.withDefault(defaults.storageAdapter))
+  const eventBroker = yield* Config.literal(
+    'in-process',
+    'pg-notify',
+  )('ACP_EVENT_BROKER').pipe(Config.withDefault('in-process' as const))
   const sqlitePath = yield* Config.string('ACP_SQLITE_PATH').pipe(
     Config.withDefault('acp.sqlite'),
   )
@@ -84,6 +89,7 @@ const load = Effect.gen(function* () {
     port,
     logLevel,
     storageAdapter,
+    eventBroker,
     sqlitePath,
     databaseUrl,
     defaultLeaseTtl,

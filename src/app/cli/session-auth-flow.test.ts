@@ -14,6 +14,7 @@ const requireAuthConfig = Layer.succeed(AppConfigTag, {
   port: 4317,
   logLevel: 'info' as const,
   storageAdapter: 'memory' as const,
+  eventBroker: 'in-process' as const,
   sqlitePath: 'acp.sqlite',
   databaseUrl: Option.none(),
   defaultLeaseTtl: Duration.minutes(15),

@@ -44,14 +44,16 @@ All configuration is environment variables (see `.env.example` and
 [[ADR-0008-deployment-storage-topology]] for the profile matrix). The
 deployment-shaping ones:
 
-| Variable              | Default      | Notes                                                                                     |
-| --------------------- | ------------ | ----------------------------------------------------------------------------------------- |
-| `ACP_PORT`            | `4317`       | Bind port; the image `EXPOSE`s it.                                                        |
-| `ACP_STORAGE_ADAPTER` | `memory`     | `memory` (ephemeral) · `sqlite` (needs a volume) · `postgres` (planned, network-durable). |
-| `ACP_SQLITE_PATH`     | `acp.sqlite` | With `sqlite`, mount a writable volume and point this at it.                              |
-| `ACP_REQUIRE_AUTH`    | `false`      | Turn on for any shared/hosted deployment.                                                 |
-| `ACP_SESSION_TTL`     | `1h`         | Session eviction window (swept in-process).                                               |
-| `ACP_SWEEP_INTERVAL`  | `60s`        | Lease/session eviction cadence.                                                           |
+| Variable              | Default      | Notes                                                                              |
+| --------------------- | ------------ | ---------------------------------------------------------------------------------- |
+| `ACP_PORT`            | `4317`       | Bind port; the image `EXPOSE`s it.                                                 |
+| `ACP_STORAGE_ADAPTER` | `memory`     | `memory` (ephemeral) · `sqlite` (needs a volume) · `postgres` (network-durable).   |
+| `ACP_SQLITE_PATH`     | `acp.sqlite` | With `sqlite`, mount a writable volume and point this at it.                       |
+| `ACP_DATABASE_URL`    | unset        | Required for the `postgres` storage adapter and `pg-notify` event broker.          |
+| `ACP_EVENT_BROKER`    | `in-process` | `in-process` for one node · `pg-notify` for Postgres-backed multi-replica fan-out. |
+| `ACP_REQUIRE_AUTH`    | `false`      | Turn on for any shared/hosted deployment.                                          |
+| `ACP_SESSION_TTL`     | `1h`         | Session eviction window (swept in-process).                                        |
+| `ACP_SWEEP_INTERVAL`  | `60s`        | Lease/session eviction cadence.                                                    |
 
 ### Storage choice by intent
 
@@ -59,9 +61,8 @@ deployment-shaping ones:
 - **`sqlite`** — single-node self-host with durability; requires a persistent
   volume, since a redeploy on most platforms wipes the container filesystem.
 - **`postgres`** — the network-durable adapter for multi-replica / managed
-  hosting. Planned (ADR-0008); land it before running more than one replica,
-  because the in-process event fan-out and row-counted `seq` are single-process
-  only until the Postgres adapter + `pg-notify` broker exist.
+  hosting. Pair it with `ACP_EVENT_BROKER=pg-notify` when more than one host
+  process serves live SSE/WebSocket subscribers.
 
 ## Health checks
 

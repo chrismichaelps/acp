@@ -259,6 +259,11 @@ an adapter concern, not a protocol concern.
   event `seq` is allocated atomically, so concurrent writers across processes
   never collide. The host fails fast at boot if `ACP_DATABASE_URL` is unset.
 
+Live event fan-out is selected separately. `ACP_EVENT_BROKER=in-process` is the
+default single-node broker; `ACP_EVENT_BROKER=pg-notify` uses the same Postgres
+connection string to deliver SSE/WebSocket event notifications across replicas
+while replay remains backed by durable storage.
+
 ---
 
 ## Authentication and scopes
@@ -286,21 +291,24 @@ without ACP storing any credentials.
 bridge, and scripts. Copy it for local use; inject secrets from the operator shell
 rather than committing them.
 
-| Variable                   | Purpose                                                 |
-| -------------------------- | ------------------------------------------------------- |
-| `ACP_PORT`                 | Host bind port (default `4317`).                        |
-| `ACP_BASE_URL`             | Target host for the CLI / stdio bridge.                 |
-| `ACP_STORAGE_ADAPTER`      | `memory` (default) or `sqlite`.                         |
-| `ACP_SQLITE_PATH`          | SQLite database path (required for the sqlite adapter). |
-| `ACP_REQUIRE_AUTH`         | `true` to require bearer sessions on scoped routes.     |
-| `ACP_RPC_TOKEN`            | Bearer token forwarded by the CLI / stdio bridge.       |
-| `ACP_LOG_LEVEL`            | `debug` \| `info` (default) \| `warn` \| `error`.       |
-| `ACP_DEFAULT_LEASE_TTL`    | Default lease TTL when a request omits one.             |
-| `ACP_SESSION_TTL`          | Session lifetime.                                       |
-| `ACP_SWEEP_INTERVAL`       | Background sweeper cadence (expiring leases/sessions).  |
-| `ACP_SSE_HEARTBEAT`        | SSE keepalive interval.                                 |
-| `ACP_EVENT_RETENTION_DAYS` | Event history retention window.                         |
-| `ACP_MAX_ARTIFACT_SIZE_MB` | Inline artifact content size cap.                       |
+| Variable                   | Purpose                                                  |
+| -------------------------- | -------------------------------------------------------- |
+| `ACP_PORT`                 | Host bind port (default `4317`).                         |
+| `ACP_BASE_URL`             | Target host for the CLI / stdio bridge.                  |
+| `ACP_PROFILE`              | Optional deployment preset (`local`, `single-node`).     |
+| `ACP_STORAGE_ADAPTER`      | `memory` (default), `sqlite`, or `postgres`.             |
+| `ACP_SQLITE_PATH`          | SQLite database path (required for the sqlite adapter).  |
+| `ACP_DATABASE_URL`         | Postgres connection string for postgres-backed adapters. |
+| `ACP_EVENT_BROKER`         | `in-process` (default) or `pg-notify`.                   |
+| `ACP_REQUIRE_AUTH`         | `true` to require bearer sessions on scoped routes.      |
+| `ACP_RPC_TOKEN`            | Bearer token forwarded by the CLI / stdio bridge.        |
+| `ACP_LOG_LEVEL`            | `debug` \| `info` (default) \| `warn` \| `error`.        |
+| `ACP_DEFAULT_LEASE_TTL`    | Default lease TTL when a request omits one.              |
+| `ACP_SESSION_TTL`          | Session lifetime.                                        |
+| `ACP_SWEEP_INTERVAL`       | Background sweeper cadence (expiring leases/sessions).   |
+| `ACP_SSE_HEARTBEAT`        | SSE keepalive interval.                                  |
+| `ACP_EVENT_RETENTION_DAYS` | Event history retention window.                          |
+| `ACP_MAX_ARTIFACT_SIZE_MB` | Inline artifact content size cap.                        |
 
 ---
 

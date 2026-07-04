@@ -16,6 +16,7 @@ describe('AppConfig', () => {
     expect(cfg.port).toBe(4317)
     expect(cfg.logLevel).toBe('info')
     expect(cfg.storageAdapter).toBe('memory')
+    expect(cfg.eventBroker).toBe('in-process')
     expect(cfg.sqlitePath).toBe('acp.sqlite')
     expect(Duration.toMillis(cfg.defaultLeaseTtl)).toBe(15 * 60 * 1000)
     expect(cfg.eventRetentionDays).toBe(30)
@@ -54,6 +55,7 @@ describe('AppConfig', () => {
       ['ACP_PORT', '8080'],
       ['ACP_LOG_LEVEL', 'debug'],
       ['ACP_STORAGE_ADAPTER', 'sqlite'],
+      ['ACP_EVENT_BROKER', 'pg-notify'],
       ['ACP_SQLITE_PATH', '/tmp/acp.sqlite'],
       ['ACP_MAX_ARTIFACT_SIZE_MB', '4'],
       ['ACP_REQUIRE_AUTH', 'true'],
@@ -61,6 +63,7 @@ describe('AppConfig', () => {
     expect(cfg.port).toBe(8080)
     expect(cfg.logLevel).toBe('debug')
     expect(cfg.storageAdapter).toBe('sqlite')
+    expect(cfg.eventBroker).toBe('pg-notify')
     expect(cfg.sqlitePath).toBe('/tmp/acp.sqlite')
     expect(cfg.maxArtifactSizeBytes).toBe(4 * 1024 * 1024)
     expect(cfg.requireAuth).toBe(true)
