@@ -56,14 +56,20 @@ export const pathParam: (
 
 ## Algorithm
 
-`authorize` reads the bearer token from `Authorization`, validates it through
-[[session-service]], and enforces the requested scope when supplied. Missing
-tokens fall back to `worker_system` only when `ACP_REQUIRE_AUTH` is false.
-Credential failures (missing token in required-auth mode, unknown token) fail
-`UnauthorizedError` (401); an authenticated session lacking the requested scope
-fails `ForbiddenError` (403 `forbidden`, spec §15) — the caller is known, the
-action is denied. Action scopes are closed in [[common]], so callers cannot
-invent route-local permission strings.
+`authorizeActor` reads the bearer token from `Authorization`, validates it
+through [[session-service]], and returns the worker id, granted permissions, and
+ADR-0009 workspace binding. `authorize` preserves the older convenience shape by
+returning only the worker id after the permission check. `authorizeWorkspace`
+checks both the action permission and a concrete `workspace_id`; host-wide
+sessions (`workspace_ids = Option.none`) pass, while a valid token bound to a
+different workspace fails `ForbiddenError` without disclosing target existence.
+
+Missing tokens fall back to `worker_system` only when `ACP_REQUIRE_AUTH` is
+false. Credential failures (missing token in required-auth mode, unknown token)
+fail `UnauthorizedError` (401); an authenticated session lacking the requested
+scope or workspace binding fails `ForbiddenError` (403 `forbidden`, spec §15) —
+the caller is known, the action is denied. Action scopes are closed in [[common]],
+so callers cannot invent route-local permission strings.
 
 `respond(route)` catches every route failure and folds tagged domain errors
 through [[http-error-mapper]], parse/request failures into `invalid_request`, and

@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · http-workspace-scope-authorization slice · added
+  [[route-support]] `authorizeActor`/`authorizeWorkspace` and enforced
+  ADR-0009 workspace bindings on HTTP routes whose target workspace is explicit
+  in the path, query, or body (work create, lease create/list, memory, events,
+  workspace aggregate/update/archive routes) · validation: full local gate passed
+  (check:env, format, lint, typecheck, file-size, build, 652 tests; 14 skipped)
+  · risk MEDIUM
+
 - 2026-07-04 · session-workspace-bindings slice · added ADR-0009
   `workspace_ids` bindings to [[session.schema]] and
   `session.initialize` payloads, preserving host-wide sessions as

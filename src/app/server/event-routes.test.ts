@@ -21,12 +21,17 @@ const worker = {
 const initSession = async (
   handler: (req: Request) => Promise<Response>,
   permissions: readonly string[],
+  workspaceIds?: readonly string[],
 ) => {
   const res = await handler(
     new Request('http://acp.test/v1/session/initialize', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ worker, permissions }),
+      body: JSON.stringify({
+        worker,
+        permissions,
+        ...(workspaceIds === undefined ? {} : { workspace_ids: workspaceIds }),
+      }),
     }),
   )
   return ((await res.json()) as { session_id: string }).session_id
@@ -84,6 +89,20 @@ describe('event routes', () => {
 
     const denied = await handler(
       new Request('http://acp.test/v1/events?workspace_id=workspace_events', {
+        method: 'GET',
+        headers: { authorization: `Bearer ${token}` },
+      }),
+    )
+
+    expect(denied.status).toBe(403)
+  })
+
+  it('rejects event replay outside the session workspace binding', async () => {
+    const handler = makeHandler()
+    const token = await initSession(handler, ['event:read'], ['workspace_a'])
+
+    const denied = await handler(
+      new Request('http://acp.test/v1/events?workspace_id=workspace_b', {
         method: 'GET',
         headers: { authorization: `Bearer ${token}` },
       }),
