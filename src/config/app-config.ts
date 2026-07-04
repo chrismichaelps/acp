@@ -1,4 +1,5 @@
 /** @Acp.Config.App — typed, defaulted runtime configuration */
+import type { Option } from 'effect'
 import { Config, Context, Duration, Effect, Layer } from 'effect'
 
 export type AppLogLevel = 'debug' | 'info' | 'warn' | 'error'
@@ -6,8 +7,9 @@ export type AppLogLevel = 'debug' | 'info' | 'warn' | 'error'
 export interface AppConfig {
   readonly port: number
   readonly logLevel: AppLogLevel
-  readonly storageAdapter: 'memory' | 'sqlite'
+  readonly storageAdapter: 'memory' | 'sqlite' | 'postgres'
   readonly sqlitePath: string
+  readonly databaseUrl: Option.Option<string>
   readonly defaultLeaseTtl: Duration.Duration
   readonly eventRetentionDays: number
   readonly maxArtifactSizeBytes: number
@@ -35,9 +37,13 @@ const load = Effect.gen(function* () {
   const storageAdapter = yield* Config.literal(
     'memory',
     'sqlite',
+    'postgres',
   )('ACP_STORAGE_ADAPTER').pipe(Config.withDefault('memory' as const))
   const sqlitePath = yield* Config.string('ACP_SQLITE_PATH').pipe(
     Config.withDefault('acp.sqlite'),
+  )
+  const databaseUrl = yield* Config.string('ACP_DATABASE_URL').pipe(
+    Config.option,
   )
   const defaultLeaseTtl = yield* Config.duration('ACP_DEFAULT_LEASE_TTL').pipe(
     Config.withDefault(Duration.minutes(15)),
@@ -65,6 +71,7 @@ const load = Effect.gen(function* () {
     logLevel,
     storageAdapter,
     sqlitePath,
+    databaseUrl,
     defaultLeaseTtl,
     eventRetentionDays,
     maxArtifactSizeBytes: maxArtifactSizeMb * 1024 * 1024,

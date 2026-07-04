@@ -20,6 +20,7 @@ const TestConfigLive = Layer.succeed(AppConfigTag, {
   logLevel: 'info' as const,
   storageAdapter: 'memory' as const,
   sqlitePath: 'acp.sqlite',
+  databaseUrl: Option.none(),
   defaultLeaseTtl: Duration.minutes(15),
   eventRetentionDays: 30,
   maxArtifactSizeBytes: 16 * 1024 * 1024,

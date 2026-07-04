@@ -1,7 +1,7 @@
 /** @Acp.App.Server.Router.Test — HTTP routes over a web handler */
 import { describe, expect, it } from 'vitest'
 import { HttpApp } from '@effect/platform'
-import { Duration, Layer } from 'effect'
+import { Duration, Layer, Option } from 'effect'
 import { AppConfigTag } from '../../config/app-config.js'
 import { AppLive } from '../index.js'
 import { IdClockLive } from './identity.js'
@@ -444,6 +444,7 @@ const requireAuthConfig = Layer.succeed(AppConfigTag, {
   logLevel: 'info' as const,
   storageAdapter: 'memory' as const,
   sqlitePath: 'acp.sqlite',
+  databaseUrl: Option.none(),
   defaultLeaseTtl: Duration.minutes(15),
   eventRetentionDays: 30,
   maxArtifactSizeBytes: 16 * 1024 * 1024,

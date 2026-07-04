@@ -221,6 +221,11 @@ an adapter concern, not a protocol concern.
 - **SQLite** (`ACP_STORAGE_ADAPTER=sqlite`, `ACP_SQLITE_PATH=...`) — durable state
   and an append-only event table, created on startup. Preserves append order and
   keeps queries scoped by workspace and key prefix.
+- **Postgres** (`ACP_STORAGE_ADAPTER=postgres`, `ACP_DATABASE_URL=...`) — the
+  network-durable adapter (via `@effect/sql-pg`, with connection pooling and
+  migrations run on startup) for multi-replica / managed hosting. Per-workspace
+  event `seq` is allocated atomically, so concurrent writers across processes
+  never collide. The host fails fast at boot if `ACP_DATABASE_URL` is unset.
 
 ---
 
