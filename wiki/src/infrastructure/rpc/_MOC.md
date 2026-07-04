@@ -19,6 +19,8 @@ first-party Effect RPC contract selected by [[ADR-0007-effect-rpc-adoption]].
 - [[acp-rpc-review-handlers]] — native human review gate handlers split from the
   aggregate handler layer.
 - [[rpc-auth]] — bearer-session authorization helper for native RPC handlers.
+- [[rpc-resource-workspace-auth]] — derived workspace authorization for native
+  RPC work and lease resource ids.
 - [[rpc-auth-middleware]] — contract-annotated native RPC authorization
   middleware.
 - [[rpc-telemetry-middleware]] — wrap-style native RPC completion telemetry
