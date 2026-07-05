@@ -1813,6 +1813,7 @@ acp work list --workspace workspace_123 --state open --priority high --assigned-
 acp work claim work_123 --worker agent_codex
 acp work update work_123 --state running
 acp lease request --workspace workspace_123 --holder agent_codex --kind file --uri file://src/auth/callback.ts
+acp lease list --workspace workspace_123 --holder agent_codex
 acp checkpoint create --workspace workspace_123 --work work_123 --summary "Found async redirect issue"
 acp memory create --workspace workspace_123 --work work_123 --kind decision --key auth.redirect.async-session --summary "Redirect waits for session creation" --content "Session creation is async; redirect must happen after persistence."
 acp artifact create --workspace workspace_123 --work work_123 --kind patch --summary "Auth redirect fix" --content "$(cat fix.patch)"

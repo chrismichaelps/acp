@@ -3,6 +3,7 @@ import { Either } from 'effect'
 import {
   encodePathSegment,
   flag,
+  optionalClientFilter,
   positional,
   positiveIntegerFlag,
   type CommandHandler,
@@ -43,9 +44,11 @@ export const leaseCommandHandlers: Readonly<Record<string, CommandHandler>> = {
   'lease list': ({ flags }) =>
     Either.gen(function* () {
       const workspaceId = yield* flag(flags, 'workspace')
+      const clientFilters = optionalClientFilter(flags, 'holder')
       return {
         method: 'GET',
         path: `/v1/leases?workspace_id=${encodeURIComponent(workspaceId)}`,
+        ...(clientFilters.length > 0 ? { clientFilters } : {}),
         label: 'lease list',
       }
     }),

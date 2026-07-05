@@ -26,19 +26,21 @@ export const leaseCommandHandlers: Readonly<Record<string, CommandHandler>>
 ```
 
 `lease request --workspace --holder --kind --uri [--ttl]` maps to
-`POST /v1/leases`. `lease list --workspace <id>` maps to
-`GET /v1/leases?workspace_id=`. `lease release`, `lease renew`, and
-`lease revoke` map to their lease-id scoped lifecycle routes.
+`POST /v1/leases`. `lease list --workspace <id> [--holder <holder>]` maps to
+`GET /v1/leases?workspace_id=` and, when `--holder` is supplied, records a
+client-side `holder` filter for [[cli-client]]. `lease release`, `lease renew`,
+and `lease revoke` map to their lease-id scoped lifecycle routes.
 
 ## Algorithm
 
 `lease request` requires workspace, holder, resource kind, and resource URI,
 then includes `ttl_seconds` only when `--ttl` is present and validates it as a
 positive safe integer before the request reaches HTTP decoding. `lease list`
-URL-encodes the workspace query parameter. Release and revoke share the same
-state-command helper because both are bodyless `POST` transitions. Renew accepts
-an optional positive `--ttl`; when it is absent, the host applies its configured
-default lease TTL.
+URL-encodes the workspace query parameter and may carry a `holder` client filter
+so an agent can recover only its own active lease claims without changing the
+host route. Release and revoke share the same state-command helper because both
+are bodyless `POST` transitions. Renew accepts an optional positive `--ttl`;
+when it is absent, the host applies its configured default lease TTL.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -46,6 +48,8 @@ default lease TTL.
   data.
 - ❌ Do NOT pass raw workspace or lease ids into routes; path and query values
   are encoded at parse time.
+- ❌ Do NOT filter lease responses here; [[cli-client]] applies client filters
+  after fetch.
 - ❌ Do NOT add unrelated command groups here.
 
 ## Depth
