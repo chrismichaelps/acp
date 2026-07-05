@@ -6,6 +6,9 @@ export interface CliRequest {
   readonly path: string
   readonly body?: Record<string, unknown>
   readonly stream?: boolean
+  /** When set, the client narrows a JSON-array response to elements whose
+   * `state` equals this value (client-side convenience for list commands). */
+  readonly filterState?: string
   readonly label: string
 }
 

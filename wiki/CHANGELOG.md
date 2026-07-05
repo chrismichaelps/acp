@@ -2,6 +2,20 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-05 · cli-work-list-state-filter slice · added a client-side `--state`
+  filter to `acp work list` so an agent can surface claimable (`open`) work with
+  one flag: [[cli-work-commands]] records `filterState` on the `CliRequest`,
+  [[cli-command-support]]'s contract carries it, and [[cli-client]]'s new pure
+  `applyClientFilter` narrows the JSON-array response after fetch (passthrough on
+  non-array/unparseable bodies), applied by [[cli-main]] before printing.
+  Client-side by design (grillme) — the work-list route is a typed HttpApi
+  endpoint and [[acp-http-api]] sits at the file-size gate, so no host/schema/
+  storage change. Dogfooded through the ACP container (workspace acp-self,
+  planner/worker/reviewer): validated live after image rebuild — `--state open`
+  and `--state running` correctly partition a 3-item workspace · validation:
+  tsc, eslint, prettier, file-size, env, and full suite (361 tests) passed · risk
+  LOW
+
 - 2026-07-05 · acp-agent-skill slice · authored the canonical
   [[agent-integration]] wiki reference (how an autonomous worker connects,
   claims, leases, checkpoints, hands off via memory, requests/handles review,

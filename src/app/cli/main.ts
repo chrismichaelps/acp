@@ -3,7 +3,7 @@ import { HttpClient, HttpClientRequest } from '@effect/platform'
 import { NodeHttpClient, NodeRuntime } from '@effect/platform-node'
 import { Config, Console, Effect, Either, Stream } from 'effect'
 import { nodeArgv } from '../../infrastructure/platform-node/index.js'
-import { runCliRequest, withBearerToken } from './client.js'
+import { applyClientFilter, runCliRequest, withBearerToken } from './client.js'
 import { CliError, parseArgs } from './commands.js'
 import { usage } from './usage.js'
 
@@ -49,7 +49,7 @@ const program = Effect.gen(function* () {
       new CliError({ message: `request failed (${String(result.status)})` }),
     )
   }
-  return yield* Console.log(result.body)
+  return yield* Console.log(applyClientFilter(request, result.body))
 })
 
 NodeRuntime.runMain(program.pipe(Effect.provide(NodeHttpClient.layer)))

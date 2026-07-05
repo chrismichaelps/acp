@@ -16,6 +16,33 @@ export const withBearerToken = (
     ? request
     : HttpClientRequest.setHeader(request, 'authorization', `Bearer ${token}`)
 
+/**
+ * Pure post-fetch narrowing for list commands. When `request.filterState` is
+ * set and `body` parses to a JSON array, keep only elements whose `state`
+ * equals the requested value and re-serialize. A non-array body or any parse
+ * failure returns `body` unchanged, so the CLI never masks a host error.
+ */
+export const applyClientFilter = (
+  request: CliRequest,
+  body: string,
+): string => {
+  const state = request.filterState
+  if (state === undefined) return body
+  try {
+    const parsed: unknown = JSON.parse(body)
+    if (!Array.isArray(parsed)) return body
+    const filtered = parsed.filter(
+      (item) =>
+        typeof item === 'object' &&
+        item !== null &&
+        (item as { state?: unknown }).state === state,
+    )
+    return JSON.stringify(filtered)
+  } catch {
+    return body
+  }
+}
+
 export const runCliRequest = (
   request: CliRequest,
   baseUrl: string,
