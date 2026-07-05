@@ -6,10 +6,14 @@ export interface CliRequest {
   readonly path: string
   readonly body?: Record<string, unknown>
   readonly stream?: boolean
-  /** When set, the client narrows a JSON-array response to elements whose
-   * `state` equals this value (client-side convenience for list commands). */
-  readonly filterState?: string
+  /** Client-side JSON-array filters for list commands. */
+  readonly clientFilters?: readonly ClientFilter[]
   readonly label: string
+}
+
+export interface ClientFilter {
+  readonly field: string
+  readonly value: string
 }
 
 export class CliError extends Data.TaggedError('CliError')<{
@@ -54,6 +58,13 @@ export const optionalAs = (
   field: string,
 ): Record<string, string> =>
   key in flags && flags[key] !== 'true' ? { [field]: flags[key] } : {}
+
+export const optionalClientFilter = (
+  flags: Readonly<Record<string, string>>,
+  key: string,
+  field: string = key,
+): readonly ClientFilter[] =>
+  key in flags && flags[key] !== 'true' ? [{ field, value: flags[key] }] : []
 
 export const optionalQuery = (
   flags: Readonly<Record<string, string>>,

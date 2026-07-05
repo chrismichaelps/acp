@@ -16,6 +16,7 @@ const baseUrl = 'http://127.0.0.1:4317'
 const expectedEventTypes = [
   'workspace.created',
   'work.created',
+  'work.created',
   'work.claimed',
   'work.started',
   'checkpoint.created',
@@ -179,6 +180,36 @@ const main = async () => {
       '--priority',
       'high',
     ])
+    const backlogWork = await cli(planner.token, [
+      'work',
+      'create',
+      'Docker-hosted ACP CLI backlog item',
+      '--workspace',
+      workspace.id,
+      '--description',
+      'Normal priority item used to prove work list priority filtering.',
+      '--priority',
+      'normal',
+    ])
+
+    const highPriorityOpen = await cli(planner.token, [
+      'work',
+      'list',
+      '--workspace',
+      workspace.id,
+      '--state',
+      'open',
+      '--priority',
+      'high',
+    ])
+    assert(
+      highPriorityOpen.length === 1 && highPriorityOpen[0].id === work.id,
+      `expected only high/open work, got ${JSON.stringify(highPriorityOpen)}`,
+    )
+    assert(
+      backlogWork.priority === 'normal',
+      `expected normal backlog priority, got ${JSON.stringify(backlogWork)}`,
+    )
 
     await cli(worker.token, [
       'work',
@@ -188,6 +219,22 @@ const main = async () => {
       worker.worker,
     ])
     await cli(worker.token, ['work', 'update', work.id, '--state', 'running'])
+    const highPriorityRunning = await cli(planner.token, [
+      'work',
+      'list',
+      '--workspace',
+      workspace.id,
+      '--state',
+      'running',
+      '--priority',
+      'high',
+    ])
+    assert(
+      highPriorityRunning.length === 1 && highPriorityRunning[0].id === work.id,
+      `expected only high/running work, got ${JSON.stringify(
+        highPriorityRunning,
+      )}`,
+    )
     await cli(worker.token, [
       'checkpoint',
       'create',

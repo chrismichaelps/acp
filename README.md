@@ -330,7 +330,7 @@ session init      --worker <id> --name <n> [--kind <k>] [--vendor <v>] [--capabi
 worker  list | get <worker_id>
 workspace create | update <id> | archive <id> | list
 work    create <title> --workspace <id> [--priority <p>] [--description <d>]
-work    list --workspace <id> | get <id> | claim <id> --worker <id> | update <id> --state <state>
+work    list --workspace <id> [--state <state>] [--priority <p>] | get <id> | claim <id> --worker <id> | update <id> --state <state>
 lease   request --workspace <id> --holder <id> --kind <k> --uri <u> [--ttl <n>]
 lease   list --workspace <id> | renew <id> [--ttl <n>] | revoke <id> | release <id>
 checkpoint create --workspace <id> --work <id> --summary <s> | list | latest --work <id>

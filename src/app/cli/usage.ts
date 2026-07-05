@@ -9,7 +9,7 @@ export const usage = `acp — Agent Coordination Protocol CLI
   acp workspace update <workspace_id> --name <n> --kind <k> --uri <u> [--default-branch <b>]
   acp workspace archive <workspace_id>
   acp work create <title> --workspace <id> [--priority <p>] [--description <d>]
-  acp work list --workspace <id> [--state <state>]
+  acp work list --workspace <id> [--state <state>] [--priority <priority>]
   acp work get <work_id>
   acp work claim <work_id> --worker <id>
   acp work update <work_id> --state <state>

@@ -25,13 +25,54 @@ describe('work commands', () => {
     ).toEqual({
       method: 'GET',
       path: '/v1/workspaces/workspace_1/work',
-      filterState: 'open',
+      clientFilters: [{ field: 'state', value: 'open' }],
       label: 'work list',
     })
   })
 
-  it('omits filterState when --state is passed without a value', () => {
+  it('records --priority as a client-side filter without changing the route', () => {
+    expect(
+      right([
+        'work',
+        'list',
+        '--workspace',
+        'workspace_1',
+        '--priority',
+        'high',
+      ]),
+    ).toEqual({
+      method: 'GET',
+      path: '/v1/workspaces/workspace_1/work',
+      clientFilters: [{ field: 'priority', value: 'high' }],
+      label: 'work list',
+    })
+  })
+
+  it('records state and priority filters in request order', () => {
+    expect(
+      right([
+        'work',
+        'list',
+        '--workspace',
+        'workspace_1',
+        '--state',
+        'open',
+        '--priority',
+        'high',
+      ]),
+    ).toEqual({
+      method: 'GET',
+      path: '/v1/workspaces/workspace_1/work',
+      clientFilters: [
+        { field: 'state', value: 'open' },
+        { field: 'priority', value: 'high' },
+      ],
+      label: 'work list',
+    })
+  })
+
+  it('omits clientFilters when filter flags are passed without values', () => {
     const req = right(['work', 'list', '--workspace', 'workspace_1', '--state'])
-    expect(req.filterState).toBeUndefined()
+    expect(req.clientFilters).toBeUndefined()
   })
 })
