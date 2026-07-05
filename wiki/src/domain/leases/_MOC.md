@@ -13,6 +13,8 @@ Lease services coordinate temporary resource claims for [[Worker]]s inside a
 - [[lease-service-index]] — opaque Lease service barrel.
 - [[lease-service]] — Lease lifecycle service, conflict guard, renewal, release,
   revoke, and expiry sweep.
+- [[lease-resource-lock]] — durable resource ownership row helpers used to make
+  lease grants atomic across replicated storage adapters.
 
 ## Referenced by
 

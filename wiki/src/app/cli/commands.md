@@ -94,18 +94,20 @@ export const parseArgs: (
 
 Split `argv` through a small token parser registry rather than a branch chain:
 flag tokens own `--key value` and valueless `--key` handling, while the fallback
-token parser records positionals. The public `<group> <action>` command key is
-then resolved through a `ReadonlyMap` built from feature command tables by
-`buildCommandRegistry`. That builder rejects duplicate command keys during
-module initialization, so command ownership remains additive without silently
-shadowing another module's handler. Each handler receives the
-parsed positionals and flags, validates its own required inputs (missing →
-`CliError`) and assembles a `CliRequest` with encoded route parameters and query
-values. Unknown keys never fall through a conditional chain; they return the same
-`CliError` as any unsupported command through the command resolver's fallback
-handler. `parseArgs` is therefore only a composition point: tokenize, resolve a
-handler, execute the handler. Numeric lease TTLs are validated as positive safe
-integers before HTTP decoding.
+token parser records positionals. `parseArgs` then builds a `CommandInvocation`
+containing the original `argv`, the public `<group> <action>` key, and the parsed
+flags/positionals. That invocation flows through ordered dispatch rules: the
+first rule resolves registered keys from the `ReadonlyMap` built by
+`buildCommandRegistry`, and the final rule returns the unknown-command fallback.
+The builder rejects duplicate command keys during module initialization, so
+command ownership remains additive without silently shadowing another module's
+handler. Each handler receives the parsed positionals and flags, validates its
+own required inputs (missing → `CliError`) and assembles a `CliRequest` with
+encoded route parameters and query values. Unknown keys and registered groups
+without subcommands never fall through a conditional chain; they return the same
+`CliError` through the fallback handler. `parseArgs` is therefore only a
+composition point: build invocation, resolve handler, execute handler. Numeric
+lease TTLs are validated as positive safe integers before HTTP decoding.
 Session bootstrap is registered by [[cli-session-commands]] so authenticated CLI
 operators can mint a bearer session before exporting `ACP_RPC_TOKEN`. Lease
 handlers are registered by [[cli-lease-commands]] so lease lifecycle and readback
