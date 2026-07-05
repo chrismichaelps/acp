@@ -4,6 +4,7 @@ import {
   encodePathSegment,
   flag,
   optional,
+  optionalClientFilter,
   positional,
   type CommandHandler,
 } from './command-support.js'
@@ -29,14 +30,14 @@ export const workCommandHandlers: Readonly<Record<string, CommandHandler>> = {
   'work list': ({ flags }) =>
     Either.gen(function* () {
       const workspaceId = yield* flag(flags, 'workspace')
-      const filter =
-        'state' in flags && flags.state !== 'true'
-          ? { filterState: flags.state }
-          : {}
+      const clientFilters = [
+        ...optionalClientFilter(flags, 'state'),
+        ...optionalClientFilter(flags, 'priority'),
+      ]
       return {
         method: 'GET',
         path: `/v1/workspaces/${encodePathSegment(workspaceId)}/work`,
-        ...filter,
+        ...(clientFilters.length > 0 ? { clientFilters } : {}),
         label: 'work list',
       }
     }),

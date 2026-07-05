@@ -88,36 +88,77 @@ describe('runCliRequest', () => {
 describe('applyClientFilter', () => {
   const base = { method: 'GET', path: '/v1/x', label: 'work list' } as const
   const body = JSON.stringify([
-    { id: 'work_1', state: 'open' },
-    { id: 'work_2', state: 'running' },
-    { id: 'work_3', state: 'open' },
+    { id: 'work_1', priority: 'high', state: 'open' },
+    { id: 'work_2', priority: 'high', state: 'running' },
+    { id: 'work_3', priority: 'normal', state: 'open' },
   ])
 
-  it('returns the body unchanged when no filterState is set', () => {
+  it('returns the body unchanged when no clientFilters are set', () => {
     expect(applyClientFilter(base, body)).toBe(body)
   })
 
   it('keeps only array elements whose state matches', () => {
-    const out = applyClientFilter({ ...base, filterState: 'open' }, body)
+    const out = applyClientFilter(
+      { ...base, clientFilters: [{ field: 'state', value: 'open' }] },
+      body,
+    )
     expect(JSON.parse(out)).toEqual([
-      { id: 'work_1', state: 'open' },
-      { id: 'work_3', state: 'open' },
+      { id: 'work_1', priority: 'high', state: 'open' },
+      { id: 'work_3', priority: 'normal', state: 'open' },
+    ])
+  })
+
+  it('keeps only array elements whose priority matches', () => {
+    const out = applyClientFilter(
+      { ...base, clientFilters: [{ field: 'priority', value: 'high' }] },
+      body,
+    )
+    expect(JSON.parse(out)).toEqual([
+      { id: 'work_1', priority: 'high', state: 'open' },
+      { id: 'work_2', priority: 'high', state: 'running' },
+    ])
+  })
+
+  it('requires all client filters to match', () => {
+    const out = applyClientFilter(
+      {
+        ...base,
+        clientFilters: [
+          { field: 'state', value: 'open' },
+          { field: 'priority', value: 'high' },
+        ],
+      },
+      body,
+    )
+    expect(JSON.parse(out)).toEqual([
+      { id: 'work_1', priority: 'high', state: 'open' },
     ])
   })
 
   it('yields an empty array when nothing matches', () => {
-    const out = applyClientFilter({ ...base, filterState: 'blocked' }, body)
+    const out = applyClientFilter(
+      { ...base, clientFilters: [{ field: 'state', value: 'blocked' }] },
+      body,
+    )
     expect(JSON.parse(out)).toEqual([])
   })
 
   it('passes through a non-array body (e.g. a host error object)', () => {
     const err = JSON.stringify({ error: { code: 'not_found' } })
-    expect(applyClientFilter({ ...base, filterState: 'open' }, err)).toBe(err)
+    expect(
+      applyClientFilter(
+        { ...base, clientFilters: [{ field: 'state', value: 'open' }] },
+        err,
+      ),
+    ).toBe(err)
   })
 
   it('passes through unparseable bodies without throwing', () => {
     expect(
-      applyClientFilter({ ...base, filterState: 'open' }, 'not json'),
+      applyClientFilter(
+        { ...base, clientFilters: [{ field: 'state', value: 'open' }] },
+        'not json',
+      ),
     ).toBe('not json')
   })
 })

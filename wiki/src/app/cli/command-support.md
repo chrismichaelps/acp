@@ -25,6 +25,7 @@ classes.
 
 ```typescript
 export interface CliRequest
+export interface ClientFilter
 export class CliError
 export interface Parsed
 export type CommandHandler
@@ -32,6 +33,7 @@ export const flag: (...)
 export const positional: (...)
 export const optional: (...)
 export const optionalAs: (...)
+export const optionalClientFilter: (...)
 export const optionalQuery: (...)
 export const csvFlag: (...)
 export const encodePathSegment: (...)
@@ -44,9 +46,9 @@ export const positiveIntegerFlag: (...)
 
 The helpers are pure transformations over already-tokenized positionals and
 flags. The `CliRequest` contract carries the HTTP `method`/`path`/`body`/`label`
-plus optional `stream` and `filterState` fields; `filterState` lets a command map
-(e.g. [[cli-work-commands]]) request a client-side response narrowing that
-[[cli-client]] applies after fetch, without changing the route. Required
+plus optional `stream` and `clientFilters` fields; `clientFilters` lets a
+command map (e.g. [[cli-work-commands]]) request client-side response narrowing
+that [[cli-client]] applies after fetch, without changing the route. Required
 positional and flag reads return `CliError` in the `Either` error channel. Optional helpers only materialize fields when the flag has a
 real value, query helpers URL-encode their values, CSV values trim empty
 segments, and integer helpers reject unsafe or below-minimum values before a

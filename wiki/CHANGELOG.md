@@ -2,6 +2,17 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-05 · cli-work-list-priority-filter slice · extended the client-side
+  work-list narrowing path from a single `filterState` field to generic
+  `clientFilters`, then added `acp work list --priority <p>` alongside
+  `--state`. The route remains `GET /v1/workspaces/<id>/work`; filtering happens
+  after fetch in [[cli-client]] so the typed host API and storage contracts stay
+  unchanged. The Docker-hosted CLI dogfood lane now creates high and normal work
+  items and asserts both priority-only and combined priority/state filtering in
+  the production image · validation: focused CLI tests, typecheck, lint,
+  prettier, file-size, env, full suite (365 passed, 8 skipped), and Docker CLI
+  dogfood passed · risk LOW
+
 - 2026-07-05 · cli-work-list-state-filter slice · added a client-side `--state`
   filter to `acp work list` so an agent can surface claimable (`open`) work with
   one flag: [[cli-work-commands]] records `filterState` on the `CliRequest`,

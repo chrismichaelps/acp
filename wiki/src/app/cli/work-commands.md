@@ -26,36 +26,38 @@ export const workCommandHandlers: Readonly<Record<string, CommandHandler>>
 ```
 
 `work create <title> --workspace <id> [--priority] [--description]` maps to
-`POST /v1/work`. `work list --workspace <id> [--state <s>]` maps to
-`GET /v1/workspaces/<id>/work`, and when `--state` is supplied it records the
-target state on the `CliRequest` `filterState` field so [[cli-client]] filters
-the returned array client-side. `work get <work_id>` maps to `GET /v1/work/<id>`.
-`work claim <work_id> --worker <id>` maps to `POST /v1/work/<id>/claim`.
-`work update <work_id> --state <s>` maps to `PATCH /v1/work/<id>`.
+`POST /v1/work`. `work list --workspace <id> [--state <s>] [--priority <p>]`
+maps to `GET /v1/workspaces/<id>/work`, and when either filter is supplied it
+records field/value entries on the `CliRequest` `clientFilters` field so
+[[cli-client]] filters the returned array client-side. `work get <work_id>` maps
+to `GET /v1/work/<id>`. `work claim <work_id> --worker <id>` maps to
+`POST /v1/work/<id>/claim`. `work update <work_id> --state <s>` maps to
+`PATCH /v1/work/<id>`.
 
 ## Algorithm
 
 Create requires a title positional and workspace flag, then forwards optional
 description and priority fields unchanged. List URL-encodes the workspace id in
-the collection path and, when `--state` is present, sets `filterState` on the
-request so the response is narrowed after fetch — the route and host stay
-unchanged. Get, claim, and update URL-encode the work id before placing it in the
-route. Claim normalizes `--worker` to the `worker_id` request field, and update
-sends only the target state.
+the collection path and records any `--state`/`--priority` filters as generic
+field/value pairs on the request so the response is narrowed after fetch — the
+route and host stay unchanged. Get, claim, and update URL-encode the work id
+before placing it in the route. Claim normalizes `--worker` to the `worker_id`
+request field, and update sends only the target state.
 
-The `--state` filter is a **client-side convenience** (grillme): the work-list
-route is a typed `HttpApi` endpoint and `[[acp-http-api]]` is at the file-size
-gate, so adding a host-side `state` url-param would ripple through schema,
-handler, domain, and storage. Filtering the already-fetched array in
-[[cli-client]] gives an agent a one-flag "show me claimable (`open`) work" path
-at zero protocol/storage cost. Rejected: host-side url-param (heavier, gated),
-and a new `work discover` command (redundant with list).
+The `--state` and `--priority` filters are **client-side conveniences**
+(grillme): the work-list route is a typed `HttpApi` endpoint and
+`[[acp-http-api]]` is at the file-size gate, so adding host-side url params would
+ripple through schema, handler, domain, and storage. Filtering the
+already-fetched array in [[cli-client]] gives an agent a one-flag "show me
+claimable (`open`) work" or "show me urgent (`high`) work" path at zero
+protocol/storage cost. Rejected: host-side url-params (heavier, gated), and a
+new `work discover` command (redundant with list).
 
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT call domain services here; this module only builds `CliRequest` data.
 - ❌ Do NOT pass raw workspace or work ids into route paths.
-- ❌ Do NOT filter the response here; this module only sets `filterState` —
+- ❌ Do NOT filter the response here; this module only sets `clientFilters` —
   [[cli-client]] applies it after fetch.
 - ❌ Do NOT handle checkpoint, artifact, or review resume reads here; those have
   separate collection semantics.

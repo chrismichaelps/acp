@@ -1809,6 +1809,7 @@ export ACP_RPC_TOKEN=session_...
 
 acp workspace create --name acp-demo --kind git_repository --uri file:///repo
 acp work create "Fix login redirect bug" --workspace workspace_123
+acp work list --workspace workspace_123 --state open --priority high
 acp work claim work_123 --worker agent_codex
 acp work update work_123 --state running
 acp lease request --workspace workspace_123 --holder agent_codex --kind file --uri file://src/auth/callback.ts
