@@ -13,6 +13,12 @@ export type EventDraft = Omit<Event, 'seq'>
 /** A Memory record with everything but its monotonic `seq`, assigned by Storage. */
 export type MemoryDraft = Omit<Memory, 'seq'>
 
+/** A kv row's value paired with its per-row monotonic version counter. */
+export interface StoredRecord {
+  readonly value: unknown
+  readonly version: number
+}
+
 export interface StorageApi {
   readonly put: (
     collection: string,
@@ -34,6 +40,23 @@ export interface StorageApi {
     collection: string,
     id: string,
   ) => Effect.Effect<Option.Option<unknown>, StorageError>
+  /** Like `get`, but returns the row's version counter alongside its value. */
+  readonly getVersioned: (
+    collection: string,
+    id: string,
+  ) => Effect.Effect<Option.Option<StoredRecord>, StorageError>
+  /**
+   * Compare-and-swap on the row's version counter instead of its full
+   * serialized value — O(1) vs. `replaceIf`'s whole-blob comparison. Swaps
+   * and returns `true` only when the row's current version equals
+   * `expectedVersion`; the new value's version is that plus one.
+   */
+  readonly replaceIfVersion: (
+    collection: string,
+    id: string,
+    expectedVersion: number,
+    value: unknown,
+  ) => Effect.Effect<boolean, StorageError>
   readonly list: (
     collection: string,
   ) => Effect.Effect<Chunk.Chunk<unknown>, StorageError>

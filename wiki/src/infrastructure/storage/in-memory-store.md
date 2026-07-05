@@ -32,13 +32,26 @@ export const InMemoryStorageLive: Layer.Layer<Storage>
 
 Two `Ref`s constructed in the Layer's scoped effect:
 
-1. `collections: Ref<HashMap<string, HashMap<string, unknown>>>` — collection → (id → value).
+1. `collections: Ref<HashMap<string, HashMap<string, StoredRecord>>>` — collection → (id → `{ value, version }`).
 2. `events: Ref<HashMap<string, Chunk<Event>>>` — workspaceId → ordered event log.
 3. `memory: Ref<HashMap<string, Chunk<Memory>>>` — workspaceId → ordered memory records.
 
-- **put** — `Ref.update`: get-or-empty the inner map, `HashMap.set(id, value)`, set back.
-- **get** — read ref, `HashMap.get(collection)` then `HashMap.get(id)` → `Option`.
-- **list** — read ref, `Chunk.fromIterable(HashMap.values(inner))` (empty if absent).
+- **put** — `Ref.update`: get-or-empty the inner map, store
+  `{ value, version: (existing?.version ?? 0) + 1 }`, set back.
+- **get** — read ref, `HashMap.get(collection)` then `HashMap.get(id)` → `Option`,
+  projected to `.value`.
+- **getVersioned** — same lookup as `get` but returns the whole `StoredRecord`
+  (value + version) unprojected.
+- **replaceIf** — `Ref.modify`: compare the stored row's `.value` against
+  `expected` via JSON-string equality; on match, write the new value and
+  increment version, else no-op and return `false`.
+- **replaceIfVersion** — `Ref.modify`: compare the stored row's `.version`
+  against `expectedVersion`; on match, write `{ value, version: version + 1 }`
+  and return `true`, else no-op and return `false`. O(1) integer compare vs.
+  `replaceIf`'s whole-blob JSON comparison.
+- **putIfAbsent** — inserts `{ value, version: 1 }` only if the id is absent.
+- **list** — read ref, `Chunk.fromIterable(HashMap.values(inner))` projected to
+  each row's `.value` (empty if absent).
 - **remove** — `Ref.update` removing the id from the inner map.
 - **appendEvent** — `Ref.modify` atomically: read the workspace's chunk (empty if
   absent), `seq = Chunk.size + 1`, build the full `Event` from the draft, append,
@@ -61,6 +74,17 @@ All operations are total in memory, so each returns `Effect.succeed(...)`; the
   semantics in memory.
 - ❌ Do NOT ignore replay limits; in-memory tests mirror the production query
   contract even though the adapter is not SQL-backed.
+
+## Grill Log
+
+- **Q:** Should `replaceIf`'s whole-value CAS also bump `version`, even though the
+  caller only ever observes version through `getVersioned`/`replaceIfVersion`?
+  **A:** Yes — every successful write (`put`, `putIfAbsent`, `replaceIf`,
+  `replaceIfVersion`) increments `version`, so the counter always reflects the
+  true number of writes to a row. Version is per-row monotonic and survives
+  value rewrites; skipping the bump on `replaceIf` would let a later
+  `replaceIfVersion` CAS succeed against a version that no longer matches the
+  row's actual value history.
 
 ## Depth
 

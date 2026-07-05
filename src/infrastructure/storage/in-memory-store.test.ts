@@ -141,6 +141,27 @@ describe('InMemory storage — keyed collections', () => {
     )
     expect(sizes).toEqual([2, 1])
   })
+
+  it('replaceIfVersion swaps only when the expected version matches', () =>
+    Effect.gen(function* () {
+      const storage = yield* Storage
+      yield* storage.put('work', 'w1', { id: 'w1', n: 0 })
+      const first = yield* storage.getVersioned('work', 'w1')
+      const version = Option.getOrThrow(first).version // 1
+      const okSwap = yield* storage.replaceIfVersion('work', 'w1', version, {
+        id: 'w1',
+        n: 1,
+      })
+      const staleSwap = yield* storage.replaceIfVersion('work', 'w1', version, {
+        id: 'w1',
+        n: 2,
+      })
+      const final = yield* storage.getVersioned('work', 'w1')
+      expect(okSwap).toBe(true)
+      expect(staleSwap).toBe(false) // version already advanced
+      expect(Option.getOrThrow(final).value).toEqual({ id: 'w1', n: 1 })
+      expect(Option.getOrThrow(final).version).toBe(2)
+    }).pipe(Effect.provide(InMemoryStorageLive), Effect.runPromise))
 })
 
 describe('InMemory storage — append-only event log', () => {

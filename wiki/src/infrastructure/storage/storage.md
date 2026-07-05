@@ -30,6 +30,11 @@ workspace-scoped [[Memory]] records.
 export type EventDraft = Omit<Event, 'seq'> // caller supplies all but seq
 export type MemoryDraft = Omit<Memory, 'seq'>
 
+export interface StoredRecord {
+  readonly value: unknown
+  readonly version: number
+}
+
 export interface StorageApi {
   readonly put: (
     collection: string,
@@ -40,6 +45,16 @@ export interface StorageApi {
     collection: string,
     id: string,
   ) => Effect<Option<unknown>, StorageError>
+  readonly getVersioned: (
+    collection: string,
+    id: string,
+  ) => Effect<Option<StoredRecord>, StorageError>
+  readonly replaceIfVersion: (
+    collection: string,
+    id: string,
+    expectedVersion: number,
+    value: unknown,
+  ) => Effect<boolean, StorageError>
   readonly list: (collection: string) => Effect<Chunk<unknown>, StorageError>
   readonly remove: (
     collection: string,
@@ -77,6 +92,9 @@ export class Storage extends Context.Tag('Storage')<Storage, StorageApi>() {}
   entire workspace event log.
 - `appendMemory` is the equivalent Memory path and exists to avoid generic `kv`
   scans for thousands of handoff/recall records.
+- `getVersioned`/`replaceIfVersion` add optimistic-concurrency-by-version: CAS
+  on an O(1) integer instead of `replaceIf`'s whole-blob JSON comparison. Every
+  `put`/`putIfAbsent`/`replaceIfVersion` write increments the row's `version`.
 
 ### Linkage
 
@@ -96,6 +114,14 @@ Interface only — no behavior. Behavior lives in adapters; see [[in-memory-stor
   exception because it requires `(workspace_id, seq)` cursor reads.
 - ❌ Do NOT implement replay limits above the seam when the adapter can push the
   cap into its `(workspace_id, seq)` query.
+
+## Grill Log
+
+- **Q:** Does `version` reset when a row's value is overwritten, or does it stay
+  monotonic across rewrites? **A:** Monotonic — version is per-row and survives
+  value rewrites; it only ever increments, never resets to reflect the new value's
+  shape. This lets callers hold a version across unrelated `put`s of other rows
+  and treat any mismatch as "someone else wrote since I read."
 
 ## Depth
 

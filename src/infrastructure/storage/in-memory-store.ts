@@ -1,7 +1,7 @@
 /** @Acp.Infra.Storage.InMemory — Ref-guarded in-memory adapter */
 import { Chunk, Effect, HashMap, Layer, Option, Ref } from 'effect'
 import { Storage } from './storage.js'
-import type { StorageApi } from './storage.js'
+import type { StorageApi, StoredRecord } from './storage.js'
 import type { Event, Memory } from '../../protocol/schema/index.js'
 
 const sameJsonValue = (left: unknown, right: unknown): boolean =>
@@ -9,7 +9,7 @@ const sameJsonValue = (left: unknown, right: unknown): boolean =>
 
 const make = Effect.gen(function* () {
   const collections = yield* Ref.make(
-    HashMap.empty<string, HashMap.HashMap<string, unknown>>(),
+    HashMap.empty<string, HashMap.HashMap<string, StoredRecord>>(),
   )
   const events = yield* Ref.make(HashMap.empty<string, Chunk.Chunk<Event>>())
   const memory = yield* Ref.make(HashMap.empty<string, Chunk.Chunk<Memory>>())
@@ -17,9 +17,14 @@ const make = Effect.gen(function* () {
   const put: StorageApi['put'] = (collection, id, value) =>
     Ref.update(collections, (cs) => {
       const inner = Option.getOrElse(HashMap.get(cs, collection), () =>
-        HashMap.empty<string, unknown>(),
+        HashMap.empty<string, StoredRecord>(),
       )
-      return HashMap.set(cs, collection, HashMap.set(inner, id, value))
+      const existing = Option.getOrUndefined(HashMap.get(inner, id))
+      const stored: StoredRecord = {
+        value,
+        version: (existing?.version ?? 0) + 1,
+      }
+      return HashMap.set(cs, collection, HashMap.set(inner, id, stored))
     })
 
   const replaceIf: StorageApi['replaceIf'] = (
@@ -30,38 +35,75 @@ const make = Effect.gen(function* () {
   ) =>
     Ref.modify(collections, (cs) => {
       const inner = Option.getOrElse(HashMap.get(cs, collection), () =>
-        HashMap.empty<string, unknown>(),
+        HashMap.empty<string, StoredRecord>(),
       )
       const current = Option.getOrUndefined(HashMap.get(inner, id))
-      if (!sameJsonValue(current, expected)) {
+      if (!sameJsonValue(current?.value, expected)) {
         return [false, cs]
       }
-      return [true, HashMap.set(cs, collection, HashMap.set(inner, id, value))]
+      const stored: StoredRecord = {
+        value,
+        version: (current?.version ?? 0) + 1,
+      }
+      return [true, HashMap.set(cs, collection, HashMap.set(inner, id, stored))]
     })
 
   const putIfAbsent: StorageApi['putIfAbsent'] = (collection, id, value) =>
     Ref.modify(collections, (cs) => {
       const inner = Option.getOrElse(HashMap.get(cs, collection), () =>
-        HashMap.empty<string, unknown>(),
+        HashMap.empty<string, StoredRecord>(),
       )
       if (Option.isSome(HashMap.get(inner, id))) {
         return [false, cs]
       }
-      return [true, HashMap.set(cs, collection, HashMap.set(inner, id, value))]
+      const stored: StoredRecord = { value, version: 1 }
+      return [true, HashMap.set(cs, collection, HashMap.set(inner, id, stored))]
     })
 
   const get: StorageApi['get'] = (collection, id) =>
+    Effect.map(Ref.get(collections), (cs) =>
+      Option.map(
+        Option.flatMap(HashMap.get(cs, collection), (inner) =>
+          HashMap.get(inner, id),
+        ),
+        (stored) => stored.value,
+      ),
+    )
+
+  const getVersioned: StorageApi['getVersioned'] = (collection, id) =>
     Effect.map(Ref.get(collections), (cs) =>
       Option.flatMap(HashMap.get(cs, collection), (inner) =>
         HashMap.get(inner, id),
       ),
     )
 
+  const replaceIfVersion: StorageApi['replaceIfVersion'] = (
+    collection,
+    id,
+    expectedVersion,
+    value,
+  ) =>
+    Ref.modify(collections, (cs) => {
+      const inner = Option.getOrElse(HashMap.get(cs, collection), () =>
+        HashMap.empty<string, StoredRecord>(),
+      )
+      const current = Option.getOrUndefined(HashMap.get(inner, id))
+      if (current?.version !== expectedVersion) {
+        return [false, cs]
+      }
+      const stored: StoredRecord = { value, version: current.version + 1 }
+      return [true, HashMap.set(cs, collection, HashMap.set(inner, id, stored))]
+    })
+
   const list: StorageApi['list'] = (collection) =>
     Effect.map(Ref.get(collections), (cs) =>
       Option.match(HashMap.get(cs, collection), {
         onNone: () => Chunk.empty<unknown>(),
-        onSome: (inner) => Chunk.fromIterable(HashMap.values(inner)),
+        onSome: (inner) =>
+          Chunk.map(
+            Chunk.fromIterable(HashMap.values(inner)),
+            (stored) => stored.value,
+          ),
       }),
     )
 
@@ -177,6 +219,8 @@ const make = Effect.gen(function* () {
     putIfAbsent,
     replaceIf,
     get,
+    getVersioned,
+    replaceIfVersion,
     list,
     remove,
     appendEvent,
