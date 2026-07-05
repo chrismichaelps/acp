@@ -2,6 +2,15 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-05 · cli-work-list-assignee-filter slice · added
+  `acp work list --assigned-to <worker_id>` as another client-side list filter
+  on the generic `clientFilters` path. The flag maps to the wire `assigned_to`
+  field, giving agents a direct "show my assigned work" query while keeping the
+  host route, schema, and storage contracts unchanged. Docker dogfood proves the
+  filter against a claimed work item in the production image · validation:
+  focused CLI tests, typecheck, lint, prettier, file-size, env, full suite (367
+  passed, 8 skipped), and Docker CLI dogfood passed · risk LOW
+
 - 2026-07-05 · cli-work-list-priority-filter slice · extended the client-side
   work-list narrowing path from a single `filterState` field to generic
   `clientFilters`, then added `acp work list --priority <p>` alongside

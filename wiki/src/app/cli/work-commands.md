@@ -26,30 +26,31 @@ export const workCommandHandlers: Readonly<Record<string, CommandHandler>>
 ```
 
 `work create <title> --workspace <id> [--priority] [--description]` maps to
-`POST /v1/work`. `work list --workspace <id> [--state <s>] [--priority <p>]`
-maps to `GET /v1/workspaces/<id>/work`, and when either filter is supplied it
-records field/value entries on the `CliRequest` `clientFilters` field so
-[[cli-client]] filters the returned array client-side. `work get <work_id>` maps
-to `GET /v1/work/<id>`. `work claim <work_id> --worker <id>` maps to
-`POST /v1/work/<id>/claim`. `work update <work_id> --state <s>` maps to
-`PATCH /v1/work/<id>`.
+`POST /v1/work`. `work list --workspace <id> [--state <s>] [--priority <p>]
+[--assigned-to <worker_id>]` maps to `GET /v1/workspaces/<id>/work`, and when a
+filter is supplied it records field/value entries on the `CliRequest`
+`clientFilters` field so [[cli-client]] filters the returned array client-side.
+`work get <work_id>` maps to `GET /v1/work/<id>`. `work claim <work_id>
+--worker <id>` maps to `POST /v1/work/<id>/claim`. `work update <work_id>
+--state <s>` maps to `PATCH /v1/work/<id>`.
 
 ## Algorithm
 
 Create requires a title positional and workspace flag, then forwards optional
 description and priority fields unchanged. List URL-encodes the workspace id in
-the collection path and records any `--state`/`--priority` filters as generic
-field/value pairs on the request so the response is narrowed after fetch — the
-route and host stay unchanged. Get, claim, and update URL-encode the work id
+the collection path and records any `--state`, `--priority`, or `--assigned-to`
+filters as generic field/value pairs on the request so the response is narrowed
+after fetch — the route and host stay unchanged. The assignee flag maps to the
+wire response field `assigned_to`. Get, claim, and update URL-encode the work id
 before placing it in the route. Claim normalizes `--worker` to the `worker_id`
 request field, and update sends only the target state.
 
-The `--state` and `--priority` filters are **client-side conveniences**
-(grillme): the work-list route is a typed `HttpApi` endpoint and
+The `--state`, `--priority`, and `--assigned-to` filters are **client-side
+conveniences** (grillme): the work-list route is a typed `HttpApi` endpoint and
 `[[acp-http-api]]` is at the file-size gate, so adding host-side url params would
 ripple through schema, handler, domain, and storage. Filtering the
-already-fetched array in [[cli-client]] gives an agent a one-flag "show me
-claimable (`open`) work" or "show me urgent (`high`) work" path at zero
+already-fetched array in [[cli-client]] gives an agent one-flag paths for
+claimable (`open`) work, urgent (`high`) work, or "my assigned work" at zero
 protocol/storage cost. Rejected: host-side url-params (heavier, gated), and a
 new `work discover` command (redundant with list).
 

@@ -89,8 +89,18 @@ describe('applyClientFilter', () => {
   const base = { method: 'GET', path: '/v1/x', label: 'work list' } as const
   const body = JSON.stringify([
     { id: 'work_1', priority: 'high', state: 'open' },
-    { id: 'work_2', priority: 'high', state: 'running' },
-    { id: 'work_3', priority: 'normal', state: 'open' },
+    {
+      assigned_to: 'worker_1',
+      id: 'work_2',
+      priority: 'high',
+      state: 'running',
+    },
+    {
+      assigned_to: 'worker_2',
+      id: 'work_3',
+      priority: 'normal',
+      state: 'open',
+    },
   ])
 
   it('returns the body unchanged when no clientFilters are set', () => {
@@ -104,7 +114,12 @@ describe('applyClientFilter', () => {
     )
     expect(JSON.parse(out)).toEqual([
       { id: 'work_1', priority: 'high', state: 'open' },
-      { id: 'work_3', priority: 'normal', state: 'open' },
+      {
+        assigned_to: 'worker_2',
+        id: 'work_3',
+        priority: 'normal',
+        state: 'open',
+      },
     ])
   })
 
@@ -115,7 +130,12 @@ describe('applyClientFilter', () => {
     )
     expect(JSON.parse(out)).toEqual([
       { id: 'work_1', priority: 'high', state: 'open' },
-      { id: 'work_2', priority: 'high', state: 'running' },
+      {
+        assigned_to: 'worker_1',
+        id: 'work_2',
+        priority: 'high',
+        state: 'running',
+      },
     ])
   })
 
@@ -132,6 +152,21 @@ describe('applyClientFilter', () => {
     )
     expect(JSON.parse(out)).toEqual([
       { id: 'work_1', priority: 'high', state: 'open' },
+    ])
+  })
+
+  it('keeps only array elements whose assignee matches', () => {
+    const out = applyClientFilter(
+      { ...base, clientFilters: [{ field: 'assigned_to', value: 'worker_1' }] },
+      body,
+    )
+    expect(JSON.parse(out)).toEqual([
+      {
+        assigned_to: 'worker_1',
+        id: 'work_2',
+        priority: 'high',
+        state: 'running',
+      },
     ])
   })
 

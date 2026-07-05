@@ -56,8 +56,9 @@ the response text, return `{ status, body }`. `withBearerToken` is exported so
 `request.clientFilters` is non-empty and the body parses to a JSON array, it
 keeps only elements whose named fields equal every requested value and
 re-serializes; on a non-array body or parse failure it returns the body
-unchanged. [[cli-main]] calls it before printing so `work list --state <s>` and
-`work list --priority <p>` narrow output without a host round-trip change.
+unchanged. [[cli-main]] calls it before printing so `work list --state <s>`,
+`work list --priority <p>`, and `work list --assigned-to <worker_id>` narrow
+output without a host round-trip change.
 
 ## Negative Logic (Prohibited Paths)
 

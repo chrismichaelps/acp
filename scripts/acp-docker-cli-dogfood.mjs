@@ -218,6 +218,20 @@ const main = async () => {
       '--worker',
       worker.worker,
     ])
+    const assignedToWorker = await cli(planner.token, [
+      'work',
+      'list',
+      '--workspace',
+      workspace.id,
+      '--assigned-to',
+      worker.worker,
+    ])
+    assert(
+      assignedToWorker.length === 1 && assignedToWorker[0].id === work.id,
+      `expected only work assigned to worker, got ${JSON.stringify(
+        assignedToWorker,
+      )}`,
+    )
     await cli(worker.token, ['work', 'update', work.id, '--state', 'running'])
     const highPriorityRunning = await cli(planner.token, [
       'work',

@@ -33,6 +33,7 @@ export const workCommandHandlers: Readonly<Record<string, CommandHandler>> = {
       const clientFilters = [
         ...optionalClientFilter(flags, 'state'),
         ...optionalClientFilter(flags, 'priority'),
+        ...optionalClientFilter(flags, 'assigned-to', 'assigned_to'),
       ]
       return {
         method: 'GET',
