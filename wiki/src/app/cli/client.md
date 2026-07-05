@@ -57,8 +57,9 @@ the response text, return `{ status, body }`. `withBearerToken` is exported so
 keeps only elements whose named fields equal every requested value and
 re-serializes; on a non-array body or parse failure it returns the body
 unchanged. [[cli-main]] calls it before printing so `work list --state <s>`,
-`work list --priority <p>`, `work list --assigned-to <worker_id>`, and
-`lease list --holder <holder>` narrow output without a host round-trip change.
+`work list --priority <p>`, `work list --assigned-to <worker_id>`,
+`lease list --holder <holder>`, and `artifact list --kind <kind>` narrow output
+without a host round-trip change.
 
 ## Negative Logic (Prohibited Paths)
 

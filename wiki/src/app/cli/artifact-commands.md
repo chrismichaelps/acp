@@ -30,9 +30,10 @@ to `POST /v1/artifacts`. `artifact pr --workspace --work --url [--summary]` is a
 convenience projection over the same create route with `kind: "pull_request"`.
 `artifact update <artifact_id> --kind [--uri] [--media-type] [--summary]
 [--content]` maps to `PATCH /v1/artifacts/<id>`. `artifact list --work <id> |
---workspace <id>` maps to the work-scoped or workspace-scoped artifact
-collection. `artifact content <artifact_id>` and `artifact delete <artifact_id>`
-map to the artifact content and delete routes.
+--workspace <id> [--kind <kind>]` maps to the work-scoped or workspace-scoped
+artifact collection and, when `--kind` is supplied, records a client-side `kind`
+filter for [[cli-client]]. `artifact content <artifact_id>` and
+`artifact delete <artifact_id>` map to the artifact content and delete routes.
 
 ## Algorithm
 
@@ -40,8 +41,9 @@ Create and PR registration require workspace and work ids, then forward optional
 metadata only when provided. Update requires artifact id and kind, normalizes
 `--media-type` to `media_type`, and forwards optional URI, summary, and content.
 List delegates to `scopedWorkListPath` for consistent `--workspace` /
-`--work` collection routing. Content and delete URL-encode the artifact id before
-constructing their routes.
+`--work` collection routing, then adds an optional `kind` client filter so agents
+can recover a specific artifact class without changing the host route. Content
+and delete URL-encode the artifact id before constructing their routes.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -49,6 +51,8 @@ constructing their routes.
   the supplied URL as ACP artifact metadata.
 - ❌ Do NOT inline artifact content limits here; service/schema boundaries own
   validation.
+- ❌ Do NOT filter artifact responses here; [[cli-client]] applies client filters
+  after fetch.
 - ❌ Do NOT duplicate scoped collection path construction.
 
 ## Depth

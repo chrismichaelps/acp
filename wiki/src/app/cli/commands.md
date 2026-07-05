@@ -71,7 +71,7 @@ export const parseArgs: (
 | `artifact create --workspace --work --kind [--uri] [--summary] [--content]`           | `POST /v1/artifacts`                              |
 | `artifact pr --workspace --work --url [--summary]`                                    | `POST /v1/artifacts` as `pull_request`            |
 | `artifact update <artifact_id> --kind [--uri] [--media-type] [--summary] [--content]` | `PATCH /v1/artifacts/<id>`                        |
-| `artifact list --work <id> \| --workspace <id>`                                       | `GET /v1/work/<id>/artifacts` or workspace list   |
+| `artifact list --work <id> \| --workspace <id> [--kind]`                              | `GET /v1/work/<id>/artifacts` or workspace list   |
 | `artifact content <artifact_id>`                                                      | `GET /v1/artifacts/<id>/content`                  |
 | `artifact delete <artifact_id>`                                                       | `DELETE /v1/artifacts/<id>`                       |
 | `review request --work --by [--reviewer]`                                             | `POST /v1/reviews`                                |

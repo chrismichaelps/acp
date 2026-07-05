@@ -24,7 +24,7 @@ export const usage = `acp — Agent Coordination Protocol CLI
   acp artifact create --workspace <id> --work <id> --kind <k> [--uri <u>] [--summary <s>] [--content <c>]
   acp artifact pr --workspace <id> --work <id> --url <u> [--summary <s>]
   acp artifact update <artifact_id> --kind <k> [--uri <u>] [--media-type <m>] [--summary <s>] [--content <c>]
-  acp artifact list --work <id>|--workspace <id>
+  acp artifact list --work <id>|--workspace <id> [--kind <kind>]
   acp artifact content <artifact_id>
   acp artifact delete <artifact_id>
   acp review request --work <id> --by <id> [--reviewer <id>]
