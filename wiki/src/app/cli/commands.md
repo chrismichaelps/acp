@@ -76,7 +76,7 @@ export const parseArgs: (
 | `artifact delete <artifact_id>`                                                       | `DELETE /v1/artifacts/<id>`                       |
 | `review request --work --by [--reviewer]`                                             | `POST /v1/reviews`                                |
 | `review list --work <id> \| --workspace <id>`                                         | `GET /v1/work/<id>/reviews` or workspace list     |
-| `review approve <review_id> --met <csv>`                                              | `POST /v1/reviews/<id>/approve`                   |
+| `review approve <review_id> --met <csv> [--signature ...]`                            | `POST /v1/reviews/<id>/approve`                   |
 | `review reject <review_id>`                                                           | `POST /v1/reviews/<id>/reject`                    |
 | `review request-changes <review_id>`                                                  | `POST /v1/reviews/<id>/request_changes`           |
 | `review cancel <review_id>`                                                           | `POST /v1/reviews/<id>/cancel`                    |
@@ -139,8 +139,9 @@ Work resume reads map `work list --workspace`, `work get`,
 `checkpoint list`, `artifact list`, and `review list` also accept `--workspace`
 for workspace-level aggregate resume reads. `events list` maps to the JSON replay
 route with an optional non-negative `--after` cursor. `review approve --met` is a
-comma-separated list that becomes `met_requirements`. `review cancel` maps to the
-dedicated review cancellation route so withdrawal is not expressed as rejection.
+comma-separated list that becomes `met_requirements`; optional signature flags
+become `approval_signature` evidence. `review cancel` maps to the dedicated
+review cancellation route so withdrawal is not expressed as rejection.
 `events stream` sets `stream: true`. Session, artifact, checkpoint, event, lease,
 memory, review, work, worker, and workspace handlers are registered by spreading
 their feature command maps into the central table, preserving one dispatch point

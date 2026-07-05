@@ -494,8 +494,18 @@ const main = async () => {
       secondReview.id,
       '--met',
       'ha_stack,durable_handoff,event_replay',
+      '--signature',
+      `sig:docker-ha:${runId}`,
+      '--signature-algorithm',
+      'test-ed25519',
+      '--signature-key',
+      `dogfood:${reviewer.workerId}`,
     ])
     assert(approved.state === 'approved', 'reviewer did not approve')
+    assert(
+      approved.approval_signature?.value === `sig:docker-ha:${runId}`,
+      'signed approval evidence was not persisted',
+    )
 
     const released = await cli(leaseHolder.token, [
       'lease',
@@ -569,6 +579,7 @@ const main = async () => {
           artifact_id: artifact.id,
           first_review_state: changes.state,
           second_review_state: approved.state,
+          approval_signature_key: approved.approval_signature?.key_id,
           completed_state: persistedWork.state,
           event_count: events.length,
           event_types: eventTypes,

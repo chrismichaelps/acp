@@ -14,6 +14,39 @@ const expectRight = <E>(
 }
 
 describe('JSON-RPC review commands', () => {
+  it('maps signed review approval evidence to the approval route', () => {
+    const command = expectRight(
+      parseJsonRpcCommand({
+        jsonrpc: '2.0',
+        id: 'rpc_review_signed_approve',
+        method: 'review.approve',
+        params: {
+          review_id: 'review_signed',
+          met_requirements: ['tests_pass'],
+          approval_signature: {
+            algorithm: 'ssh-ed25519',
+            key_id: 'github:user:human_chris:key1',
+            value: 'sig:v1:abc123',
+          },
+        },
+      }),
+    )
+
+    expect(command.request).toEqual({
+      method: 'POST',
+      path: '/v1/reviews/review_signed/approve',
+      body: {
+        met_requirements: ['tests_pass'],
+        approval_signature: {
+          algorithm: 'ssh-ed25519',
+          key_id: 'github:user:human_chris:key1',
+          value: 'sig:v1:abc123',
+        },
+      },
+      label: 'review.approve',
+    })
+  })
+
   it('maps review.cancel to the dedicated cancellation route', () => {
     const command = expectRight(
       parseJsonRpcCommand({

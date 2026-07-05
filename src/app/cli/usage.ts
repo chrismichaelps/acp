@@ -29,7 +29,7 @@ export const usage = `acp — Agent Coordination Protocol CLI
   acp artifact delete <artifact_id>
   acp review request --work <id> --by <id> [--reviewer <id>]
   acp review list --work <id>|--workspace <id>
-  acp review approve <review_id> --met <requirement,csv>
+  acp review approve <review_id> --met <requirement,csv> [--signature <s> --signature-algorithm <alg> --signature-key <key-id> [--signed-at <iso>]]
   acp review reject <review_id>
   acp review request-changes <review_id>
   acp review cancel <review_id>

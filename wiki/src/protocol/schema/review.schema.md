@@ -14,7 +14,8 @@ aliases: [review.schema]
 
 ## Purpose
 
-Wire + domain shape of a [[Review]] and the `RequestReview` payload (spec §10.7, §12.11).
+Wire + domain shape of a [[Review]], the `RequestReview` payload, and optional
+signed-approval evidence (spec §10.7, §12.11, §23).
 
 ## Interface
 
@@ -28,7 +29,14 @@ export const Review: Schema.Struct<{
   reviewer: optionalWith<WorkerId, Option>
   state: ReviewState
   requirements: Schema.Array<string>
+  approval_signature: optionalWith<ReviewApprovalSignature, Option>
   created_at: Timestamp
+}>
+export const ReviewApprovalSignature: Schema.Struct<{
+  algorithm: NonEmptyString
+  key_id: NonEmptyString
+  value: NonEmptyString
+  signed_at: optionalWith<Timestamp, Option>
 }>
 export const RequestReviewPayload: Schema.Struct<{
   work_id
@@ -41,12 +49,20 @@ export type Review = typeof Review.Type
 
 ## Algorithm
 
-Struct over [[ids]] + [[common]] `ReviewState`. `reviewer` is `Option` (a review may
-be open to any qualified reviewer).
+Struct over [[ids]] + [[common]] `ReviewState`. `reviewer` is `Option` (a review
+may be open to any qualified reviewer). `approval_signature` is also `Option`;
+unsigned approvals remain valid, while signed approvals may carry durable
+reviewer-supplied evidence for later verification by a dedicated seam. The
+schema records the signature algorithm, public key identifier, opaque signature
+value, and optional signature timestamp. It does not verify cryptography or
+accept private key material.
 
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT approve while any `requirements` entry is unmet — service enforces, not schema.
+- ❌ Do NOT treat `approval_signature` as verified cryptographic proof; it is
+  supplied evidence until a verifier seam exists.
+- ❌ Do NOT store private signing keys or secrets in review records.
 
 ## Depth
 

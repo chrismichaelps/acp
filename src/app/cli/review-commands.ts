@@ -6,8 +6,28 @@ import {
   flag,
   positional,
   scopedWorkListPath,
+  type CliError,
   type CommandHandler,
 } from './command-support.js'
+
+const approvalSignature = (
+  flags: Record<string, string>,
+): Either.Either<Record<string, unknown>, CliError> =>
+  Either.gen(function* () {
+    if (!('signature' in flags) || flags.signature === 'true') return {}
+    const algorithm = yield* flag(flags, 'signature-algorithm')
+    const keyId = yield* flag(flags, 'signature-key')
+    return {
+      approval_signature: {
+        algorithm,
+        key_id: keyId,
+        value: flags.signature,
+        ...('signed-at' in flags && flags['signed-at'] !== 'true'
+          ? { signed_at: flags['signed-at'] }
+          : {}),
+      },
+    }
+  })
 
 const reviewStateCommand =
   (action: 'reject' | 'request_changes' | 'cancel'): CommandHandler =>
@@ -54,10 +74,11 @@ export const reviewCommandHandlers: Readonly<Record<string, CommandHandler>> = {
     Either.gen(function* () {
       const reviewId = yield* positional(positionals, 0, 'review_id')
       const metRequirements = yield* csvFlag(flags, 'met')
+      const signature = yield* approvalSignature(flags)
       return {
         method: 'POST',
         path: `/v1/reviews/${encodePathSegment(reviewId)}/approve`,
-        body: { met_requirements: metRequirements },
+        body: Object.assign({ met_requirements: metRequirements }, signature),
         label: 'review approve',
       }
     }),

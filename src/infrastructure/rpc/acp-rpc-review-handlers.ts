@@ -1,5 +1,5 @@
 /** @Acp.Infra.Rpc.ReviewHandlers — native RPC review handlers */
-import { Effect, Layer } from 'effect'
+import { Effect, Layer, Option } from 'effect'
 import { ReviewService } from '../../domain/reviews/index.js'
 import { IdClock } from '../../app/server/identity.js'
 import type { ReviewId } from '../../protocol/schema/index.js'
@@ -40,7 +40,13 @@ const reviewApproveHandler = AcpRpcGroup.toLayerHandler(
       const idClock = yield* IdClock
       const now = yield* idClock.now
       return yield* reviews
-        .approve(payload.review_id, actor, now, payload.met_requirements)
+        .approve(
+          payload.review_id,
+          actor,
+          now,
+          payload.met_requirements,
+          Option.fromNullable(payload.approval_signature),
+        )
         .pipe(Effect.mapError(toRpcError))
     }),
 )

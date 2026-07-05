@@ -28,8 +28,10 @@ export const reviewCommandHandlers: Readonly<Record<string, CommandHandler>>
 `review request --work --by [--reviewer]` maps to `POST /v1/reviews`.
 `review list --work <id> | --workspace <id>` maps to the work-scoped or
 workspace-scoped review collection. `review approve <review_id> --met <csv>`
-maps to the approval route. `review reject`, `review request-changes`, and
-`review cancel` map to their review-id scoped state routes.
+maps to the approval route and may include signed-approval evidence through
+`--signature`, `--signature-algorithm`, `--signature-key`, and optional
+`--signed-at`. `review reject`, `review request-changes`, and `review cancel`
+map to their review-id scoped state routes.
 
 ## Algorithm
 
@@ -37,13 +39,17 @@ Request requires work id and requester, includes an empty requirements list, and
 only includes reviewer when `--reviewer` has a real value. List delegates to
 `scopedWorkListPath` for the shared `--workspace` / `--work` collection
 precedence. Approve parses `--met` as a comma-separated list and sends it as
-`met_requirements`. Reject, request-changes, and cancel share a bodyless state
-command helper that URL-encodes the review id.
+`met_requirements`. When `--signature` is present, approve also sends an
+`approval_signature` object containing the supplied algorithm, key id, signature
+value, and optional timestamp. Reject, request-changes, and cancel share a
+bodyless state command helper that URL-encodes the review id.
 
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT model cancellation as rejection; `review cancel` has its own route.
 - ❌ Do NOT decide review outcomes here; this module only builds request data.
+- ❌ Do NOT invent signature defaults when `--signature` is present; algorithm
+  and key id must be explicit evidence.
 - ❌ Do NOT duplicate scoped collection path construction.
 
 ## Depth

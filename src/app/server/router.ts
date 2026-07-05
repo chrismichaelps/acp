@@ -380,6 +380,7 @@ const approveReview = respond('POST /v1/reviews/:review_id/approve')(
       actor,
       now,
       payload.met_requirements,
+      Option.fromNullable(payload.approval_signature),
     )
     return yield* ok(200)(Review, review)
   }),
