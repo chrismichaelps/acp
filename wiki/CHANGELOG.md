@@ -2,6 +2,17 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-05 · events-replay-limit slice · added bounded event replay across
+  [[storage]], [[event-store]], HTTP, JSON-RPC, native RPC, and
+  [[cli-event-commands]]. `GET /v1/events` now accepts an optional positive
+  `limit`, `acp events list --limit <n>` forwards it, and SQLite/Postgres apply
+  the cap in the `(workspace_id, seq)` query instead of trimming after decode.
+  This gives agents a token- and IO-efficient way to fetch a short replay tail
+  while keeping `--type` as a client-side open-payload filter · validation:
+  typecheck passed locally; focused Vitest is blocked locally by the missing
+  Rolldown optional native binding and will be covered by CI/Docker dogfood ·
+  risk MEDIUM
+
 - 2026-07-05 · cli-events-list-type-filter slice · added
   `acp events list --type <event_type>` as a client-side event replay filter.
   The command keeps the existing `GET /v1/events?workspace_id=&after_seq=`

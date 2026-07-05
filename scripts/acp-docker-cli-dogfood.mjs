@@ -394,11 +394,25 @@ const main = async () => {
       '--type',
       'work.completed',
     ])
+    const limitedEvents = await cli(planner.token, [
+      'events',
+      'list',
+      '--workspace',
+      workspace.id,
+      '--limit',
+      '3',
+    ])
     const eventTypes = events.map((event) => event.type)
+    const limitedEventTypes = limitedEvents.map((event) => event.type)
     assert(
       completedEvents.length === 1 &&
         completedEvents[0].type === 'work.completed',
       `expected only completed events, got ${JSON.stringify(completedEvents)}`,
+    )
+    assert(
+      JSON.stringify(limitedEventTypes) ===
+        JSON.stringify(expectedEventTypes.slice(0, 3)),
+      `expected bounded replay, got ${JSON.stringify(limitedEventTypes)}`,
     )
     assert(
       JSON.stringify(eventTypes) === JSON.stringify(expectedEventTypes),

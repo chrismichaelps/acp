@@ -39,13 +39,20 @@ export const commandForEvent = (
 ): Option.Option<Either.Either<JsonRpcCommand, JsonRpcRequestError>> => {
   if (method === 'events.list') {
     return Option.some(
-      Either.map(decodeParams(EventsReplayParams, paramsValue, id), (params) =>
-        command(
-          id,
-          expectsResponse,
-          method,
-          `/v1/events?workspace_id=${encodeURIComponent(params.workspace_id)}&after_seq=${params.after_seq.toString()}`,
-        ),
+      Either.map(
+        decodeParams(EventsReplayParams, paramsValue, id),
+        (params) => {
+          const limit = Option.match(params.limit, {
+            onNone: () => '',
+            onSome: (value) => `&limit=${value.toString()}`,
+          })
+          return command(
+            id,
+            expectsResponse,
+            method,
+            `/v1/events?workspace_id=${encodeURIComponent(params.workspace_id)}&after_seq=${params.after_seq.toString()}${limit}`,
+          )
+        },
       ),
     )
   }

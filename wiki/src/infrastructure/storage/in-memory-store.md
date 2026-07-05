@@ -43,7 +43,8 @@ Two `Ref`s constructed in the Layer's scoped effect:
 - **appendEvent** — `Ref.modify` atomically: read the workspace's chunk (empty if
   absent), `seq = Chunk.size + 1`, build the full `Event` from the draft, append,
   store, and return the full event. Atomic modify guarantees no two events share a seq.
-- **readEventsAfter** — read ref, get the chunk, `Chunk.filter(e => e.seq > afterSeq)`.
+- **readEventsAfter** — read ref, get the chunk, filter by
+  `e.seq > afterSeq`, then apply the optional limit with `Chunk.take`.
 - **appendMemory** — same sequence-ownership pattern for [[Memory]] records.
 - **readMemory** — read ref, filter by `afterSeq` plus optional work id / kind / key /
   label, preserving chronological order.
@@ -58,6 +59,8 @@ All operations are total in memory, so each returns `Effect.succeed(...)`; the
 - ❌ Do NOT import Node built-ins — this adapter is pure in-memory.
 - ❌ Do NOT implement Memory as a generic collection scan; mirror the SQLite cursor
   semantics in memory.
+- ❌ Do NOT ignore replay limits; in-memory tests mirror the production query
+  contract even though the adapter is not SQL-backed.
 
 ## Depth
 

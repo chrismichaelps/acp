@@ -83,6 +83,57 @@ describe('event routes', () => {
     expect(await afterFirst.json()).toEqual([])
   })
 
+  it('limits replayed workspace events at the route boundary', async () => {
+    const handler = makeHandler()
+    const token = await initSession(handler, [
+      'work:create',
+      'work:update',
+      'event:read',
+    ])
+
+    const created = await handler(
+      new Request('http://acp.test/v1/work', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          workspace_id: 'workspace_event_limit',
+          title: 'Replay only the first event',
+        }),
+      }),
+    )
+    expect(created.status).toBe(201)
+
+    const secondCreated = await handler(
+      new Request('http://acp.test/v1/work', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          workspace_id: 'workspace_event_limit',
+          title: 'Replay should not include this second event',
+        }),
+      }),
+    )
+    expect(secondCreated.status).toBe(201)
+
+    const replayed = await handler(
+      new Request(
+        'http://acp.test/v1/events?workspace_id=workspace_event_limit&after_seq=0&limit=1',
+        { method: 'GET', headers: { authorization: `Bearer ${token}` } },
+      ),
+    )
+    expect(replayed.status).toBe(200)
+    const events = (await replayed.json()) as { seq: number; type: string }[]
+    expect(events.map((event) => [event.seq, event.type])).toEqual([
+      [1, 'work.created'],
+    ])
+  })
+
   it('enforces event:read for authenticated replay reads', async () => {
     const handler = makeHandler()
     const token = await initSession(handler, [])

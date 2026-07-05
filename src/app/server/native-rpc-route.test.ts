@@ -456,7 +456,11 @@ describe('native RPC route', () => {
             ),
           )
           const events = yield* authed(
-            client.events.list({ workspace_id: workspace.id, after_seq: 0 }),
+            client.events.list({
+              workspace_id: workspace.id,
+              after_seq: 0,
+              limit: Option.none(),
+            }),
           )
 
           return { approved, events, memories, memory, published, requested }

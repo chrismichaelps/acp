@@ -11,6 +11,7 @@ Mirror of `@root/src/infrastructure/storage/`.
 - [[storage]] — `Storage` service tag and persistence port interface.
 - [[in-memory-store]] — Ref-backed in-memory production adapter.
 - [[sqlite-store]] — file-backed SQLite production adapter.
+- [[postgres-store]] — network-durable Postgres production adapter.
 
 ## Referenced by
 

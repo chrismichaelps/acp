@@ -308,6 +308,10 @@ const eventList = scoped(
       Schema.Struct({
         workspace_id: WorkspaceId,
         after_seq: Schema.Number,
+        limit: Schema.optionalWith(Schema.Number, {
+          as: 'Option',
+          nullable: true,
+        }),
       }),
     )
     .setSuccess(Schema.Array(Event)),

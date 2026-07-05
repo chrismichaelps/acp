@@ -31,6 +31,7 @@ export interface EventStoreApi {
   readonly readAfter: (
     workspaceId: string,
     afterSeq: number,
+    limit?: Option<number>,
   ) => Effect<Chunk<Event>, StorageError>
   readonly subscribe: (
     workspaceId: string,
@@ -53,6 +54,8 @@ export const EventStoreLive: Layer.Layer<
 - `append` delegates sequence assignment to [[storage]]; callers never set `seq`.
 - Live subscribers receive only events whose `workspace_id` matches their
   workspace filter.
+- `readAfter` accepts an optional positive limit. Consumers that need compact
+  context tails should pass it instead of replaying the full workspace history.
 - `subscribe` is live-only and scoped. Consumers that need replay first call
   `readAfter`, then acquire the subscription stream for future events.
 
@@ -68,7 +71,8 @@ export const EventStoreLive: Layer.Layer<
 2. `append(draft)` calls `Storage.appendEvent(draft.workspace_id, draft)`.
 3. After persistence succeeds, publish the returned full event to the broker and
    return it to the caller.
-4. `readAfter(workspaceId, seq)` delegates to `Storage.readEventsAfter`.
+4. `readAfter(workspaceId, seq, limit)` delegates to
+   `Storage.readEventsAfter`, preserving any optional storage-level row cap.
 5. `subscribe(workspaceId)` acquires the broker stream and filters by
    `event.workspace_id`.
 
@@ -78,6 +82,8 @@ export const EventStoreLive: Layer.Layer<
 - ❌ Do NOT swallow `StorageError`; persistence failures must stay typed.
 - ❌ Do NOT let one workspace receive another workspace's events.
 - ❌ Do NOT encode SSE/HTTP frames here; transport owns wire formatting.
+- ❌ Do NOT trim replay results after fetching from storage when a caller
+  supplied a limit; the cap belongs at the storage seam for durable adapters.
 
 ## Depth
 

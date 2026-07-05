@@ -21,6 +21,10 @@ export const EventsReplayParams = Schema.Struct({
     Schema.NumberFromString.pipe(Schema.int(), Schema.nonNegative()),
     { default: () => 0 },
   ),
+  limit: Schema.optionalWith(
+    Schema.NumberFromString.pipe(Schema.int(), Schema.positive()),
+    { as: 'Option' },
+  ),
 })
 export type EventsReplayParams = typeof EventsReplayParams.Type
 

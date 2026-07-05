@@ -77,8 +77,8 @@ export const acpRouter: HttpRouter.HttpRouter<
   · `POST /v1/reviews/:review_id/reject`
   · `POST /v1/reviews/:review_id/request_changes`
   · `POST /v1/reviews/:review_id/cancel`
-- `GET /v1/events?workspace_id=…&after_seq=…` → replay workspace [[Event]]
-  history through [[event-routes]]
+- `GET /v1/events?workspace_id=…&after_seq=…&limit=…` → replay workspace
+  [[Event]] history through [[event-routes]]
 - `GET  /v1/events/stream?workspace_id=…` → SSE ([[event-routes]] /
   [[sse-event-stream]])
 - `POST /rpc` → JSON-RPC 2.0 framing ([[rpc-endpoint]]); the `/v1` routes above are

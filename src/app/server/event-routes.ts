@@ -19,6 +19,7 @@ export const replayEvents = respond('GET /v1/events')(
     const replay = yield* events.readAfter(
       params.workspace_id,
       params.after_seq,
+      params.limit,
     )
     return yield* ok(200)(Schema.Array(Event), Chunk.toReadonlyArray(replay))
   }),

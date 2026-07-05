@@ -53,4 +53,38 @@ describe('event command parsing', () => {
       label: 'events list',
     })
   })
+
+  it('parses events list with a server-side replay limit', () => {
+    expect(
+      right([
+        'events',
+        'list',
+        '--workspace',
+        'workspace 1',
+        '--after',
+        '7',
+        '--limit',
+        '2',
+      ]),
+    ).toEqual({
+      method: 'GET',
+      path: '/v1/events?workspace_id=workspace%201&after_seq=7&limit=2',
+      label: 'events list',
+    })
+  })
+
+  it('rejects non-positive event replay limits', () => {
+    const parsed = parseArgs([
+      'events',
+      'list',
+      '--workspace',
+      'workspace 1',
+      '--limit',
+      '0',
+    ])
+    expect(Either.isLeft(parsed)).toBe(true)
+    if (Either.isLeft(parsed)) {
+      expect(parsed.left.message).toBe('invalid --limit: 0')
+    }
+  })
 })

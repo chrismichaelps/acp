@@ -1,6 +1,7 @@
 /** @Acp.Domain.Events.EventStore — persisted event append + live fan-out */
 import { Context, Effect, Layer, Stream } from 'effect'
 import type { Chunk, Scope } from 'effect'
+import type { Option } from 'effect'
 import { Storage } from '../../infrastructure/storage/index.js'
 import type { EventDraft as StorageEventDraft } from '../../infrastructure/storage/index.js'
 import type { StorageError } from '../../protocol/errors/protocol-error.js'
@@ -14,6 +15,7 @@ export interface EventStoreApi {
   readonly readAfter: (
     workspaceId: string,
     afterSeq: number,
+    limit?: Option.Option<number>,
   ) => Effect.Effect<Chunk.Chunk<Event>, StorageError>
   readonly subscribe: (
     workspaceId: string,
@@ -37,8 +39,11 @@ const make = Effect.gen(function* () {
       return event
     })
 
-  const readAfter: EventStoreApi['readAfter'] = (workspaceId, afterSeq) =>
-    storage.readEventsAfter(workspaceId, afterSeq)
+  const readAfter: EventStoreApi['readAfter'] = (
+    workspaceId,
+    afterSeq,
+    limit,
+  ) => storage.readEventsAfter(workspaceId, afterSeq, limit)
 
   const pruneBefore: EventStoreApi['pruneBefore'] = (cutoff) =>
     storage.pruneEventsBefore(cutoff)

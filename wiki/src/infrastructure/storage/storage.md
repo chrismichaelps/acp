@@ -52,6 +52,7 @@ export interface StorageApi {
   readonly readEventsAfter: (
     workspaceId: string,
     afterSeq: number,
+    limit?: Option<number>,
   ) => Effect<Chunk<Event>, StorageError>
   readonly appendMemory: (
     workspaceId: string,
@@ -71,6 +72,9 @@ export class Storage extends Context.Tag('Storage')<Storage, StorageApi>() {}
   inspects entity shape except [[Event]] and [[Memory]] records, whose
   per-workspace `seq` values and hot cursor reads are owned by the adapter.
 - `appendEvent` is the **only** way to obtain a `seq`; callers never set it.
+- `readEventsAfter` owns the hot event replay query shape and accepts an optional
+  positive limit so agents can fetch bounded context tails without pulling an
+  entire workspace event log.
 - `appendMemory` is the equivalent Memory path and exists to avoid generic `kv`
   scans for thousands of handoff/recall records.
 
@@ -90,6 +94,8 @@ Interface only — no behavior. Behavior lives in adapters; see [[in-memory-stor
 - ❌ Do NOT add entity-specific methods here unless the data shape needs
   adapter-owned sequencing or query-plan guarantees; [[Memory]] is the v0.1
   exception because it requires `(workspace_id, seq)` cursor reads.
+- ❌ Do NOT implement replay limits above the seam when the adapter can push the
+  cap into its `(workspace_id, seq)` query.
 
 ## Depth
 

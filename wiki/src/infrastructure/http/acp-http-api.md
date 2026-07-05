@@ -94,7 +94,7 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 - `POST /v1/reviews/{review_id}/reject`
 - `POST /v1/reviews/{review_id}/request_changes`
 - `POST /v1/reviews/{review_id}/cancel`
-- `GET /v1/events?workspace_id=...&after_seq=...`
+- `GET /v1/events?workspace_id=...&after_seq=...&limit=...`
 - `GET /v1/events/stream?workspace_id=...`
 
 ### Linkage
@@ -156,8 +156,9 @@ adding worker presence events to the workspace event log.
 
 Event replay reads are declared as backed recovery extensions over
 [[event-store]] `readAfter` through [[acp-http-api-events]]. The query shape
-mirrors the storage scan key: workspace id plus a non-negative sequence cursor.
-Live SSE remains on `/v1/events/stream`.
+mirrors the storage scan key: workspace id plus a non-negative sequence cursor,
+with an optional positive limit for bounded recovery tails. Live SSE remains on
+`/v1/events/stream`.
 
 Review cancellation is declared beside the existing review outcome routes as
 `POST /v1/reviews/{review_id}/cancel`. It is a withdrawal command, not a

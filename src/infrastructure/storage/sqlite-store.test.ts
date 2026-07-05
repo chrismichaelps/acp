@@ -211,6 +211,20 @@ describe('SQLite storage — append-only event log', () => {
     expect(count).toBe(2)
   })
 
+  it('limits event replay in the SQL read path', () => {
+    const seqs = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* s.appendEvent('ws1', draft('ws1'))
+        yield* s.appendEvent('ws1', draft('ws1'))
+        yield* s.appendEvent('ws1', draft('ws1'))
+        const after = yield* s.readEventsAfter('ws1', 0, Option.some(2))
+        return Chunk.toReadonlyArray(after).map((event) => event.seq)
+      }),
+    )
+    expect(seqs).toEqual([1, 2])
+  })
+
   it('reads a small tail from a large workspace event log', () => {
     const seqs = run(
       Effect.gen(function* () {

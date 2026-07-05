@@ -155,10 +155,18 @@ const make = Effect.gen(function* () {
   const readEventsAfter: StorageApi['readEventsAfter'] = (
     workspaceId,
     afterSeq,
+    limit,
   ) =>
-    sql<ValueRow>`SELECT value FROM events
-                  WHERE workspace_id = ${workspaceId} AND seq > ${afterSeq}
-                  ORDER BY seq ASC`.pipe(
+    Effect.sync(() =>
+      Option.getOrElse(limit ?? Option.none(), () => Number.MAX_SAFE_INTEGER),
+    ).pipe(
+      Effect.flatMap(
+        (rowLimit) =>
+          sql<ValueRow>`SELECT value FROM events
+                      WHERE workspace_id = ${workspaceId} AND seq > ${afterSeq}
+                      ORDER BY seq ASC
+                      LIMIT ${rowLimit}`,
+      ),
       Effect.mapError(storageError('read_events_after')),
       Effect.flatMap((rows) =>
         Effect.forEach(rows, (row) => decodeEvent('decode_event', row.value)),

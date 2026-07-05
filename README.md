@@ -116,8 +116,8 @@ acp review approve review_xxx --met "correctness"   # -> work goes to approved
 acp work update work_xxx --state completed
 acp lease release lease_xxx
 
-# Replay the whole story at any time — or stream it live.
-acp events list --workspace workspace_xxx --after 0
+# Replay the story at any time, usually as a bounded tail, or stream it live.
+acp events list --workspace workspace_xxx --after 0 --limit 25
 acp events stream --workspace workspace_xxx
 ```
 
@@ -195,9 +195,10 @@ review withdraws the gate and lets the work continue rather than failing it.
 
 Every workspace has an append-only, strictly monotonic event log
 (`workspace_id, seq`). It is the source of truth for ordering and the recovery
-mechanism: a returning worker replays `events list --after <seq>` before opening
-a live subscription. Worker presence, by contrast, is host-scoped current state
-(`worker list` / `worker get`), not derived from event history.
+mechanism: a returning worker replays `events list --after <seq> --limit <n>`
+before opening a live subscription, keeping context recovery proportional to the
+tail it actually needs. Worker presence, by contrast, is host-scoped current
+state (`worker list` / `worker get`), not derived from event history.
 
 ---
 
