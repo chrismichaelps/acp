@@ -31,10 +31,21 @@ interface ArgTokenParser {
 }
 
 interface CommandResolver {
-  readonly resolve: (argv: readonly string[]) => CommandHandler
+  readonly resolve: (invocation: CommandInvocation) => CommandHandler
 }
 
 type CommandHandlerTable = Readonly<Record<string, CommandHandler | undefined>>
+
+interface CommandInvocation {
+  readonly argv: readonly string[]
+  readonly key: string
+  readonly parsed: Parsed
+}
+
+interface CommandDispatchRule {
+  readonly matches: (invocation: CommandInvocation) => boolean
+  readonly resolve: (invocation: CommandInvocation) => CommandHandler
+}
 
 const isFlagToken = (token: string): boolean => token.startsWith('--')
 
@@ -85,6 +96,12 @@ const unknownCommandHandler =
 const commandKey = (group: string | undefined, action: string | undefined) =>
   `${group ?? ''} ${action ?? ''}`
 
+const commandInvocation = (argv: readonly string[]): CommandInvocation => ({
+  argv,
+  key: commandKey(argv[0], argv[1]),
+  parsed: splitArgs(argv.slice(2)),
+})
+
 export const buildCommandRegistry = (
   tables: readonly CommandHandlerTable[],
 ): ReadonlyMap<string, CommandHandler> => {
@@ -114,15 +131,29 @@ const commandRegistry = buildCommandRegistry([
   eventCommandHandlers,
 ])
 
+const commandDispatchRules: readonly CommandDispatchRule[] = [
+  {
+    matches: (invocation) => commandRegistry.has(invocation.key),
+    resolve: (invocation) =>
+      commandRegistry.get(invocation.key) ??
+      unknownCommandHandler(invocation.argv),
+  },
+  {
+    matches: () => true,
+    resolve: (invocation) => unknownCommandHandler(invocation.argv),
+  },
+]
+
 const commandResolver: CommandResolver = {
-  resolve: (argv) =>
-    commandRegistry.get(commandKey(argv[0], argv[1])) ??
-    unknownCommandHandler(argv),
+  resolve: (invocation) =>
+    commandDispatchRules
+      .find((rule) => rule.matches(invocation))
+      ?.resolve(invocation) ?? unknownCommandHandler(invocation.argv),
 }
 
 export const parseArgs = (
   argv: readonly string[],
 ): Either.Either<CliRequest, CliError> => {
-  const parsed = splitArgs(argv.slice(2))
-  return commandResolver.resolve(argv)(parsed)
+  const invocation = commandInvocation(argv)
+  return commandResolver.resolve(invocation)(invocation.parsed)
 }

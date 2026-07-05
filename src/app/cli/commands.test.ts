@@ -484,5 +484,16 @@ describe('parseArgs', () => {
   it('rejects an unknown command', () => {
     const parsed = parseArgs(['frobnicate', 'now'])
     expect(Either.isLeft(parsed)).toBe(true)
+    if (Either.isLeft(parsed)) {
+      expect(parsed.left.message).toBe('unknown command: frobnicate now')
+    }
+  })
+
+  it('rejects a registered command group without a subcommand', () => {
+    const parsed = parseArgs(['workspace'])
+    expect(Either.isLeft(parsed)).toBe(true)
+    if (Either.isLeft(parsed)) {
+      expect(parsed.left.message).toBe('unknown command: workspace')
+    }
   })
 })

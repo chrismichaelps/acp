@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-05 · cli-parse-dispatch-pattern slice · refactored `parseArgs` around
+  an explicit command invocation and ordered dispatch-rule pattern so command
+  lookup, fallback handling, and handler invocation scale through the registry
+  instead of central parser branching; preserved the public `CliRequest` surface
+  and added regressions for unknown commands and missing subcommands ·
+  validation: focused CLI parser/auth tests, typecheck, and file-size passed ·
+  risk LOW
+
 - 2026-07-05 · docker-ha-multi-agent-dogfood slice · expanded the reusable
   Postgres/HA Docker proof from restart durability into a real multi-agent
   lifecycle: planner, two workers, and reviewer sessions now contend for a work
