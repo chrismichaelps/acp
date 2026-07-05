@@ -11,6 +11,7 @@ import {
   Checkpoint,
   Review,
   WorkUnit,
+  WorkResumePacket,
 } from '../../protocol/schema/index.js'
 import type { ArtifactId, WorkId } from '../../protocol/schema/index.js'
 import type { WorkUnitServiceApi } from '../../domain/work-units/index.js'
@@ -38,6 +39,27 @@ export const getWork = respond('GET /v1/work/:work_id')(
     const found = yield* requireWork(work, workId)
     yield* authorizeWorkspace('workspace:read', found.workspace_id)
     return yield* ok(200)(WorkUnit, found)
+  }),
+)
+
+export const getWorkResumePacket = respond('GET /v1/work/:work_id/resume')(
+  Effect.gen(function* () {
+    const work = yield* WorkUnitService
+    const checkpoints = yield* CheckpointService
+    const artifacts = yield* ArtifactService
+    const reviews = yield* ReviewService
+    const workId = yield* workIdParam()
+    const foundWork = yield* requireWork(work, workId)
+    yield* authorizeWorkspace('workspace:read', foundWork.workspace_id)
+    const latest = yield* checkpoints.latestForWork(workId)
+    const foundArtifacts = yield* artifacts.listForWork(workId)
+    const foundReviews = yield* reviews.listForWork(workId)
+    return yield* ok(200)(WorkResumePacket, {
+      work: foundWork,
+      latest_checkpoint: latest,
+      artifacts: foundArtifacts,
+      reviews: foundReviews,
+    })
   }),
 )
 

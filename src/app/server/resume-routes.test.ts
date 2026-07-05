@@ -197,6 +197,32 @@ describe('resume routes', () => {
     expect((await content.json()) as { content: string }).toEqual({
       content: 'Resume notes',
     })
+
+    const packet = await handler(
+      new Request(`http://acp.test/v1/work/${work.id}/resume`, {
+        method: 'GET',
+        headers: { authorization: `Bearer ${token}` },
+      }),
+    )
+    expect(packet.status).toBe(200)
+    const resume = (await packet.json()) as {
+      artifacts: { uri: string }[]
+      latest_checkpoint: { summary: string }
+      reviews: { requirements: string[] }[]
+      work: { id: string; title: string }
+    }
+    expect(resume.work).toMatchObject({
+      id: work.id,
+      title: 'Resume handoff',
+    })
+    expect(resume.latest_checkpoint.summary).toBe('Second checkpoint')
+    expect(resume.artifacts.map((listed) => listed.uri)).toEqual(
+      expect.arrayContaining([
+        'https://example.com/acp/artifacts/pr-7',
+        `acp://artifacts/${artifact.id}`,
+      ]),
+    )
+    expect(resume.reviews).toMatchObject([{ requirements: ['diff_review'] }])
   })
 
   it('enforces workspace:read for bearer-authenticated resume reads', async () => {

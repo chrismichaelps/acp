@@ -26,6 +26,7 @@ the public handle for private content stored by [[artifact-service]].
 
 ```typescript
 export const getWork: HttpRouter handler
+export const getWorkResumePacket: HttpRouter handler
 export const listWorkCheckpoints: HttpRouter handler
 export const latestWorkCheckpoint: HttpRouter handler
 export const listWorkArtifacts: HttpRouter handler
@@ -36,6 +37,8 @@ export const getArtifactContent: HttpRouter handler
 ### Routes
 
 - `GET /v1/work/{work_id}` → [[WorkUnit]]
+- `GET /v1/work/{work_id}/resume` → compact resume packet (`work`,
+  `latest_checkpoint`, `artifacts`, `reviews`)
 - `GET /v1/work/{work_id}/checkpoints` → newest-first [[Checkpoint]][]
 - `GET /v1/work/{work_id}/checkpoints/latest` → latest [[Checkpoint]]
 - `GET /v1/work/{work_id}/artifacts` → [[Artifact]][]
@@ -46,10 +49,12 @@ export const getArtifactContent: HttpRouter handler
 
 Each handler reads `work_id`, authorizes `workspace:read`, verifies the
 [[WorkUnit]] exists through [[work-unit-service]], then delegates to the matching
-domain read method and schema-encodes the response. List endpoints return empty
-arrays for existing work with no checkpoints, artifacts, or reviews. The
-latest-checkpoint endpoint returns `404 not_found` when the work exists but no
-checkpoint has been published.
+domain read method and schema-encodes the response. `getWorkResumePacket`
+combines the current work record, latest checkpoint (optional), artifact
+metadata, and review records into one response so a resuming agent does not need
+four separate reads. List endpoints return empty arrays for existing work with
+no checkpoints, artifacts, or reviews. The latest-checkpoint endpoint returns
+`404 not_found` when the work exists but no checkpoint has been published.
 
 `getArtifactContent` reads `artifact_id`, authorizes `workspace:read`, verifies
 the [[Artifact]] metadata exists, then returns host-stored content when present.

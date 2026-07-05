@@ -41,6 +41,7 @@ import {
 } from '../../protocol/schema/index.js'
 import { EventsGroup } from './acp-http-api-events.js'
 import { MemoryGroup } from './acp-http-api-memory.js'
+import { ResumeGroup } from './acp-http-api-resume.js'
 
 export const WorkPath = Schema.Struct({
   work_id: HttpApiSchema.param('work_id', WorkId),
@@ -491,5 +492,6 @@ export class AcpHttpApi extends HttpApi.make('acp')
   .add(ArtifactGroup)
   .add(CheckpointGroup)
   .add(MemoryGroup)
+  .add(ResumeGroup)
   .add(ReviewGroup)
   .add(EventsGroup) {}

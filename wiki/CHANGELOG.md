@@ -2,6 +2,15 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-05 · resume-work-packet slice · added `GET /v1/work/<id>/resume` and
+  `acp work resume <id>` as the compact handoff read for token-efficient agent
+  recovery. The response contains the work record, optional latest checkpoint,
+  artifact metadata, and reviews without embedding artifact content or replaying
+  the event log. The HTTP contract lives in a new resume API group to keep
+  [[acp-http-api]] under the file-size gate · validation: focused resume/CLI/API
+  tests, typecheck, lint, prettier, file-size, env, full suite (370 passed, 8
+  skipped), and Docker CLI dogfood passed · risk MEDIUM
+
 - 2026-07-05 · cli-artifact-list-kind-filter slice · added
   `acp artifact list --kind <kind>` as a client-side artifact kind filter over
   work-scoped or workspace-scoped artifact lists. The command still uses the

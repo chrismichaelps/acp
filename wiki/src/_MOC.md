@@ -13,7 +13,8 @@ file has exactly one page here. A source file with no page is UNREGISTERED.
 - [[ids]] — branded protocol identifiers (`WorkId`, `WorkerId`, …).
 - [[common]] — shared enums/value objects (timestamps, priority, status literals).
 - [[worker.schema]] · [[workspace.schema]] · [[work-unit.schema]] · [[lease.schema]]
-  · [[artifact.schema]] · [[checkpoint.schema]] · [[review.schema]] · [[event.schema]]
+  · [[artifact.schema]] · [[checkpoint.schema]] · [[review.schema]] ·
+  [[resume-schema]] · [[event.schema]]
 
 ## protocol/
 

@@ -284,6 +284,12 @@ describe('AcpHttpApi', () => {
         path: '/v1/memory',
       },
       {
+        group: 'resume',
+        name: 'getWorkResumePacket',
+        method: 'GET',
+        path: '/v1/work/:work_id/resume',
+      },
+      {
         group: 'reviews',
         name: 'requestReview',
         method: 'POST',

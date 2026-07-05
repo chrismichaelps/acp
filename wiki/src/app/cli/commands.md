@@ -58,6 +58,7 @@ export const parseArgs: (
 | `work create <title> --workspace <id> [--priority] [--description]`                   | `POST /v1/work`                                   |
 | `work list --workspace <id> [--state] [--priority] [--assigned-to]`                   | `GET /v1/workspaces/<id>/work`                    |
 | `work get <work_id>`                                                                  | `GET /v1/work/<id>`                               |
+| `work resume <work_id>`                                                               | `GET /v1/work/<id>/resume`                        |
 | `work claim <work_id> --worker <id>`                                                  | `POST /v1/work/<id>/claim`                        |
 | `work update <work_id> --state <s>`                                                   | `PATCH /v1/work/<id>`                             |
 | `lease request --workspace --holder --kind --uri [--ttl]`                             | `POST /v1/leases`                                 |
@@ -133,7 +134,7 @@ coordination ledger rather than a GitHub actor. Lease renewal accepts optional
 maps `lease list --workspace` onto the workspace-scoped lease collection so
 operators can inspect active and terminal lease state directly. Worker registry
 reads map `worker list` and `worker get` onto host-scoped presence endpoints.
-Work resume reads map `work list --workspace`, `work get`,
+Work resume reads map `work list --workspace`, `work get`, `work resume`,
 `checkpoint list/latest --work`, `artifact list --work`,
 `artifact content <id>`, and `review list --work` onto the read endpoints.
 `checkpoint list`, `artifact list`, and `review list` also accept `--workspace`
