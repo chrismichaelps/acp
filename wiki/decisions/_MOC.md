@@ -27,6 +27,10 @@ tags: [moc, adr]
 - [[ADR-0009-workspace-scoped-sessions]] — ACCEPTED — hosted ACP sessions carry
   optional workspace bindings; permission scopes say what a session may do,
   workspace bindings say where it may do it.
+- [[ADR-0010-context-exchange-optimization]] — ACCEPTED — Feature 580: indexed/
+  queryable Storage port (kill full-collection scans), version-column CAS,
+  content-addressed blob dedup, immutable delta-based handoff, runtime grill
+  protocol, reusable context blocks, opt-in semantic recall. Scale tier first.
 
 ## Referenced by
 

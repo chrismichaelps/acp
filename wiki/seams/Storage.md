@@ -52,7 +52,9 @@ surface in [[storage-index]], interface in [[storage]], adapters in
 
 ## Deepening
 
-ADR: [[ADR-0001-architecture-foundation]].
+ADR: [[ADR-0001-architecture-foundation]] · [[ADR-0008-deployment-storage-topology]]
+· [[ADR-0010-context-exchange-optimization]] (queryable/indexed port, `version`
+CAS, content-addressed blob dedup — Feature 580 scale tier).
 
 ## Referenced by
 
