@@ -18,6 +18,9 @@ const expectedEventTypes = [
   'work.created',
   'work.created',
   'work.claimed',
+  'lease.requested',
+  'lease.granted',
+  'lease.released',
   'work.started',
   'checkpoint.created',
   'memory.created',
@@ -94,7 +97,7 @@ const cli = async (token, args) => {
     ...args,
   ]
   const { stdout } = await docker(dockerArgs, { capture: true })
-  return JSON.parse(stdout)
+  return stdout.trim() === '' ? undefined : JSON.parse(stdout)
 }
 
 const initAgent = async (role, permissions, capabilities, kind = 'agent') => {
@@ -143,6 +146,8 @@ const main = async () => {
       [
         'work:claim',
         'work:update',
+        'lease:create',
+        'lease:release',
         'checkpoint:create',
         'memory:create',
         'artifact:create',
@@ -232,6 +237,31 @@ const main = async () => {
         assignedToWorker,
       )}`,
     )
+    const lease = await cli(worker.token, [
+      'lease',
+      'request',
+      '--workspace',
+      workspace.id,
+      '--holder',
+      worker.worker,
+      '--kind',
+      'file',
+      '--uri',
+      'file:///workspace/acp/src/app/cli/main.ts',
+    ])
+    const heldLeases = await cli(planner.token, [
+      'lease',
+      'list',
+      '--workspace',
+      workspace.id,
+      '--holder',
+      worker.worker,
+    ])
+    assert(
+      heldLeases.length === 1 && heldLeases[0].id === lease.id,
+      `expected only worker-held lease, got ${JSON.stringify(heldLeases)}`,
+    )
+    await cli(worker.token, ['lease', 'release', lease.id])
     await cli(worker.token, ['work', 'update', work.id, '--state', 'running'])
     const highPriorityRunning = await cli(planner.token, [
       'work',

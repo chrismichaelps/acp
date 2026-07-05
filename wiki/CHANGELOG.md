@@ -2,6 +2,16 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-05 · cli-lease-list-holder-filter slice · added
+  `acp lease list --holder <holder>` as a client-side holder filter over the
+  workspace lease list. The command still hits `GET /v1/leases?workspace_id=`;
+  [[cli-client]] narrows the returned array by `holder`, giving agents a direct
+  recovery query for their own lease claims without changing lease routes,
+  schema, or storage. Docker dogfood now requests, filters, and releases a real
+  lease in the production image · validation: focused CLI tests, typecheck,
+  lint, prettier, file-size, env, full suite (368 passed, 8 skipped), and Docker
+  CLI dogfood passed · risk LOW
+
 - 2026-07-05 · cli-work-list-assignee-filter slice · added
   `acp work list --assigned-to <worker_id>` as another client-side list filter
   on the generic `clientFilters` path. The flag maps to the wire `assigned_to`

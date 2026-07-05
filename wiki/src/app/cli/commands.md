@@ -61,7 +61,7 @@ export const parseArgs: (
 | `work claim <work_id> --worker <id>`                                                  | `POST /v1/work/<id>/claim`                        |
 | `work update <work_id> --state <s>`                                                   | `PATCH /v1/work/<id>`                             |
 | `lease request --workspace --holder --kind --uri [--ttl]`                             | `POST /v1/leases`                                 |
-| `lease list --workspace <id>`                                                         | `GET /v1/leases?workspace_id=`                    |
+| `lease list --workspace <id> [--holder]`                                              | `GET /v1/leases?workspace_id=`                    |
 | `lease release <lease_id>`                                                            | `POST /v1/leases/<id>/release`                    |
 | `lease renew <lease_id> [--ttl]`                                                      | `POST /v1/leases/<id>/renew`                      |
 | `lease revoke <lease_id>`                                                             | `POST /v1/leases/<id>/revoke`                     |
