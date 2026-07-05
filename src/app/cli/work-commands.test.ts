@@ -71,6 +71,24 @@ describe('work commands', () => {
     })
   })
 
+  it('records --assigned-to as an assigned_to client-side filter', () => {
+    expect(
+      right([
+        'work',
+        'list',
+        '--workspace',
+        'workspace_1',
+        '--assigned-to',
+        'worker_1',
+      ]),
+    ).toEqual({
+      method: 'GET',
+      path: '/v1/workspaces/workspace_1/work',
+      clientFilters: [{ field: 'assigned_to', value: 'worker_1' }],
+      label: 'work list',
+    })
+  })
+
   it('omits clientFilters when filter flags are passed without values', () => {
     const req = right(['work', 'list', '--workspace', 'workspace_1', '--state'])
     expect(req.clientFilters).toBeUndefined()

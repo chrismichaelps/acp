@@ -56,7 +56,7 @@ export const parseArgs: (
 | `workspace update <workspace_id> --name --kind --uri [--default-branch]`              | `PATCH /v1/workspaces/<id>`                       |
 | `workspace archive <workspace_id>`                                                    | `POST /v1/workspaces/<id>/archive`                |
 | `work create <title> --workspace <id> [--priority] [--description]`                   | `POST /v1/work`                                   |
-| `work list --workspace <id> [--state] [--priority]`                                   | `GET /v1/workspaces/<id>/work`                    |
+| `work list --workspace <id> [--state] [--priority] [--assigned-to]`                   | `GET /v1/workspaces/<id>/work`                    |
 | `work get <work_id>`                                                                  | `GET /v1/work/<id>`                               |
 | `work claim <work_id> --worker <id>`                                                  | `POST /v1/work/<id>/claim`                        |
 | `work update <work_id> --state <s>`                                                   | `PATCH /v1/work/<id>`                             |
