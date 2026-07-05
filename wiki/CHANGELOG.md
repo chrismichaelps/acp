@@ -2,6 +2,18 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · docker-ha-profile-and-ci slice · added a Compose `ha` profile (the
+  ADR-0008 self-host-ha stack: `postgres:16-alpine` + `pg-notify` fan-out,
+  auto-migrating on boot) alongside the default `sqlite` profile in one
+  `docker-compose.yml`, taught `bin/acp` to auto-detect the running host service
+  (`acp` or `acp-ha`), added `acp:ha:up`/`down`/`logs` npm scripts, and added a
+  `.github/workflows/docker.yml` CI guard with two jobs — the Docker-hosted CLI
+  dogfood and a Postgres/HA durability check that creates work, restarts the host,
+  and reads it back. No untrusted GitHub event input reaches any `run:` step ·
+  validation: both Compose profiles pass `docker compose config`; local
+  lint/format/typecheck/file-size/env/tests green; Docker/HA runtime proven on CI
+  (local Docker store was disk-full) · risk LOW
+
 - 2026-07-04 · docker-daily-driver slice · packaged the full ACP host as a
   persistent Docker service for terminal-first feature work: `docker-compose.yml`
   runs the production image with durable SQLite on a named volume (`local`

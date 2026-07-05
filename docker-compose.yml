@@ -1,34 +1,77 @@
-# Persistent, single-user ACP host for daily-driver use.
+# ACP host for terminal-first feature work — two selectable Compose profiles.
 #
-# Boots the reference ACP host from the production image with durable SQLite
-# storage on a named volume, so work, leases, events, memory, artifacts,
-# checkpoints, and reviews survive `docker compose restart`. Drive it from your
-# terminal with ./bin/acp (which runs the compiled CLI inside this container).
+#   sqlite (default daily-driver): one container, durable SQLite on a volume.
+#     npm run acp:up          # docker compose --profile sqlite up -d --build
 #
-#   docker compose up -d --build   # start the host
-#   ./bin/acp workspace create ...  # use it
-#   docker compose down             # stop (data kept in the volume)
-#   docker compose down -v          # stop and wipe all state
+#   ha (Postgres + pg-notify): the ADR-0008 self-host-ha stack — network-durable
+#   storage and cross-replica event fan-out, ready to scale to multiple hosts.
+#     npm run acp:ha:up       # docker compose --profile ha up -d --build
+#
+# Run one profile at a time (both hosts publish 4317). Drive either with ./bin/acp
+# — the wrapper auto-detects whichever host service is running. Both keep the
+# local single-user posture (auth off → mutations as worker_system); flip
+# ACP_REQUIRE_AUTH/ACP_REQUIRE_WORKSPACE_BINDINGS to true for the full hosted
+# security posture.
 services:
+  # ---- default: single-container SQLite daily-driver ----
   acp:
+    profiles: ['sqlite']
     build: .
     image: acp:latest
     container_name: acp-host
     ports:
       - '4317:4317'
     environment:
-      # local profile, single-user: no bearer tokens needed — mutations run as
-      # worker_system. Flip ACP_REQUIRE_AUTH=true for real session bootstrap.
       ACP_PORT: '4317'
       ACP_PROFILE: local
       ACP_REQUIRE_AUTH: 'false'
       ACP_REQUIRE_WORKSPACE_BINDINGS: 'false'
-      # Durable file storage on the mounted volume below.
       ACP_STORAGE_ADAPTER: sqlite
       ACP_SQLITE_PATH: /data/acp.sqlite
     volumes:
       - acp-data:/data
     restart: unless-stopped
 
+  # ---- ha: Postgres-backed host with pg-notify event fan-out ----
+  db:
+    profiles: ['ha']
+    image: postgres:16-alpine
+    container_name: acp-postgres
+    environment:
+      POSTGRES_USER: acp
+      POSTGRES_PASSWORD: acp
+      POSTGRES_DB: acp
+    volumes:
+      - acp-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U acp -d acp']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  acp-ha:
+    profiles: ['ha']
+    build: .
+    image: acp:latest
+    container_name: acp-host-ha
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '4317:4317'
+    environment:
+      ACP_PORT: '4317'
+      # self-host-ha preset selects postgres + pg-notify; auth stays off here for
+      # frictionless single-user terminal use (override to true for production).
+      ACP_PROFILE: self-host-ha
+      ACP_REQUIRE_AUTH: 'false'
+      ACP_REQUIRE_WORKSPACE_BINDINGS: 'false'
+      ACP_STORAGE_ADAPTER: postgres
+      ACP_EVENT_BROKER: pg-notify
+      ACP_DATABASE_URL: postgres://acp:acp@db:5432/acp
+    restart: unless-stopped
+
 volumes:
   acp-data:
+  acp-pgdata:
