@@ -356,6 +356,7 @@ POST /v1/session/initialize
   "capabilities": {
     "supports_events": true,
     "supports_reviews": true,
+    "supports_signed_review_approvals": true,
     "supports_artifacts": true,
     "supports_memory": true,
     "supports_sse": true

@@ -139,6 +139,7 @@ export type HostDescriptor = typeof HostDescriptor.Type
 export const HostCapabilities = Schema.Struct({
   supports_events: Schema.Boolean,
   supports_reviews: Schema.Boolean,
+  supports_signed_review_approvals: Schema.Boolean,
   supports_artifacts: Schema.Boolean,
   supports_memory: Schema.Boolean,
   supports_sse: Schema.Boolean,

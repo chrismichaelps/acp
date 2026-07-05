@@ -11,6 +11,8 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
 - [[server-index]] — opaque server barrel (router + id-clock + http-app).
 - [[id-clock]] — id/timestamp minting primitive for the composition root.
 - [[acp-router]] — `HttpRouter` wiring all v0.1 routes to services + SSE + `/rpc`.
+- [[session-capabilities-test]] — focused HTTP regression for advertised host
+  capability flags.
 - [[route-support]] — shared authorization, response encoding, route error
   folding, and request lifecycle logging.
 - [[resource-workspace-auth]] — derived workspace authorization for by-id HTTP
