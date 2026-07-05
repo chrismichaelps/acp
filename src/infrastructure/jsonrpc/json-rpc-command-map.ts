@@ -20,6 +20,7 @@ import {
   UpdateWorkspacePayload,
   WorkspaceId,
 } from '../../protocol/schema/index.js'
+import type { ReviewApprovalSignature } from '../../protocol/schema/index.js'
 import {
   decodeParams,
   encodeSegment,
@@ -93,6 +94,15 @@ const methodLabels = new Set<string>([
   ...memoryMethodLabels,
   ...eventMethodLabels,
 ])
+
+const approvalSignatureBody = (signature: ReviewApprovalSignature) => ({
+  algorithm: signature.algorithm,
+  key_id: signature.key_id,
+  value: signature.value,
+  ...(Option.isSome(signature.signed_at)
+    ? { signed_at: signature.signed_at.value }
+    : {}),
+})
 
 const toMethod = (
   method: string,
@@ -406,17 +416,26 @@ export const commandFor = (
         Schema.Struct({
           review_id: ReviewId,
           met_requirements: ApproveReviewPayload.fields.met_requirements,
+          approval_signature: ApproveReviewPayload.fields.approval_signature,
         }),
         paramsValue,
         id,
       )
+      const approvalSignature = params.approval_signature
       return {
         id,
         expects_response: expectsResponse,
         request: {
           method: 'POST',
           path: `/v1/reviews/${encodeSegment(params.review_id)}/approve`,
-          body: { met_requirements: params.met_requirements },
+          body: {
+            met_requirements: params.met_requirements,
+            ...(approvalSignature === undefined
+              ? {}
+              : {
+                  approval_signature: approvalSignatureBody(approvalSignature),
+                }),
+          },
           label: method,
         },
       }

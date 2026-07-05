@@ -1839,7 +1839,13 @@ RPC for first-party typed clients without making that stack mandatory for other
 implementations.
 
 1. Should ACP define Git-specific extensions?
-2. Should reviews support signed approvals?
+Resolved in v0.1: reviews may carry optional signed-approval evidence on
+approval. The reference shape records reviewer-supplied algorithm, key id,
+signature value, and optional signature timestamp. Hosts are not required to
+verify cryptographic signatures until a future trust/key verification seam is
+specified.
+
+2. Should review approval signatures be cryptographically verified by hosts?
 3. Should protocol objects support CRDT-style sync for offline agents?
 
 ---

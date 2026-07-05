@@ -2,6 +2,16 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-05 · signed-review-approval-evidence slice · added optional
+  signed-approval evidence to [[review.schema]], HTTP approval payloads,
+  [[review-service]], CLI review approval flags, JSON-RPC and native RPC review
+  approval paths, and the Docker HA dogfood lane. Unsigned approvals remain
+  compatible; signed approvals persist the reviewer-supplied algorithm, key id,
+  signature value, and optional signed timestamp on the Review and
+  `review.approved` event without claiming cryptographic verification ·
+  validation: focused schema/review/CLI/JSON-RPC/RPC/router tests, typecheck,
+  and file-size passed · risk MEDIUM
+
 - 2026-07-05 · fmcf-lease-lock-cli-dispatch-sync slice · reconciled the FMCF
   vault after the HA arbitration and CLI parser slices: added the
   [[lease-resource-lock]] mirror page, linked it from the leases MOC and

@@ -11,6 +11,7 @@ import {
   CreateMemoryPayload,
   ReadMemoryQuery,
   CreateWorkPayload,
+  Review,
   Session,
 } from './index.js'
 
@@ -242,5 +243,32 @@ describe('Memory schema', () => {
       data: { memory_id: 'memory_123' },
     })
     expect(e.type).toBe('memory.created')
+  })
+})
+
+describe('Review schema', () => {
+  it('decodes optional approval signature evidence', () => {
+    const review = Schema.decodeUnknownSync(Review)({
+      id: 'review_signed',
+      work_id: 'work_signed',
+      requested_by: 'agent_worker',
+      reviewer: 'human_chris',
+      state: 'approved',
+      requirements: ['tests_pass'],
+      approval_signature: {
+        algorithm: 'ssh-ed25519',
+        key_id: 'github:user:human_chris:key1',
+        value: 'sig:v1:abc123',
+        signed_at: '2026-07-05T01:30:00.000Z',
+      },
+      created_at: '2026-07-05T01:00:00.000Z',
+    })
+
+    expect(Option.getOrThrow(review.approval_signature)).toEqual({
+      algorithm: 'ssh-ed25519',
+      key_id: 'github:user:human_chris:key1',
+      value: 'sig:v1:abc123',
+      signed_at: Option.some('2026-07-05T01:30:00.000Z'),
+    })
   })
 })

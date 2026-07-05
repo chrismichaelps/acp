@@ -34,7 +34,10 @@ export const WorkerPath: Schema.Struct<{ worker_id: WorkerId }>
 export const UpdateWorkStatePayload: Schema.Struct<{ state: WorkState }>
 export const WorkProgressEventType: Schema.Literal<['work.progressed']>
 export const PublishWorkEventPayload: Schema.Struct<{ type: WorkProgressEventType; data: Record<string, unknown> }>
-export const ApproveReviewPayload: Schema.Struct<{ met_requirements: string[] }>
+export const ApproveReviewPayload: Schema.Struct<{
+  met_requirements: string[]
+  approval_signature?: ReviewApprovalSignature
+}>
 export const ArtifactContentResponse: Schema.Struct<{ content: string }>
 export const RenewLeasePayload: Schema.Struct<{ ttl_seconds?: Positive }>
 export const ClientCapabilities: Schema.Struct<{ // spec §9 worker flags }>
@@ -160,6 +163,10 @@ Review cancellation is declared beside the existing review outcome routes as
 `POST /v1/reviews/{review_id}/cancel`. It is a withdrawal command, not a
 rejection alias, and is backed by [[review-service]] `cancel` plus
 `review.cancelled`.
+
+Review approval accepts optional `approval_signature` evidence. The payload is
+schema-validated and forwarded to [[review-service]], which stores and emits the
+evidence without host-side cryptographic verification.
 
 ## Negative Logic (Prohibited Paths)
 

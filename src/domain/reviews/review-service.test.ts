@@ -40,6 +40,12 @@ const otherWorkId = Schema.decodeUnknownSync(WorkId)('work_review_other')
 const workspaceId = Schema.decodeUnknownSync(WorkspaceId)('workspace_review')
 const now = Schema.decodeUnknownSync(Timestamp)('2026-06-26T06:00:00.000Z')
 const later = Schema.decodeUnknownSync(Timestamp)('2026-06-26T06:05:00.000Z')
+const approvalSignature = {
+  algorithm: 'ssh-ed25519',
+  key_id: 'github:user:human_chris:key1',
+  value: 'sig:v1:review_main',
+  signed_at: Option.some(later),
+}
 
 const workPayload = Schema.decodeUnknownSync(CreateWorkPayload)({
   workspace_id: 'workspace_review',
@@ -134,6 +140,44 @@ describe('ReviewService', () => {
       'work.needs_review',
       'review.approved',
     ])
+  })
+
+  it('stores signed approval evidence and emits it with review.approved', () => {
+    const result = runSync(
+      Effect.gen(function* () {
+        yield* prepareWorkForReview()
+        const reviews = yield* ReviewService
+        const events = yield* EventStore
+        yield* reviews.request(requestReviewInput())
+        const approved = yield* reviews.approve(
+          reviewId,
+          reviewerId,
+          later,
+          ['diff_review', 'tests_pass'],
+          Option.some(approvalSignature),
+        )
+        const stored = yield* reviews.get(reviewId)
+        const log = yield* events.readAfter('workspace_review', 0)
+        return { approved, stored, log }
+      }),
+    )
+
+    expect(Option.getOrNull(result.approved.approval_signature)).toEqual(
+      approvalSignature,
+    )
+    expect(
+      Option.getOrNull(Option.getOrThrow(result.stored).approval_signature),
+    ).toEqual(approvalSignature)
+    expect(Chunk.toReadonlyArray(result.log).at(-1)?.data).toMatchObject({
+      review_id: reviewId,
+      state: 'approved',
+      approval_signature: {
+        algorithm: approvalSignature.algorithm,
+        key_id: approvalSignature.key_id,
+        value: approvalSignature.value,
+        signed_at: later,
+      },
+    })
   })
 
   it('rejects approval with unmet requirements', () => {

@@ -24,6 +24,7 @@ import {
   RequestLeasePayload,
   RequestReviewPayload,
   Review,
+  ReviewApprovalSignature,
   ReviewId,
   SessionId,
   UpdateArtifactPayload,
@@ -168,6 +169,7 @@ export type PublishWorkEventPayload = typeof PublishWorkEventPayload.Type
 
 export const ApproveReviewPayload = Schema.Struct({
   met_requirements: Schema.Array(Schema.String),
+  approval_signature: Schema.optional(ReviewApprovalSignature),
 })
 export type ApproveReviewPayload = typeof ApproveReviewPayload.Type
 

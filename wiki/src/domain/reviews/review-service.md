@@ -50,6 +50,7 @@ export interface ReviewServiceApi {
     actor: WorkerId,
     now: Timestamp,
     metRequirements: readonly string[],
+    signature: Option<ReviewApprovalSignature>,
   ) => Effect<Review, ReviewServiceError>
   readonly reject: (
     reviewId: ReviewId,
@@ -85,6 +86,9 @@ export interface ReviewServiceApi {
 - `request` requires the WorkUnit to be in a state that can move to
   `needs_review`.
 - `approve` requires every review requirement to be present in `metRequirements`.
+- `approve` may attach optional signed-approval evidence to the Review and
+  `review.approved` event. The service stores the evidence as supplied; it does
+  not perform cryptographic verification.
 - `cancel` is only valid for a `requested` Review. It emits `review.cancelled`
   and returns the WorkUnit to `running`, preserving the distinction between a
   withdrawn gate and an explicit review outcome.
@@ -93,7 +97,8 @@ export interface ReviewServiceApi {
 
 1. `request` loads the WorkUnit, saves a `requested` Review, emits
    `review.requested`, and transitions the WorkUnit to `needs_review`.
-2. `approve` checks requirements, saves `approved`, emits `review.approved`, and
+2. `approve` checks requirements, saves `approved` with optional
+   `approval_signature`, emits `review.approved` with the same evidence, and
    transitions the WorkUnit to `approved`.
 3. `reject` saves `rejected`, emits `review.rejected`, and transitions the
    WorkUnit to `rejected`.
@@ -106,13 +111,16 @@ export interface ReviewServiceApi {
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT approve with unmet requirements.
+- ❌ Do NOT claim an approval signature was verified; this service records
+  durable evidence only.
 - ❌ Do NOT represent a cancelled review as `review.rejected`.
 - ❌ Do NOT emit review events without a WorkUnit-derived workspace scope.
 
 ## Depth
 
 DEEP (0.76). The service hides review storage, workspace resolution, requirement
-validation, event emission, and WorkUnit outcome coupling behind one domain API.
+validation, optional signature evidence persistence, event emission, and WorkUnit
+outcome coupling behind one domain API.
 
 ## Grill Log
 
@@ -123,6 +131,11 @@ validation, event emission, and WorkUnit outcome coupling behind one domain API.
   **A:** Yes. [[event.schema]] now carries `review.cancelled`, so cancellation can
   be represented as its own append-only event instead of being forced through a
   false reviewer outcome.
+- **Q:** Should signed approvals verify cryptographic signatures now?
+  **A:** No. The v0.1 host records signature evidence supplied by the reviewer,
+  but verification needs a separate trust/key seam. _Rejected:_ adding ad hoc
+  crypto verification inside [[review-service]], which would blur domain state
+  transitions with key management and algorithm policy.
 
 ## Referenced by
 

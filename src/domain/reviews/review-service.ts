@@ -14,6 +14,7 @@ import type {
   EventType,
   RequestReviewPayload,
   ReviewId,
+  ReviewApprovalSignature,
   ReviewState,
   Timestamp,
   WorkerId,
@@ -54,6 +55,7 @@ export interface ReviewServiceApi {
     actor: WorkerId,
     now: Timestamp,
     metRequirements: readonly string[],
+    approvalSignature?: Option.Option<ReviewApprovalSignature>,
   ) => Effect.Effect<Review, ReviewServiceError>
   readonly reject: (
     reviewId: ReviewId,
@@ -135,6 +137,26 @@ const make = Effect.gen(function* () {
       storage.put(collection, review.id, encoded),
     )
 
+  const approvalSignatureEventData = (signature: ReviewApprovalSignature) => ({
+    algorithm: signature.algorithm,
+    key_id: signature.key_id,
+    value: signature.value,
+    signed_at: Option.getOrNull(signature.signed_at),
+  })
+
+  const reviewEventData = (review: Review) => ({
+    review_id: review.id,
+    state: review.state,
+    requirements: review.requirements,
+    ...(Option.isSome(review.approval_signature)
+      ? {
+          approval_signature: approvalSignatureEventData(
+            review.approval_signature.value,
+          ),
+        }
+      : {}),
+  })
+
   const appendReviewEvent = (
     review: Review,
     workspaceId: WorkspaceId,
@@ -151,11 +173,7 @@ const make = Effect.gen(function* () {
         actor,
         timestamp,
         seq: 0,
-        data: {
-          review_id: review.id,
-          state: review.state,
-          requirements: review.requirements,
-        },
+        data: reviewEventData(review),
       }).pipe(
         Effect.mapError(
           (error) =>
@@ -238,6 +256,7 @@ const make = Effect.gen(function* () {
         reviewer: input.payload.reviewer,
         state: 'requested',
         requirements: input.payload.requirements,
+        approval_signature: Option.none(),
         created_at: input.now,
       }
 
@@ -289,6 +308,7 @@ const make = Effect.gen(function* () {
     actor,
     now,
     metRequirements,
+    approvalSignature = Option.none(),
   ) =>
     Effect.flatMap(requireReview(reviewId), (review) =>
       Effect.gen(function* () {
@@ -303,7 +323,12 @@ const make = Effect.gen(function* () {
           )
         }
 
-        const approved = yield* transitionReview(review, actor, now, 'approved')
+        const approved = yield* transitionReview(
+          { ...review, approval_signature: approvalSignature },
+          actor,
+          now,
+          'approved',
+        )
         yield* workUnits.transitionSilently(
           review.work_id,
           'approved',
