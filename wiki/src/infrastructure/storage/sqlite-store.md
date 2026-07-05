@@ -35,7 +35,8 @@ export const SqliteMemoryStorageLive: Layer.Layer<Storage, StorageError>
 ### Tables
 
 ```sql
-kv(collection TEXT, id TEXT, value TEXT, PRIMARY KEY(collection, id))
+kv(collection TEXT, id TEXT, value TEXT, version INTEGER NOT NULL DEFAULT 1,
+   PRIMARY KEY(collection, id))
 events(workspace_id TEXT, seq INTEGER, value TEXT, PRIMARY KEY(workspace_id, seq))
 memory(workspace_id TEXT, seq INTEGER, id TEXT, work_id TEXT, kind TEXT, key TEXT,
        labels_json TEXT, value_json TEXT, created_at TEXT,
@@ -47,6 +48,13 @@ table layout. Hot reads use those keys directly: `kv(collection, id)`,
 `kv(collection) ORDER BY id`, `events(workspace_id, seq)` for tail replay, and
 `memory(workspace_id, seq)` for memory cursor reads. Secondary indexes cover
 memory key/work handoff reads.
+
+The `kv.version` column is a per-row monotonic counter added idempotently on
+boot (SQLite has no `ADD COLUMN IF NOT EXISTS`, so a `PRAGMA table_info` guard
+runs the `ALTER TABLE` only when the column is absent). New rows start at
+version `1`; every successful write — `put` upsert, `replaceIf`, and
+`replaceIfVersion` — bumps it by one, matching [[in-memory-store]] and
+[[postgres-store]] so the three adapters version identically.
 
 ### Linkage
 
@@ -62,7 +70,17 @@ Open the database in a scoped Layer, set `busy_timeout`, WAL journaling, and
 once, and close the handle on release. `put` encodes the unknown value as JSON and
 upserts into `kv`; `get` loads one JSON cell and returns `Option.none` for absence;
 `list` walks only the requested collection in primary-key order; `remove` deletes
-the row.
+the row. `getVersioned` returns the row's value paired with its `version`;
+`replaceIfVersion` is an O(1) compare-and-swap that `UPDATE`s only when the
+current `version` equals the caller's expected version (`... SET value = ?,
+version = version + 1 WHERE ... AND version = ?`), succeeding when SQLite
+reports one changed row — cheaper than `replaceIf`'s whole-blob comparison.
+
+The pure serialization and row-mapping helpers (`storageTry`, `parseJson`,
+`encodeJson`, `jsonRow`, `jsonRows`, `seqRow`, `decodeEvent`, `decodeMemory`,
+`optionalText`, `memoryRowsToChunk`, `rollback`) live in the sibling
+[[sqlite-support]] module so this adapter stays under the source line cap;
+they close over no database handle, so the split is a pure move.
 
 `appendEvent` owns sequence assignment inside the adapter. It reads
 `MAX(seq) + 1` for the workspace inside a `BEGIN IMMEDIATE` transaction, writes the
@@ -112,6 +130,12 @@ force domain services to know about SQL and durable ordering.
   **A:** No. _Rationale:_ this slice proves the second production adapter behind
   the seam without changing local-host default behavior or test isolation. Host
   selection can become a small config slice after the adapter is verified.
+- **Q:** How does the `kv.version` column reach an already-created database?
+  **A:** Guard the `ALTER TABLE` with `PRAGMA table_info`. _Rationale:_ SQLite
+  cannot `ADD COLUMN IF NOT EXISTS`, so boot inspects the existing columns and
+  only alters when `version` is missing — idempotent across reopens, with a
+  `DEFAULT 1` backfilling pre-existing rows. _Rejected:_ dropping/recreating
+  `kv`, which would lose persisted collections.
 
 ## Referenced by
 

@@ -169,6 +169,31 @@ describe('SQLite storage — keyed collections', () => {
     )
     expect(values).toEqual({ before: [1, 2], after: [2] })
   })
+
+  it('replaceIfVersion swaps only when the expected version matches', () => {
+    const result = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* s.put('work', 'w1', { id: 'w1', n: 0 })
+        const first = yield* s.getVersioned('work', 'w1')
+        const version = Option.getOrThrow(first).version // 1
+        const okSwap = yield* s.replaceIfVersion('work', 'w1', version, {
+          id: 'w1',
+          n: 1,
+        })
+        const staleSwap = yield* s.replaceIfVersion('work', 'w1', version, {
+          id: 'w1',
+          n: 2,
+        })
+        const final = yield* s.getVersioned('work', 'w1')
+        return { okSwap, staleSwap, final }
+      }),
+    )
+    expect(result.okSwap).toBe(true)
+    expect(result.staleSwap).toBe(false) // version already advanced
+    expect(Option.getOrThrow(result.final).value).toEqual({ id: 'w1', n: 1 })
+    expect(Option.getOrThrow(result.final).version).toBe(2)
+  })
 })
 
 describe('SQLite storage — append-only event log', () => {

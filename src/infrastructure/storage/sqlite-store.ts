@@ -1,17 +1,26 @@
 /** @Acp.Infra.Storage.Sqlite — file-backed SQLite adapter */
 import { DatabaseSync } from 'node:sqlite'
 import { Chunk, Effect, Layer, Option, Schema } from 'effect'
-import { StorageError } from '../../protocol/errors/protocol-error.js'
 import { Event, Memory } from '../../protocol/schema/index.js'
 import { Storage } from './storage.js'
-import type { StorageApi } from './storage.js'
+import {
+  decodeEvent,
+  encodeJson,
+  jsonRow,
+  jsonRows,
+  memoryRowsToChunk,
+  optionalText,
+  parseJson,
+  rollback,
+  seqRow,
+  storageTry,
+} from './sqlite-support.js'
+import type { StorageError } from '../../protocol/errors/protocol-error.js'
+import type { StorageApi, StoredRecord } from './storage.js'
 
-interface JsonRow {
+interface VersionedRow {
   readonly value: string
-}
-
-interface SeqRow {
-  readonly seq: number
+  readonly version: number
 }
 
 const schemaSql = `
@@ -50,91 +59,25 @@ CREATE INDEX IF NOT EXISTS memory_workspace_work_seq
   ON memory (workspace_id, work_id, seq);
 `
 
-const toCause = (cause: unknown): string =>
-  cause instanceof Error ? cause.message : String(cause)
-
-const storageTry = <A>(op: string, body: () => A) =>
-  Effect.try({
-    try: body,
-    catch: (cause) => new StorageError({ op, cause: toCause(cause) }),
-  })
-
-const parseJson = (op: string, text: string) =>
-  storageTry(op, () => JSON.parse(text) as unknown)
-
-const encodeJson = (op: string, value: unknown) =>
-  storageTry(op, () => JSON.stringify(value))
-
-const jsonRow = (
+const versionedRow = (
   row: Record<string, unknown> | undefined,
-): Option.Option<JsonRow> =>
-  row === undefined || typeof row.value !== 'string'
+): Option.Option<VersionedRow> =>
+  row === undefined ||
+  typeof row.value !== 'string' ||
+  typeof row.version !== 'number'
     ? Option.none()
-    : Option.some({ value: row.value })
+    : Option.some({ value: row.value, version: row.version })
 
-const jsonRows = (
-  rows: readonly Record<string, unknown>[],
-): readonly JsonRow[] =>
-  rows.flatMap((row) =>
-    typeof row.value === 'string' ? [{ value: row.value }] : [],
-  )
-
-const seqRow = (row: Record<string, unknown> | undefined): SeqRow =>
-  row !== undefined && typeof row.seq === 'number'
-    ? { seq: row.seq }
-    : { seq: 0 }
-
-const decodeEvent = (op: string, value: unknown) =>
-  Schema.decodeUnknown(Event)(value).pipe(
-    Effect.mapError((cause) => new StorageError({ op, cause: String(cause) })),
-  )
-
-const decodeMemory = (op: string, value: unknown) =>
-  Schema.decodeUnknown(Memory)(value).pipe(
-    Effect.mapError((cause) => new StorageError({ op, cause: String(cause) })),
-  )
-
-const optionalText = <A>(option: Option.Option<A>): A | null =>
-  Option.match(option, {
-    onNone: () => null,
-    onSome: (value) => value,
-  })
-
-const memoryMatchesSecondaryFilters = (
-  memory: Memory,
-  query: Parameters<StorageApi['readMemory']>[0],
-) =>
-  Option.match(query.kind, {
-    onNone: () => true,
-    onSome: (kind) => memory.kind === kind,
-  }) &&
-  Option.match(query.label, {
-    onNone: () => true,
-    onSome: (label) => memory.labels.includes(label),
-  })
-
-const memoryRowsToChunk = (
-  rows: readonly JsonRow[],
-  query: Parameters<StorageApi['readMemory']>[0],
-) =>
-  Effect.gen(function* () {
-    const limit = Option.getOrElse(query.limit, () => 100)
-    const decoded = yield* Effect.forEach(rows, (row) =>
-      Effect.flatMap(parseJson('decode_memory_json', row.value), (value) =>
-        decodeMemory('decode_memory', value),
-      ),
-    )
-    return Chunk.fromIterable(
-      decoded.filter((memory) => memoryMatchesSecondaryFilters(memory, query)),
-    ).pipe(Chunk.take(limit))
-  })
-
-const rollback = (db: DatabaseSync) => {
-  try {
-    db.exec('ROLLBACK')
-  } catch {
-    // Ignore rollback failures so the original SQLite/encoding error is preserved.
-  }
+const ensureColumn = (
+  db: DatabaseSync,
+  table: string,
+  column: string,
+  ddl: string,
+) => {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all() as {
+    name: string
+  }[]
+  if (!cols.some((c) => c.name === column)) db.exec(ddl)
 }
 
 const make = (path: string) =>
@@ -146,6 +89,12 @@ const make = (path: string) =>
         opened.exec('PRAGMA journal_mode = WAL')
         opened.exec('PRAGMA synchronous = NORMAL')
         opened.exec(schemaSql)
+        ensureColumn(
+          opened,
+          'kv',
+          'version',
+          'ALTER TABLE kv ADD COLUMN version INTEGER NOT NULL DEFAULT 1',
+        )
         return opened
       }),
       (opened) =>
@@ -155,21 +104,30 @@ const make = (path: string) =>
     )
 
     const putStmt = db.prepare(
-      `INSERT INTO kv (collection, id, value)
-       VALUES (?, ?, ?)
-       ON CONFLICT(collection, id) DO UPDATE SET value = excluded.value`,
+      `INSERT INTO kv (collection, id, value, version)
+       VALUES (?, ?, ?, 1)
+       ON CONFLICT(collection, id)
+       DO UPDATE SET value = excluded.value, version = kv.version + 1`,
     )
     const putIfAbsentStmt = db.prepare(
-      `INSERT OR IGNORE INTO kv (collection, id, value)
-       VALUES (?, ?, ?)`,
+      `INSERT OR IGNORE INTO kv (collection, id, value, version)
+       VALUES (?, ?, ?, 1)`,
     )
     const replaceIfStmt = db.prepare(
       `UPDATE kv
-       SET value = ?
+       SET value = ?, version = version + 1
        WHERE collection = ? AND id = ? AND value = ?`,
     )
     const getStmt = db.prepare(
       'SELECT value FROM kv WHERE collection = ? AND id = ?',
+    )
+    const getVersionedStmt = db.prepare(
+      'SELECT value, version FROM kv WHERE collection = ? AND id = ?',
+    )
+    const replaceIfVersionStmt = db.prepare(
+      `UPDATE kv
+       SET value = ?, version = version + 1
+       WHERE collection = ? AND id = ? AND version = ?`,
     )
     const listStmt = db.prepare(
       'SELECT value FROM kv WHERE collection = ? ORDER BY id ASC',
@@ -256,6 +214,23 @@ const make = (path: string) =>
         return changes === 1
       })
 
+    const replaceIfVersion: StorageApi['replaceIfVersion'] = (
+      collection,
+      id,
+      expectedVersion,
+      value,
+    ) =>
+      Effect.gen(function* () {
+        const encoded = yield* encodeJson('encode_value', value)
+        const changes = yield* storageTry('replace_if_version', () =>
+          Number(
+            replaceIfVersionStmt.run(encoded, collection, id, expectedVersion)
+              .changes,
+          ),
+        )
+        return changes === 1
+      })
+
     const putIfAbsent: StorageApi['putIfAbsent'] = (collection, id, value) =>
       Effect.gen(function* () {
         const encoded = yield* encodeJson('encode_value', value)
@@ -274,6 +249,22 @@ const make = (path: string) =>
           onNone: () => Effect.succeed(Option.none<unknown>()),
           onSome: (found) =>
             Effect.map(parseJson('decode_value', found.value), Option.some),
+        })
+      })
+
+    const getVersioned: StorageApi['getVersioned'] = (collection, id) =>
+      Effect.gen(function* () {
+        const row = yield* storageTry('get_versioned', () =>
+          versionedRow(getVersionedStmt.get(collection, id)),
+        )
+        return yield* Option.match(row, {
+          onNone: () => Effect.succeed(Option.none<StoredRecord>()),
+          onSome: (found) =>
+            Effect.map(
+              parseJson('decode_value', found.value),
+              (value): Option.Option<StoredRecord> =>
+                Option.some({ value, version: found.version }),
+            ),
         })
       })
 
@@ -408,6 +399,8 @@ const make = (path: string) =>
       putIfAbsent,
       replaceIf,
       get,
+      getVersioned,
+      replaceIfVersion,
       list,
       remove,
       appendEvent,
