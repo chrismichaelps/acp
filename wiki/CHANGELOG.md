@@ -2,6 +2,17 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-05 · acp-agent-skill slice · authored the canonical
+  [[agent-integration]] wiki reference (how an autonomous worker connects,
+  claims, leases, checkpoints, hands off via memory, requests/handles review,
+  completes, and recovers by replaying events) and projected it to the root
+  `ACP-SKILL.md` skill file with `name: acp` frontmatter so any agent harness can
+  load it as the ACP interaction reference. Docs only — no source logic. Every
+  documented command was validated live against the Dockerized `sqlite` host via
+  `bin/acp`: the full lifecycle replayed (workspace→…→completed, including a real
+  lease_conflict) and the verbatim operating loop drove work to `completed` ·
+  validation: prettier format:check on both new markdown files passed · risk LOW
+
 - 2026-07-05 · readme-onboarding-refresh slice · rewrote README as a
   developer-onboarding guide: foregrounded the Dockerized host + `bin/acp`
   wrapper as the 60-second daily-driver path, added a tutorial-style first
