@@ -48,6 +48,7 @@ export interface StorageApi {
   readonly readEventsAfter: (
     workspaceId: string,
     afterSeq: number,
+    limit?: Option.Option<number>,
   ) => Effect.Effect<Chunk.Chunk<Event>, StorageError>
   /**
    * Delete events whose `timestamp` is strictly before `cutoff` (an ISO-8601

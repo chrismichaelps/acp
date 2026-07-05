@@ -1,5 +1,5 @@
 /** @Acp.Infra.Rpc.MemoryEventHandlers.Test — native memory and event RPC handlers */
-import { Effect, Either } from 'effect'
+import { Effect, Either, Option } from 'effect'
 import { describe, expect, it } from 'vitest'
 import { AcpRpcGroup, AcpRpcs } from './acp-rpc-contract.js'
 import type { WorkerId } from '../../protocol/schema/index.js'
@@ -61,7 +61,11 @@ describe('AcpRpcMemoryEventHandlersLive', () => {
         headers,
       )
       const events = yield* eventsList(
-        { workspace_id: workspace.id, after_seq: 0 },
+        {
+          workspace_id: workspace.id,
+          after_seq: event.seq - 1,
+          limit: Option.some(1),
+        },
         headers,
       )
 
@@ -91,7 +95,7 @@ describe('AcpRpcMemoryEventHandlersLive', () => {
       )
       const unauthorized = yield* Effect.either(
         eventsList(
-          { workspace_id: workspace.id, after_seq: 0 },
+          { workspace_id: workspace.id, after_seq: 0, limit: Option.none() },
           rpcOptions(bearer(scopedSession.session_id)),
         ),
       )

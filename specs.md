@@ -1824,6 +1824,7 @@ acp review approve review_123 --met tests_pass,diff_review
 # If the requesting agent withdraws a pending review instead:
 acp review cancel review_456
 acp events list --workspace workspace_123 --type work.completed
+acp events list --workspace workspace_123 --limit 25
 acp events stream --workspace workspace_123
 ```
 

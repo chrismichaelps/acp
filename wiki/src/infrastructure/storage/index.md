@@ -27,11 +27,13 @@ deep-importing implementation files.
 export * from './storage.js'
 export * from './in-memory-store.js'
 export * from './sqlite-store.js'
+export * from './postgres-store.js'
 ```
 
 ### Linkage
 
-- **Requires:** [[storage]], [[in-memory-store]], [[sqlite-store]]
+- **Requires:** [[storage]], [[in-memory-store]], [[sqlite-store]],
+  [[postgres-store]]
 - **Consumed by:** storage tests now; future domain services and app wiring later.
 
 ## Algorithm
@@ -46,8 +48,8 @@ No behavior. Re-export-only module enforcing the Export Law from
 
 ## Depth
 
-MEDIUM (0.5). Aggregates a small capability surface; value grows as SQLite and
-server wiring land.
+MEDIUM (0.5). Aggregates the storage seam and its durable adapters without
+letting callers import construction files directly.
 
 ## Referenced by
 

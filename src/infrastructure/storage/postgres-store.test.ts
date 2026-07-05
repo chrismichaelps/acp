@@ -195,6 +195,20 @@ describe.skipIf(url === undefined)('Postgres storage adapter', () => {
     expect(count).toBe(2)
   })
 
+  it('limits event replay in the SQL read path', async () => {
+    const seqs = await run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* s.appendEvent('ws1', draft('ws1'))
+        yield* s.appendEvent('ws1', draft('ws1'))
+        yield* s.appendEvent('ws1', draft('ws1'))
+        const after = yield* s.readEventsAfter('ws1', 0, Option.some(2))
+        return Chunk.toReadonlyArray(after).map((event) => event.seq)
+      }),
+    )
+    expect(seqs).toEqual([1, 2])
+  })
+
   it('prunes aged events, keeps the newest as seq watermark', async () => {
     const outcome = await run(
       Effect.gen(function* () {

@@ -52,7 +52,7 @@ const eventListHandler = AcpRpcGroup.toLayerHandler(
       )
       const events = yield* EventStore
       const replay = yield* events
-        .readAfter(payload.workspace_id, payload.after_seq)
+        .readAfter(payload.workspace_id, payload.after_seq, payload.limit)
         .pipe(Effect.mapError(toRpcError))
       return Chunk.toReadonlyArray(replay)
     }),

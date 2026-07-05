@@ -66,11 +66,13 @@ the row.
 
 `appendEvent` owns sequence assignment inside the adapter. It reads
 `MAX(seq) + 1` for the workspace inside a `BEGIN IMMEDIATE` transaction, writes the
-full event as JSON, commits, and returns that event to the caller. `readEventsAfter`
-selects rows where `seq > afterSeq` ordered by `seq` and decodes each row through
-the [[event.schema]] so persisted data cannot silently drift from the protocol
-model. Tests assert the query plan uses the composite primary keys for collection
-and event reads and include a thousands-of-events tail replay regression.
+full event as JSON, commits, and returns that event to the caller.
+`readEventsAfter` selects rows where `seq > afterSeq`, orders by `seq`, applies
+the optional `LIMIT`, and decodes each row through the [[event.schema]] so
+persisted data cannot silently drift from the protocol model. Tests assert the
+query plan uses the composite primary keys for collection and event reads,
+include a thousands-of-events tail replay regression, and cover the bounded SQL
+read path.
 
 `appendMemory` mirrors event sequence ownership for [[Memory]] records. It assigns
 `MAX(seq) + 1` inside `BEGIN IMMEDIATE`, stores the encoded record plus
@@ -86,6 +88,8 @@ through secondary indexes.
   [[event.schema]].
 - ❌ Do NOT prepare statements per operation on hot paths; prepare once per Layer.
 - ❌ Do NOT full-scan the event table for replay; constrain by `(workspace_id, seq)`.
+- ❌ Do NOT apply event replay limits after row materialization; the prepared
+  statement carries `LIMIT ?`.
 - ❌ Do NOT read Memory through the generic `kv` collection; use the dedicated
   table and cursor/index statements.
 - ❌ Do NOT add a third-party SQLite dependency for this slice; Node 24 provides the

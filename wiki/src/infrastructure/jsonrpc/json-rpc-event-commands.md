@@ -38,8 +38,9 @@ export const commandForEvent: (
 
 ## Algorithm
 
-`events.list` decodes `workspace_id` plus optional non-negative integer
-`after_seq`, then maps to `GET /v1/events?workspace_id=...&after_seq=...`.
+`events.list` decodes `workspace_id`, optional non-negative integer `after_seq`,
+and optional positive integer `limit`, then maps to
+`GET /v1/events?workspace_id=...&after_seq=...` with `&limit=...` when present.
 `events.subscribe` decodes `workspace_id`, maps to
 `GET /v1/events/stream?workspace_id=...`, and marks the command as `stream: true`
 so HTTP JSON-RPC continues rejecting it while [[rpc-socket]] can special-case the

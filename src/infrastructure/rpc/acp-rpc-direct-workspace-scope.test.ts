@@ -1,5 +1,5 @@
 /** @Acp.Infra.Rpc.DirectWorkspaceScope.Test — explicit workspace RPC tenancy */
-import { Effect, Either } from 'effect'
+import { Effect, Either, Option } from 'effect'
 import { describe, expect, it } from 'vitest'
 import type { WorkspaceId } from '../../protocol/schema/index.js'
 import { AcpRpcGroup, AcpRpcs } from './acp-rpc-contract.js'
@@ -103,7 +103,10 @@ describe('native RPC direct workspace scope', () => {
         ),
       )
       const events = yield* Effect.either(
-        eventsList({ workspace_id: workspaceId, after_seq: 0 }, headers),
+        eventsList(
+          { workspace_id: workspaceId, after_seq: 0, limit: Option.none() },
+          headers,
+        ),
       )
 
       return [

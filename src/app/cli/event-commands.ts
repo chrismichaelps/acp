@@ -4,6 +4,8 @@ import {
   flag,
   integerFlag,
   optionalClientFilter,
+  optionalQuery,
+  positiveIntegerFlag,
   type CommandHandler,
 } from './command-support.js'
 
@@ -24,10 +26,18 @@ export const eventCommandHandlers: Readonly<Record<string, CommandHandler>> = {
       const workspaceId = yield* flag(flags, 'workspace')
       const afterSeq =
         'after' in flags ? yield* integerFlag(flags, 'after', 0) : 0
+      if ('limit' in flags) {
+        yield* positiveIntegerFlag(flags, 'limit')
+      }
       const clientFilters = optionalClientFilter(flags, 'type')
+      const query = [
+        `workspace_id=${encodeURIComponent(workspaceId)}`,
+        `after_seq=${afterSeq.toString()}`,
+        ...optionalQuery(flags, 'limit'),
+      ].join('&')
       return {
         method: 'GET',
-        path: `/v1/events?workspace_id=${encodeURIComponent(workspaceId)}&after_seq=${afterSeq.toString()}`,
+        path: `/v1/events?${query}`,
         ...(clientFilters.length > 0 ? { clientFilters } : {}),
         label: 'events list',
       }

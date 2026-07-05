@@ -48,8 +48,9 @@ the RPC payload is already the native query shape, so no URL re-decode is needed
 unlike the [[json-rpc-memory-commands]] HTTP bridge.
 
 `events.list` checks `event:read` plus the explicit workspace binding, reads
-through `EventStore.readAfter`, and converts the returned `Chunk` to a readonly
-array, matching the HTTP replay route. `events.subscribe` checks `event:read`
+through `EventStore.readAfter` with the optional replay limit, and converts the
+returned `Chunk` to a readonly array, matching the HTTP replay route.
+`events.subscribe` checks `event:read`
 plus the explicit workspace binding and returns the scoped
 `EventStore.subscribe(workspace_id)` stream directly to `@effect/rpc`, so the
 native NDJSON HTTP route can deliver future workspace events as stream chunks.

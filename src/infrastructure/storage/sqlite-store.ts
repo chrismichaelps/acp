@@ -186,7 +186,8 @@ const make = (path: string) =>
     const readEventsAfterStmt = db.prepare(
       `SELECT value FROM events
        WHERE workspace_id = ? AND seq > ?
-       ORDER BY seq ASC`,
+       ORDER BY seq ASC
+       LIMIT ?`,
     )
     // Delete aged events but never a workspace's newest row, so MAX(seq) — the
     // append high-water-mark — is preserved even after a full-history sweep.
@@ -314,10 +315,15 @@ const make = (path: string) =>
     const readEventsAfter: StorageApi['readEventsAfter'] = (
       workspaceId,
       afterSeq,
+      limit,
     ) =>
       Effect.gen(function* () {
+        const rowLimit = Option.getOrElse(
+          limit ?? Option.none(),
+          () => Number.MAX_SAFE_INTEGER,
+        )
         const rows = yield* storageTry('read_events_after', () =>
-          jsonRows(readEventsAfterStmt.all(workspaceId, afterSeq)),
+          jsonRows(readEventsAfterStmt.all(workspaceId, afterSeq, rowLimit)),
         )
         const events = yield* Effect.forEach(rows, (row) =>
           Effect.flatMap(parseJson('decode_event_json', row.value), (value) =>

@@ -29,30 +29,33 @@ export const EventsStreamParams: Schema.Struct<{ workspace_id: WorkspaceId }>
 export const EventsReplayParams: Schema.Struct<{
   workspace_id: WorkspaceId
   after_seq: number
+  limit: Option<number>
 }>
 export const EventsGroup: HttpApiGroup.HttpApiGroup<'events', ...>
 ```
 
 ### Routes
 
-`GET /v1/events?workspace_id=...&after_seq=...` replays ordered workspace events
-after a non-negative sequence cursor. `GET /v1/events/stream?workspace_id=...`
-declares the live SSE stream surface for clients that prefer subscription over
-polling.
+`GET /v1/events?workspace_id=...&after_seq=...&limit=...` replays ordered
+workspace events after a non-negative sequence cursor, optionally capped by a
+positive row limit. `GET /v1/events/stream?workspace_id=...` declares the live
+SSE stream surface for clients that prefer subscription over polling.
 
 ## Algorithm
 
-`EventsReplayParams` validates the storage scan key directly: `workspace_id` plus
-an `after_seq` cursor defaulting to zero. The group declares both event endpoints
-with the shared `ProtocolError` schema and returns arrays of [[Event]] records in
-the reflected API contract; the runtime streaming response remains implemented in
-[[event-routes]].
+`EventsReplayParams` validates the storage scan key directly: `workspace_id`, an
+`after_seq` cursor defaulting to zero, and an optional positive `limit`. The
+group declares both event endpoints with the shared `ProtocolError` schema and
+returns arrays of [[Event]] records in the reflected API contract; the runtime
+streaming response remains implemented in [[event-routes]].
 
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT add event persistence or replay logic here.
 - ❌ Do NOT accept negative cursors; ordered replay depends on monotonic
   non-negative sequences.
+- ❌ Do NOT accept zero or negative limits; bounded replay must request at least
+  one event.
 - ❌ Do NOT drift endpoint paths from [[router]].
 
 ## Depth

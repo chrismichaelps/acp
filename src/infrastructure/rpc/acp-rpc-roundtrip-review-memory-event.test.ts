@@ -1,6 +1,6 @@
 /** @Acp.Infra.Rpc.RoundtripReviewMemoryEvent.Test — generated client over review/memory/event methods */
 import { RpcTest } from '@effect/rpc'
-import { Effect } from 'effect'
+import { Effect, Option } from 'effect'
 import { describe, expect, it } from 'vitest'
 import type { WorkerId } from '../../protocol/schema/index.js'
 import { AcpRpcGroup, AcpRpcs } from './acp-rpc-contract.js'
@@ -153,7 +153,7 @@ describe('native RPC round-trip — review/memory/event', () => {
         { headers: auth },
       )
       const events = yield* client.events.list(
-        { workspace_id: workspace.id, after_seq: 0 },
+        { workspace_id: workspace.id, after_seq: 0, limit: Option.none() },
         { headers: auth },
       )
 

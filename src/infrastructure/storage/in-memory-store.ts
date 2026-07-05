@@ -110,11 +110,19 @@ const make = Effect.gen(function* () {
   const readEventsAfter: StorageApi['readEventsAfter'] = (
     workspaceId,
     afterSeq,
+    limit,
   ) =>
     Effect.map(Ref.get(events), (es) =>
       Option.match(HashMap.get(es, workspaceId), {
         onNone: () => Chunk.empty<Event>(),
-        onSome: (chunk) => Chunk.filter(chunk, (e) => e.seq > afterSeq),
+        onSome: (chunk) =>
+          Chunk.take(
+            Chunk.filter(chunk, (e) => e.seq > afterSeq),
+            Option.getOrElse(
+              limit ?? Option.none(),
+              () => Number.MAX_SAFE_INTEGER,
+            ),
+          ),
       }),
     )
 
