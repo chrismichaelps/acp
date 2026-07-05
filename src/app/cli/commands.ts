@@ -30,21 +30,12 @@ interface ArgTokenParser {
   readonly read: (argv: readonly string[], cursor: ArgCursor) => ArgCursor
 }
 
-interface CommandResolver {
-  readonly resolve: (invocation: CommandInvocation) => CommandHandler
-}
-
 type CommandHandlerTable = Readonly<Record<string, CommandHandler | undefined>>
 
-interface CommandInvocation {
-  readonly argv: readonly string[]
+interface RegisteredCommand {
   readonly key: string
-  readonly parsed: Parsed
-}
-
-interface CommandDispatchRule {
-  readonly matches: (invocation: CommandInvocation) => boolean
-  readonly resolve: (invocation: CommandInvocation) => CommandHandler
+  readonly tokens: readonly string[]
+  readonly handler: CommandHandler
 }
 
 const isFlagToken = (token: string): boolean => token.startsWith('--')
@@ -93,14 +84,28 @@ const unknownCommandHandler =
   () =>
     unknown(argv)
 
-const commandKey = (group: string | undefined, action: string | undefined) =>
-  `${group ?? ''} ${action ?? ''}`
+const keyTokens = (key: string): readonly string[] =>
+  key.split(' ').filter((token) => token !== '')
 
-const commandInvocation = (argv: readonly string[]): CommandInvocation => ({
-  argv,
-  key: commandKey(argv[0], argv[1]),
-  parsed: splitArgs(argv.slice(2)),
-})
+const registeredCommands = (
+  registry: ReadonlyMap<string, CommandHandler>,
+): readonly RegisteredCommand[] =>
+  Array.from(registry.entries())
+    .map(([key, handler]) => ({ key, tokens: keyTokens(key), handler }))
+    .sort((left, right) => right.tokens.length - left.tokens.length)
+
+const matchesCommand = (
+  argv: readonly string[],
+  command: RegisteredCommand,
+): boolean =>
+  command.tokens.every((token, index) => argv[index] === token) &&
+  command.tokens.length <= argv.length
+
+const resolveCommand = (
+  argv: readonly string[],
+  commands: readonly RegisteredCommand[],
+): RegisteredCommand | undefined =>
+  commands.find((command) => matchesCommand(argv, command))
 
 export const buildCommandRegistry = (
   tables: readonly CommandHandlerTable[],
@@ -118,7 +123,20 @@ export const buildCommandRegistry = (
   return registry
 }
 
-const commandRegistry = buildCommandRegistry([
+export const buildCommandParser = (
+  tables: readonly CommandHandlerTable[],
+): ((argv: readonly string[]) => Either.Either<CliRequest, CliError>) => {
+  const registry = buildCommandRegistry(tables)
+  const commands = registeredCommands(registry)
+  return (argv) => {
+    const command = resolveCommand(argv, commands)
+    const handler = command?.handler ?? unknownCommandHandler(argv)
+    const parsed = splitArgs(argv.slice(command?.tokens.length ?? 0))
+    return handler(parsed)
+  }
+}
+
+export const parseArgs = buildCommandParser([
   sessionCommandHandlers,
   workerCommandHandlers,
   workspaceCommandHandlers,
@@ -130,30 +148,3 @@ const commandRegistry = buildCommandRegistry([
   reviewCommandHandlers,
   eventCommandHandlers,
 ])
-
-const commandDispatchRules: readonly CommandDispatchRule[] = [
-  {
-    matches: (invocation) => commandRegistry.has(invocation.key),
-    resolve: (invocation) =>
-      commandRegistry.get(invocation.key) ??
-      unknownCommandHandler(invocation.argv),
-  },
-  {
-    matches: () => true,
-    resolve: (invocation) => unknownCommandHandler(invocation.argv),
-  },
-]
-
-const commandResolver: CommandResolver = {
-  resolve: (invocation) =>
-    commandDispatchRules
-      .find((rule) => rule.matches(invocation))
-      ?.resolve(invocation) ?? unknownCommandHandler(invocation.argv),
-}
-
-export const parseArgs = (
-  argv: readonly string[],
-): Either.Either<CliRequest, CliError> => {
-  const invocation = commandInvocation(argv)
-  return commandResolver.resolve(invocation)(invocation.parsed)
-}

@@ -95,20 +95,19 @@ export const parseArgs: (
 
 Split `argv` through a small token parser registry rather than a branch chain:
 flag tokens own `--key value` and valueless `--key` handling, while the fallback
-token parser records positionals. `parseArgs` then builds a `CommandInvocation`
-containing the original `argv`, the public `<group> <action>` key, and the parsed
-flags/positionals. That invocation flows through ordered dispatch rules: the
-first rule resolves registered keys from the `ReadonlyMap` built by
-`buildCommandRegistry`, and the final rule returns the unknown-command fallback.
-The builder rejects duplicate command keys during module initialization, so
-command ownership remains additive without silently shadowing another module's
-handler. Each handler receives the parsed positionals and flags, validates its
-own required inputs (missing → `CliError`) and assembles a `CliRequest` with
-encoded route parameters and query values. Unknown keys and registered groups
-without subcommands never fall through a conditional chain; they return the same
-`CliError` through the fallback handler. `parseArgs` is therefore only a
-composition point: build invocation, resolve handler, execute handler. Numeric
-lease TTLs are validated as positive safe integers before HTTP decoding.
+token parser records positionals. `buildCommandParser` first composes feature
+command tables with `buildCommandRegistry`, rejects duplicate keys, tokenizes
+each registered key, and sorts by descending token length. `parseArgs` is the
+production parser built from that table. For each invocation it resolves the
+longest registered command prefix, slices only those command tokens away, and
+passes the remaining tokens through `splitArgs` before executing the handler.
+That means one-token, two-token, and future three-token commands are all data in
+the registry rather than parser branches. Unknown keys and registered groups
+without subcommands return the same `CliError` through the fallback handler. Each
+handler receives parsed positionals and flags, validates its own required inputs
+(missing → `CliError`), and assembles a `CliRequest` with encoded route
+parameters and query values. Numeric lease TTLs are validated as positive safe
+integers before HTTP decoding.
 Session bootstrap is registered by [[cli-session-commands]] so authenticated CLI
 operators can mint a bearer session before exporting `ACP_RPC_TOKEN`. Lease
 handlers are registered by [[cli-lease-commands]] so lease lifecycle and readback
@@ -146,16 +145,19 @@ review cancellation route so withdrawal is not expressed as rejection.
 `events stream` sets `stream: true`. Session, artifact, checkpoint, event, lease,
 memory, review, work, worker, and workspace handlers are registered by spreading
 their feature command maps into the central table, preserving one dispatch point
-while keeping the parser below the file-size gate.
-The parser regression suite pins the tokenizer edge where a valueless flag is
-followed by another flag token so future command additions do not accidentally
-consume the next flag as a value.
+while keeping the parser below the file-size gate. The parser regression suite
+pins duplicate-key rejection, one/two/three-token command routing, longest-prefix
+selection, and the tokenizer edge where a valueless flag is followed by another
+flag token so future command additions do not accidentally consume the next flag
+as a value.
 
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT perform I/O or build HTTP clients here — return data only.
 - ❌ Do NOT throw — unknown/invalid commands return `Either.left(CliError)`.
 - ❌ Do NOT pass raw route/query values into URLs — encode them at parse time.
+- ❌ Do NOT reintroduce fixed `<group> <action>` slicing; command arity belongs
+  to the registered key tokens.
 
 ## Depth
 
