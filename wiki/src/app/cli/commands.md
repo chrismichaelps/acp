@@ -81,7 +81,7 @@ export const parseArgs: (
 | `review reject <review_id>`                                                           | `POST /v1/reviews/<id>/reject`                    |
 | `review request-changes <review_id>`                                                  | `POST /v1/reviews/<id>/request_changes`           |
 | `review cancel <review_id>`                                                           | `POST /v1/reviews/<id>/cancel`                    |
-| `events list --workspace <id> [--after <seq>]`                                        | `GET /v1/events?workspace_id=&after_seq=`         |
+| `events list --workspace <id> [--after <seq>] [--type]`                               | `GET /v1/events?workspace_id=&after_seq=`         |
 | `events stream --workspace <id>`                                                      | `GET /v1/events/stream?workspace_id=`             |
 | `memory create --workspace --kind --key --summary --content [--work] [--labels]`      | `POST /v1/memory`                                 |
 | `memory list --workspace [--after] [--limit] [--work] [--kind] [--key] [--label]`     | `GET /v1/memory?workspace_id=&after_seq=`         |

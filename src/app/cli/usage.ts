@@ -36,7 +36,7 @@ export const usage = `acp — Agent Coordination Protocol CLI
   acp review cancel <review_id>
   acp memory create --workspace <id> --kind <k> --key <k> --summary <s> --content <c> [--work <id>] [--labels <csv>]
   acp memory list --workspace <id> [--after <seq>] [--limit <n>] [--work <id>] [--kind <k>] [--key <k>] [--label <l>]
-  acp events list --workspace <id> [--after <seq>]
+  acp events list --workspace <id> [--after <seq>] [--type <event_type>]
   acp events stream --workspace <id>
 
 Targets ACP_BASE_URL (default http://localhost:$ACP_PORT).`
