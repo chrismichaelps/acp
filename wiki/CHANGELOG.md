@@ -2,6 +2,20 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-05 · docker-ha-multi-agent-dogfood slice · expanded the reusable
+  Postgres/HA Docker proof from restart durability into a real multi-agent
+  lifecycle: planner, two workers, and reviewer sessions now contend for a work
+  claim and a resource lease, persist checkpoint/memory/artifact handoff state,
+  run request-changes then approval, restart the host mid-review and after
+  completion, and replay the Postgres event log for monotonic sequence and
+  required lifecycle events. The run exposed two production races, so storage now
+  exposes atomic `putIfAbsent` and `replaceIf` operations across memory, SQLite,
+  and Postgres; work claims use conditional replacement, lease resources use a
+  deterministic Postgres-safe lock row, and `pg-notify` publishing uses
+  `SELECT pg_notify(...)` to avoid parameterized `NOTIFY` syntax failures ·
+  validation: focused work-unit/lease/storage/event tests and Docker HA dogfood
+  passed locally with 23 replayed events · risk MEDIUM
+
 - 2026-07-04 · docker-ha-dogfood-runner slice · added
   `scripts/acp-docker-ha-dogfood.mjs` and the `dogfood:docker-ha` package script
   so the Postgres/HA Compose profile can be validated outside GitHub Actions with

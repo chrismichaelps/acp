@@ -159,6 +159,15 @@ const make = (path: string) =>
        VALUES (?, ?, ?)
        ON CONFLICT(collection, id) DO UPDATE SET value = excluded.value`,
     )
+    const putIfAbsentStmt = db.prepare(
+      `INSERT OR IGNORE INTO kv (collection, id, value)
+       VALUES (?, ?, ?)`,
+    )
+    const replaceIfStmt = db.prepare(
+      `UPDATE kv
+       SET value = ?
+       WHERE collection = ? AND id = ? AND value = ?`,
+    )
     const getStmt = db.prepare(
       'SELECT value FROM kv WHERE collection = ? AND id = ?',
     )
@@ -226,6 +235,33 @@ const make = (path: string) =>
       Effect.gen(function* () {
         const encoded = yield* encodeJson('encode_value', value)
         yield* storageTry('put', () => putStmt.run(collection, id, encoded))
+      })
+
+    const replaceIf: StorageApi['replaceIf'] = (
+      collection,
+      id,
+      expected,
+      value,
+    ) =>
+      Effect.gen(function* () {
+        const encodedExpected = yield* encodeJson('encode_expected', expected)
+        const encodedValue = yield* encodeJson('encode_value', value)
+        const changes = yield* storageTry('replace_if', () =>
+          Number(
+            replaceIfStmt.run(encodedValue, collection, id, encodedExpected)
+              .changes,
+          ),
+        )
+        return changes === 1
+      })
+
+    const putIfAbsent: StorageApi['putIfAbsent'] = (collection, id, value) =>
+      Effect.gen(function* () {
+        const encoded = yield* encodeJson('encode_value', value)
+        const changes = yield* storageTry('put_if_absent', () =>
+          Number(putIfAbsentStmt.run(collection, id, encoded).changes),
+        )
+        return changes === 1
       })
 
     const get: StorageApi['get'] = (collection, id) =>
@@ -363,6 +399,8 @@ const make = (path: string) =>
 
     return {
       put,
+      putIfAbsent,
+      replaceIf,
       get,
       list,
       remove,

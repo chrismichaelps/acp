@@ -49,22 +49,21 @@ const make = Effect.gen(function* () {
   const storage = yield* Storage
 
   const publish: EventBrokerApi['publish'] = (event) =>
-    pg
-      .notify(
-        channel,
-        JSON.stringify({ workspace_id: event.workspace_id, seq: event.seq }),
-      )
-      .pipe(
-        Effect.catchAllCause((cause) =>
-          Effect.logWarning('pg-notify publish failed', cause).pipe(
-            Effect.annotateLogs({
-              component: 'pg-notify-event-broker',
-              workspace_id: event.workspace_id,
-              seq: event.seq,
-            }),
-          ),
+    pg`SELECT pg_notify(${channel}, ${JSON.stringify({
+      workspace_id: event.workspace_id,
+      seq: event.seq,
+    })})`.pipe(
+      Effect.asVoid,
+      Effect.catchAllCause((cause) =>
+        Effect.logWarning('pg-notify publish failed', cause).pipe(
+          Effect.annotateLogs({
+            component: 'pg-notify-event-broker',
+            workspace_id: event.workspace_id,
+            seq: event.seq,
+          }),
         ),
-      )
+      ),
+    )
 
   const eventForPointer = (
     pointer: EventPointer,

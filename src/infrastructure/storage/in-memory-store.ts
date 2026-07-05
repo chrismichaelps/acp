@@ -4,6 +4,9 @@ import { Storage } from './storage.js'
 import type { StorageApi } from './storage.js'
 import type { Event, Memory } from '../../protocol/schema/index.js'
 
+const sameJsonValue = (left: unknown, right: unknown): boolean =>
+  JSON.stringify(left) === JSON.stringify(right)
+
 const make = Effect.gen(function* () {
   const collections = yield* Ref.make(
     HashMap.empty<string, HashMap.HashMap<string, unknown>>(),
@@ -17,6 +20,34 @@ const make = Effect.gen(function* () {
         HashMap.empty<string, unknown>(),
       )
       return HashMap.set(cs, collection, HashMap.set(inner, id, value))
+    })
+
+  const replaceIf: StorageApi['replaceIf'] = (
+    collection,
+    id,
+    expected,
+    value,
+  ) =>
+    Ref.modify(collections, (cs) => {
+      const inner = Option.getOrElse(HashMap.get(cs, collection), () =>
+        HashMap.empty<string, unknown>(),
+      )
+      const current = Option.getOrUndefined(HashMap.get(inner, id))
+      if (!sameJsonValue(current, expected)) {
+        return [false, cs]
+      }
+      return [true, HashMap.set(cs, collection, HashMap.set(inner, id, value))]
+    })
+
+  const putIfAbsent: StorageApi['putIfAbsent'] = (collection, id, value) =>
+    Ref.modify(collections, (cs) => {
+      const inner = Option.getOrElse(HashMap.get(cs, collection), () =>
+        HashMap.empty<string, unknown>(),
+      )
+      if (Option.isSome(HashMap.get(inner, id))) {
+        return [false, cs]
+      }
+      return [true, HashMap.set(cs, collection, HashMap.set(inner, id, value))]
     })
 
   const get: StorageApi['get'] = (collection, id) =>
@@ -135,6 +166,8 @@ const make = Effect.gen(function* () {
 
   return {
     put,
+    putIfAbsent,
+    replaceIf,
     get,
     list,
     remove,

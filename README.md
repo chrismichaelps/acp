@@ -306,16 +306,18 @@ npm run acp:ha:down
 
 Run one profile at a time (both hosts publish `4317`). The
 [`docker.yml`](./.github/workflows/docker.yml) CI workflow guards both paths on
-every PR: it runs the Docker-hosted CLI dogfood and proves Postgres state survives
-a host restart.
+every PR: it runs the Docker-hosted CLI dogfood and drives the Postgres profile
+through the same coordination path expected from a real multi-agent deployment.
 
 The HA proof is also available outside CI through
 `node scripts/acp-docker-ha-dogfood.mjs`, with `dogfood:docker-ha` exposed as the
 matching package script. It starts the `ha` profile, drives `./bin/acp` against
-the `acp-ha` service, writes workspace, work, checkpoint, memory, and event
-history into Postgres, restarts the host, reads the work and events back, and
-tears the stack down with its volume. Set `ACP_DOCKER_HA_KEEP_STACK=true` when
-you want to leave the profile running after the check for manual inspection.
+the `acp-ha` service as separate planner, worker, and reviewer identities,
+serializes claim and lease contention, writes checkpoint, memory, and artifact
+state, runs a request-changes review loop, restarts the host before and after
+completion, and then replays the Postgres event history to confirm a monotonic
+record of the lifecycle. Set `ACP_DOCKER_HA_KEEP_STACK=true` when you want to
+leave the profile running after the check for manual inspection.
 
 The same image runs every deployment profile; only environment differs. See
 [`wiki/references/deployment.md`](./wiki/references/deployment.md) for the
@@ -452,10 +454,11 @@ Beyond unit tests, several lanes exercise ACP against a _live_ host:
   `docs/superpowers/specs/2026-07-02-live-agent-coordination-test-design.md`.
 
 The Postgres-backed Docker lane is
-`node scripts/acp-docker-ha-dogfood.mjs`. It runs the Compose `ha` profile,
-writes workspace, work, checkpoint, and memory state through the Docker-hosted
-CLI, restarts the ACP host, and proves the durable work record and event history
-are still readable.
+`node scripts/acp-docker-ha-dogfood.mjs`. It runs the Compose `ha` profile with
+separate planner, worker, and reviewer sessions, forces claim and lease races,
+persists checkpoint, memory, and artifact handoff state, exercises the
+request-changes review loop, restarts the ACP host during and after the work, and
+proves the durable work record plus monotonic event history remain readable.
 
 For hosted-policy dogfood, set `ACP_DOGFOOD_WORKSPACE_ID` to a provisioned
 workspace id. The Codex smoke and multi-agent runners will bind every session to
