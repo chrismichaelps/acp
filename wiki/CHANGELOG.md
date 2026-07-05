@@ -2,6 +2,15 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-05 · readme-onboarding-refresh slice · rewrote README as a
+  developer-onboarding guide: foregrounded the Dockerized host + `bin/acp`
+  wrapper as the 60-second daily-driver path, added a tutorial-style first
+  coordinated task, trimmed reference prose, and removed the Repository-layout
+  and Design-record sections; refreshed the GitHub About description and topics.
+  Docs/metadata only — no logic change; Docker CLI dogfood re-run green (11-event
+  lifecycle) to back the daily-driver framing · validation: prettier
+  format:check on README passed · risk LOW
+
 - 2026-07-05 · signed-approval-host-capability slice · added
   `supports_signed_review_approvals` to the session host capability descriptor
   across the HTTP schema, REST host response, native RPC session response, specs,
