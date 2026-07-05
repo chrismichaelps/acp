@@ -386,7 +386,20 @@ const main = async () => {
       '--workspace',
       workspace.id,
     ])
+    const completedEvents = await cli(planner.token, [
+      'events',
+      'list',
+      '--workspace',
+      workspace.id,
+      '--type',
+      'work.completed',
+    ])
     const eventTypes = events.map((event) => event.type)
+    assert(
+      completedEvents.length === 1 &&
+        completedEvents[0].type === 'work.completed',
+      `expected only completed events, got ${JSON.stringify(completedEvents)}`,
+    )
     assert(
       JSON.stringify(eventTypes) === JSON.stringify(expectedEventTypes),
       `unexpected event sequence: ${JSON.stringify(eventTypes)}`,

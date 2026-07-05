@@ -2,6 +2,16 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-05 · cli-events-list-type-filter slice · added
+  `acp events list --type <event_type>` as a client-side event replay filter.
+  The command keeps the existing `GET /v1/events?workspace_id=&after_seq=`
+  route and narrows the returned array by `type` before printing, so agents can
+  ask for one event class without dumping the full replay tail into context.
+  Docker dogfood asserts the filter against a real `work.completed` event ·
+  validation: focused event/client tests, typecheck, lint, prettier, file-size,
+  env, full suite (371 passed, 8 skipped), and Docker CLI dogfood passed · risk
+  LOW
+
 - 2026-07-05 · resume-work-packet slice · added `GET /v1/work/<id>/resume` and
   `acp work resume <id>` as the compact handoff read for token-efficient agent
   recovery. The response contains the work record, optional latest checkpoint,
