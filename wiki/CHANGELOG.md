@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-05 · signed-approval-host-capability slice · added
+  `supports_signed_review_approvals` to the session host capability descriptor
+  across the HTTP schema, REST host response, native RPC session response, specs,
+  and [[acp-http-api]] wiki page so clients can discover that signed review
+  approval evidence is accepted and persisted without implying cryptographic
+  verification · validation: focused session/router/http/RPC tests, format,
+  lint, typecheck, file-size, env, and full test suite passed · risk LOW
+
 - 2026-07-05 · signed-review-approval-evidence slice · added optional
   signed-approval evidence to [[review.schema]], HTTP approval payloads,
   [[review-service]], CLI review approval flags, JSON-RPC and native RPC review

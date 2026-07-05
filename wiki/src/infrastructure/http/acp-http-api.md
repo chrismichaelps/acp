@@ -48,7 +48,7 @@ export const InitializeSessionPayload: Schema.Struct<{ // §8 scopes default to 
 export const InitializeSessionResponse: Schema.Struct<{ // spec §9 host handshake
   session_id: SessionId; protocol_version: "0.1"
   host: { name: string; kind: "local" }
-  capabilities: { supports_events; supports_reviews; supports_artifacts; supports_sse: boolean } }>
+  capabilities: { supports_events; supports_reviews; supports_signed_review_approvals; supports_artifacts; supports_sse: boolean } }>
 
 export const WorkGroup: HttpApiGroup.HttpApiGroup<'work', ...>
 export const WorkerGroup: HttpApiGroup.HttpApiGroup<'workers', ...>
@@ -167,6 +167,9 @@ rejection alias, and is backed by [[review-service]] `cancel` plus
 Review approval accepts optional `approval_signature` evidence. The payload is
 schema-validated and forwarded to [[review-service]], which stores and emits the
 evidence without host-side cryptographic verification.
+The host capability descriptor advertises this as
+`supports_signed_review_approvals: true` so clients can discover evidence
+support without inferring it from broad review support.
 
 ## Negative Logic (Prohibited Paths)
 
