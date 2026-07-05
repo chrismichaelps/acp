@@ -103,7 +103,7 @@ export const LeaseServiceLive: Layer.Layer<
 ### Linkage
 
 - **Requires:** [[storage]], [[event-store]], [[app-config]], [[lease.schema]],
-  [[common]], [[protocol-error]]
+  [[common]], [[protocol-error]], [[lease-resource-lock]]
 - **Consumed by:** [[acp-router]] (`/v1/leases`, spec §12), CLI, dogfood
   runners, and the
   [[sweeper]] (`expireAllDue`).
@@ -111,17 +111,22 @@ export const LeaseServiceLive: Layer.Layer<
 ## Algorithm
 
 1. `request` lists leases for the workspace and searches for an active unexpired
-   conflicting resource claim. On conflict it emits `lease.requested` +
-   `lease.denied` then fails `LeaseConflictError`; otherwise it saves an `active`
-   lease and emits `lease.requested` + `lease.granted`.
+   conflicting resource claim. It then asks [[lease-resource-lock]] for a
+   deterministic resource key and inserts a `lease_resource` row with
+   `putIfAbsent`. On conflict it emits `lease.requested` + `lease.denied` then
+   fails `LeaseConflictError`; if the existing row is expired it removes the stale
+   row and retries once; otherwise it saves an `active` lease and emits
+   `lease.requested` + `lease.granted`.
 2. `get` loads one lease by id; absence is `Option.none`.
 3. `list` decodes the `lease` collection and filters by `workspace_id`.
 4. `renew` requires the lease to still be active and unexpired at `now`, extends
    `expires_at`, saves, and emits `lease.renewed`.
-5. `release` and `revoke` require `active`, save the terminal state, and emit
+5. `release` and `revoke` require `active`, save the terminal state, remove the
+   resource row only when it still points at the same lease id, and emit
    `lease.released` or `lease.revoked`.
 6. `expireDue` scans active leases in a workspace, marks those whose
-   `expires_at <= now` as `expired`, and emits `lease.expired`.
+   `expires_at <= now` as `expired`, removes their resource rows, and emits
+   `lease.expired`.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -133,13 +138,16 @@ export const LeaseServiceLive: Layer.Layer<
   events follow the successful state write; `lease.requested`/`lease.denied` are
   appended only once the conflict verdict is known, never speculatively.
 - ❌ Do NOT delete expired/released/revoked leases; the history remains readable.
+- ❌ Do NOT use a generic scan-then-insert sequence for grant arbitration; the
+  resource row insert is the cross-process winner election.
 
 ## Depth
 
-DEEP (0.76). The service hides storage collection naming, schema encode/decode,
-TTL calculation, conflict detection, terminal-state transition rules, and event
-emission behind one domain surface. Deleting it would scatter lease conflict
-logic across transport handlers and make resource coordination fragile.
+DEEP (0.76). The service hides lease storage, schema encode/decode, TTL
+calculation, conflict detection, resource-row arbitration, terminal-state
+transition rules, and event emission behind one domain surface. Deleting it would
+scatter lease conflict logic across transport handlers and make resource
+coordination fragile.
 
 ## Grill Log
 
@@ -176,4 +184,4 @@ state.
 
 ## Referenced by
 
-[[leases/_MOC]] · [[Lease]] · [[src/_MOC]]
+[[leases/_MOC]] · [[Lease]] · [[lease-resource-lock]] · [[src/_MOC]]
