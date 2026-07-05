@@ -2,6 +2,16 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-05 · cli-artifact-list-kind-filter slice · added
+  `acp artifact list --kind <kind>` as a client-side artifact kind filter over
+  work-scoped or workspace-scoped artifact lists. The command still uses the
+  existing artifact collection routes; [[cli-client]] narrows the returned array
+  by `kind`, giving agents a direct way to recover patch, markdown, log, or pull
+  request artifacts without changing artifact routes, schema, or storage. Docker
+  dogfood creates two artifact kinds and filters back only the markdown report ·
+  validation: focused CLI tests, typecheck, lint, prettier, file-size, env, full
+  suite (369 passed, 8 skipped), and Docker CLI dogfood passed · risk LOW
+
 - 2026-07-05 · cli-lease-list-holder-filter slice · added
   `acp lease list --holder <holder>` as a client-side holder filter over the
   workspace lease list. The command still hits `GET /v1/leases?workspace_id=`;

@@ -25,6 +25,7 @@ const expectedEventTypes = [
   'checkpoint.created',
   'memory.created',
   'artifact.created',
+  'artifact.created',
   'review.requested',
   'work.needs_review',
   'review.approved',
@@ -307,7 +308,7 @@ const main = async () => {
       '--labels',
       'dogfood,docker,cli',
     ])
-    await cli(worker.token, [
+    const reportArtifact = await cli(worker.token, [
       'artifact',
       'create',
       '--workspace',
@@ -321,6 +322,35 @@ const main = async () => {
       '--content',
       `workspace=${workspace.id} work=${work.id}`,
     ])
+    await cli(worker.token, [
+      'artifact',
+      'create',
+      '--workspace',
+      workspace.id,
+      '--work',
+      work.id,
+      '--kind',
+      'log',
+      '--summary',
+      'Docker CLI secondary artifact',
+      '--content',
+      'secondary artifact for kind-filter dogfood',
+    ])
+    const markdownArtifacts = await cli(planner.token, [
+      'artifact',
+      'list',
+      '--work',
+      work.id,
+      '--kind',
+      'markdown',
+    ])
+    assert(
+      markdownArtifacts.length === 1 &&
+        markdownArtifacts[0].id === reportArtifact.id,
+      `expected only markdown artifact, got ${JSON.stringify(
+        markdownArtifacts,
+      )}`,
+    )
 
     const review = await cli(planner.token, [
       'review',

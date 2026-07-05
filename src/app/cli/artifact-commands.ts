@@ -5,6 +5,7 @@ import {
   flag,
   optional,
   optionalAs,
+  optionalClientFilter,
   positional,
   scopedWorkListPath,
   type CommandHandler,
@@ -72,9 +73,11 @@ export const artifactCommandHandlers: Readonly<Record<string, CommandHandler>> =
     'artifact list': ({ flags }) =>
       Either.gen(function* () {
         const path = yield* scopedWorkListPath(flags, 'artifacts')
+        const clientFilters = optionalClientFilter(flags, 'kind')
         return {
           method: 'GET',
           path,
+          ...(clientFilters.length > 0 ? { clientFilters } : {}),
           label: 'artifact list',
         }
       }),

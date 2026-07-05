@@ -294,6 +294,23 @@ describe('parseArgs', () => {
     })
   })
 
+  it('records artifact list --kind as a client-side filter', () => {
+    const req = right([
+      'artifact',
+      'list',
+      '--work',
+      'work 123/main',
+      '--kind',
+      'markdown',
+    ])
+    expect(req).toEqual({
+      method: 'GET',
+      path: '/v1/work/work%20123%2Fmain/artifacts',
+      clientFilters: [{ field: 'kind', value: 'markdown' }],
+      label: 'artifact list',
+    })
+  })
+
   it('parses artifact content with an encoded path and GET method', () => {
     const req = right(['artifact', 'content', 'artifact 123/main'])
     expect(req).toEqual({

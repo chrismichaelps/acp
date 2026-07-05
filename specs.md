@@ -1817,6 +1817,7 @@ acp lease list --workspace workspace_123 --holder agent_codex
 acp checkpoint create --workspace workspace_123 --work work_123 --summary "Found async redirect issue"
 acp memory create --workspace workspace_123 --work work_123 --kind decision --key auth.redirect.async-session --summary "Redirect waits for session creation" --content "Session creation is async; redirect must happen after persistence."
 acp artifact create --workspace workspace_123 --work work_123 --kind patch --summary "Auth redirect fix" --content "$(cat fix.patch)"
+acp artifact list --work work_123 --kind patch
 acp review request --work work_123 --by agent_codex --reviewer human_chris
 acp review approve review_123 --met tests_pass,diff_review
 # If the requesting agent withdraws a pending review instead:
