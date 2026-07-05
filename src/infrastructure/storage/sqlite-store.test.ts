@@ -106,6 +106,42 @@ describe('SQLite storage — keyed collections', () => {
     expect(Option.getOrNull(result)).toEqual({ title: 'fix bug' })
   })
 
+  it('puts only when absent and replaces only when unchanged', () => {
+    const result = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        const first = yield* s.putIfAbsent('locks', 'resource', {
+          holder: 'a',
+        })
+        const second = yield* s.putIfAbsent('locks', 'resource', {
+          holder: 'b',
+        })
+        const stale = yield* s.replaceIf(
+          'locks',
+          'resource',
+          { holder: 'b' },
+          { holder: 'c' },
+        )
+        const fresh = yield* s.replaceIf(
+          'locks',
+          'resource',
+          { holder: 'a' },
+          { holder: 'c' },
+        )
+        const got = yield* s.get('locks', 'resource')
+        return { first, second, stale, fresh, got: Option.getOrNull(got) }
+      }),
+    )
+
+    expect(result).toEqual({
+      first: true,
+      second: false,
+      stale: false,
+      fresh: true,
+      got: { holder: 'c' },
+    })
+  })
+
   it('returns Option.none for a missing key', () => {
     const result = run(
       Effect.gen(function* () {

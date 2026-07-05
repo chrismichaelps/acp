@@ -88,6 +88,33 @@ const make = Effect.gen(function* () {
       Effect.mapError(storageError('put')),
     )
 
+  const replaceIf: StorageApi['replaceIf'] = (
+    collection,
+    id,
+    expected,
+    value,
+  ) =>
+    sql<{ readonly one: number }>`
+      UPDATE kv
+      SET value = ${JSON.stringify(value)}::jsonb
+      WHERE collection = ${collection}
+        AND id = ${id}
+        AND value = ${JSON.stringify(expected)}::jsonb
+      RETURNING 1 AS one`.pipe(
+      Effect.map((rows) => rows.length === 1),
+      Effect.mapError(storageError('replace_if')),
+    )
+
+  const putIfAbsent: StorageApi['putIfAbsent'] = (collection, id, value) =>
+    sql<{ readonly one: number }>`
+      INSERT INTO kv (collection, id, value)
+      VALUES (${collection}, ${id}, ${JSON.stringify(value)}::jsonb)
+      ON CONFLICT (collection, id) DO NOTHING
+      RETURNING 1 AS one`.pipe(
+      Effect.map((rows) => rows.length === 1),
+      Effect.mapError(storageError('put_if_absent')),
+    )
+
   const get: StorageApi['get'] = (collection, id) =>
     sql<ValueRow>`SELECT value FROM kv WHERE collection = ${collection} AND id = ${id}`.pipe(
       Effect.map((rows) =>
@@ -197,6 +224,8 @@ const make = Effect.gen(function* () {
 
   return {
     put,
+    putIfAbsent,
+    replaceIf,
     get,
     list,
     remove,

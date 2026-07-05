@@ -10,6 +10,13 @@ import {
   StorageError,
 } from '../../protocol/errors/protocol-error.js'
 import { Event, Lease, Timestamp } from '../../protocol/schema/index.js'
+import {
+  makeResourceLock,
+  readResourceLock,
+  removeResourceLock,
+  resourceCollection,
+  resourceKey,
+} from './resource-lock.js'
 import type {
   EventType,
   LeaseId,
@@ -269,6 +276,7 @@ const make = Effect.gen(function* () {
 
       const next: Lease = { ...lease, state: to }
       yield* save(next)
+      yield* removeResourceLock(storage, lease)
       yield* appendLeaseEvent(next, actor, now, type)
       return next
     })
@@ -308,6 +316,65 @@ const make = Effect.gen(function* () {
           ttlMillis(input.payload.ttl_seconds),
         ),
         state: 'active',
+      }
+
+      const lock = makeResourceLock(lease)
+      const lockKey = resourceKey(lease.workspace_id, lease.resource)
+      const locked = yield* storage.putIfAbsent(
+        resourceCollection,
+        lockKey,
+        lock,
+      )
+      if (!locked) {
+        const currentLock = yield* readResourceLock(
+          storage,
+          lease.workspace_id,
+          lease.resource,
+        )
+        const current = Option.getOrUndefined(currentLock)
+        if (
+          current !== undefined &&
+          Date.parse(current.expires_at) <= Date.parse(input.now)
+        ) {
+          yield* storage.remove(resourceCollection, lockKey)
+          const retried = yield* storage.putIfAbsent(
+            resourceCollection,
+            lockKey,
+            lock,
+          )
+          if (retried) {
+            yield* save(lease)
+            yield* appendRequestPhaseEvent(
+              input,
+              'lease.requested',
+              input.payload.holder,
+            )
+            yield* appendLeaseEvent(
+              lease,
+              input.payload.holder,
+              input.now,
+              'lease.granted',
+            )
+            return lease
+          }
+        }
+
+        yield* appendRequestPhaseEvent(
+          input,
+          'lease.requested',
+          input.payload.holder,
+        )
+        yield* appendRequestPhaseEvent(
+          input,
+          'lease.denied',
+          current?.holder ?? input.payload.holder,
+        )
+        return yield* Effect.fail(
+          new LeaseConflictError({
+            resourceUri: input.payload.resource.uri,
+            holderWorkerId: current?.holder ?? input.payload.holder,
+          }),
+        )
       }
 
       yield* save(lease)
@@ -372,6 +439,7 @@ const make = Effect.gen(function* () {
         Effect.gen(function* () {
           const next: Lease = { ...lease, state: 'expired' }
           yield* save(next)
+          yield* removeResourceLock(storage, lease)
           yield* appendLeaseEvent(next, actor, now, 'lease.expired')
           return next
         }),

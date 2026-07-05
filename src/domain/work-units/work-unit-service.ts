@@ -279,13 +279,44 @@ const make = Effect.gen(function* () {
           }),
         )
       }
-      return yield* transitionWork(
-        work,
-        'claimed',
-        workerId,
-        now,
-        Option.some(workerId),
+      if (!allowedTransitions[work.state].has('claimed')) {
+        return yield* Effect.fail(
+          new InvalidStateTransitionError({
+            from: work.state,
+            to: 'claimed',
+          }),
+        )
+      }
+
+      const next: WorkUnit = {
+        ...work,
+        state: 'claimed',
+        assigned_to: Option.some(workerId),
+        updated_at: now,
+      }
+      const expected = yield* encodeWork(work)
+      const replacement = yield* encodeWork(next)
+      const replaced = yield* storage.replaceIf(
+        collection,
+        work.id,
+        expected,
+        replacement,
       )
+      if (!replaced) {
+        const current = yield* requireWork(workId)
+        return yield* Effect.fail(
+          new ClaimConflictError({
+            workId,
+            holderWorkerId: Option.getOrElse(
+              current.assigned_to,
+              () => workerId,
+            ),
+          }),
+        )
+      }
+
+      yield* appendWorkEvent(next, workerId, now, 'work.claimed')
+      return next
     })
 
   const transition: WorkUnitServiceApi['transition'] = (

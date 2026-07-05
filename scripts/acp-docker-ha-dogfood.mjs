@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Docker HA dogfood lane: run the Compose self-host-ha profile, drive the
- * compiled CLI inside the host container, and prove Postgres-backed state
- * survives an ACP host restart.
+ * Docker HA dogfood lane: run the Compose self-host-ha profile, drive separate
+ * ACP identities through a realistic coordination lifecycle, and prove the
+ * Postgres-backed state survives host restarts.
  */
 import { spawn } from 'node:child_process'
 import process from 'node:process'
@@ -11,6 +11,52 @@ import { setTimeout as delay } from 'node:timers/promises'
 const runId = process.env.ACP_DOGFOOD_RUN_ID ?? Date.now().toString(36)
 const keepStack = process.env.ACP_DOCKER_HA_KEEP_STACK === 'true'
 const composeArgs = ['compose', '--profile', 'ha']
+
+const sharedPermissions = ['workspace:read', 'event:read']
+const plannerPermissions = [
+  ...sharedPermissions,
+  'workspace:write',
+  'work:create',
+  'checkpoint:create',
+  'memory:create',
+]
+const workerPermissions = [
+  ...sharedPermissions,
+  'work:claim',
+  'work:update',
+  'lease:create',
+  'lease:renew',
+  'lease:release',
+  'checkpoint:create',
+  'memory:create',
+  'memory:read',
+  'artifact:create',
+  'review:create',
+]
+const reviewerPermissions = [
+  ...sharedPermissions,
+  'memory:read',
+  'review:request_changes',
+  'review:approve',
+]
+
+const requiredEventTypes = [
+  'workspace.created',
+  'work.created',
+  'checkpoint.created',
+  'memory.created',
+  'work.claimed',
+  'work.started',
+  'lease.granted',
+  'lease.renewed',
+  'artifact.created',
+  'review.requested',
+  'review.changes_requested',
+  'work.unblocked',
+  'review.approved',
+  'lease.released',
+  'work.completed',
+]
 
 const run = (command, args, options = {}) =>
   new Promise((resolvePromise, rejectPromise) => {
@@ -24,20 +70,26 @@ const run = (command, args, options = {}) =>
     if (child.stderr) child.stderr.on('data', (chunk) => (stderr += chunk))
     child.on('error', rejectPromise)
     child.on('close', (code) => {
-      if (code === 0) {
-        resolvePromise({ stdout, stderr })
-        return
-      }
-      rejectPromise(
-        new Error(
-          `${command} ${args.join(' ')} exited ${code}: ${stderr || stdout}`,
-        ),
-      )
+      resolvePromise({ code: code ?? 1, stdout, stderr })
     })
   })
 
-const docker = (args, options) => run('docker', args, options)
+const runOk = async (command, args, options = {}) => {
+  const result = await run(command, args, options)
+  if (result.code === 0) return result
+  throw new Error(
+    `${command} ${args.join(' ')} exited ${String(result.code)}: ${
+      result.stderr || result.stdout
+    }`,
+  )
+}
+
+const docker = (args, options) => runOk('docker', args, options)
 const compose = (args, options) => docker([...composeArgs, ...args], options)
+
+const assert = (condition, message) => {
+  if (!condition) throw new Error(`assertion failed: ${message}`)
+}
 
 const healthStatus = async () => {
   const { stdout } = await docker(
@@ -59,16 +111,88 @@ const waitForHealthy = async (label) => {
   }
 }
 
-const cli = async (args) => {
-  const { stdout } = await run('./bin/acp', args, {
-    capture: true,
-    env: { ACP_COMPOSE_SERVICE: 'acp-ha' },
-  })
-  return JSON.parse(stdout)
+const restartHost = async (label) => {
+  await compose(['restart', 'acp-ha'])
+  await waitForHealthy(label)
 }
 
-const assert = (condition, message) => {
-  if (!condition) throw new Error(`assertion failed: ${message}`)
+const parsePayload = (text) => {
+  const trimmed = text.trim()
+  if (trimmed === '') return undefined
+  const candidate =
+    trimmed
+      .split('\n')
+      .map((line) => line.trim())
+      .find((line) => line.startsWith('{') || line.startsWith('[')) ?? trimmed
+  return JSON.parse(candidate)
+}
+
+const cli = async (token, args) => {
+  const result = await run('./bin/acp', args, {
+    capture: true,
+    env: {
+      ACP_COMPOSE_SERVICE: 'acp-ha',
+      ...(token === '' ? {} : { ACP_RPC_TOKEN: token }),
+    },
+  })
+  const payload = parsePayload(
+    result.code === 0 ? result.stdout : result.stderr,
+  )
+  return {
+    ok: result.code === 0,
+    code: result.code,
+    payload,
+    stdout: result.stdout,
+    stderr: result.stderr,
+  }
+}
+
+const expectOk = async (token, label, args) => {
+  const result = await cli(token, args)
+  if (!result.ok) {
+    throw new Error(
+      `${label} failed (${String(result.code)}): ${
+        result.stderr || JSON.stringify(result.payload)
+      }`,
+    )
+  }
+  return result.payload
+}
+
+const safeWorkerId = (role) =>
+  `agent_ha_${role}_${runId}`.replace(/[^a-zA-Z0-9_]/g, '_')
+
+const initAgent = async (role, permissions, capabilities, kind = 'agent') => {
+  const workerId = safeWorkerId(role)
+  const session = await expectOk('', `session init (${role})`, [
+    'session',
+    'init',
+    '--worker',
+    workerId,
+    '--name',
+    `HA ${role}`,
+    '--kind',
+    kind,
+    '--vendor',
+    'codex',
+    '--capabilities',
+    capabilities.join(','),
+    '--permissions',
+    permissions.join(','),
+  ])
+  return { role, workerId, token: session.session_id }
+}
+
+const classifyRace = (agent, result, conflictCode) => {
+  if (result.ok) return { agent, kind: 'winner', payload: result.payload }
+  if (result.payload?.error?.code === conflictCode) {
+    return { agent, kind: 'conflict', payload: result.payload }
+  }
+  throw new Error(
+    `unexpected ${conflictCode} result for ${agent.role}: ${
+      result.stderr || JSON.stringify(result.payload)
+    }`,
+  )
 }
 
 const main = async () => {
@@ -76,7 +200,25 @@ const main = async () => {
     await compose(['up', '-d', '--build'])
     await waitForHealthy('acp-host-ha')
 
-    const workspace = await cli([
+    const [planner, workerA, workerB, reviewer] = await Promise.all([
+      initAgent('planner', plannerPermissions, [
+        'supports_checkpoints',
+        'supports_leases',
+      ]),
+      initAgent('worker_a', workerPermissions, [
+        'can_edit_files',
+        'can_run_commands',
+        'supports_leases',
+      ]),
+      initAgent('worker_b', workerPermissions, [
+        'can_edit_files',
+        'can_run_commands',
+        'supports_leases',
+      ]),
+      initAgent('reviewer', reviewerPermissions, ['can_review'], 'human'),
+    ])
+
+    const workspace = await expectOk(planner.token, 'workspace create', [
       'workspace',
       'create',
       '--name',
@@ -88,31 +230,33 @@ const main = async () => {
       '--default-branch',
       'main',
     ])
-    const work = await cli([
+    const work = await expectOk(planner.token, 'work create', [
       'work',
       'create',
-      'Docker HA durability dogfood',
+      'Docker HA multi-agent dogfood',
       '--workspace',
       workspace.id,
       '--description',
-      'Prove the Compose HA profile stores ACP coordination state in Postgres.',
+      'Prove the Compose HA profile can coordinate multiple ACP actors through Postgres.',
       '--priority',
       'high',
     ])
 
-    await cli(['work', 'claim', work.id, '--worker', `agent_ha_${runId}`])
-    await cli(['work', 'update', work.id, '--state', 'running'])
-    const checkpoint = await cli([
-      'checkpoint',
-      'create',
-      '--workspace',
-      workspace.id,
-      '--work',
-      work.id,
-      '--summary',
-      'HA dogfood reached durable checkpoint before restart.',
-    ])
-    const memory = await cli([
+    const plannerCheckpoint = await expectOk(
+      planner.token,
+      'planner checkpoint',
+      [
+        'checkpoint',
+        'create',
+        '--workspace',
+        workspace.id,
+        '--work',
+        work.id,
+        '--summary',
+        'Planner opened the HA dogfood work item.',
+      ],
+    )
+    await expectOk(planner.token, 'planner memory', [
       'memory',
       'create',
       '--workspace',
@@ -120,35 +264,292 @@ const main = async () => {
       '--work',
       work.id,
       '--kind',
-      'observation',
+      'decision',
       '--key',
-      `dogfood.docker-ha.${runId}`,
+      `docker-ha.${runId}.plan`,
       '--summary',
-      'Postgres HA profile accepted coordination state before restart.',
+      'Planner chose a Postgres-backed multi-agent lifecycle.',
       '--content',
-      'The ACP host is running in the Compose self-host-ha profile with Postgres storage and pg-notify configured.',
+      `Plan for HA dogfood run ${runId}.`,
       '--labels',
-      'dogfood,docker,ha,postgres',
+      'dogfood,docker,ha,multi-agent',
     ])
 
-    await compose(['restart', 'acp-ha'])
-    await waitForHealthy('acp-host-ha after restart')
-
-    const persistedWork = await cli(['work', 'get', work.id])
-    const events = await cli(['events', 'list', '--workspace', workspace.id])
-    const eventTypes = events.map((event) => event.type)
-
-    assert(persistedWork.id === work.id, 'work id survived restart')
+    const claimResults = await Promise.all([
+      cli(workerA.token, [
+        'work',
+        'claim',
+        work.id,
+        '--worker',
+        workerA.workerId,
+      ]).then((result) => classifyRace(workerA, result, 'claim_conflict')),
+      cli(workerB.token, [
+        'work',
+        'claim',
+        work.id,
+        '--worker',
+        workerB.workerId,
+      ]).then((result) => classifyRace(workerB, result, 'claim_conflict')),
+    ])
+    const claimWinner = claimResults.find((result) => result.kind === 'winner')
+    const claimConflict = claimResults.find(
+      (result) => result.kind === 'conflict',
+    )
+    assert(claimWinner !== undefined, 'expected a claim winner')
+    assert(claimConflict !== undefined, 'expected a claim conflict')
     assert(
-      persistedWork.workspace_id === workspace.id,
-      'work remained bound to original workspace',
+      claimResults.filter((result) => result.kind === 'winner').length === 1,
+      'expected exactly one claim winner',
+    )
+
+    const activeWorker = claimWinner.agent
+    const running = await expectOk(activeWorker.token, 'work running', [
+      'work',
+      'update',
+      work.id,
+      '--state',
+      'running',
+    ])
+    assert(running.state === 'running', 'work did not enter running')
+
+    const leaseArgs = (holder) => [
+      'lease',
+      'request',
+      '--workspace',
+      workspace.id,
+      '--holder',
+      holder,
+      '--kind',
+      'worktree',
+      '--uri',
+      `worktree://docker-ha/${runId}`,
+      '--ttl',
+      '900',
+    ]
+    const leaseResults = await Promise.all([
+      cli(activeWorker.token, leaseArgs(activeWorker.workerId)).then((result) =>
+        classifyRace(activeWorker, result, 'lease_conflict'),
+      ),
+      cli(
+        claimConflict.agent.token,
+        leaseArgs(claimConflict.agent.workerId),
+      ).then((result) =>
+        classifyRace(claimConflict.agent, result, 'lease_conflict'),
+      ),
+    ])
+    const leaseWinner = leaseResults.find((result) => result.kind === 'winner')
+    assert(leaseWinner !== undefined, 'expected a lease winner')
+    assert(
+      leaseResults.filter((result) => result.kind === 'winner').length === 1,
+      'expected exactly one lease winner',
     )
     assert(
-      eventTypes.includes('workspace.created') &&
-        eventTypes.includes('work.created') &&
-        eventTypes.includes('checkpoint.created') &&
-        eventTypes.includes('memory.created'),
-      `missing expected durable events: ${JSON.stringify(eventTypes)}`,
+      leaseResults.some((result) => result.kind === 'conflict'),
+      'expected a lease conflict',
+    )
+
+    const leaseHolder = leaseWinner.agent
+    const lease = leaseWinner.payload
+    const renewed = await expectOk(leaseHolder.token, 'lease renew', [
+      'lease',
+      'renew',
+      lease.id,
+      '--ttl',
+      '900',
+    ])
+    assert(renewed.state === 'active', 'renewed lease was not active')
+
+    const activeLeases = await expectOk(reviewer.token, 'lease list', [
+      'lease',
+      'list',
+      '--workspace',
+      workspace.id,
+    ])
+    const activeLease = activeLeases.find((item) => item.id === lease.id)
+    assert(activeLease?.state === 'active', 'lease was not active on readback')
+
+    const workerCheckpoint = await expectOk(
+      activeWorker.token,
+      'worker checkpoint',
+      [
+        'checkpoint',
+        'create',
+        '--workspace',
+        workspace.id,
+        '--work',
+        work.id,
+        '--summary',
+        'Worker reached the HA handoff checkpoint.',
+      ],
+    )
+    const handoffMemory = await expectOk(activeWorker.token, 'handoff memory', [
+      'memory',
+      'create',
+      '--workspace',
+      workspace.id,
+      '--work',
+      work.id,
+      '--kind',
+      'handoff',
+      '--key',
+      `docker-ha.${runId}.handoff`,
+      '--summary',
+      'Worker handed off HA context for review.',
+      '--content',
+      `Handoff for HA dogfood run ${runId}.`,
+      '--labels',
+      'dogfood,docker,ha,handoff',
+    ])
+    const artifact = await expectOk(activeWorker.token, 'artifact create', [
+      'artifact',
+      'create',
+      '--workspace',
+      workspace.id,
+      '--work',
+      work.id,
+      '--kind',
+      'test_report',
+      '--uri',
+      `acp://dogfood/docker-ha/${runId}/report`,
+      '--summary',
+      'Docker HA dogfood report.',
+    ])
+
+    const firstReview = await expectOk(activeWorker.token, 'review request', [
+      'review',
+      'request',
+      '--work',
+      work.id,
+      '--by',
+      activeWorker.workerId,
+      '--reviewer',
+      reviewer.workerId,
+    ])
+    const changes = await expectOk(reviewer.token, 'review request-changes', [
+      'review',
+      'request-changes',
+      firstReview.id,
+    ])
+    assert(
+      changes.state === 'changes_requested',
+      'reviewer did not request changes',
+    )
+
+    await restartHost('acp-host-ha after review restart')
+
+    const latestCheckpoint = await expectOk(
+      reviewer.token,
+      'checkpoint latest after restart',
+      ['checkpoint', 'latest', '--work', work.id],
+    )
+    assert(
+      latestCheckpoint.id === workerCheckpoint.id,
+      'latest checkpoint did not survive restart',
+    )
+    const handoffRecords = await expectOk(
+      reviewer.token,
+      'handoff memory after restart',
+      [
+        'memory',
+        'list',
+        '--workspace',
+        workspace.id,
+        '--work',
+        work.id,
+        '--kind',
+        'handoff',
+      ],
+    )
+    assert(
+      handoffRecords.some((record) => record.id === handoffMemory.id),
+      'handoff memory did not survive restart',
+    )
+
+    const resumed = await expectOk(activeWorker.token, 'work resume', [
+      'work',
+      'update',
+      work.id,
+      '--state',
+      'running',
+    ])
+    assert(resumed.state === 'running', 'work did not resume after changes')
+
+    const secondReview = await expectOk(
+      activeWorker.token,
+      'second review request',
+      [
+        'review',
+        'request',
+        '--work',
+        work.id,
+        '--by',
+        activeWorker.workerId,
+        '--reviewer',
+        reviewer.workerId,
+      ],
+    )
+    const approved = await expectOk(reviewer.token, 'review approve', [
+      'review',
+      'approve',
+      secondReview.id,
+      '--met',
+      'ha_stack,durable_handoff,event_replay',
+    ])
+    assert(approved.state === 'approved', 'reviewer did not approve')
+
+    const released = await cli(leaseHolder.token, [
+      'lease',
+      'release',
+      lease.id,
+    ])
+    assert(released.ok, `lease release failed: ${released.stderr}`)
+
+    const completed = await expectOk(activeWorker.token, 'work complete', [
+      'work',
+      'update',
+      work.id,
+      '--state',
+      'completed',
+    ])
+    assert(completed.state === 'completed', 'work did not complete')
+
+    await restartHost('acp-host-ha after completion restart')
+
+    const persistedWork = await expectOk(
+      reviewer.token,
+      'work get after restart',
+      ['work', 'get', work.id],
+    )
+    assert(persistedWork.id === work.id, 'work id did not survive restart')
+    assert(
+      persistedWork.workspace_id === workspace.id,
+      'work workspace binding did not survive restart',
+    )
+    assert(
+      persistedWork.state === 'completed',
+      'completed state did not survive restart',
+    )
+
+    const events = await expectOk(reviewer.token, 'events list after restart', [
+      'events',
+      'list',
+      '--workspace',
+      workspace.id,
+      '--after',
+      '0',
+    ])
+    const eventTypes = events.map((event) => event.type)
+    for (const eventType of requiredEventTypes) {
+      assert(
+        eventTypes.includes(eventType),
+        `missing durable event ${eventType}: ${JSON.stringify(eventTypes)}`,
+      )
+    }
+    assert(
+      events.every(
+        (event, index) => index === 0 || event.seq > events[index - 1].seq,
+      ),
+      'event sequence is not strictly monotonic',
     )
 
     console.log(
@@ -156,10 +557,19 @@ const main = async () => {
         {
           ok: true,
           profile: 'ha',
+          run_id: runId,
           workspace_id: workspace.id,
           work_id: work.id,
-          checkpoint_id: checkpoint.id,
-          memory_id: memory.id,
+          claim_winner: activeWorker.workerId,
+          claim_conflict: claimConflict.agent.workerId,
+          lease_winner: leaseHolder.workerId,
+          planner_checkpoint_id: plannerCheckpoint.id,
+          worker_checkpoint_id: workerCheckpoint.id,
+          handoff_memory_id: handoffMemory.id,
+          artifact_id: artifact.id,
+          first_review_state: changes.state,
+          second_review_state: approved.state,
+          completed_state: persistedWork.state,
           event_count: events.length,
           event_types: eventTypes,
         },

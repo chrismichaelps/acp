@@ -19,6 +19,17 @@ export interface StorageApi {
     id: string,
     value: unknown,
   ) => Effect.Effect<void, StorageError>
+  readonly putIfAbsent: (
+    collection: string,
+    id: string,
+    value: unknown,
+  ) => Effect.Effect<boolean, StorageError>
+  readonly replaceIf: (
+    collection: string,
+    id: string,
+    expected: unknown,
+    value: unknown,
+  ) => Effect.Effect<boolean, StorageError>
   readonly get: (
     collection: string,
     id: string,
