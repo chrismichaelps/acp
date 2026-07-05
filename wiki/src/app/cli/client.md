@@ -35,6 +35,7 @@ export const withBearerToken: (
   request: HttpClientRequest,
   token: string,
 ) => HttpClientRequest
+export const applyClientFilter: (request: CliRequest, body: string) => string
 ```
 
 ### Linkage
@@ -51,10 +52,16 @@ Build a `GET`/`POST`/`PATCH`/`DELETE` `HttpClientRequest` for
 `Authorization: Bearer <token>` only when a token was supplied, `execute`, read
 the response text, return `{ status, body }`. `withBearerToken` is exported so
 [[cli-main]] applies the same header policy to `events stream`.
+`applyClientFilter` is a pure post-fetch transform: when `request.filterState` is
+set and the body parses to a JSON array, it keeps only elements whose `state`
+equals the requested value and re-serializes; on a non-array body or parse
+failure it returns the body unchanged. [[cli-main]] calls it before printing so
+`work list --state <s>` narrows output without a host round-trip change.
 
 ## Negative Logic (Prohibited Paths)
 
-- ❌ Do NOT decode into domain schemas here — the CLI prints raw JSON.
+- ❌ Do NOT decode into domain schemas here — `applyClientFilter` does a
+  structural array narrowing only, never a typed decode.
 - ❌ Do NOT pick the transport Layer here — [[cli-main]] provides it.
 - ❌ Do NOT log or echo bearer tokens.
 

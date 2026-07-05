@@ -29,9 +29,14 @@ export const workCommandHandlers: Readonly<Record<string, CommandHandler>> = {
   'work list': ({ flags }) =>
     Either.gen(function* () {
       const workspaceId = yield* flag(flags, 'workspace')
+      const filter =
+        'state' in flags && flags.state !== 'true'
+          ? { filterState: flags.state }
+          : {}
       return {
         method: 'GET',
         path: `/v1/workspaces/${encodePathSegment(workspaceId)}/work`,
+        ...filter,
         label: 'work list',
       }
     }),

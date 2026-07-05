@@ -43,8 +43,11 @@ export const positiveIntegerFlag: (...)
 ## Algorithm
 
 The helpers are pure transformations over already-tokenized positionals and
-flags. Required positional and flag reads return `CliError` in the `Either`
-error channel. Optional helpers only materialize fields when the flag has a
+flags. The `CliRequest` contract carries the HTTP `method`/`path`/`body`/`label`
+plus optional `stream` and `filterState` fields; `filterState` lets a command map
+(e.g. [[cli-work-commands]]) request a client-side response narrowing that
+[[cli-client]] applies after fetch, without changing the route. Required
+positional and flag reads return `CliError` in the `Either` error channel. Optional helpers only materialize fields when the flag has a
 real value, query helpers URL-encode their values, CSV values trim empty
 segments, and integer helpers reject unsafe or below-minimum values before a
 request reaches HTTP decoding. `scopedWorkListPath` centralizes collection routes

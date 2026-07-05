@@ -44,7 +44,8 @@ NodeRuntime.runMain(program)
    exit non-zero on `CliError`.
 2. Read `ACP_RPC_TOKEN` once. For `stream`, open the SSE endpoint with the same
    bearer header policy as [[cli-client]] and print frames; otherwise
-   `runCliRequest` and print `{ status, body }`.
+   `runCliRequest`, pass the body through [[cli-client]]'s `applyClientFilter`
+   (a no-op unless `filterState` is set), and print it.
 3. Provide `NodeHttpClient.layer`; `NodeRuntime.runMain`.
 
 ## Negative Logic (Prohibited Paths)
