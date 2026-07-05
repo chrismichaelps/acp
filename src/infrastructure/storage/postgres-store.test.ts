@@ -157,6 +157,31 @@ describe.skipIf(url === undefined)('Postgres storage adapter', () => {
     })
   })
 
+  it('replaceIfVersion swaps only when the expected version matches', async () => {
+    const result = await run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* s.put('work', 'w1', { id: 'w1', n: 0 })
+        const first = yield* s.getVersioned('work', 'w1')
+        const version = Option.getOrThrow(first).version // 1
+        const okSwap = yield* s.replaceIfVersion('work', 'w1', version, {
+          id: 'w1',
+          n: 1,
+        })
+        const staleSwap = yield* s.replaceIfVersion('work', 'w1', version, {
+          id: 'w1',
+          n: 2,
+        })
+        const final = yield* s.getVersioned('work', 'w1')
+        return { okSwap, staleSwap, final }
+      }),
+    )
+    expect(result.okSwap).toBe(true)
+    expect(result.staleSwap).toBe(false) // version already advanced
+    expect(Option.getOrThrow(result.final).value).toEqual({ id: 'w1', n: 1 })
+    expect(Option.getOrThrow(result.final).version).toBe(2)
+  })
+
   it('returns Option.none for a missing key', async () => {
     const missing = await run(
       Effect.gen(function* () {

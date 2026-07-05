@@ -5,7 +5,7 @@ import { Chunk, Effect, Layer, Option, Redacted, Schema } from 'effect'
 import { StorageError } from '../../protocol/errors/protocol-error.js'
 import { Event, Memory } from '../../protocol/schema/index.js'
 import { Storage } from './storage.js'
-import type { StorageApi } from './storage.js'
+import type { StorageApi, StoredRecord } from './storage.js'
 
 const schemaStatements: readonly string[] = [
   `CREATE TABLE IF NOT EXISTS kv (
@@ -14,6 +14,7 @@ const schemaStatements: readonly string[] = [
     value jsonb NOT NULL,
     PRIMARY KEY (collection, id)
   )`,
+  `ALTER TABLE kv ADD COLUMN IF NOT EXISTS version bigint NOT NULL DEFAULT 1`,
   `CREATE TABLE IF NOT EXISTS events (
     workspace_id text NOT NULL,
     seq bigint NOT NULL,
@@ -46,6 +47,11 @@ const schemaStatements: readonly string[] = [
 
 interface ValueRow {
   readonly value: unknown
+}
+
+interface VersionedRow {
+  readonly value: unknown
+  readonly version: string | number
 }
 
 const storageError = (op: string) => (cause: unknown) =>
@@ -83,7 +89,7 @@ const make = Effect.gen(function* () {
   const put: StorageApi['put'] = (collection, id, value) =>
     sql`INSERT INTO kv (collection, id, value)
         VALUES (${collection}, ${id}, ${JSON.stringify(value)}::jsonb)
-        ON CONFLICT (collection, id) DO UPDATE SET value = excluded.value`.pipe(
+        ON CONFLICT (collection, id) DO UPDATE SET value = excluded.value, version = kv.version + 1`.pipe(
       Effect.asVoid,
       Effect.mapError(storageError('put')),
     )
@@ -96,13 +102,30 @@ const make = Effect.gen(function* () {
   ) =>
     sql<{ readonly one: number }>`
       UPDATE kv
-      SET value = ${JSON.stringify(value)}::jsonb
+      SET value = ${JSON.stringify(value)}::jsonb, version = kv.version + 1
       WHERE collection = ${collection}
         AND id = ${id}
         AND value = ${JSON.stringify(expected)}::jsonb
       RETURNING 1 AS one`.pipe(
       Effect.map((rows) => rows.length === 1),
       Effect.mapError(storageError('replace_if')),
+    )
+
+  const replaceIfVersion: StorageApi['replaceIfVersion'] = (
+    collection,
+    id,
+    expectedVersion,
+    value,
+  ) =>
+    sql<{ readonly one: number }>`
+      UPDATE kv
+      SET value = ${JSON.stringify(value)}::jsonb, version = version + 1
+      WHERE collection = ${collection}
+        AND id = ${id}
+        AND version = ${expectedVersion}
+      RETURNING 1 AS one`.pipe(
+      Effect.map((rows) => rows.length === 1),
+      Effect.mapError(storageError('replace_if_version')),
     )
 
   const putIfAbsent: StorageApi['putIfAbsent'] = (collection, id, value) =>
@@ -121,6 +144,19 @@ const make = Effect.gen(function* () {
         rows.length === 0 ? Option.none<unknown>() : Option.some(rows[0].value),
       ),
       Effect.mapError(storageError('get')),
+    )
+
+  const getVersioned: StorageApi['getVersioned'] = (collection, id) =>
+    sql<VersionedRow>`SELECT value, version FROM kv WHERE collection = ${collection} AND id = ${id}`.pipe(
+      Effect.map((rows) =>
+        rows.length === 0
+          ? Option.none<StoredRecord>()
+          : Option.some({
+              value: rows[0].value,
+              version: Number(rows[0].version),
+            }),
+      ),
+      Effect.mapError(storageError('get_versioned')),
     )
 
   const list: StorageApi['list'] = (collection) =>
@@ -234,7 +270,9 @@ const make = Effect.gen(function* () {
     put,
     putIfAbsent,
     replaceIf,
+    replaceIfVersion,
     get,
+    getVersioned,
     list,
     remove,
     appendEvent,
