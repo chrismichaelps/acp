@@ -309,6 +309,14 @@ Run one profile at a time (both hosts publish `4317`). The
 every PR: it runs the Docker-hosted CLI dogfood and proves Postgres state survives
 a host restart.
 
+The HA proof is also available outside CI through
+`node scripts/acp-docker-ha-dogfood.mjs`, with `dogfood:docker-ha` exposed as the
+matching package script. It starts the `ha` profile, drives `./bin/acp` against
+the `acp-ha` service, writes workspace, work, checkpoint, memory, and event
+history into Postgres, restarts the host, reads the work and events back, and
+tears the stack down with its volume. Set `ACP_DOCKER_HA_KEEP_STACK=true` when
+you want to leave the profile running after the check for manual inspection.
+
 The same image runs every deployment profile; only environment differs. See
 [`wiki/references/deployment.md`](./wiki/references/deployment.md) for the
 platform-by-platform runbook and storage-adapter guidance.
@@ -423,7 +431,7 @@ pnpm test
 (The SQLite adapter prints Node's experimental-`node:sqlite` warning during
 storage tests; that is expected, not a failure.)
 
-Beyond unit tests, three lanes exercise ACP against a _live_ host:
+Beyond unit tests, several lanes exercise ACP against a _live_ host:
 
 - **`pnpm dogfood:codex`** — a single Codex-shaped worker runs a full lifecycle
   (session, claim, lease, checkpoint, memory, PR artifact, progress, review,
@@ -442,6 +450,12 @@ Beyond unit tests, three lanes exercise ACP against a _live_ host:
   dangling leases, cross-actor handoff, and API↔SQLite durability parity — reading
   the history back both via the CLI and directly from the database file. See
   `docs/superpowers/specs/2026-07-02-live-agent-coordination-test-design.md`.
+
+The Postgres-backed Docker lane is
+`node scripts/acp-docker-ha-dogfood.mjs`. It runs the Compose `ha` profile,
+writes workspace, work, checkpoint, and memory state through the Docker-hosted
+CLI, restarts the ACP host, and proves the durable work record and event history
+are still readable.
 
 For hosted-policy dogfood, set `ACP_DOGFOOD_WORKSPACE_ID` to a provisioned
 workspace id. The Codex smoke and multi-agent runners will bind every session to
