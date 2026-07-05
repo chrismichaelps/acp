@@ -30,9 +30,10 @@ export const workCommandHandlers: Readonly<Record<string, CommandHandler>>
 [--assigned-to <worker_id>]` maps to `GET /v1/workspaces/<id>/work`, and when a
 filter is supplied it records field/value entries on the `CliRequest`
 `clientFilters` field so [[cli-client]] filters the returned array client-side.
-`work get <work_id>` maps to `GET /v1/work/<id>`. `work claim <work_id>
---worker <id>` maps to `POST /v1/work/<id>/claim`. `work update <work_id>
---state <s>` maps to `PATCH /v1/work/<id>`.
+`work get <work_id>` maps to `GET /v1/work/<id>`. `work resume <work_id>` maps
+to `GET /v1/work/<id>/resume` for the compact handoff packet. `work claim
+<work_id> --worker <id>` maps to `POST /v1/work/<id>/claim`. `work update
+<work_id> --state <s>` maps to `PATCH /v1/work/<id>`.
 
 ## Algorithm
 
@@ -41,9 +42,11 @@ description and priority fields unchanged. List URL-encodes the workspace id in
 the collection path and records any `--state`, `--priority`, or `--assigned-to`
 filters as generic field/value pairs on the request so the response is narrowed
 after fetch — the route and host stay unchanged. The assignee flag maps to the
-wire response field `assigned_to`. Get, claim, and update URL-encode the work id
-before placing it in the route. Claim normalizes `--worker` to the `worker_id`
-request field, and update sends only the target state.
+wire response field `assigned_to`. Get, resume, claim, and update URL-encode the
+work id before placing it in the route. Resume is the token-efficient handoff
+read: it returns work metadata, latest checkpoint, artifact metadata, and review
+state in one packet. Claim normalizes `--worker` to the `worker_id` request
+field, and update sends only the target state.
 
 The `--state`, `--priority`, and `--assigned-to` filters are **client-side
 conveniences** (grillme): the work-list route is a typed `HttpApi` endpoint and
@@ -60,8 +63,8 @@ new `work discover` command (redundant with list).
 - ❌ Do NOT pass raw workspace or work ids into route paths.
 - ❌ Do NOT filter the response here; this module only sets `clientFilters` —
   [[cli-client]] applies it after fetch.
-- ❌ Do NOT handle checkpoint, artifact, or review resume reads here; those have
-  separate collection semantics.
+- ❌ Do NOT make `work resume` fetch artifact content; it returns metadata so the
+  agent can choose which artifact content to read.
 
 ## Depth
 

@@ -53,6 +53,16 @@ export const workCommandHandlers: Readonly<Record<string, CommandHandler>> = {
       }
     }),
 
+  'work resume': ({ positionals }) =>
+    Either.gen(function* () {
+      const workId = yield* positional(positionals, 0, 'work_id')
+      return {
+        method: 'GET',
+        path: `/v1/work/${encodePathSegment(workId)}/resume`,
+        label: 'work resume',
+      }
+    }),
+
   'work claim': ({ positionals, flags }) =>
     Either.gen(function* () {
       const workId = yield* positional(positionals, 0, 'work_id')

@@ -27,6 +27,7 @@ import { livenessProbe, readinessProbe } from './health-routes.js'
 import {
   getWork,
   getArtifactContent,
+  getWorkResumePacket,
   latestWorkCheckpoint,
   listWorkArtifacts,
   listWorkCheckpoints,
@@ -455,7 +456,11 @@ const workRouter = HttpRouter.empty.pipe(
   HttpRouter.get('/v1/work/:work_id/reviews', listWorkReviews),
 )
 
-const leaseRouter = workRouter.pipe(
+const resumeRouter = workRouter.pipe(
+  HttpRouter.get('/v1/work/:work_id/resume', getWorkResumePacket),
+)
+
+const leaseRouter = resumeRouter.pipe(
   HttpRouter.get('/v1/leases', listLeases),
   HttpRouter.post('/v1/leases', requestLease),
   HttpRouter.post('/v1/leases/:lease_id/renew', renewLease),

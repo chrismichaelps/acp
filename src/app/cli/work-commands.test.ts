@@ -93,4 +93,12 @@ describe('work commands', () => {
     const req = right(['work', 'list', '--workspace', 'workspace_1', '--state'])
     expect(req.clientFilters).toBeUndefined()
   })
+
+  it('maps work resume to the compact resume packet route', () => {
+    expect(right(['work', 'resume', 'work 123/main'])).toEqual({
+      method: 'GET',
+      path: '/v1/work/work%20123%2Fmain/resume',
+      label: 'work resume',
+    })
+  })
 })

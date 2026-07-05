@@ -362,6 +362,15 @@ const main = async () => {
       '--reviewer',
       reviewer.worker,
     ])
+    const resumePacket = await cli(planner.token, ['work', 'resume', work.id])
+    assert(
+      resumePacket.work.id === work.id &&
+        resumePacket.latest_checkpoint.summary ===
+          'Docker-hosted CLI dogfood reached checkpoint.' &&
+        resumePacket.artifacts.length === 2 &&
+        resumePacket.reviews.length === 1,
+      `unexpected resume packet: ${JSON.stringify(resumePacket)}`,
+    )
     await cli(reviewer.token, [
       'review',
       'approve',
