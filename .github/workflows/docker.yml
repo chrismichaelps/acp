@@ -31,40 +31,5 @@ jobs:
         with:
           node-version: 24
 
-      - name: Start the HA stack (Postgres + pg-notify)
-        run: docker compose --profile ha up -d --build
-
-      - name: Wait for the HA host to become healthy
-        run: |
-          for _ in $(seq 1 60); do
-            status="$(docker inspect -f '{{.State.Health.Status}}' acp-host-ha 2>/dev/null || echo none)"
-            if [ "$status" = healthy ]; then exit 0; fi
-            sleep 3
-          done
-          echo "acp-host-ha did not become healthy"
-          docker compose --profile ha logs
-          exit 1
-
-      - name: Drive the CLI and prove Postgres durability across a restart
-        run: |
-          id_of() { node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).id))"; }
-          ws="$(./bin/acp workspace create --name ci-ha --kind git_repository --uri file:///repo | id_of)"
-          wk="$(./bin/acp work create 'CI HA smoke' --workspace "$ws" --priority high | id_of)"
-          echo "created work $wk in workspace $ws"
-
-          docker compose --profile ha restart acp-ha
-          for _ in $(seq 1 60); do
-            [ "$(docker inspect -f '{{.State.Health.Status}}' acp-host-ha 2>/dev/null)" = healthy ] && break
-            sleep 3
-          done
-
-          got="$(./bin/acp work get "$wk" | id_of)"
-          if [ "$got" != "$wk" ]; then
-            echo "state not durable across restart: got '$got', expected '$wk'"
-            exit 1
-          fi
-          echo "Postgres-backed state survived restart: $wk"
-
-      - name: Tear down
-        if: always()
-        run: docker compose --profile ha down -v
+      - name: Run HA dogfood
+        run: node scripts/acp-docker-ha-dogfood.mjs

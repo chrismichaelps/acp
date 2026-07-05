@@ -2,6 +2,16 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-04 · docker-ha-dogfood-runner slice · added
+  `scripts/acp-docker-ha-dogfood.mjs` and the `dogfood:docker-ha` package script
+  so the Postgres/HA Compose profile can be validated outside GitHub Actions with
+  the same production-oriented flow: start `--profile ha`, drive `./bin/acp`
+  against `acp-ha`, write workspace/work/checkpoint/memory state, restart the
+  host, read work and events back from Postgres, and tear the stack down ·
+  documented and drift-checked the Docker dogfood environment controls in
+  `.env.example`, then wired the Docker workflow's HA job to call the reusable
+  Node script instead of inlining shell.
+
 - 2026-07-04 · docker-ha-profile-and-ci slice · added a Compose `ha` profile (the
   ADR-0008 self-host-ha stack: `postgres:16-alpine` + `pg-notify` fan-out,
   auto-migrating on boot) alongside the default `sqlite` profile in one
