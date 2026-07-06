@@ -284,4 +284,89 @@ describe.skipIf(url === undefined)('Postgres storage adapter', () => {
     expect(outcome.seqs).toEqual([1, 2])
     expect(outcome.keys).toEqual(['b', 'b'])
   })
+
+  it('queryBy returns only rows matching every filter, ordered by id', async () => {
+    const rows = await run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* s.put('work', 'w2', {
+          id: 'w2',
+          workspace_id: 'a',
+          state: 'open',
+        })
+        yield* s.put('work', 'w1', {
+          id: 'w1',
+          workspace_id: 'a',
+          state: 'open',
+        })
+        yield* s.put('work', 'w3', {
+          id: 'w3',
+          workspace_id: 'a',
+          state: 'claimed',
+        })
+        yield* s.put('work', 'w4', {
+          id: 'w4',
+          workspace_id: 'b',
+          state: 'open',
+        })
+        const openInA = yield* s.queryBy('work', [
+          { field: 'workspace_id', value: 'a' },
+          { field: 'state', value: 'open' },
+        ])
+        return Chunk.toReadonlyArray(openInA)
+      }),
+    )
+    expect(rows).toEqual([
+      { id: 'w1', workspace_id: 'a', state: 'open' },
+      { id: 'w2', workspace_id: 'a', state: 'open' },
+    ])
+  })
+
+  it('queryBy reflects generated columns after a value rewrite, honoring limit', async () => {
+    const outcome = await run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* s.put('work', 'w1', {
+          id: 'w1',
+          workspace_id: 'a',
+          state: 'open',
+        })
+        yield* s.put('work', 'w1', {
+          id: 'w1',
+          workspace_id: 'a',
+          state: 'claimed',
+        })
+        const stillOpen = yield* s.queryBy('work', [
+          { field: 'workspace_id', value: 'a' },
+          { field: 'state', value: 'open' },
+        ])
+        yield* s.put('work', 'w2', { id: 'w2', workspace_id: 'a' })
+        const firstOne = yield* s.queryBy(
+          'work',
+          [{ field: 'workspace_id', value: 'a' }],
+          { limit: 1 },
+        )
+        return {
+          open: Chunk.size(stillOpen),
+          first: Chunk.toReadonlyArray(firstOne).map(
+            (r) => (r as { id: string }).id,
+          ),
+        }
+      }),
+    )
+    expect(outcome.open).toBe(0)
+    expect(outcome.first).toEqual(['w1'])
+  })
+
+  it('queryBy rejects an unknown filter field with a StorageError', async () => {
+    const result = await run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        return yield* Effect.either(
+          s.queryBy('work', [{ field: 'nope', value: 'x' }]),
+        )
+      }),
+    )
+    expect(result._tag).toBe('Left')
+  })
 })

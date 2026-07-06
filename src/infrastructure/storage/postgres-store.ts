@@ -5,7 +5,19 @@ import { Chunk, Effect, Layer, Option, Redacted, Schema } from 'effect'
 import { StorageError } from '../../protocol/errors/protocol-error.js'
 import { Event, Memory } from '../../protocol/schema/index.js'
 import { Storage } from './storage.js'
+import { INDEXED_FIELDS } from './index-columns.js'
 import type { StorageApi, StoredRecord } from './storage.js'
+
+const INDEXED_FIELD_SET: ReadonlySet<string> = new Set(INDEXED_FIELDS)
+
+// Promoted scoping columns are DB-derived: Postgres computes each from the jsonb
+// value via a STORED generated column, so no write path changes — every insert or
+// update recomputes them automatically, and they can never drift from `value`.
+const generatedColumnStatements: readonly string[] = INDEXED_FIELDS.map(
+  (field) =>
+    `ALTER TABLE kv ADD COLUMN IF NOT EXISTS ${field} text ` +
+    `GENERATED ALWAYS AS (value->>'${field}') STORED`,
+)
 
 const schemaStatements: readonly string[] = [
   `CREATE TABLE IF NOT EXISTS kv (
@@ -15,6 +27,13 @@ const schemaStatements: readonly string[] = [
     PRIMARY KEY (collection, id)
   )`,
   `ALTER TABLE kv ADD COLUMN IF NOT EXISTS version bigint NOT NULL DEFAULT 1`,
+  ...generatedColumnStatements,
+  `CREATE INDEX IF NOT EXISTS kv_collection_workspace
+     ON kv (collection, workspace_id)`,
+  `CREATE INDEX IF NOT EXISTS kv_collection_workspace_state
+     ON kv (collection, workspace_id, state)`,
+  `CREATE INDEX IF NOT EXISTS kv_collection_work
+     ON kv (collection, work_id)`,
   `CREATE TABLE IF NOT EXISTS events (
     workspace_id text NOT NULL,
     seq bigint NOT NULL,
@@ -165,6 +184,35 @@ const make = Effect.gen(function* () {
       Effect.mapError(storageError('list')),
     )
 
+  const queryBy: StorageApi['queryBy'] = (collection, filters, opts) =>
+    Effect.gen(function* () {
+      for (const { field } of filters) {
+        if (!INDEXED_FIELD_SET.has(field)) {
+          return yield* Effect.fail(
+            new StorageError({
+              op: 'queryBy',
+              cause: `unknown filter field: ${field}`,
+            }),
+          )
+        }
+      }
+      // Column names come only from the validated allowlist (rendered as quoted
+      // identifiers via sql(field)); every filter value is a bound parameter.
+      const conditions = [
+        sql`collection = ${collection}`,
+        ...filters.map((f) => sql`${sql(f.field)} = ${f.value}`),
+      ]
+      const limit = opts?.limit
+      const rows = yield* sql<ValueRow>`
+        SELECT value FROM kv
+        WHERE ${sql.and(conditions)}
+        ORDER BY id ASC
+        ${limit === undefined ? sql`` : sql`LIMIT ${limit}`}`.pipe(
+        Effect.mapError(storageError('query_by')),
+      )
+      return Chunk.fromIterable(rows.map((row) => row.value))
+    })
+
   const remove: StorageApi['remove'] = (collection, id) =>
     sql`DELETE FROM kv WHERE collection = ${collection} AND id = ${id}`.pipe(
       Effect.asVoid,
@@ -274,6 +322,7 @@ const make = Effect.gen(function* () {
     get,
     getVersioned,
     list,
+    queryBy,
     remove,
     appendEvent,
     readEventsAfter,
