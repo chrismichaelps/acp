@@ -315,3 +315,85 @@ describe('InMemory storage — event retention pruning', () => {
     expect(kept).toBe(1)
   })
 })
+
+describe('InMemory storage — queryBy indexed predicate read', () => {
+  it('returns only rows matching every filter, ordered by id', () => {
+    const rows = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* s.put('work', 'w2', {
+          id: 'w2',
+          workspace_id: 'a',
+          state: 'open',
+        })
+        yield* s.put('work', 'w1', {
+          id: 'w1',
+          workspace_id: 'a',
+          state: 'open',
+        })
+        yield* s.put('work', 'w3', {
+          id: 'w3',
+          workspace_id: 'a',
+          state: 'claimed',
+        })
+        yield* s.put('work', 'w4', {
+          id: 'w4',
+          workspace_id: 'b',
+          state: 'open',
+        })
+        const openInA = yield* s.queryBy('work', [
+          { field: 'workspace_id', value: 'a' },
+          { field: 'state', value: 'open' },
+        ])
+        return Chunk.toReadonlyArray(openInA)
+      }),
+    )
+    expect(rows).toEqual([
+      { id: 'w1', workspace_id: 'a', state: 'open' },
+      { id: 'w2', workspace_id: 'a', state: 'open' },
+    ])
+  })
+
+  it('honors the limit option after ordering by id', () => {
+    const rows = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* s.put('work', 'w3', { id: 'w3', workspace_id: 'a' })
+        yield* s.put('work', 'w1', { id: 'w1', workspace_id: 'a' })
+        yield* s.put('work', 'w2', { id: 'w2', workspace_id: 'a' })
+        const first = yield* s.queryBy(
+          'work',
+          [{ field: 'workspace_id', value: 'a' }],
+          { limit: 2 },
+        )
+        return Chunk.toReadonlyArray(first).map((r) => (r as { id: string }).id)
+      }),
+    )
+    expect(rows).toEqual(['w1', 'w2'])
+  })
+
+  it('rejects an unknown filter field with a StorageError', () => {
+    const result = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        return yield* Effect.either(
+          s.queryBy('work', [{ field: 'nope', value: 'x' }]),
+        )
+      }),
+    )
+    expect(result._tag).toBe('Left')
+  })
+
+  it('returns empty for a collection that has never been written', () => {
+    const rows = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        const out = yield* s.queryBy('ghost', [
+          { field: 'workspace_id', value: 'a' },
+        ])
+        return Chunk.size(out)
+      }),
+    )
+    expect(rows).toBe(0)
+  })
+})

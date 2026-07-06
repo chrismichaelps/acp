@@ -19,6 +19,12 @@ export interface StoredRecord {
   readonly version: number
 }
 
+/** An equality predicate over one promoted, indexed scoping column. */
+export interface QueryFilter {
+  readonly field: string
+  readonly value: string
+}
+
 export interface StorageApi {
   readonly put: (
     collection: string,
@@ -59,6 +65,19 @@ export interface StorageApi {
   ) => Effect.Effect<boolean, StorageError>
   readonly list: (
     collection: string,
+  ) => Effect.Effect<Chunk.Chunk<unknown>, StorageError>
+  /**
+   * Scoped predicate read: returns decoded `value`s whose promoted, indexed
+   * columns equal **every** supplied filter, ordered by `id`, with an optional
+   * `limit`. Filter fields are restricted to the `INDEXED_FIELDS` allowlist —
+   * an unknown field fails `StorageError`, guarding injection and index-miss.
+   * Replaces the `list()` + in-app `.filter` pattern (O(N_all)) with an indexed
+   * O(log N + k) read on the SQL adapters.
+   */
+  readonly queryBy: (
+    collection: string,
+    filters: readonly QueryFilter[],
+    opts?: { readonly limit?: number },
   ) => Effect.Effect<Chunk.Chunk<unknown>, StorageError>
   readonly remove: (
     collection: string,
