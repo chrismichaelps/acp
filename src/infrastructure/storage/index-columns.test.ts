@@ -17,4 +17,12 @@ describe('extractIndexColumns', () => {
   it('nulls everything for non-objects', () => {
     expect(extractIndexColumns('nope').workspace_id).toBeNull()
   })
+  it('promotes review_id and grill_id to indexed columns', () => {
+    const cols = extractIndexColumns({
+      review_id: 'review_1',
+      grill_id: 'grill_1',
+    })
+    expect(cols.review_id).toBe('review_1')
+    expect(cols.grill_id).toBe('grill_1')
+  })
 })
