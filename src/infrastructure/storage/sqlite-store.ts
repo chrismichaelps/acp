@@ -15,8 +15,21 @@ import {
   seqRow,
   storageTry,
 } from './sqlite-support.js'
-import type { StorageError } from '../../protocol/errors/protocol-error.js'
+import { extractIndexColumns, INDEXED_FIELDS } from './index-columns.js'
+import {
+  buildQueryBySql,
+  indexColumnDdls,
+  indexColumnValues,
+  kvIndexSql,
+  putIfAbsentSql,
+  putSql,
+  replaceIfSql,
+  replaceIfVersionSql,
+} from './kv-statements.js'
+import { StorageError } from '../../protocol/errors/protocol-error.js'
 import type { StorageApi, StoredRecord } from './storage.js'
+
+const INDEXED_FIELD_SET: ReadonlySet<string> = new Set(INDEXED_FIELDS)
 
 interface VersionedRow {
   readonly value: string
@@ -95,6 +108,10 @@ const make = (path: string) =>
           'version',
           'ALTER TABLE kv ADD COLUMN version INTEGER NOT NULL DEFAULT 1',
         )
+        for (const { column, ddl } of indexColumnDdls) {
+          ensureColumn(opened, 'kv', column, ddl)
+        }
+        opened.exec(kvIndexSql)
         return opened
       }),
       (opened) =>
@@ -103,32 +120,16 @@ const make = (path: string) =>
         }),
     )
 
-    const putStmt = db.prepare(
-      `INSERT INTO kv (collection, id, value, version)
-       VALUES (?, ?, ?, 1)
-       ON CONFLICT(collection, id)
-       DO UPDATE SET value = excluded.value, version = kv.version + 1`,
-    )
-    const putIfAbsentStmt = db.prepare(
-      `INSERT OR IGNORE INTO kv (collection, id, value, version)
-       VALUES (?, ?, ?, 1)`,
-    )
-    const replaceIfStmt = db.prepare(
-      `UPDATE kv
-       SET value = ?, version = version + 1
-       WHERE collection = ? AND id = ? AND value = ?`,
-    )
+    const putStmt = db.prepare(putSql)
+    const putIfAbsentStmt = db.prepare(putIfAbsentSql)
+    const replaceIfStmt = db.prepare(replaceIfSql)
     const getStmt = db.prepare(
       'SELECT value FROM kv WHERE collection = ? AND id = ?',
     )
     const getVersionedStmt = db.prepare(
       'SELECT value, version FROM kv WHERE collection = ? AND id = ?',
     )
-    const replaceIfVersionStmt = db.prepare(
-      `UPDATE kv
-       SET value = ?, version = version + 1
-       WHERE collection = ? AND id = ? AND version = ?`,
-    )
+    const replaceIfVersionStmt = db.prepare(replaceIfVersionSql)
     const listStmt = db.prepare(
       'SELECT value FROM kv WHERE collection = ? ORDER BY id ASC',
     )
@@ -193,7 +194,10 @@ const make = (path: string) =>
     const put: StorageApi['put'] = (collection, id, value) =>
       Effect.gen(function* () {
         const encoded = yield* encodeJson('encode_value', value)
-        yield* storageTry('put', () => putStmt.run(collection, id, encoded))
+        const columns = indexColumnValues(extractIndexColumns(value))
+        yield* storageTry('put', () =>
+          putStmt.run(collection, id, encoded, ...columns),
+        )
       })
 
     const replaceIf: StorageApi['replaceIf'] = (
@@ -205,10 +209,16 @@ const make = (path: string) =>
       Effect.gen(function* () {
         const encodedExpected = yield* encodeJson('encode_expected', expected)
         const encodedValue = yield* encodeJson('encode_value', value)
+        const columns = indexColumnValues(extractIndexColumns(value))
         const changes = yield* storageTry('replace_if', () =>
           Number(
-            replaceIfStmt.run(encodedValue, collection, id, encodedExpected)
-              .changes,
+            replaceIfStmt.run(
+              encodedValue,
+              ...columns,
+              collection,
+              id,
+              encodedExpected,
+            ).changes,
           ),
         )
         return changes === 1
@@ -222,10 +232,16 @@ const make = (path: string) =>
     ) =>
       Effect.gen(function* () {
         const encoded = yield* encodeJson('encode_value', value)
+        const columns = indexColumnValues(extractIndexColumns(value))
         const changes = yield* storageTry('replace_if_version', () =>
           Number(
-            replaceIfVersionStmt.run(encoded, collection, id, expectedVersion)
-              .changes,
+            replaceIfVersionStmt.run(
+              encoded,
+              ...columns,
+              collection,
+              id,
+              expectedVersion,
+            ).changes,
           ),
         )
         return changes === 1
@@ -234,8 +250,11 @@ const make = (path: string) =>
     const putIfAbsent: StorageApi['putIfAbsent'] = (collection, id, value) =>
       Effect.gen(function* () {
         const encoded = yield* encodeJson('encode_value', value)
+        const columns = indexColumnValues(extractIndexColumns(value))
         const changes = yield* storageTry('put_if_absent', () =>
-          Number(putIfAbsentStmt.run(collection, id, encoded).changes),
+          Number(
+            putIfAbsentStmt.run(collection, id, encoded, ...columns).changes,
+          ),
         )
         return changes === 1
       })
@@ -272,6 +291,37 @@ const make = (path: string) =>
       Effect.gen(function* () {
         const rows = yield* storageTry('list', () =>
           jsonRows(listStmt.all(collection)),
+        )
+        const values = yield* Effect.forEach(rows, (row) =>
+          parseJson('decode_value', row.value),
+        )
+        return Chunk.fromIterable(values)
+      })
+
+    const queryBy: StorageApi['queryBy'] = (collection, filters, opts) =>
+      Effect.gen(function* () {
+        for (const { field } of filters) {
+          if (!INDEXED_FIELD_SET.has(field)) {
+            return yield* Effect.fail(
+              new StorageError({
+                op: 'queryBy',
+                cause: `unknown filter field: ${field}`,
+              }),
+            )
+          }
+        }
+        const hasLimit = opts?.limit !== undefined
+        const sql = buildQueryBySql(
+          filters.map((f) => f.field),
+          hasLimit,
+        )
+        const params: (string | number)[] = [
+          collection,
+          ...filters.map((f) => f.value),
+        ]
+        if (opts?.limit !== undefined) params.push(opts.limit)
+        const rows = yield* storageTry('query_by', () =>
+          jsonRows(db.prepare(sql).all(...params)),
         )
         const values = yield* Effect.forEach(rows, (row) =>
           parseJson('decode_value', row.value),
@@ -402,6 +452,7 @@ const make = (path: string) =>
       getVersioned,
       replaceIfVersion,
       list,
+      queryBy,
       remove,
       appendEvent,
       readEventsAfter,
