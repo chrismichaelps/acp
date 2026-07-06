@@ -2,7 +2,15 @@
 import { Chunk, Effect, HashMap, Layer, Option, Ref } from 'effect'
 import { Storage } from './storage.js'
 import type { StorageApi, StoredRecord } from './storage.js'
+import {
+  extractIndexColumns,
+  INDEXED_FIELDS,
+  type IndexedField,
+} from './index-columns.js'
+import { StorageError } from '../../protocol/errors/protocol-error.js'
 import type { Event, Memory } from '../../protocol/schema/index.js'
+
+const INDEXED_FIELD_SET: ReadonlySet<string> = new Set(INDEXED_FIELDS)
 
 const sameJsonValue = (left: unknown, right: unknown): boolean =>
   JSON.stringify(left) === JSON.stringify(right)
@@ -106,6 +114,40 @@ const make = Effect.gen(function* () {
           ),
       }),
     )
+
+  // Single-process/dev scan: the SQLite/Postgres adapters carry the real index
+  // for this same allowlist-guarded, id-ordered, limited equality contract.
+  const queryBy: StorageApi['queryBy'] = (collection, filters, opts) =>
+    Effect.gen(function* () {
+      for (const { field } of filters) {
+        if (!INDEXED_FIELD_SET.has(field)) {
+          return yield* Effect.fail(
+            new StorageError({
+              op: 'queryBy',
+              cause: `unknown filter field: ${field}`,
+            }),
+          )
+        }
+      }
+      const cs = yield* Ref.get(collections)
+      const inner = Option.getOrElse(HashMap.get(cs, collection), () =>
+        HashMap.empty<string, StoredRecord>(),
+      )
+      const matches: { id: string; value: unknown }[] = []
+      for (const [id, stored] of HashMap.entries(inner)) {
+        const columns = extractIndexColumns(stored.value)
+        const kept = filters.every(
+          (f) => columns[f.field as IndexedField] === f.value,
+        )
+        if (kept) {
+          matches.push({ id, value: stored.value })
+        }
+      }
+      matches.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+      const limited =
+        opts?.limit === undefined ? matches : matches.slice(0, opts.limit)
+      return Chunk.fromIterable(limited.map((m) => m.value))
+    })
 
   const remove: StorageApi['remove'] = (collection, id) =>
     Ref.update(collections, (cs) =>
@@ -222,6 +264,7 @@ const make = Effect.gen(function* () {
     getVersioned,
     replaceIfVersion,
     list,
+    queryBy,
     remove,
     appendEvent,
     readEventsAfter,

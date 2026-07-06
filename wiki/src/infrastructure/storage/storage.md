@@ -35,6 +35,12 @@ export interface StoredRecord {
   readonly version: number
 }
 
+/** An equality predicate over one promoted, indexed scoping column. */
+export interface QueryFilter {
+  readonly field: string
+  readonly value: string
+}
+
 export interface StorageApi {
   readonly put: (
     collection: string,
@@ -56,6 +62,11 @@ export interface StorageApi {
     value: unknown,
   ) => Effect<boolean, StorageError>
   readonly list: (collection: string) => Effect<Chunk<unknown>, StorageError>
+  readonly queryBy: (
+    collection: string,
+    filters: readonly QueryFilter[],
+    opts?: { readonly limit?: number },
+  ) => Effect<Chunk<unknown>, StorageError>
   readonly remove: (
     collection: string,
     id: string,
@@ -95,6 +106,13 @@ export class Storage extends Context.Tag('Storage')<Storage, StorageApi>() {}
 - `getVersioned`/`replaceIfVersion` add optimistic-concurrency-by-version: CAS
   on an O(1) integer instead of `replaceIf`'s whole-blob JSON comparison. Every
   `put`/`putIfAbsent`/`replaceIfVersion` write increments the row's `version`.
+- `queryBy` is the scoped predicate read: it returns decoded `value`s (not
+  `StoredRecord`s) whose promoted columns equal **every** supplied filter,
+  ordered by `id`, with an optional `limit`. Filter fields are restricted to the
+  [[index-columns]] `INDEXED_FIELDS` allowlist — an unknown field fails
+  `StorageError`, which guards injection and typos and keeps the read on an index
+  (SQLite/Postgres) rather than a full scan. This replaces the domain services'
+  `list()` + in-app `.filter` pattern (O(N_all)) with an O(log N + k) indexed read.
 
 ### Linkage
 
@@ -122,6 +140,18 @@ Interface only — no behavior. Behavior lives in adapters; see [[in-memory-stor
   value rewrites; it only ever increments, never resets to reflect the new value's
   shape. This lets callers hold a version across unrelated `put`s of other rows
   and treat any mismatch as "someone else wrote since I read."
+- **Q:** Why does `queryBy` take `QueryFilter[]` restricted to an allowlist rather
+  than an arbitrary predicate function or a raw column name? **A:** A predicate
+  function cannot be pushed into a SQL `WHERE`/index (it would force a full scan and
+  re-decode), and a raw column name would let a caller name any string — an
+  injection and index-miss hazard on the SQL adapters. The allowlisted
+  `{ field, value }` equality list is the largest predicate shape that every
+  adapter can serve from a real index with bound parameters. Range/`IN`/ordering
+  predicates are deliberately out of scope for this tier.
+- **Q:** Why return decoded `value`s from `queryBy` instead of `StoredRecord`s like
+  `getVersioned`? **A:** Callers migrating off `list()` already consume bare
+  values and filter in-app; returning `value`s is a drop-in replacement. Versioned
+  reads remain the explicit path for CAS via `getVersioned`.
 
 ## Depth
 

@@ -27,14 +27,33 @@ SQLite calls in `StorageError`-tagged effects, and rolls a transaction back.
 
 ```typescript
 export const toCause: (cause: unknown) => string
-export const storageTry: <A>(op: string, body: () => A) => Effect.Effect<A, StorageError>
-export const parseJson: (op: string, text: string) => Effect.Effect<unknown, StorageError>
-export const encodeJson: (op: string, value: unknown) => Effect.Effect<string, StorageError>
-export const jsonRow: (row: Record<string, unknown> | undefined) => Option.Option<JsonRow>
-export const jsonRows: (rows: readonly Record<string, unknown>[]) => readonly JsonRow[]
+export const storageTry: <A>(
+  op: string,
+  body: () => A,
+) => Effect.Effect<A, StorageError>
+export const parseJson: (
+  op: string,
+  text: string,
+) => Effect.Effect<unknown, StorageError>
+export const encodeJson: (
+  op: string,
+  value: unknown,
+) => Effect.Effect<string, StorageError>
+export const jsonRow: (
+  row: Record<string, unknown> | undefined,
+) => Option.Option<JsonRow>
+export const jsonRows: (
+  rows: readonly Record<string, unknown>[],
+) => readonly JsonRow[]
 export const seqRow: (row: Record<string, unknown> | undefined) => SeqRow
-export const decodeEvent: (op: string, value: unknown) => Effect.Effect<Event, StorageError>
-export const decodeMemory: (op: string, value: unknown) => Effect.Effect<Memory, StorageError>
+export const decodeEvent: (
+  op: string,
+  value: unknown,
+) => Effect.Effect<Event, StorageError>
+export const decodeMemory: (
+  op: string,
+  value: unknown,
+) => Effect.Effect<Memory, StorageError>
 export const optionalText: <A>(option: Option.Option<A>) => A | null
 export const memoryRowsToChunk: (
   rows: readonly JsonRow[],

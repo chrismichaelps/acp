@@ -12,6 +12,8 @@ Mirror of `@root/src/infrastructure/storage/`.
 - [[in-memory-store]] — Ref-backed in-memory production adapter.
 - [[sqlite-store]] — file-backed SQLite production adapter.
 - [[sqlite-support]] — pure serialization + row-mapping helpers for the SQLite adapter.
+- [[kv-statements]] — `kv` DDL + statement SQL derived from `INDEXED_FIELDS`.
+- [[index-columns]] — promoted-column allowlist + extractor shared by all adapters.
 - [[postgres-store]] — network-durable Postgres production adapter.
 
 ## Referenced by

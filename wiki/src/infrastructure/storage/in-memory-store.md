@@ -52,6 +52,13 @@ Two `Ref`s constructed in the Layer's scoped effect:
 - **putIfAbsent** — inserts `{ value, version: 1 }` only if the id is absent.
 - **list** — read ref, `Chunk.fromIterable(HashMap.values(inner))` projected to
   each row's `.value` (empty if absent).
+- **queryBy** — validate every filter `field` against the [[index-columns]]
+  `INDEXED_FIELDS` allowlist first; an unknown field fails `StorageError` before any
+  scan. Then read the collection, and for each row compute `extractIndexColumns(value)`
+  and keep it iff every filter's column equals the filter value; sort the survivors by
+  `id`; apply the optional `limit` with `Chunk.take`; project to `.value`. The scan is
+  O(N) — acceptable here because InMemory is single-process/dev; the SQLite/Postgres
+  adapters carry the real index for the same contract.
 - **remove** — `Ref.update` removing the id from the inner map.
 - **appendEvent** — `Ref.modify` atomically: read the workspace's chunk (empty if
   absent), `seq = Chunk.size + 1`, build the full `Event` from the draft, append,
@@ -74,9 +81,19 @@ All operations are total in memory, so each returns `Effect.succeed(...)`; the
   semantics in memory.
 - ❌ Do NOT ignore replay limits; in-memory tests mirror the production query
   contract even though the adapter is not SQL-backed.
+- ❌ Do NOT let `queryBy` accept a filter field outside `INDEXED_FIELDS` — the
+  allowlist check is the same guard the SQL adapters rely on; skipping it in memory
+  would let a typo pass here and only fail in production.
 
 ## Grill Log
 
+- **Q:** Should `queryBy` maintain per-collection secondary index maps in memory
+  to match the SQL adapters' index, or is a full scan acceptable? **A:** A full
+  scan is acceptable and preferred for InMemory. This adapter is single-process/dev
+  only; maintaining secondary maps on every write would add bookkeeping and a
+  second source of truth for no production benefit, since the real index lives on
+  SQLite/Postgres. The contract (allowlist-guarded, id-ordered, limited equality
+  read) is identical — only the physical plan differs.
 - **Q:** Should `replaceIf`'s whole-value CAS also bump `version`, even though the
   caller only ever observes version through `getVersioned`/`replaceIfVersion`?
   **A:** Yes — every successful write (`put`, `putIfAbsent`, `replaceIf`,

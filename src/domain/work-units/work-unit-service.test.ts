@@ -6,7 +6,11 @@ import {
   EventStoreLive,
   InProcessEventBrokerLive,
 } from '../events/index.js'
-import { InMemoryStorageLive } from '../../infrastructure/storage/index.js'
+import {
+  InMemoryStorageLive,
+  Storage,
+} from '../../infrastructure/storage/index.js'
+import type { StorageApi } from '../../infrastructure/storage/index.js'
 import {
   ClaimWorkPayload,
   CreateWorkPayload,
@@ -29,6 +33,28 @@ const TestLive = Layer.provideMerge(WorkUnitServiceLive, StorageAndEventsLive)
 const runSync = <A, E>(
   program: Effect.Effect<A, E, WorkUnitService | EventStore>,
 ): A => Effect.runSync(Effect.provide(program, TestLive))
+
+// A Storage decorator whose `replaceIfVersion` always fails the CAS, wrapping
+// the real in-memory store so every other op (put/getVersioned/get) behaves
+// normally. Exercises `claim`'s `if (!replaced)` conflict branch without needing
+// real concurrency: the row is present and claimable, but the version swap loses.
+const CasFailingStorageLive = Layer.effect(
+  Storage,
+  Effect.map(Storage, (base): StorageApi => ({
+    ...base,
+    replaceIfVersion: () => Effect.succeed(false),
+  })),
+).pipe(Layer.provide(InMemoryStorageLive))
+
+const CasFailingStorageAndEventsLive = Layer.provideMerge(
+  EventStoreLive,
+  Layer.merge(CasFailingStorageLive, InProcessEventBrokerLive),
+)
+
+const CasFailingTestLive = Layer.provideMerge(
+  WorkUnitServiceLive,
+  CasFailingStorageAndEventsLive,
+)
 
 const workId = Schema.decodeUnknownSync(WorkId)('work_state_machine')
 const workerId = Schema.decodeUnknownSync(WorkerId)('agent_codex')
@@ -114,6 +140,30 @@ describe('WorkUnitService', () => {
     }
   })
 
+  it('fails claim with ClaimConflictError when the version CAS loses', () => {
+    const error = Effect.runSync(
+      Effect.provide(
+        Effect.either(
+          Effect.gen(function* () {
+            const id = Schema.decodeUnknownSync(WorkId)('work_cas_lost')
+            const work = yield* WorkUnitService
+            // The row exists and is open/claimable, so `claim` passes its
+            // pre-checks and reaches the CAS write — which the stub Storage
+            // forces to lose, driving the `if (!replaced)` conflict branch.
+            yield* work.create(createInput(id))
+            return yield* work.claim(id, workerId, later)
+          }),
+        ),
+        CasFailingTestLive,
+      ),
+    )
+
+    expect(error._tag).toBe('Left')
+    if (error._tag === 'Left') {
+      expect(error.left._tag).toBe('ClaimConflictError')
+    }
+  })
+
   it('lists work units by workspace', () => {
     const listed = runSync(
       Effect.gen(function* () {
@@ -156,6 +206,31 @@ describe('WorkUnitService', () => {
     )
 
     expect(final.state).toBe('running')
+  })
+
+  it('rejects a stale transition after a concurrent transition already moved the work on', () => {
+    const error = runSync(
+      Effect.either(
+        Effect.gen(function* () {
+          const id = Schema.decodeUnknownSync(WorkId)('work_stale_transition')
+          const work = yield* WorkUnitService
+          yield* work.create(createInput(id))
+          yield* work.claim(id, workerId, later)
+          yield* work.transition(id, 'running', workerId, later)
+          // Simulates two racers both having observed `running`: one lands
+          // first, moving the work to `needs_review`; the loser retries its
+          // transition computed against the stale `running` snapshot and
+          // must fail with the same conflict error the CAS write enforces.
+          yield* work.transition(id, 'needs_review', workerId, later)
+          return yield* work.transition(id, 'blocked', workerId, later)
+        }),
+      ),
+    )
+
+    expect(error._tag).toBe('Left')
+    if (error._tag === 'Left') {
+      expect(error.left._tag).toBe('InvalidStateTransitionError')
+    }
   })
 
   it('rejects invalid transitions with InvalidStateTransitionError', () => {

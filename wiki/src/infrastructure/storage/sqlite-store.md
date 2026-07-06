@@ -36,7 +36,13 @@ export const SqliteMemoryStorageLive: Layer.Layer<Storage, StorageError>
 
 ```sql
 kv(collection TEXT, id TEXT, value TEXT, version INTEGER NOT NULL DEFAULT 1,
+   -- promoted, indexed scoping columns (one per [[index-columns]] INDEXED_FIELDS)
+   workspace_id TEXT, work_id TEXT, state TEXT, assigned_to TEXT,
+   priority TEXT, holder TEXT, kind TEXT,
    PRIMARY KEY(collection, id))
+-- kv_collection_workspace(collection, workspace_id)
+-- kv_collection_workspace_state(collection, workspace_id, state)
+-- kv_collection_work(collection, work_id)
 events(workspace_id TEXT, seq INTEGER, value TEXT, PRIMARY KEY(workspace_id, seq))
 memory(workspace_id TEXT, seq INTEGER, id TEXT, work_id TEXT, kind TEXT, key TEXT,
        labels_json TEXT, value_json TEXT, created_at TEXT,
@@ -55,6 +61,14 @@ runs the `ALTER TABLE` only when the column is absent). New rows start at
 version `1`; every successful write — `put` upsert, `replaceIf`, and
 `replaceIfVersion` — bumps it by one, matching [[in-memory-store]] and
 [[postgres-store]] so the three adapters version identically.
+
+The promoted scoping columns (`workspace_id`, `work_id`, `state`, …) are added by
+the same `PRAGMA table_info` guard, one per [[index-columns]] `INDEXED_FIELDS`
+entry, and every value-mutating write (`put`, `putIfAbsent`, `replaceIf`,
+`replaceIfVersion`) re-derives them from the value via `extractIndexColumns` and
+writes them alongside — so a value rewrite can never leave a column stale. Three
+composite indexes back the hot scoped reads. `queryBy` serves an indexed
+`SELECT`; [[in-memory-store]] serves the same contract by scan.
 
 ### Linkage
 
@@ -76,11 +90,21 @@ current `version` equals the caller's expected version (`... SET value = ?,
 version = version + 1 WHERE ... AND version = ?`), succeeding when SQLite
 reports one changed row — cheaper than `replaceIf`'s whole-blob comparison.
 
+`queryBy` first validates every filter `field` against the [[index-columns]]
+`INDEXED_FIELDS` allowlist (an unknown field fails `StorageError` before touching
+the database), then builds a parameterized `SELECT value FROM kv WHERE collection
+= ? AND "<field>" = ? … ORDER BY id ASC [LIMIT ?]` and runs it. The column names
+are quoted from the validated allowlist (never caller input) and every value is a
+bound parameter, so the dynamic SQL carries no injection surface. The statement is
+prepared per call (filter shape varies) rather than once per Layer.
+
 The pure serialization and row-mapping helpers (`storageTry`, `parseJson`,
 `encodeJson`, `jsonRow`, `jsonRows`, `seqRow`, `decodeEvent`, `decodeMemory`,
 `optionalText`, `memoryRowsToChunk`, `rollback`) live in the sibling
-[[sqlite-support]] module so this adapter stays under the source line cap;
-they close over no database handle, so the split is a pure move.
+[[sqlite-support]] module, and the `kv` DDL/statement SQL built from
+`INDEXED_FIELDS` (write SQL, index DDL, `queryBy` SQL builder, column-value
+projector) lives in [[kv-statements]], so this adapter stays under the source line
+cap; both helpers close over no database handle, so the splits are pure moves.
 
 `appendEvent` owns sequence assignment inside the adapter. It reads
 `MAX(seq) + 1` for the workspace inside a `BEGIN IMMEDIATE` transaction, writes the
@@ -110,6 +134,11 @@ through secondary indexes.
   statement carries `LIMIT ?`.
 - ❌ Do NOT read Memory through the generic `kv` collection; use the dedicated
   table and cursor/index statements.
+- ❌ Do NOT let `queryBy` accept a filter field outside `INDEXED_FIELDS`, and do
+  NOT interpolate a filter _value_ into the SQL — fields come from the allowlist,
+  values are always bound parameters.
+- ❌ Do NOT update `value` on any write path without also re-deriving the promoted
+  columns; a value-only write would desync the index from the row.
 - ❌ Do NOT add a third-party SQLite dependency for this slice; Node 24 provides the
   local runtime surface.
 
@@ -136,6 +165,22 @@ force domain services to know about SQL and durable ordering.
   only alters when `version` is missing — idempotent across reopens, with a
   `DEFAULT 1` backfilling pre-existing rows. _Rejected:_ dropping/recreating
   `kv`, which would lose persisted collections.
+- **Q:** The plan only listed `put`/`putIfAbsent`/`replaceIfVersion` for promoted-
+  column population — should `replaceIf` also write them, given it has no domain
+  callers left after the [[work-unit-service]] claim migration?
+  **A:** Yes — populate on `replaceIf` too. _Rationale:_ [[in-memory-store]]'s
+  `queryBy` derives columns fresh from the value on every read, so it can never go
+  stale; the SQL adapters persist columns at write time, so any value-mutating path
+  that skips them would let the index diverge from the row. Covering `replaceIf`
+  keeps all four write paths consistent and removes a latent bug if `replaceIf` is
+  ever reused. _Rejected:_ following the plan's list literally and leaving
+  `replaceIf` column-blind.
+- **Q:** Prepare the `queryBy` statement once per Layer like the others, or per
+  call? **A:** Per call. _Rationale:_ the `WHERE` shape depends on which subset of
+  `INDEXED_FIELDS` a caller filters on and how many, so there is no single reusable
+  statement; the field list is small and bounded by the allowlist. _Rejected:_
+  caching a statement per distinct filter shape — premature for this tier's read
+  volume.
 
 ## Referenced by
 
