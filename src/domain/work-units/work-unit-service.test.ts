@@ -6,7 +6,11 @@ import {
   EventStoreLive,
   InProcessEventBrokerLive,
 } from '../events/index.js'
-import { InMemoryStorageLive } from '../../infrastructure/storage/index.js'
+import {
+  InMemoryStorageLive,
+  Storage,
+} from '../../infrastructure/storage/index.js'
+import type { StorageApi } from '../../infrastructure/storage/index.js'
 import {
   ClaimWorkPayload,
   CreateWorkPayload,
@@ -29,6 +33,28 @@ const TestLive = Layer.provideMerge(WorkUnitServiceLive, StorageAndEventsLive)
 const runSync = <A, E>(
   program: Effect.Effect<A, E, WorkUnitService | EventStore>,
 ): A => Effect.runSync(Effect.provide(program, TestLive))
+
+// A Storage decorator whose `replaceIfVersion` always fails the CAS, wrapping
+// the real in-memory store so every other op (put/getVersioned/get) behaves
+// normally. Exercises `claim`'s `if (!replaced)` conflict branch without needing
+// real concurrency: the row is present and claimable, but the version swap loses.
+const CasFailingStorageLive = Layer.effect(
+  Storage,
+  Effect.map(Storage, (base): StorageApi => ({
+    ...base,
+    replaceIfVersion: () => Effect.succeed(false),
+  })),
+).pipe(Layer.provide(InMemoryStorageLive))
+
+const CasFailingStorageAndEventsLive = Layer.provideMerge(
+  EventStoreLive,
+  Layer.merge(CasFailingStorageLive, InProcessEventBrokerLive),
+)
+
+const CasFailingTestLive = Layer.provideMerge(
+  WorkUnitServiceLive,
+  CasFailingStorageAndEventsLive,
+)
 
 const workId = Schema.decodeUnknownSync(WorkId)('work_state_machine')
 const workerId = Schema.decodeUnknownSync(WorkerId)('agent_codex')
@@ -111,6 +137,30 @@ describe('WorkUnitService', () => {
       expect(error.left._tag).toBe('ClaimConflictError')
       const conflict = error.left as { readonly holderWorkerId: string }
       expect(conflict.holderWorkerId).toBe(claimPayload.worker_id)
+    }
+  })
+
+  it('fails claim with ClaimConflictError when the version CAS loses', () => {
+    const error = Effect.runSync(
+      Effect.provide(
+        Effect.either(
+          Effect.gen(function* () {
+            const id = Schema.decodeUnknownSync(WorkId)('work_cas_lost')
+            const work = yield* WorkUnitService
+            // The row exists and is open/claimable, so `claim` passes its
+            // pre-checks and reaches the CAS write — which the stub Storage
+            // forces to lose, driving the `if (!replaced)` conflict branch.
+            yield* work.create(createInput(id))
+            return yield* work.claim(id, workerId, later)
+          }),
+        ),
+        CasFailingTestLive,
+      ),
+    )
+
+    expect(error._tag).toBe('Left')
+    if (error._tag === 'Left') {
+      expect(error.left._tag).toBe('ClaimConflictError')
     }
   })
 
