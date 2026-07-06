@@ -28,9 +28,7 @@ export interface CreateArtifactInput {
 }
 
 export type ArtifactServiceError =
-  | ValidationError
-  | NotFoundError
-  | StorageError
+  ValidationError | NotFoundError | StorageError
 
 export interface ArtifactServiceApi {
   readonly create: (

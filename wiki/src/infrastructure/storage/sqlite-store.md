@@ -135,7 +135,7 @@ through secondary indexes.
 - ❌ Do NOT read Memory through the generic `kv` collection; use the dedicated
   table and cursor/index statements.
 - ❌ Do NOT let `queryBy` accept a filter field outside `INDEXED_FIELDS`, and do
-  NOT interpolate a filter *value* into the SQL — fields come from the allowlist,
+  NOT interpolate a filter _value_ into the SQL — fields come from the allowlist,
   values are always bound parameters.
 - ❌ Do NOT update `value` on any write path without also re-deriving the promoted
   columns; a value-only write would desync the index from the row.

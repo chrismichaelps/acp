@@ -109,9 +109,7 @@ export class WorkUnitStore extends Effect.Service<WorkUnitStore>()(
   {
     effect: Effect.gen(function* () {
       /* construct interface */
-      return {
-        /* methods returning Effect.Effect<A, E, R> */
-      }
+      return {/* methods returning Effect.Effect<A, E, R> */}
     }),
   },
 ) {}

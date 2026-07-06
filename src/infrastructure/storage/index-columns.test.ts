@@ -4,7 +4,10 @@ import { INDEXED_FIELDS, extractIndexColumns } from './index-columns.js'
 describe('extractIndexColumns', () => {
   it('pulls indexed fields and nulls the rest', () => {
     const cols = extractIndexColumns({
-      id: 'w1', workspace_id: 'ws1', state: 'open', priority: 'high',
+      id: 'w1',
+      workspace_id: 'ws1',
+      state: 'open',
+      priority: 'high',
     })
     expect(cols.workspace_id).toBe('ws1')
     expect(cols.state).toBe('open')

@@ -29,10 +29,7 @@ export interface RequestReviewInput {
 }
 
 export type ReviewServiceError =
-  | ValidationError
-  | NotFoundError
-  | InvalidStateTransitionError
-  | StorageError
+  ValidationError | NotFoundError | InvalidStateTransitionError | StorageError
 
 export interface ReviewServiceApi {
   readonly request: (

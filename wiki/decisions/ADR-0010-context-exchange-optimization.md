@@ -2,7 +2,18 @@
 type: adr
 status: ACCEPTED
 date: 2026-07-05
-tags: [adr, storage, indexing, context-exchange, tokens, handoff, grill, performance, scale]
+tags:
+  [
+    adr,
+    storage,
+    indexing,
+    context-exchange,
+    tokens,
+    handoff,
+    grill,
+    performance,
+    scale,
+  ]
 aliases: [ADR-0010, ADR-0010-context-exchange-optimization, Feature-580]
 ---
 
@@ -48,7 +59,7 @@ entities persist into a single `kv(collection, id, value)` table via
 dedicated append-only tables — `events` and `memory` — with a monotonic
 per-workspace `seq` and, for `memory`, two composite indexes
 (`(workspace_id, key, seq)`, `(workspace_id, work_id, seq)`). Records serialize as
-JSON via Effect `Schema.encode`. Artifact *content* is already split into a lazy
+JSON via Effect `Schema.encode`. Artifact _content_ is already split into a lazy
 `artifact_content` collection (metadata vs. blob), which is the one place the
 "reference, fetch on demand" pattern already exists.
 
@@ -57,7 +68,7 @@ JSON via Effect `Schema.encode`. Artifact *content* is already split into a lazy
 **B1 — Every scoped read is a full-collection scan + full decode + in-app
 filter.** `WorkUnitService.listForWorkspace` (`work-unit-service.ts:200`) calls
 `storage.list('work')` — which is `SELECT value FROM kv WHERE collection = 'work'
-ORDER BY id` (`postgres-store.ts`), *no `workspace_id` predicate* — then
+ORDER BY id` (`postgres-store.ts`), _no `workspace_id` predicate_ — then
 `Schema.decodeUnknown`s **every** row across **every** workspace and filters
 `w.workspace_id === x` in JavaScript. `ArtifactService.listForWork`/`listForWorkspace`
 (`artifact-service.ts:245-259`) do the same. The recently added
@@ -84,7 +95,7 @@ latest [[Checkpoint]] + **all** [[Artifact]]s + **all** [[Review]]s. There is no
 "since" cursor and no delta. A chain of N handoffs re-transfers the growing total
 each time.
 
-**B5 — `grill` does not exist at runtime.** It is only an FMCF *methodology* term
+**B5 — `grill` does not exist at runtime.** It is only an FMCF _methodology_ term
 (SKILL.md §VI: agent self-interrogation) and dev-log notes. There is no
 agent-to-agent challenge protocol, so adversarial verification between workers
 would route through the human.
@@ -110,7 +121,7 @@ accumulated `a·k` artifact/review records (metadata) of average size `s`:
   dedup).
 - **Proposed (delta + content-addressed refs):** step `k` transfers only the
   `Δ ≈ a` new refs plus already-held refs elided by hash → **Θ(a·s·N)** total, and
-  the *bytes* behind unchanged refs are transferred **once** over the whole chain.
+  the _bytes_ behind unchanged refs are transferred **once** over the whole chain.
 
 So the headline is **O(N²) → O(N)** in handoff-chain tokens, and repeated content
 collapses from O(total) to O(unique). Memory recall goes from an O(window) scan to
@@ -224,7 +235,7 @@ reversibility > performance), now executed between workers instead of within one
 Keep the exact cursor/key/label index as the **deterministic default**. Add an
 **opt-in** `readMemory({ similar_to, k })` mode via pgvector on Postgres: store an
 embedding alongside each memory row and retrieve the top-K relevant records by
-cosine, so an incoming agent pulls the *relevant* K instead of replaying the
+cosine, so an incoming agent pulls the _relevant_ K instead of replaying the
 window. Opt-in preserves determinism and vendor-neutrality — it is negotiated at
 session initialize as a `supports_semantic_recall` capability; SQLite/InMemory
 degrade to keyword/label recall and advertise the gap. This is the only capability
@@ -245,14 +256,14 @@ version bump from move B.
 
 ## Indexing strategy (summary)
 
-| Table | Key / index | Serves |
-| --- | --- | --- |
-| `kv` | PK `(collection, id)`; `version` col | point get, O(1) CAS |
-| `kv` | `(collection, workspace_id)` + per-hot-field composites | move A scoped lists |
-| `events` | PK `(workspace_id, seq)` | replay range scan (unchanged) |
-| `memory` | `(workspace_id, key, seq)`, `(workspace_id, work_id, seq)` | recall (unchanged); + optional `ivfflat` vector index (move F) |
-| `blobs` | PK `hash`; partial index `refcount=0` | dedup lookup, GC sweep |
-| `handoff` | `(work_id, at_seq)` | latest/delta handoff |
+| Table     | Key / index                                                | Serves                                                         |
+| --------- | ---------------------------------------------------------- | -------------------------------------------------------------- |
+| `kv`      | PK `(collection, id)`; `version` col                       | point get, O(1) CAS                                            |
+| `kv`      | `(collection, workspace_id)` + per-hot-field composites    | move A scoped lists                                            |
+| `events`  | PK `(workspace_id, seq)`                                   | replay range scan (unchanged)                                  |
+| `memory`  | `(workspace_id, key, seq)`, `(workspace_id, work_id, seq)` | recall (unchanged); + optional `ivfflat` vector index (move F) |
+| `blobs`   | PK `hash`; partial index `refcount=0`                      | dedup lookup, GC sweep                                         |
+| `handoff` | `(work_id, at_seq)`                                        | latest/delta handoff                                           |
 
 ## Retrieval strategy
 
@@ -275,14 +286,14 @@ version-guarded.
 
 ## Complexity analysis (time / space)
 
-| Operation | Today | Proposed |
-| --- | --- | --- |
-| Scoped list | O(N_all) scan + decode | **O(log N + k)** time |
-| Guarded write (CAS) | O(blob) transfer + compare | **O(1)** version compare |
-| Repeated-content storage | O(total) space | **O(unique)** space |
-| Handoff-chain tokens | Θ(a·s·N²) | **Θ(a·s·N)**, bytes once |
-| Memory recall tokens | O(window) | **O(K)** semantic |
-| Repeated content pull | O(bytes) | **O(1)** (304 / ref) |
+| Operation                | Today                      | Proposed                 |
+| ------------------------ | -------------------------- | ------------------------ |
+| Scoped list              | O(N_all) scan + decode     | **O(log N + k)** time    |
+| Guarded write (CAS)      | O(blob) transfer + compare | **O(1)** version compare |
+| Repeated-content storage | O(total) space             | **O(unique)** space      |
+| Handoff-chain tokens     | Θ(a·s·N²)                  | **Θ(a·s·N)**, bytes once |
+| Memory recall tokens     | O(window)                  | **O(K)** semantic        |
+| Repeated content pull    | O(bytes)                   | **O(1)** (304 / ref)     |
 
 ## Trade-offs
 
@@ -303,21 +314,17 @@ verifies (Step 5), and closes the loop (Step 6). Independently shippable and
 reversible.
 
 **Scale tier (approved first):**
+
 1. This ADR + [[Storage]] seam update: queryable port & indexing direction.
 2. `version` column + CAS-by-version (additive, backward-compatible; keep full-blob
    path until cut over).
 3. Generated/indexed columns + `query()` port method; migrate all `listFor*` to
    indexed predicates; retain `list` only for full-scan consumers.
 
-**Token tier:**
-4. Content-addressed `blobs` + refcount + GC; migrate `artifact_content`; keep
-   `acp://` URI compatibility.
-5. `ContextBlock` primitive + ETag/`If-None-Match` + decode LRU.
-6. `Handoff` record + `acp handoff` + `--since` delta + materialized resume;
-   `handoff.*` events + permissions.
-7. `acp grill` adversarial protocol (typed records + `grill.*` events + bounded
-   rounds).
-8. Opt-in semantic recall (pgvector) behind `supports_semantic_recall` capability.
+**Token tier:** 4. Content-addressed `blobs` + refcount + GC; migrate `artifact_content`; keep
+`acp://` URI compatibility. 5. `ContextBlock` primitive + ETag/`If-None-Match` + decode LRU. 6. `Handoff` record + `acp handoff` + `--since` delta + materialized resume;
+`handoff.*` events + permissions. 7. `acp grill` adversarial protocol (typed records + `grill.*` events + bounded
+rounds). 8. Opt-in semantic recall (pgvector) behind `supports_semantic_recall` capability.
 
 ## Risks
 
@@ -365,14 +372,14 @@ DB — only tighter, reference-first coordination state.
 ## Grill Log
 
 - **Q:** Generic indexed `kv` or per-entity tables?
-  **A:** Generic `kv` with promoted generated/indexed columns. *Rationale:* preserves
+  **A:** Generic `kv` with promoted generated/indexed columns. _Rationale:_ preserves
   the single stable [[Storage]] contract that ten services and three adapters share
   (convention-fit, reversibility); the O(log N) win comes from the index, not the
-  table split. *Rejected:* per-entity tables (better stats, far larger migration +
+  table split. _Rejected:_ per-entity tables (better stats, far larger migration +
   contract surface for marginal gain today).
 - **Q:** How is optimistic concurrency done without full-blob compare?
-  **A:** Monotonic `version` column; CAS on `version`. *Rationale:* O(1), removes
-  blob transfer, decouples from JSON canonicalization. *Rejected:* content-hash of
+  **A:** Monotonic `version` column; CAS on `version`. _Rationale:_ O(1), removes
+  blob transfer, decouples from JSON canonicalization. _Rejected:_ content-hash of
   the row (works but costs a hash per write and still couples to serialization);
   DB-level `SELECT FOR UPDATE` (heavier, worse under the multi-replica topology).
 - **Q:** Does delta handoff risk an incoming agent missing context that predates
@@ -380,24 +387,24 @@ DB — only tighter, reference-first coordination state.
   **A:** No — a delta handoff carries the prior `HandoffId`; the receiver can walk
   the `since` chain to reconstruct full state, but pulls each ref's bytes at most
   once (content-addressed). A `--full` handoff is always available as the safe
-  default when no prior handoff is trusted. *Rejected:* always-full handoffs
+  default when no prior handoff is trusted. _Rejected:_ always-full handoffs
   (correct but Θ(N²) tokens); deltas with no back-pointer (loses recoverability).
 - **Q:** Should `grill` be a new typed entity or reuse `memory kind=grill`?
   **A:** Start as typed `grill.*` events over memory-backed challenge/response
   records; promote to a first-class entity only if the challenge/response shape
-  diverges from memory. *Rationale:* simplicity + reversibility; ship the protocol
-  before the schema hardens. *Rejected:* new entity up front (premature; memory
+  diverges from memory. _Rationale:_ simplicity + reversibility; ship the protocol
+  before the schema hardens. _Rejected:_ new entity up front (premature; memory
   already carries `key`/`summary`/`content`/`labels`).
 - **Q:** Does semantic recall break determinism / vendor-neutrality?
   **A:** It is opt-in and negotiated (`supports_semantic_recall`); the default
-  recall path stays exact and adapter-portable. *Rationale:* determinism is a
+  recall path stays exact and adapter-portable. _Rationale:_ determinism is a
   protocol invariant; relevance retrieval is an optimization, not a guarantee.
-  *Rejected:* semantic-by-default (nondeterministic coordination), external vector
+  _Rejected:_ semantic-by-default (nondeterministic coordination), external vector
   DB (second dependency).
 - **Q:** Blobs are immutable — how is storage reclaimed?
   **A:** `refcount` on `blobs`, decremented when a referencing record is deleted or
-  superseded; swept at `refcount=0` in the existing retention job. *Rationale:*
-  reuses the [[ADR-0008]] sweeper; no new daemon. *Rejected:* mark-and-sweep GC
+  superseded; swept at `refcount=0` in the existing retention job. _Rationale:_
+  reuses the [[ADR-0008]] sweeper; no new daemon. _Rejected:_ mark-and-sweep GC
   over all references (O(N) scan, needless at this scale).
 - **Q (escalated, defaulted):** What embedding provider backs semantic recall?
   **A:** None mandated by the protocol. The host exposes an embedding seam; the

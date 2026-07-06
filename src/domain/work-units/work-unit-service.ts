@@ -33,9 +33,7 @@ export type WorkUnitClaimError =
   | StorageError
 
 export type WorkUnitTransitionError =
-  | NotFoundError
-  | InvalidStateTransitionError
-  | StorageError
+  NotFoundError | InvalidStateTransitionError | StorageError
 
 export interface WorkUnitServiceApi {
   readonly create: (

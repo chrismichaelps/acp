@@ -1,6 +1,12 @@
 /** @Acp.Infra.Storage.IndexColumns — promoted scoping columns shared by adapters */
 export const INDEXED_FIELDS = [
-  'workspace_id', 'work_id', 'state', 'assigned_to', 'priority', 'holder', 'kind',
+  'workspace_id',
+  'work_id',
+  'state',
+  'assigned_to',
+  'priority',
+  'holder',
+  'kind',
 ] as const
 
 export type IndexedField = (typeof INDEXED_FIELDS)[number]

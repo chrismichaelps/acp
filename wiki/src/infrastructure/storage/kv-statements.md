@@ -58,7 +58,7 @@ plus one quoted `AND "<field>" = ?` per filter, `ORDER BY id ASC`, and an option
 - ❌ Do NOT interpolate a caller-supplied field into `buildQueryBySql` without the
   adapter first validating it against `INDEXED_FIELDS`; column names are quoted, not
   bound.
-- ❌ Do NOT interpolate filter *values* — they are always bound parameters at the
+- ❌ Do NOT interpolate filter _values_ — they are always bound parameters at the
   adapter.
 - ❌ Do NOT reorder the column fragments independently of `indexColumnValues`; both
   derive from `INDEXED_FIELDS` order and must stay in lockstep.

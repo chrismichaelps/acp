@@ -125,7 +125,7 @@ the same storage port used by the in-memory and SQLite adapters.
 
 - **Q:** How does the `kv.version` column reach an already-created database?
   **A:** `ALTER TABLE kv ADD COLUMN IF NOT EXISTS version bigint NOT NULL
-  DEFAULT 1` in `schemaStatements`, run unconditionally on every boot alongside
+DEFAULT 1` in `schemaStatements`, run unconditionally on every boot alongside
   the other `CREATE TABLE IF NOT EXISTS` statements. _Rationale:_ Postgres
   supports `ADD COLUMN IF NOT EXISTS` natively, so no separate existence check
   is needed (unlike [[sqlite-store]], whose engine lacks that clause).

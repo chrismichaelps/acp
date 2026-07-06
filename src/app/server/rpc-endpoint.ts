@@ -46,9 +46,8 @@ export const dispatchVia =
         HttpServerRequest.fromWeb(webRequest),
       )
       const web = HttpServerResponse.toWeb(response)
-      const body = yield* Effect.promise(
-        (): Promise<unknown> =>
-          web.status === 204 ? Promise.resolve(null) : web.json(),
+      const body = yield* Effect.promise((): Promise<unknown> =>
+        web.status === 204 ? Promise.resolve(null) : web.json(),
       )
       return { status: web.status, body }
     }).pipe(
