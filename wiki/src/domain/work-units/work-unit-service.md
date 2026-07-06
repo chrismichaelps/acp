@@ -93,9 +93,13 @@ export const WorkUnitServiceLive: Layer.Layer<
 
 1. `create` builds an `open` WorkUnit, defaults absent priority to `normal`,
    saves it, then emits `work.created`.
-2. `claim` loads the WorkUnit. Already assigned work fails with
-   `ClaimConflictError`; otherwise the service validates `open -> claimed`, sets
-   `assigned_to`, saves it, then emits `work.claimed`.
+2. `claim` loads the WorkUnit with its row `version` (`[[storage]]`'s
+   `getVersioned`). Already assigned work fails with `ClaimConflictError`;
+   otherwise the service validates `open -> claimed`, sets `assigned_to`, and
+   writes via `replaceIfVersion` — CAS on the row's integer `version`, not on
+   the serialized value. A `false` swap (another writer already advanced the
+   version) re-reads the current work and fails with `ClaimConflictError`.
+   On success it emits `work.claimed`.
 3. `transition` validates the current state against the state-machine table,
    saves the updated state, and emits the corresponding work/review event.
 4. `get` returns `Option.none` for absence and decodes stored records through
@@ -131,6 +135,16 @@ without creating a reviewer outcome.
 - ❌ Do NOT generate IDs or timestamps here until those seams exist.
 - ❌ Do NOT make transport adapters scan raw storage for work indexes; this
   service owns the filter.
+
+## Grill Log
+
+- **Q:** Migrate `claim`'s conflict CAS from `replaceIf` (whole-blob compare) to
+  `replaceIfVersion` (integer `version` compare) — worth the churn? **A:** Yes.
+  `replaceIf` re-serializes and JSON-compares the entire WorkUnit on every claim;
+  `replaceIfVersion` is an O(1) integer compare. Same observable behavior — a
+  losing writer still re-reads and fails with `ClaimConflictError` — at lower
+  cost per claim. `transition`/`transitionSilently` still `save` (unconditional
+  `put`) rather than CAS; only `claim` had a conflict-checked write to migrate.
 
 ## Depth
 

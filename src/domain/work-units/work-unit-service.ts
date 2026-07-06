@@ -213,6 +213,32 @@ const make = Effect.gen(function* () {
       }),
     )
 
+  interface VersionedWork {
+    readonly work: WorkUnit
+    readonly version: number
+  }
+
+  const getVersionedWork = (workId: WorkId) =>
+    Effect.flatMap(storage.getVersioned(collection, workId), (stored) =>
+      Option.match(stored, {
+        onNone: () => Effect.succeed(Option.none<VersionedWork>()),
+        onSome: ({ value, version }) =>
+          Effect.map(decodeStoredWork(value), (work) =>
+            Option.some({ work, version }),
+          ),
+      }),
+    )
+
+  /** Like `requireWork`, but also returns the row's version for CAS writes. */
+  const requireVersionedWork = (workId: WorkId) =>
+    Effect.flatMap(getVersionedWork(workId), (versioned) =>
+      Option.match(versioned, {
+        onNone: () =>
+          Effect.fail(new NotFoundError({ entity: 'work', id: workId })),
+        onSome: Effect.succeed,
+      }),
+    )
+
   const create: WorkUnitServiceApi['create'] = (input) => {
     const work: WorkUnit = {
       id: input.id,
@@ -270,7 +296,7 @@ const make = Effect.gen(function* () {
 
   const claim: WorkUnitServiceApi['claim'] = (workId, workerId, now) =>
     Effect.gen(function* () {
-      const work = yield* requireWork(workId)
+      const { work, version } = yield* requireVersionedWork(workId)
       if (work.state !== 'open' && Option.isSome(work.assigned_to)) {
         return yield* Effect.fail(
           new ClaimConflictError({
@@ -294,12 +320,11 @@ const make = Effect.gen(function* () {
         assigned_to: Option.some(workerId),
         updated_at: now,
       }
-      const expected = yield* encodeWork(work)
       const replacement = yield* encodeWork(next)
-      const replaced = yield* storage.replaceIf(
+      const replaced = yield* storage.replaceIfVersion(
         collection,
         work.id,
-        expected,
+        version,
         replacement,
       )
       if (!replaced) {

@@ -158,6 +158,31 @@ describe('WorkUnitService', () => {
     expect(final.state).toBe('running')
   })
 
+  it('rejects a stale transition after a concurrent transition already moved the work on', () => {
+    const error = runSync(
+      Effect.either(
+        Effect.gen(function* () {
+          const id = Schema.decodeUnknownSync(WorkId)('work_stale_transition')
+          const work = yield* WorkUnitService
+          yield* work.create(createInput(id))
+          yield* work.claim(id, workerId, later)
+          yield* work.transition(id, 'running', workerId, later)
+          // Simulates two racers both having observed `running`: one lands
+          // first, moving the work to `needs_review`; the loser retries its
+          // transition computed against the stale `running` snapshot and
+          // must fail with the same conflict error the CAS write enforces.
+          yield* work.transition(id, 'needs_review', workerId, later)
+          return yield* work.transition(id, 'blocked', workerId, later)
+        }),
+      ),
+    )
+
+    expect(error._tag).toBe('Left')
+    if (error._tag === 'Left') {
+      expect(error.left._tag).toBe('InvalidStateTransitionError')
+    }
+  })
+
   it('rejects invalid transitions with InvalidStateTransitionError', () => {
     const error = runSync(
       Effect.either(
