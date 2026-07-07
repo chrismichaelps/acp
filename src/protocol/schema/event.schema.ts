@@ -36,6 +36,9 @@ export const EventType = Schema.Literal(
   'review.rejected',
   'review.changes_requested',
   'review.cancelled',
+  'review_comment.added',
+  'review_comment.resolved',
+  'review_comment.reopened',
 )
 export type EventType = typeof EventType.Type
 
