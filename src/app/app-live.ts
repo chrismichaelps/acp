@@ -53,7 +53,7 @@ const ReviewCommentProvidedLive = Layer.provideMerge(
 )
 const GrillProvidedLive = Layer.provideMerge(
   GrillServiceLive,
-  EventStoreProvidedLive,
+  Layer.merge(ReviewCommentProvidedLive, EventStoreProvidedLive),
 )
 const MemoryProvidedLive = Layer.provideMerge(
   MemoryServiceLive,

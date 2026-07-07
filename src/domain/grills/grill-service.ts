@@ -1,6 +1,7 @@
 /** @Acp.Domain.Grills.Service — forced senior-question review gate */
 import { Chunk, Context, Effect, Layer, Option, Schema } from 'effect'
 import { EventStore } from '../events/index.js'
+import { ReviewCommentService } from '../review-comments/index.js'
 import { Storage } from '../../infrastructure/storage/index.js'
 import {
   NotFoundError,
@@ -13,6 +14,7 @@ import type {
   AddGrillQuestionPayload,
   Grill as GrillType,
   GrillQuestion as GrillQuestionType,
+  GrillEvaluation as GrillEvaluationType,
   GrillId,
   GrillQuestionId,
   ReviewId,
@@ -75,6 +77,10 @@ export interface GrillServiceApi {
   readonly listForReview: (
     reviewId: ReviewId,
   ) => Effect.Effect<readonly GrillType[], StorageError>
+  readonly evaluate: (
+    grillId: GrillId,
+    now: Timestamp,
+  ) => Effect.Effect<GrillEvaluationType, NotFoundError | StorageError>
 }
 
 export class GrillService extends Context.Tag('GrillService')<
@@ -106,6 +112,7 @@ const oldestFirst = (a: GrillType, b: GrillType) =>
 const make = Effect.gen(function* () {
   const storage = yield* Storage
   const events = yield* EventStore
+  const reviewComments = yield* ReviewCommentService
 
   const encodeGrill = (g: GrillType) =>
     Schema.encode(Grill)(g).pipe(
@@ -377,6 +384,62 @@ const make = Effect.gen(function* () {
       return next
     })
 
+  const closeGrill = (
+    grill: GrillType,
+    state: 'passed' | 'failed',
+    type: 'grill.passed' | 'grill.failed',
+    now: Timestamp,
+  ) =>
+    Effect.gen(function* () {
+      const closed: GrillType = {
+        ...grill,
+        state,
+        closed_at: Option.some(now),
+      }
+      yield* saveGrill(closed)
+      yield* emit(
+        closed.workspace_id,
+        closed.work_id,
+        closed.opened_by,
+        now,
+        type,
+        { grill_id: closed.id, review_id: closed.review_id },
+        closed.id,
+      )
+      return closed
+    })
+
+  const evaluate: GrillServiceApi['evaluate'] = (grillId, now) =>
+    Effect.gen(function* () {
+      const found = yield* get(grillId)
+      const { grill, questions } = yield* Option.match(found, {
+        onNone: () =>
+          Effect.fail(new NotFoundError({ entity: 'grill', id: grillId })),
+        onSome: Effect.succeed,
+      })
+      const comments = yield* reviewComments.listForReview(grill.review_id)
+      const blockers = questions.filter((q) => q.severity === 'blocker')
+      const rejected = blockers.filter((q) => q.verdict === 'rejected')
+      const pending = blockers.filter((q) => q.verdict === 'pending')
+      const openComments = comments.filter((c) => c.state === 'open')
+
+      const blocking: string[] = [
+        ...rejected.map((q) => `blocker rejected: ${q.prompt}`),
+        ...pending.map((q) => `blocker unanswered: ${q.prompt}`),
+        ...openComments.map((c) => `unresolved comment: ${c.target.file}`),
+      ]
+
+      if (rejected.length > 0) {
+        const failed = yield* closeGrill(grill, 'failed', 'grill.failed', now)
+        return { grill: failed, outcome: 'fail' as const, blocking }
+      }
+      if (pending.length > 0 || openComments.length > 0) {
+        return { grill, outcome: 'incomplete' as const, blocking }
+      }
+      const passed = yield* closeGrill(grill, 'passed', 'grill.passed', now)
+      return { grill: passed, outcome: 'pass' as const, blocking: [] }
+    })
+
   return {
     open,
     addQuestion,
@@ -385,11 +448,12 @@ const make = Effect.gen(function* () {
     get,
     getQuestion,
     listForReview,
+    evaluate,
   } satisfies GrillServiceApi
 })
 
 export const GrillServiceLive: Layer.Layer<
   GrillService,
   never,
-  Storage | EventStore
+  Storage | EventStore | ReviewCommentService
 > = Layer.effect(GrillService, make)

@@ -43,6 +43,8 @@ export const EventType = Schema.Literal(
   'grill.question_added',
   'grill.answered',
   'grill.verdict_set',
+  'grill.passed',
+  'grill.failed',
 )
 export type EventType = typeof EventType.Type
 
