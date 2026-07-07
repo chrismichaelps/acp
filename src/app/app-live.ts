@@ -4,6 +4,7 @@ import { AppConfigLive } from '../config/app-config.js'
 import { ArtifactServiceLive } from '../domain/artifacts/index.js'
 import { CheckpointServiceLive } from '../domain/checkpoints/index.js'
 import { EventStoreLive } from '../domain/events/index.js'
+import { GrillServiceLive } from '../domain/grills/index.js'
 import { LeaseServiceLive } from '../domain/leases/index.js'
 import { ReviewCommentServiceLive } from '../domain/review-comments/index.js'
 import { MemoryServiceLive } from '../domain/memory/index.js'
@@ -50,6 +51,10 @@ const ReviewCommentProvidedLive = Layer.provideMerge(
   ReviewCommentServiceLive,
   EventStoreProvidedLive,
 )
+const GrillProvidedLive = Layer.provideMerge(
+  GrillServiceLive,
+  EventStoreProvidedLive,
+)
 const MemoryProvidedLive = Layer.provideMerge(
   MemoryServiceLive,
   EventStoreProvidedLive,
@@ -72,6 +77,7 @@ export const AppLive = Layer.mergeAll(
   ArtifactProvidedLive,
   CheckpointProvidedLive,
   ReviewCommentProvidedLive,
+  GrillProvidedLive,
   MemoryProvidedLive,
   ReviewProvidedLive,
 )

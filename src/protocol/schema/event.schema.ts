@@ -39,6 +39,10 @@ export const EventType = Schema.Literal(
   'review_comment.added',
   'review_comment.resolved',
   'review_comment.reopened',
+  'grill.opened',
+  'grill.question_added',
+  'grill.answered',
+  'grill.verdict_set',
 )
 export type EventType = typeof EventType.Type
 
