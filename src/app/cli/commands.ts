@@ -12,6 +12,8 @@ import { eventCommandHandlers } from './event-commands.js'
 import { leaseCommandHandlers } from './lease-commands.js'
 import { memoryCommandHandlers } from './memory-commands.js'
 import { reviewCommandHandlers } from './review-commands.js'
+import { reviewCommentCommandHandlers } from './review-comment-commands.js'
+import { grillCommandHandlers } from './grill-commands.js'
 import { sessionCommandHandlers } from './session-commands.js'
 import { workCommandHandlers } from './work-commands.js'
 import { workerCommandHandlers } from './worker-commands.js'
@@ -146,5 +148,7 @@ export const parseArgs = buildCommandParser([
   artifactCommandHandlers,
   memoryCommandHandlers,
   reviewCommandHandlers,
+  reviewCommentCommandHandlers,
+  grillCommandHandlers,
   eventCommandHandlers,
 ])
