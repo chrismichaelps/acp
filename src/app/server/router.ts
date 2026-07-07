@@ -9,12 +9,10 @@ import { ArtifactService } from '../../domain/artifacts/index.js'
 import { CheckpointService } from '../../domain/checkpoints/index.js'
 import { EventStore } from '../../domain/events/index.js'
 import { LeaseService } from '../../domain/leases/index.js'
-import { ReviewService } from '../../domain/reviews/index.js'
 import { SessionService } from '../../domain/sessions/index.js'
 import { WorkUnitService } from '../../domain/work-units/index.js'
 import { WorkerService } from '../../domain/workers/index.js'
 import {
-  ApproveReviewPayload,
   InitializeSessionPayload,
   InitializeSessionResponse,
   LeaseListParams,
@@ -34,6 +32,29 @@ import {
   listWorkReviews,
 } from './resume-routes.js'
 import { createMemory, listMemory } from './memory-routes.js'
+import {
+  addReviewComment,
+  listReviewComments,
+  listWorkReviewComments,
+  reopenReviewComment,
+  resolveReviewComment,
+} from './review-comment-routes.js'
+import {
+  addGrillQuestion,
+  answerGrillQuestion,
+  evaluateGrill,
+  getGrill,
+  listReviewGrills,
+  openGrill,
+  setGrillVerdict,
+} from './grill-routes.js'
+import {
+  approveReview,
+  cancelReview,
+  rejectReview,
+  requestReview,
+  requestReviewChanges,
+} from './review-routes.js'
 import { makeRpcHandler } from './rpc-endpoint.js'
 import { makeRpcSocketHandler } from './rpc-socket.js'
 import { ValidationError } from '../../protocol/errors/protocol-error.js'
@@ -48,8 +69,6 @@ import {
   Event,
   Lease,
   RequestLeasePayload,
-  RequestReviewPayload,
-  Review,
   UpdateArtifactPayload,
   WorkUnit,
   isSupportedProtocolVersion,
@@ -60,7 +79,6 @@ import type {
   CheckpointId,
   EventId,
   LeaseId,
-  ReviewId,
   SessionId,
   WorkId,
 } from '../../protocol/schema/index.js'
@@ -354,78 +372,6 @@ const createCheckpoint = respond('POST /v1/checkpoints')(
   }),
 )
 
-const requestReview = respond('POST /v1/reviews')(
-  Effect.gen(function* () {
-    const service = yield* ReviewService
-    const idClock = yield* IdClock
-    const payload =
-      yield* HttpServerRequest.schemaBodyJson(RequestReviewPayload)
-    const id = (yield* idClock.nextId('review')) as ReviewId
-    const now = yield* idClock.now
-    yield* target.reviewRequest('review:create', payload.work_id)
-    const review = yield* service.request({ id, payload, now })
-    return yield* ok(201)(Review, review)
-  }),
-)
-
-const approveReview = respond('POST /v1/reviews/:review_id/approve')(
-  Effect.gen(function* () {
-    const service = yield* ReviewService
-    const idClock = yield* IdClock
-    const reviewId = (yield* pathParam('review_id')) as ReviewId
-    const payload =
-      yield* HttpServerRequest.schemaBodyJson(ApproveReviewPayload)
-    const now = yield* idClock.now
-    const { actor } = yield* target.review('review:approve', reviewId)
-    const review = yield* service.approve(
-      reviewId,
-      actor,
-      now,
-      payload.met_requirements,
-      Option.fromNullable(payload.approval_signature),
-    )
-    return yield* ok(200)(Review, review)
-  }),
-)
-
-const rejectReview = respond('POST /v1/reviews/:review_id/reject')(
-  Effect.gen(function* () {
-    const service = yield* ReviewService
-    const idClock = yield* IdClock
-    const reviewId = (yield* pathParam('review_id')) as ReviewId
-    const now = yield* idClock.now
-    const { actor } = yield* target.review('review:reject', reviewId)
-    const review = yield* service.reject(reviewId, actor, now)
-    return yield* ok(200)(Review, review)
-  }),
-)
-
-const requestReviewChanges = respond(
-  'POST /v1/reviews/:review_id/request_changes',
-)(
-  Effect.gen(function* () {
-    const service = yield* ReviewService
-    const idClock = yield* IdClock
-    const reviewId = (yield* pathParam('review_id')) as ReviewId
-    const now = yield* idClock.now
-    const { actor } = yield* target.review('review:request_changes', reviewId)
-    const review = yield* service.requestChanges(reviewId, actor, now)
-    return yield* ok(200)(Review, review)
-  }),
-)
-
-const cancelReview = respond('POST /v1/reviews/:review_id/cancel')(
-  Effect.gen(function* () {
-    const service = yield* ReviewService
-    const idClock = yield* IdClock
-    const reviewId = (yield* pathParam('review_id')) as ReviewId
-    const now = yield* idClock.now
-    const { actor } = yield* target.review('review:cancel', reviewId)
-    const review = yield* service.cancel(reviewId, actor, now)
-    return yield* ok(200)(Review, review)
-  }),
-)
-
 // The canonical REST surface (spec §12). JSON-RPC dispatch replays against this.
 const workRouter = HttpRouter.empty.pipe(
   HttpRouter.post('/v1/session/initialize', initializeSession),
@@ -487,6 +433,27 @@ const v1Router = commandRouter.pipe(
     requestReviewChanges,
   ),
   HttpRouter.post('/v1/reviews/:review_id/cancel', cancelReview),
+  HttpRouter.post('/v1/reviews/:review_id/comments', addReviewComment),
+  HttpRouter.get('/v1/reviews/:review_id/comments', listReviewComments),
+  HttpRouter.post(
+    '/v1/review-comments/:comment_id/resolve',
+    resolveReviewComment,
+  ),
+  HttpRouter.post(
+    '/v1/review-comments/:comment_id/reopen',
+    reopenReviewComment,
+  ),
+  HttpRouter.get('/v1/work/:work_id/review-comments', listWorkReviewComments),
+  HttpRouter.post('/v1/reviews/:review_id/grill', openGrill),
+  HttpRouter.get('/v1/reviews/:review_id/grills', listReviewGrills),
+  HttpRouter.post('/v1/grills/:grill_id/questions', addGrillQuestion),
+  HttpRouter.post('/v1/grills/:grill_id/evaluate', evaluateGrill),
+  HttpRouter.get('/v1/grills/:grill_id', getGrill),
+  HttpRouter.post(
+    '/v1/grill-questions/:question_id/answer',
+    answerGrillQuestion,
+  ),
+  HttpRouter.post('/v1/grill-questions/:question_id/verdict', setGrillVerdict),
   HttpRouter.get('/v1/events', replayEvents),
   HttpRouter.get('/v1/events/stream', streamEvents),
 )

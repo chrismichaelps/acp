@@ -1,17 +1,25 @@
 /** @Acp.App.Server.ResourceWorkspaceAuth — derive tenant scope from resource ids */
 import { Effect, Option } from 'effect'
 import { ArtifactService } from '../../domain/artifacts/index.js'
+import { GrillService } from '../../domain/grills/index.js'
 import { LeaseService } from '../../domain/leases/index.js'
+import { ReviewCommentService } from '../../domain/review-comments/index.js'
 import { ReviewService } from '../../domain/reviews/index.js'
 import { WorkUnitService } from '../../domain/work-units/index.js'
 import { NotFoundError } from '../../protocol/errors/protocol-error.js'
 import type {
   Artifact,
   ArtifactId,
+  Grill,
+  GrillId,
+  GrillQuestion,
+  GrillQuestionId,
   Lease,
   LeaseId,
   Permission,
   Review,
+  ReviewComment,
+  ReviewCommentId,
   ReviewId,
   WorkId,
   WorkUnit,
@@ -91,3 +99,51 @@ export const review = (scope: Permission, reviewId: ReviewId) =>
 
 export const reviewRequest = (scope: Permission, workId: WorkId) =>
   work(scope, workId)
+
+export const reviewComment = (scope: Permission, commentId: ReviewCommentId) =>
+  Effect.gen(function* () {
+    const service = yield* ReviewCommentService
+    const comment = yield* Effect.flatMap(
+      service.get(commentId),
+      fromOption('review_comment', commentId),
+    )
+    const actor = yield* authorizeWorkspace(scope, comment.workspace_id)
+    return { actor, comment } satisfies {
+      readonly actor: WorkerId
+      readonly comment: ReviewComment
+    }
+  })
+
+export const grill = (scope: Permission, grillId: GrillId) =>
+  Effect.gen(function* () {
+    const service = yield* GrillService
+    const found = yield* Effect.flatMap(
+      service.get(grillId),
+      fromOption('grill', grillId),
+    )
+    const actor = yield* authorizeWorkspace(scope, found.grill.workspace_id)
+    return { actor, grill: found.grill, questions: found.questions } satisfies {
+      readonly actor: WorkerId
+      readonly grill: Grill
+      readonly questions: readonly GrillQuestion[]
+    }
+  })
+
+export const grillQuestion = (scope: Permission, questionId: GrillQuestionId) =>
+  Effect.gen(function* () {
+    const service = yield* GrillService
+    const question = yield* Effect.flatMap(
+      service.getQuestion(questionId),
+      fromOption('grill_question', questionId),
+    )
+    const parent = yield* Effect.flatMap(
+      service.get(question.grill_id),
+      fromOption('grill', question.grill_id),
+    )
+    const actor = yield* authorizeWorkspace(scope, parent.grill.workspace_id)
+    return { actor, question, grill: parent.grill } satisfies {
+      readonly actor: WorkerId
+      readonly question: GrillQuestion
+      readonly grill: Grill
+    }
+  })

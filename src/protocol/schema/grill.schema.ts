@@ -54,6 +54,22 @@ export const AddGrillQuestionPayload = Schema.Struct({
 })
 export type AddGrillQuestionPayload = typeof AddGrillQuestionPayload.Type
 
+export const AnswerGrillQuestionPayload = Schema.Struct({
+  answer: Schema.NonEmptyString,
+})
+export type AnswerGrillQuestionPayload = typeof AnswerGrillQuestionPayload.Type
+
+export const SetGrillVerdictPayload = Schema.Struct({
+  verdict: Schema.Literal('accepted', 'rejected'),
+})
+export type SetGrillVerdictPayload = typeof SetGrillVerdictPayload.Type
+
+export const GrillDetail = Schema.Struct({
+  grill: Grill,
+  questions: Schema.Array(GrillQuestion),
+})
+export type GrillDetail = typeof GrillDetail.Type
+
 export const GrillEvaluation = Schema.Struct({
   grill: Grill,
   outcome: Schema.Literal('pass', 'fail', 'incomplete'),

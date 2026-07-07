@@ -25,8 +25,13 @@ workspace binding check to [[route-support]] `authorizeWorkspace`.
 The exported helpers are intentionally short because [[acp-router]] sits on the
 500-line file-size boundary. `w`, `l`, `a`, and `r` authorize work, lease,
 artifact, and review targets respectively. `rr` authorizes review creation from
-the request's `work_id`. Each helper returns the authorized actor and the loaded
-resource when the route needs it for the subsequent service call.
+the request's `work_id`. The review-gate helpers `reviewComment`, `grill`, and
+`grillQuestion` extend the same protocol: `reviewComment` loads the comment for
+its own `workspace_id`, `grill` loads the `{ grill, questions }` composite for
+the grill's `workspace_id`, and `grillQuestion` walks question → parent grill →
+`workspace_id` because a [[GrillQuestion]] carries no tenant id of its own. Each
+helper returns the authorized actor and the loaded resource when the route needs
+it for the subsequent service call.
 
 ## Algorithm
 
