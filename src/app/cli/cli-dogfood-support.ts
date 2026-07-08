@@ -85,6 +85,7 @@ export const plannerPerms = [
 ]
 export const workerPerms = [
   ...shared,
+  'workspace:write',
   'work:claim',
   'work:update',
   'lease:create',
@@ -98,6 +99,7 @@ export const workerPerms = [
 ]
 export const reviewerPerms = [
   ...shared,
+  'workspace:write',
   'memory:read',
   'review:request_changes',
   'review:approve',
@@ -123,6 +125,122 @@ export interface Agent {
   readonly role: string
   readonly workerId: string
   readonly token: string
+}
+
+export interface GrillRoundInput {
+  readonly reviewer: Agent
+  readonly worker: Agent
+  readonly reviewId: string
+  readonly workId: string
+  readonly workspaceId: string
+  readonly artifactId: string
+  readonly accept: boolean
+  readonly resolveComment: boolean
+  readonly label: string
+}
+
+export interface GrillRoundResult {
+  readonly comment: Record<string, unknown>
+  readonly grill: Record<string, unknown>
+  readonly evaluation: Record<string, unknown>
+}
+
+// Drive one full review-gate round through the real CLI: a diff-anchored
+// comment, a blocker grill (open → ask → answer → verdict), an optional comment
+// resolve, then the gate evaluation. The reviewer authors the gate; the worker
+// answers the question. `accept` picks the verdict and `resolveComment` decides
+// whether the comment is cleared before evaluation, so a caller can shape a
+// passing or failing outcome.
+export const driveGrillRound = async (
+  baseUrl: string,
+  input: GrillRoundInput,
+): Promise<GrillRoundResult> => {
+  const { reviewer, worker, reviewId, workId, workspaceId, artifactId, label } =
+    input
+  const comment = await expectOk(
+    baseUrl,
+    `${label} comment`,
+    [
+      'review',
+      'comment',
+      '--review',
+      reviewId,
+      '--work',
+      workId,
+      '--workspace',
+      workspaceId,
+      '--artifact',
+      artifactId,
+      '--file',
+      'src/app.ts',
+      '--side',
+      'new',
+      '--body',
+      `${label} round question.`,
+    ],
+    reviewer.token,
+  )
+  const grill = await expectOk(
+    baseUrl,
+    `${label} grill open`,
+    [
+      'grill',
+      'open',
+      '--review',
+      reviewId,
+      '--work',
+      workId,
+      '--workspace',
+      workspaceId,
+    ],
+    reviewer.token,
+  )
+  const question = await expectOk(
+    baseUrl,
+    `${label} grill ask`,
+    [
+      'grill',
+      'ask',
+      grill.id as string,
+      '--severity',
+      'blocker',
+      '--prompt',
+      `${label} blocker prompt.`,
+    ],
+    reviewer.token,
+  )
+  await expectOk(
+    baseUrl,
+    `${label} grill answer`,
+    ['grill', 'answer', question.id as string, '--answer', `${label} answer.`],
+    worker.token,
+  )
+  await expectOk(
+    baseUrl,
+    `${label} grill verdict`,
+    [
+      'grill',
+      'verdict',
+      question.id as string,
+      input.accept ? '--accept' : '--reject',
+    ],
+    reviewer.token,
+  )
+  if (input.resolveComment) {
+    await expectOk(
+      baseUrl,
+      `${label} comment resolve`,
+      ['review', 'comment', 'resolve', comment.id as string],
+      reviewer.token,
+    )
+  }
+  const evaluation = await expectOk(
+    baseUrl,
+    `${label} grill evaluate`,
+    ['grill', 'evaluate', grill.id as string],
+    reviewer.token,
+  )
+  return { comment, grill, evaluation }
 }
 
 export const initAgent = async (

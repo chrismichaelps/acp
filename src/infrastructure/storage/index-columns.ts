@@ -7,6 +7,8 @@ export const INDEXED_FIELDS = [
   'priority',
   'holder',
   'kind',
+  'review_id',
+  'grill_id',
 ] as const
 
 export type IndexedField = (typeof INDEXED_FIELDS)[number]

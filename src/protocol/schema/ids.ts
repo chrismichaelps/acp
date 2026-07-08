@@ -25,6 +25,19 @@ export type MemoryId = typeof MemoryId.Type
 export const ReviewId = Schema.String.pipe(Schema.brand('ReviewId'))
 export type ReviewId = typeof ReviewId.Type
 
+export const ReviewCommentId = Schema.String.pipe(
+  Schema.brand('ReviewCommentId'),
+)
+export type ReviewCommentId = typeof ReviewCommentId.Type
+
+export const GrillId = Schema.String.pipe(Schema.brand('GrillId'))
+export type GrillId = typeof GrillId.Type
+
+export const GrillQuestionId = Schema.String.pipe(
+  Schema.brand('GrillQuestionId'),
+)
+export type GrillQuestionId = typeof GrillQuestionId.Type
+
 export const EventId = Schema.String.pipe(Schema.brand('EventId'))
 export type EventId = typeof EventId.Type
 

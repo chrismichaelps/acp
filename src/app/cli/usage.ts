@@ -34,6 +34,17 @@ export const usage = `acp — Agent Coordination Protocol CLI
   acp review reject <review_id>
   acp review request-changes <review_id>
   acp review cancel <review_id>
+  acp review comment --review <id> --work <id> --workspace <id> --artifact <id> --file <f> --side old|new --body <t> [--line <n>] [--reply-to <id>]
+  acp review comment resolve <comment_id>
+  acp review comment reopen <comment_id>
+  acp review comment list --review <id>|--work <id>
+  acp grill open --review <id> --work <id> --workspace <id>
+  acp grill ask <grill_id> --severity blocker|major|minor --prompt <q>
+  acp grill answer <question_id> --answer <t>
+  acp grill verdict <question_id> --accept|--reject
+  acp grill evaluate <grill_id>
+  acp grill get <grill_id>
+  acp grill list --review <id>
   acp memory create --workspace <id> --kind <k> --key <k> --summary <s> --content <c> [--work <id>] [--labels <csv>]
   acp memory list --workspace <id> [--after <seq>] [--limit <n>] [--work <id>] [--kind <k>] [--key <k>] [--label <l>]
   acp events list --workspace <id> [--after <seq>] [--limit <n>] [--type <event_type>]

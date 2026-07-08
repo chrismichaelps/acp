@@ -93,6 +93,21 @@ export const ReviewState = Schema.Literal(
 )
 export type ReviewState = typeof ReviewState.Type
 
+export const CommentState = Schema.Literal('open', 'resolved', 'outdated')
+export type CommentState = typeof CommentState.Type
+
+export const CommentSide = Schema.Literal('old', 'new')
+export type CommentSide = typeof CommentSide.Type
+
+export const GrillState = Schema.Literal('open', 'passed', 'failed')
+export type GrillState = typeof GrillState.Type
+
+export const QuestionSeverity = Schema.Literal('blocker', 'major', 'minor')
+export type QuestionSeverity = typeof QuestionSeverity.Type
+
+export const QuestionVerdict = Schema.Literal('pending', 'accepted', 'rejected')
+export type QuestionVerdict = typeof QuestionVerdict.Type
+
 export const WorkspaceKind = Schema.Literal(
   'git_repository',
   'git_worktree',

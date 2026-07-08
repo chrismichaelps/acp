@@ -2,7 +2,9 @@
 import { Schema } from 'effect'
 import { Artifact } from './artifact.schema.js'
 import { Checkpoint } from './checkpoint.schema.js'
+import { Grill } from './grill.schema.js'
 import { Review } from './review.schema.js'
+import { ReviewComment } from './review-comment.schema.js'
 import { WorkUnit } from './work-unit.schema.js'
 
 export const WorkResumePacket = Schema.Struct({
@@ -13,5 +15,10 @@ export const WorkResumePacket = Schema.Struct({
   }),
   artifacts: Schema.Array(Artifact),
   reviews: Schema.Array(Review),
+  open_comments: Schema.Array(ReviewComment),
+  latest_grill: Schema.optionalWith(Grill, {
+    as: 'Option',
+    nullable: true,
+  }),
 })
 export type WorkResumePacket = typeof WorkResumePacket.Type

@@ -23,7 +23,8 @@ SQLite, etc.) must use this same allowlist and extractor.
 
 ```typescript
 export const INDEXED_FIELDS: readonly string[] = [
-  'workspace_id', 'work_id', 'state', 'assigned_to', 'priority', 'holder', 'kind'
+  'workspace_id', 'work_id', 'state', 'assigned_to', 'priority', 'holder', 'kind',
+  'review_id', 'grill_id'
 ]
 
 export type IndexedField = (typeof INDEXED_FIELDS)[number]

@@ -2,6 +2,8 @@
 import { Effect, Option, Schema } from 'effect'
 import { ArtifactService } from '../../domain/artifacts/index.js'
 import { CheckpointService } from '../../domain/checkpoints/index.js'
+import { GrillService } from '../../domain/grills/index.js'
+import { ReviewCommentService } from '../../domain/review-comments/index.js'
 import { ReviewService } from '../../domain/reviews/index.js'
 import { WorkUnitService } from '../../domain/work-units/index.js'
 import { ArtifactContentResponse } from '../../infrastructure/http/index.js'
@@ -48,17 +50,37 @@ export const getWorkResumePacket = respond('GET /v1/work/:work_id/resume')(
     const checkpoints = yield* CheckpointService
     const artifacts = yield* ArtifactService
     const reviews = yield* ReviewService
+    const reviewComments = yield* ReviewCommentService
+    const grills = yield* GrillService
     const workId = yield* workIdParam()
     const foundWork = yield* requireWork(work, workId)
     yield* authorizeWorkspace('workspace:read', foundWork.workspace_id)
     const latest = yield* checkpoints.latestForWork(workId)
     const foundArtifacts = yield* artifacts.listForWork(workId)
     const foundReviews = yield* reviews.listForWork(workId)
+    const comments = yield* reviewComments.listForWork(workId)
+    const openComments = comments.filter((comment) => comment.state === 'open')
+    const grillLists = yield* Effect.forEach(foundReviews, (review) =>
+      grills.listForReview(review.id),
+    )
+    const latestGrill = grillLists.flat().reduce(
+      (newest, grill) =>
+        Option.match(newest, {
+          onNone: () => Option.some(grill),
+          onSome: (current) =>
+            Date.parse(grill.created_at) >= Date.parse(current.created_at)
+              ? Option.some(grill)
+              : newest,
+        }),
+      Option.none<(typeof grillLists)[number][number]>(),
+    )
     return yield* ok(200)(WorkResumePacket, {
       work: foundWork,
       latest_checkpoint: latest,
       artifacts: foundArtifacts,
       reviews: foundReviews,
+      open_comments: openComments,
+      latest_grill: latestGrill,
     })
   }),
 )
