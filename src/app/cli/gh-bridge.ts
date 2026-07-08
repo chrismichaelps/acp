@@ -6,7 +6,72 @@ import {
   type GitHubError,
   parsePrRef,
 } from '../../infrastructure/github/index.js'
-import { acpPost, BridgeError } from './gh-bridge-support.js'
+import { acpGet, acpPost, BridgeError } from './gh-bridge-support.js'
+
+interface WireCommentTarget {
+  readonly file: string
+  readonly line: number | null
+  readonly side: string
+}
+
+interface WireComment {
+  readonly id: string
+  readonly origin: string
+  readonly external_id: string | null | undefined
+  readonly state: string
+  readonly body: string
+  readonly target: WireCommentTarget
+}
+
+const toGitHubSide = (side: string): 'LEFT' | 'RIGHT' =>
+  side === 'old' ? 'LEFT' : 'RIGHT'
+
+const syncPr = (
+  ctx: BridgeContext,
+): Effect.Effect<
+  void,
+  BridgeError | GitHubError,
+  GitHubGateway | HttpClient.HttpClient
+> =>
+  Effect.gen(function* () {
+    const refInput = ctx.argv[2]
+    const ref = yield* parsePrRef(refInput)
+    const flags = parseGhFlags(ctx.argv.slice(3))
+    const workId = yield* requireFlag(flags, 'work')
+
+    const gh = yield* GitHubGateway
+    const pull = yield* gh.fetchPullRequest(ref)
+
+    const comments = (yield* acpGet(
+      ctx.baseUrl,
+      ctx.token,
+      `/v1/work/${workId}/review-comments`,
+    )) as readonly WireComment[]
+
+    const unsynced = comments.filter(
+      (c) =>
+        c.origin === 'acp' &&
+        (c.external_id === null || c.external_id === undefined),
+    )
+
+    for (const comment of unsynced) {
+      const created = yield* gh.postReviewComment(ref, {
+        path: comment.target.file,
+        line: comment.target.line,
+        side: toGitHubSide(comment.target.side),
+        body: comment.body,
+        commit_id: pull.head_sha,
+      })
+      yield* acpPost(
+        ctx.baseUrl,
+        ctx.token,
+        `/v1/review-comments/${comment.id}/external-id`,
+        { external_id: created.id },
+      )
+    }
+
+    return yield* Effect.void
+  })
 
 interface GhFlags {
   readonly work?: string
@@ -109,7 +174,7 @@ export const runGhBridge = (
     const subcommand = argv[1]
 
     if (subcommand === 'import') return yield* importPr(ctx)
-    if (subcommand === 'sync') return yield* Effect.die('Task 8')
+    if (subcommand === 'sync') return yield* syncPr(ctx)
     if (subcommand === 'merge') return yield* Effect.die('Task 9')
     return yield* Effect.fail(
       new BridgeError({ message: `unknown gh subcommand: ${subcommand}` }),

@@ -38,6 +38,7 @@ import {
   listWorkReviewComments,
   reopenReviewComment,
   resolveReviewComment,
+  setReviewCommentExternalId,
 } from './review-comment-routes.js'
 import {
   addGrillQuestion,
@@ -442,6 +443,10 @@ const v1Router = commandRouter.pipe(
   HttpRouter.post(
     '/v1/review-comments/:comment_id/reopen',
     reopenReviewComment,
+  ),
+  HttpRouter.post(
+    '/v1/review-comments/:comment_id/external-id',
+    setReviewCommentExternalId,
   ),
   HttpRouter.get('/v1/work/:work_id/review-comments', listWorkReviewComments),
   HttpRouter.post('/v1/reviews/:review_id/grill', openGrill),

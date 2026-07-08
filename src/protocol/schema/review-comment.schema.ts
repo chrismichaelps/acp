@@ -33,6 +33,13 @@ export const ReviewComment = Schema.Struct({
   }),
   created_at: Timestamp,
   resolved_at: Schema.optionalWith(Timestamp, { as: 'Option', nullable: true }),
+  origin: Schema.optionalWith(Schema.Literal('acp', 'github'), {
+    default: () => 'acp' as const,
+  }),
+  external_id: Schema.optionalWith(Schema.String, {
+    as: 'Option',
+    nullable: true,
+  }),
 })
 export type ReviewComment = typeof ReviewComment.Type
 
@@ -43,6 +50,13 @@ export const AddReviewCommentPayload = Schema.Struct({
   target: CommentTarget,
   body: Schema.NonEmptyString,
   in_reply_to: Schema.optionalWith(ReviewCommentId, {
+    as: 'Option',
+    nullable: true,
+  }),
+  origin: Schema.optionalWith(Schema.Literal('acp', 'github'), {
+    default: () => 'acp' as const,
+  }),
+  external_id: Schema.optionalWith(Schema.String, {
     as: 'Option',
     nullable: true,
   }),
