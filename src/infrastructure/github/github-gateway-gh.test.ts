@@ -69,4 +69,85 @@ describe('makeGhGateway', () => {
       expect.arrayContaining(['pr', 'merge', '7', '--squash', '--repo', 'o/r']),
     )
   })
+
+  it('lists review comments from the REST endpoint', async () => {
+    const { run, calls } = fakeRun({
+      'pulls/7/comments': {
+        code: 0,
+        stdout: JSON.stringify([
+          {
+            id: 55,
+            path: 'x',
+            line: 3,
+            side: 'RIGHT',
+            body: 'b',
+            user: { login: 'octo' },
+            in_reply_to_id: null,
+          },
+        ]),
+        stderr: '',
+      },
+    })
+    const gh = makeGhGateway(run)
+    const listed = await Effect.runPromise(gh.listReviewComments(ref))
+    expect(listed[0]).toEqual({
+      id: '55',
+      path: 'x',
+      line: 3,
+      side: 'RIGHT',
+      body: 'b',
+      author: 'octo',
+      in_reply_to: null,
+      resolved: false,
+    })
+    expect(calls[0]).toContain('api')
+  })
+
+  it('posts a review comment and parses the created comment', async () => {
+    const { run, calls } = fakeRun({
+      'pulls/7/comments': {
+        code: 0,
+        stdout: JSON.stringify({
+          id: 88,
+          path: 'x',
+          line: 2,
+          side: 'RIGHT',
+          body: 'hi',
+          user: { login: 'acp' },
+          in_reply_to_id: null,
+        }),
+        stderr: '',
+      },
+    })
+    const gh = makeGhGateway(run)
+    const created = await Effect.runPromise(
+      gh.postReviewComment(ref, {
+        path: 'x',
+        line: 2,
+        side: 'RIGHT',
+        body: 'hi',
+        commit_id: 'headsha',
+      }),
+    )
+    expect(created.id).toBe('88')
+    expect(calls[0]).toContain('api')
+  })
+
+  it('posts an issue comment via gh pr comment', async () => {
+    const { run, calls } = fakeRun({
+      'pr comment': { code: 0, stdout: '', stderr: '' },
+    })
+    const gh = makeGhGateway(run)
+    await Effect.runPromise(gh.postIssueComment(ref, 'decision body'))
+    expect(calls[0]).toEqual(expect.arrayContaining(['pr', 'comment', '7']))
+  })
+
+  it('resolves a review thread via graphql', async () => {
+    const { run, calls } = fakeRun({
+      graphql: { code: 0, stdout: '{}', stderr: '' },
+    })
+    const gh = makeGhGateway(run)
+    await Effect.runPromise(gh.resolveReviewThread(ref, 'THREAD_ID'))
+    expect(calls[0]).toContain('graphql')
+  })
 })

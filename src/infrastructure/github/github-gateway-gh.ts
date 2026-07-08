@@ -3,7 +3,13 @@ import { Effect, Layer } from 'effect'
 import { runProcess, type ProcessResult } from '../platform-node/index.js'
 import { GitHubError } from './github-error.js'
 import { GitHubGateway, type GitHubGatewayApi } from './github-gateway.js'
-import type { MergeMethod, PrRef, PullRequestRef } from './github-types.js'
+import type {
+  GitHubReviewComment,
+  MergeMethod,
+  PostCommentInput,
+  PrRef,
+  PullRequestRef,
+} from './github-types.js'
 
 export type RunProcess = (
   command: string,
@@ -38,6 +44,33 @@ const ghJson =
           }),
       }),
     )
+
+interface RawReviewComment {
+  readonly id: number
+  readonly path: string
+  readonly line: number | null
+  readonly side: 'LEFT' | 'RIGHT'
+  readonly body: string
+  readonly user: { readonly login: string }
+  readonly in_reply_to_id?: number | null
+}
+
+const toReviewComment = (raw: RawReviewComment): GitHubReviewComment => ({
+  id: String(raw.id),
+  path: raw.path,
+  line: raw.line,
+  side: raw.side,
+  body: raw.body,
+  author: raw.user.login,
+  in_reply_to:
+    raw.in_reply_to_id === undefined || raw.in_reply_to_id === null
+      ? null
+      : String(raw.in_reply_to_id),
+  resolved: false,
+})
+
+const resolveReviewThreadMutation =
+  'mutation($threadId: ID!) { resolveReviewThread(input: { threadId: $threadId }) { thread { id } } }'
 
 export const makeGhGateway = (run: RunProcess): GitHubGatewayApi => ({
   fetchPullRequest: (ref) =>
@@ -80,10 +113,54 @@ export const makeGhGateway = (run: RunProcess): GitHubGatewayApi => ({
         ...repoFlag(ref),
       ]),
     ),
-  listReviewComments: () => Effect.die('not implemented until Task 5'),
-  postReviewComment: () => Effect.die('not implemented until Task 5'),
-  resolveReviewThread: () => Effect.die('not implemented until Task 5'),
-  postIssueComment: () => Effect.die('not implemented until Task 5'),
+  listReviewComments: (ref: PrRef) =>
+    Effect.map(
+      ghJson(run)<readonly RawReviewComment[]>([
+        'api',
+        `repos/${ref.owner}/${ref.repo}/pulls/${String(ref.number)}/comments`,
+      ]),
+      (comments) => comments.map(toReviewComment),
+    ),
+  postReviewComment: (ref: PrRef, input: PostCommentInput) =>
+    Effect.map(
+      ghJson(run)<RawReviewComment>([
+        'api',
+        `repos/${ref.owner}/${ref.repo}/pulls/${String(ref.number)}/comments`,
+        '-f',
+        `body=${input.body}`,
+        '-F',
+        `line=${input.line === null ? '' : String(input.line)}`,
+        '-f',
+        `side=${input.side}`,
+        '-f',
+        `commit_id=${input.commit_id}`,
+        '-f',
+        `path=${input.path}`,
+      ]),
+      toReviewComment,
+    ),
+  resolveReviewThread: (_ref: PrRef, externalId: string) =>
+    Effect.asVoid(
+      ghText(run)([
+        'api',
+        'graphql',
+        '-f',
+        `query=${resolveReviewThreadMutation}`,
+        '-F',
+        `threadId=${externalId}`,
+      ]),
+    ),
+  postIssueComment: (ref: PrRef, body: string) =>
+    Effect.asVoid(
+      ghText(run)([
+        'pr',
+        'comment',
+        String(ref.number),
+        '--body',
+        body,
+        ...repoFlag(ref),
+      ]),
+    ),
 })
 
 export const GitHubGatewayGhLive: Layer.Layer<GitHubGateway> = Layer.succeed(
