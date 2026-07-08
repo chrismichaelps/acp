@@ -17,7 +17,9 @@ aliases: [resume-schema, work-resume-packet]
 Defines the compact work resume packet used by [[resume-routes]]. The packet is
 the token-efficient handoff shape for an agent returning to a known work unit:
 one response carries the current [[WorkUnit]], latest [[Checkpoint]], artifact
-metadata, and review state.
+metadata, review state, the unresolved [[ReviewComment]] backlog
+(`open_comments`), and the newest [[Grill]] across the work's reviews
+(`latest_grill`) so a resuming reviewer sees the open review-gate obligations.
 
 ## Interface
 
@@ -30,7 +32,11 @@ export const WorkResumePacket: Schema
 The schema composes existing protocol objects. `latest_checkpoint` is optional
 because a work unit may exist before any checkpoint has been written. Artifacts
 remain metadata-only; callers use `artifact content` when they intentionally
-need stored artifact content.
+need stored artifact content. `open_comments` is the `open`-state slice of the
+work's [[ReviewComment]] backlog, and `latest_grill` is optional because most
+work units never open a [[Grill]]; when present it is the newest grill by
+`created_at` across the work's reviews. Both are additive — existing consumers
+ignore the extra fields.
 
 ## Negative Logic (Prohibited Paths)
 

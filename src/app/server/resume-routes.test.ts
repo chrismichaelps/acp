@@ -225,6 +225,82 @@ describe('resume routes', () => {
     expect(resume.reviews).toMatchObject([{ requirements: ['diff_review'] }])
   })
 
+  it('surfaces open review comments and the latest grill in the resume packet', async () => {
+    const handler = makeHandler()
+    const token = await initSession(handler, [
+      'workspace:read',
+      'workspace:write',
+      'work:create',
+      'work:claim',
+      'work:update',
+      'review:create',
+    ])
+
+    const work = (await (
+      await handler(
+        authedJson(token, '/v1/work', {
+          workspace_id: 'workspace_1',
+          title: 'Gate handoff',
+        }),
+      )
+    ).json()) as { id: string; workspace_id: string }
+
+    await handler(
+      authedJson(token, `/v1/work/${work.id}/claim`, { worker_id: worker.id }),
+    )
+    await handler(
+      authedJson(token, `/v1/work/${work.id}`, { state: 'running' }, 'PATCH'),
+    )
+    const review = (await (
+      await handler(
+        authedJson(token, '/v1/reviews', {
+          work_id: work.id,
+          requested_by: worker.id,
+          requirements: ['diff_review'],
+        }),
+      )
+    ).json()) as { id: string }
+
+    await handler(
+      authedJson(token, `/v1/reviews/${review.id}/comments`, {
+        review_id: review.id,
+        work_id: work.id,
+        workspace_id: work.workspace_id,
+        target: {
+          artifact_id: 'artifact_diff',
+          file: 'src/app.ts',
+          side: 'new',
+        },
+        body: 'Unresolved question.',
+      }),
+    )
+    const grill = (await (
+      await handler(
+        authedJson(token, `/v1/reviews/${review.id}/grill`, {
+          review_id: review.id,
+          work_id: work.id,
+          workspace_id: work.workspace_id,
+        }),
+      )
+    ).json()) as { id: string }
+
+    const packet = await handler(
+      new Request(`http://acp.test/v1/work/${work.id}/resume`, {
+        method: 'GET',
+        headers: { authorization: `Bearer ${token}` },
+      }),
+    )
+    expect(packet.status).toBe(200)
+    const resume = (await packet.json()) as {
+      open_comments: { id: string; state: string }[]
+      latest_grill: { id: string } | null
+    }
+    expect(resume.open_comments).toHaveLength(1)
+    expect(resume.open_comments[0].state).toBe('open')
+    expect(resume.latest_grill).not.toBeNull()
+    expect(resume.latest_grill?.id).toBe(grill.id)
+  })
+
   it('enforces workspace:read for bearer-authenticated resume reads', async () => {
     const handler = makeHandler()
     const token = await initSession(handler, ['work:create'])

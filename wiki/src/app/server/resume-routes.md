@@ -38,7 +38,7 @@ export const getArtifactContent: HttpRouter handler
 
 - `GET /v1/work/{work_id}` → [[WorkUnit]]
 - `GET /v1/work/{work_id}/resume` → compact resume packet (`work`,
-  `latest_checkpoint`, `artifacts`, `reviews`)
+  `latest_checkpoint`, `artifacts`, `reviews`, `open_comments`, `latest_grill`)
 - `GET /v1/work/{work_id}/checkpoints` → newest-first [[Checkpoint]][]
 - `GET /v1/work/{work_id}/checkpoints/latest` → latest [[Checkpoint]]
 - `GET /v1/work/{work_id}/artifacts` → [[Artifact]][]
@@ -52,7 +52,11 @@ Each handler reads `work_id`, authorizes `workspace:read`, verifies the
 domain read method and schema-encodes the response. `getWorkResumePacket`
 combines the current work record, latest checkpoint (optional), artifact
 metadata, and review records into one response so a resuming agent does not need
-four separate reads. List endpoints return empty arrays for existing work with
+four separate reads. It also surfaces the review-gate backlog: `open_comments`
+is the `open`-state slice of [[review-comment-service]] `listForWork`, and
+`latest_grill` is the newest [[Grill]] (by `created_at`) across the work's
+reviews via [[grill-service]] `listForReview` — `Option.none` when the work has
+no grills. List endpoints return empty arrays for existing work with
 no checkpoints, artifacts, or reviews. The latest-checkpoint endpoint returns
 `404 not_found` when the work exists but no checkpoint has been published.
 
