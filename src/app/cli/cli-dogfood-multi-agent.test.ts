@@ -10,6 +10,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   classifyRace,
+  driveGrillRound,
   expectOk,
   initAgent,
   must,
@@ -302,6 +303,24 @@ describe('multi-agent CLI dogfood', () => {
         ],
         activeWorker.token,
       )
+      // review gate — FAIL round: an open comment + a rejected blocker grill
+      const failRound = await driveGrillRound(baseUrl, {
+        reviewer,
+        worker: activeWorker,
+        reviewId: firstReview.id as string,
+        workId,
+        workspaceId,
+        artifactId: artifact.id as string,
+        accept: false,
+        resolveComment: false,
+        label: 'fail',
+      })
+      expect(failRound.comment.state).toBe('open')
+      expect(failRound.evaluation.outcome).toBe('fail')
+      expect((failRound.evaluation.grill as { state: string }).state).toBe(
+        'failed',
+      )
+
       const changes = await expectOk(
         baseUrl,
         'review request-changes',
@@ -309,6 +328,18 @@ describe('multi-agent CLI dogfood', () => {
         reviewer.token,
       )
       expect(changes.state).toBe('changes_requested')
+
+      // the resume handoff surfaces the failed grill + the open comment
+      const failHandoff = await expectOk(
+        baseUrl,
+        'work resume (fail handoff)',
+        ['work', 'resume', workId],
+        reviewer.token,
+      )
+      expect(
+        (failHandoff.latest_grill as { state: string } | null)?.state,
+      ).toBe('failed')
+      expect(failHandoff.open_comments as unknown[]).not.toHaveLength(0)
       const resumed = await expectOk(
         baseUrl,
         'work resume',
@@ -331,6 +362,23 @@ describe('multi-agent CLI dogfood', () => {
         ],
         activeWorker.token,
       )
+      // review gate — PASS round: accept the blocker, resolve the comment
+      const passRound = await driveGrillRound(baseUrl, {
+        reviewer,
+        worker: activeWorker,
+        reviewId: secondReview.id as string,
+        workId,
+        workspaceId,
+        artifactId: artifact.id as string,
+        accept: true,
+        resolveComment: true,
+        label: 'pass',
+      })
+      expect(passRound.evaluation.outcome).toBe('pass')
+      expect((passRound.evaluation.grill as { state: string }).state).toBe(
+        'passed',
+      )
+
       const approved = await expectOk(
         baseUrl,
         'review approve',
@@ -376,6 +424,16 @@ describe('multi-agent CLI dogfood', () => {
       for (const required of requiredEvents) {
         expect(types, `missing replayed event ${required}`).toContain(required)
       }
+      for (const gateEvent of [
+        'review_comment.added',
+        'review_comment.resolved',
+        'grill.opened',
+        'grill.verdict_set',
+        'grill.failed',
+        'grill.passed',
+      ]) {
+        expect(types, `missing gate event ${gateEvent}`).toContain(gateEvent)
+      }
       const monotonic = events.every(
         (e, i) => i === 0 || e.seq > events[i - 1].seq,
       )
@@ -391,6 +449,11 @@ describe('multi-agent CLI dogfood', () => {
         firstReviewState: changes.state,
         secondReviewState: approved.state,
         completedState: completed.state,
+        failGrillOutcome: failRound.evaluation.outcome,
+        passGrillOutcome: passRound.evaluation.outcome,
+        failHandoffGrillState: (
+          failHandoff.latest_grill as { state: string } | null
+        )?.state,
         events: events.length,
       }
     })
@@ -399,6 +462,9 @@ describe('multi-agent CLI dogfood', () => {
     expect(summary.firstReviewState).toBe('changes_requested')
     expect(summary.secondReviewState).toBe('approved')
     expect(summary.completedState).toBe('completed')
+    expect(summary.failGrillOutcome).toBe('fail')
+    expect(summary.passGrillOutcome).toBe('pass')
+    expect(summary.failHandoffGrillState).toBe('failed')
     expect(summary.events).toBeGreaterThanOrEqual(requiredEvents.length)
   })
 })
