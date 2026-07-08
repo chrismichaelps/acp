@@ -7,24 +7,19 @@ import {
   parsePrRef,
 } from '../../infrastructure/github/index.js'
 import { acpGet, acpPost, BridgeError } from './gh-bridge-support.js'
+import {
+  acpCommentsAwaitingGithubPost,
+  acpCommentsAwaitingResolvePropagation,
+  buildExternalIdIndex,
+  githubCommentsAwaitingAcpImport,
+  toAcpImportPayload,
+  toGitHubSide,
+  type WireComment,
+} from './gh-reconcile.js'
 
-interface WireCommentTarget {
-  readonly file: string
-  readonly line: number | null
-  readonly side: string
+interface WorkWire {
+  readonly workspace_id: string
 }
-
-interface WireComment {
-  readonly id: string
-  readonly origin: string
-  readonly external_id: string | null | undefined
-  readonly state: string
-  readonly body: string
-  readonly target: WireCommentTarget
-}
-
-const toGitHubSide = (side: string): 'LEFT' | 'RIGHT' =>
-  side === 'old' ? 'LEFT' : 'RIGHT'
 
 const syncPr = (
   ctx: BridgeContext,
@@ -38,9 +33,12 @@ const syncPr = (
     const ref = yield* parsePrRef(refInput)
     const flags = parseGhFlags(ctx.argv.slice(3))
     const workId = yield* requireFlag(flags, 'work')
+    const reviewId = yield* requireFlag(flags, 'review')
+    const artifactId = yield* requireFlag(flags, 'artifact')
 
     const gh = yield* GitHubGateway
     const pull = yield* gh.fetchPullRequest(ref)
+    const githubComments = yield* gh.listReviewComments(ref)
 
     const comments = (yield* acpGet(
       ctx.baseUrl,
@@ -48,12 +46,8 @@ const syncPr = (
       `/v1/work/${workId}/review-comments`,
     )) as readonly WireComment[]
 
-    const unsynced = comments.filter(
-      (c) =>
-        c.origin === 'acp' &&
-        (c.external_id === null || c.external_id === undefined),
-    )
-
+    // ACP -> GitHub: post unstamped ACP-origin comments, then stamp them.
+    const unsynced = acpCommentsAwaitingGithubPost(comments)
     for (const comment of unsynced) {
       const created = yield* gh.postReviewComment(ref, {
         path: comment.target.file,
@@ -70,6 +64,40 @@ const syncPr = (
       )
     }
 
+    // GitHub -> ACP: import GitHub comments not yet mirrored into ACP.
+    const mirroredExternalIds = buildExternalIdIndex(comments)
+    const workspace = (yield* acpGet(
+      ctx.baseUrl,
+      ctx.token,
+      `/v1/work/${workId}`,
+    )) as WorkWire
+    const unimported = githubCommentsAwaitingAcpImport(
+      githubComments,
+      mirroredExternalIds,
+    )
+    for (const ghComment of unimported) {
+      yield* acpPost(
+        ctx.baseUrl,
+        ctx.token,
+        `/v1/reviews/${reviewId}/comments`,
+        toAcpImportPayload(ghComment, {
+          review_id: reviewId,
+          work_id: workId,
+          workspace_id: workspace.workspace_id,
+          artifact_id: artifactId,
+        }),
+      )
+    }
+
+    // Resolve propagation: best-effort, every resolved+stamped ACP comment.
+    const toResolve = acpCommentsAwaitingResolvePropagation(comments)
+    for (const comment of toResolve) {
+      if (comment.external_id === null || comment.external_id === undefined) {
+        continue
+      }
+      yield* gh.resolveReviewThread(ref, comment.external_id)
+    }
+
     return yield* Effect.void
   })
 
@@ -77,9 +105,17 @@ interface GhFlags {
   readonly work?: string
   readonly workspace?: string
   readonly method?: string
+  readonly review?: string
+  readonly artifact?: string
 }
 
-const FLAG_NAMES = ['work', 'workspace', 'method'] as const
+const FLAG_NAMES = [
+  'work',
+  'workspace',
+  'method',
+  'review',
+  'artifact',
+] as const
 
 const parseGhFlags = (argv: readonly string[]): GhFlags => {
   const flags: Record<string, string> = {}

@@ -166,7 +166,17 @@ describe('acp gh sync (one-way)', () => {
       process.env.ACP_BASE_URL = baseUrl
       process.env.ACP_RPC_TOKEN = planner.token
       await Effect.runPromise(
-        runGhBridge(['gh', 'sync', 'o/r#7', '--work', work.id as string]).pipe(
+        runGhBridge([
+          'gh',
+          'sync',
+          'o/r#7',
+          '--work',
+          work.id as string,
+          '--review',
+          reviewId,
+          '--artifact',
+          'artifact_diff_1',
+        ]).pipe(
           Effect.provide(Layer.mergeAll(fake.layer, NodeHttpClient.layer)),
         ),
       )
@@ -183,6 +193,249 @@ describe('acp gh sync (one-way)', () => {
       for (const comment of listed) {
         expect(comment.external_id).not.toBeNull()
       }
+    })
+  })
+})
+
+describe('acp gh sync (bidirectional reconcile)', () => {
+  const seedWithGhComment = {
+    ...seed,
+    comments: [
+      {
+        id: 'gh_1',
+        path: 'src/imported.ts',
+        line: 12,
+        side: 'RIGHT' as const,
+        body: 'GitHub reviewer remark.',
+        author: 'octocat',
+        in_reply_to: null,
+        resolved: false,
+      },
+    ],
+  }
+
+  const setUpSyncFixture = async (baseUrl: string, agentName: string) => {
+    const planner = await initAgent(baseUrl, agentName, 'planner', ghPerms, [
+      'supports_checkpoints',
+    ])
+    const ws = await expectOk(
+      baseUrl,
+      'workspace',
+      [
+        'workspace',
+        'create',
+        '--name',
+        'o/r',
+        '--kind',
+        'git_repository',
+        '--uri',
+        'git+https://github.com/o/r.git',
+        '--default-branch',
+        'main',
+      ],
+      planner.token,
+    )
+    const work = await expectOk(
+      baseUrl,
+      'work',
+      ['work', 'create', 'Reconcile target', '--workspace', ws.id as string],
+      planner.token,
+    )
+    return { planner, ws, work }
+  }
+
+  const syncArgv = (prWorkId: string, reviewId: string): readonly string[] => [
+    'gh',
+    'sync',
+    'o/r#7',
+    '--work',
+    prWorkId,
+    '--review',
+    reviewId,
+    '--artifact',
+    'artifact_diff_1',
+  ]
+
+  it('imports unseen GitHub comments into ACP with provenance', async () => {
+    await onLiveServer(async (baseUrl) => {
+      const { planner, work } = await setUpSyncFixture(baseUrl, 'ghrecon1')
+      const fake = makeGitHubGatewayFake(seedWithGhComment)
+      process.env.ACP_BASE_URL = baseUrl
+      process.env.ACP_RPC_TOKEN = planner.token
+
+      await Effect.runPromise(
+        runGhBridge(syncArgv(work.id as string, 'review_recon_1')).pipe(
+          Effect.provide(Layer.mergeAll(fake.layer, NodeHttpClient.layer)),
+        ),
+      )
+
+      const listed = (await expectOk(
+        baseUrl,
+        'comment list',
+        ['review', 'comment', 'list', '--work', work.id as string],
+        planner.token,
+      )) as unknown as { origin: string; external_id: string | null }[]
+
+      expect(listed).toHaveLength(1)
+      expect(listed[0].origin).toBe('github')
+      expect(listed[0].external_id).toBe('gh_1')
+    })
+  })
+
+  it('is idempotent across repeated syncs', async () => {
+    await onLiveServer(async (baseUrl) => {
+      const { planner, work } = await setUpSyncFixture(baseUrl, 'ghrecon2')
+      const fake = makeGitHubGatewayFake(seedWithGhComment)
+      process.env.ACP_BASE_URL = baseUrl
+      process.env.ACP_RPC_TOKEN = planner.token
+
+      const runSync = () =>
+        Effect.runPromise(
+          runGhBridge(syncArgv(work.id as string, 'review_recon_2')).pipe(
+            Effect.provide(Layer.mergeAll(fake.layer, NodeHttpClient.layer)),
+          ),
+        )
+
+      await runSync()
+      const afterFirst = (await expectOk(
+        baseUrl,
+        'comment list',
+        ['review', 'comment', 'list', '--work', work.id as string],
+        planner.token,
+      )) as unknown as unknown[]
+
+      await runSync()
+      const afterSecond = (await expectOk(
+        baseUrl,
+        'comment list',
+        ['review', 'comment', 'list', '--work', work.id as string],
+        planner.token,
+      )) as unknown as unknown[]
+
+      expect(fake.state.postedComments).toHaveLength(0)
+      expect(afterSecond).toHaveLength(afterFirst.length)
+    })
+  })
+
+  it('never re-posts a stamped ACP comment or re-imports a mirrored GitHub comment', async () => {
+    await onLiveServer(async (baseUrl) => {
+      const { planner, ws, work } = await setUpSyncFixture(baseUrl, 'ghrecon3')
+
+      await expectOk(
+        baseUrl,
+        'comment',
+        [
+          'review',
+          'comment',
+          '--review',
+          'review_recon_3',
+          '--work',
+          work.id as string,
+          '--workspace',
+          ws.id as string,
+          '--artifact',
+          'artifact_diff_1',
+          '--file',
+          'src/app.ts',
+          '--side',
+          'new',
+          '--body',
+          'Loop-guard ACP comment.',
+        ],
+        planner.token,
+      )
+
+      const fake = makeGitHubGatewayFake(seedWithGhComment)
+      process.env.ACP_BASE_URL = baseUrl
+      process.env.ACP_RPC_TOKEN = planner.token
+
+      const runSync = () =>
+        Effect.runPromise(
+          runGhBridge(syncArgv(work.id as string, 'review_recon_3')).pipe(
+            Effect.provide(Layer.mergeAll(fake.layer, NodeHttpClient.layer)),
+          ),
+        )
+
+      await runSync()
+      await runSync()
+
+      expect(fake.state.postedComments).toHaveLength(1)
+      const ids = fake.state.postedComments.map((c) => c.id)
+      expect(new Set(ids).size).toBe(ids.length)
+
+      const listed = (await expectOk(
+        baseUrl,
+        'comment list',
+        ['review', 'comment', 'list', '--work', work.id as string],
+        planner.token,
+      )) as unknown as { origin: string }[]
+      const githubOriginCount = listed.filter(
+        (c) => c.origin === 'github',
+      ).length
+      expect(githubOriginCount).toBe(1)
+    })
+  })
+
+  it('propagates resolved ACP comments to GitHub thread resolution', async () => {
+    await onLiveServer(async (baseUrl) => {
+      const { planner, ws, work } = await setUpSyncFixture(baseUrl, 'ghrecon4')
+
+      const created = await expectOk(
+        baseUrl,
+        'comment',
+        [
+          'review',
+          'comment',
+          '--review',
+          'review_recon_4',
+          '--work',
+          work.id as string,
+          '--workspace',
+          ws.id as string,
+          '--artifact',
+          'artifact_diff_1',
+          '--file',
+          'src/app.ts',
+          '--side',
+          'new',
+          '--body',
+          'Will be resolved.',
+        ],
+        planner.token,
+      )
+
+      const fake = makeGitHubGatewayFake(seed)
+      process.env.ACP_BASE_URL = baseUrl
+      process.env.ACP_RPC_TOKEN = planner.token
+
+      await Effect.runPromise(
+        runGhBridge(syncArgv(work.id as string, 'review_recon_4')).pipe(
+          Effect.provide(Layer.mergeAll(fake.layer, NodeHttpClient.layer)),
+        ),
+      )
+
+      await expectOk(
+        baseUrl,
+        'resolve',
+        ['review', 'comment', 'resolve', created.id as string],
+        planner.token,
+      )
+
+      await Effect.runPromise(
+        runGhBridge(syncArgv(work.id as string, 'review_recon_4')).pipe(
+          Effect.provide(Layer.mergeAll(fake.layer, NodeHttpClient.layer)),
+        ),
+      )
+
+      const listed = (await expectOk(
+        baseUrl,
+        'comment list',
+        ['review', 'comment', 'list', '--work', work.id as string],
+        planner.token,
+      )) as unknown as { external_id: string | null }[]
+      const stamped = listed.find((c) => c.external_id !== null)
+      expect(stamped).toBeDefined()
+      expect(fake.state.resolvedThreads).toContain(stamped?.external_id)
     })
   })
 })
