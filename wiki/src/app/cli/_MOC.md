@@ -21,6 +21,8 @@ Mirror of `@root/src/app/cli/`. The `acp` command-line client of [[acp-router]].
 - [[cli-lease-commands]] — lease lifecycle and readback command map.
 - [[cli-memory-commands]] — workspace memory command map.
 - [[cli-review-commands]] — review workflow command map.
+- [[cli-review-comment-commands]] — diff-anchored review comment command map.
+- [[cli-grill-commands]] — forced senior-question grill gate command map.
 - [[review-commands-test]] — focused parser regression for signed review
   approval evidence.
 - [[cli-work-commands]] — work lifecycle command map.

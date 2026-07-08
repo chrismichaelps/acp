@@ -36,7 +36,10 @@ export interface GrillServiceApi {
   readonly addQuestion: (
     grillId: GrillId,
     input: AddGrillQuestionInput,
-  ) => Effect<GrillQuestion, NotFoundError | InvalidStateTransitionError | StorageError>
+  ) => Effect<
+    GrillQuestion,
+    NotFoundError | InvalidStateTransitionError | StorageError
+  >
   readonly answer: (
     questionId: GrillQuestionId,
     input: AnswerGrillQuestionInput,
@@ -49,7 +52,10 @@ export interface GrillServiceApi {
   ) => Effect<GrillQuestion, NotFoundError | StorageError>
   readonly get: (
     grillId: GrillId,
-  ) => Effect<Option<{ grill: Grill; questions: readonly GrillQuestion[] }>, StorageError>
+  ) => Effect<
+    Option<{ grill: Grill; questions: readonly GrillQuestion[] }>,
+    StorageError
+  >
   readonly getQuestion: (
     questionId: GrillQuestionId,
   ) => Effect<Option<GrillQuestion>, StorageError>
@@ -94,8 +100,8 @@ export interface GrillServiceApi {
    - else any blocker `pending` OR any comment still `open` → **incomplete**:
      no state change, return the blocking reasons.
    - else → **pass**: close to `passed`, emit `grill.passed`.
-   The returned `GrillEvaluation.blocking` lists free-text reasons (rejected
-   blockers, unanswered blockers, unresolved comment files).
+     The returned `GrillEvaluation.blocking` lists free-text reasons (rejected
+     blockers, unanswered blockers, unresolved comment files).
 
 ## Negative Logic (Prohibited Paths)
 

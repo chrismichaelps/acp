@@ -24,11 +24,11 @@ canonical decode → [[review-service]] → encode transport boundary behind the
 ## Interface
 
 ```typescript
-export const requestReview        // POST /v1/reviews
-export const approveReview        // POST /v1/reviews/:review_id/approve
-export const rejectReview         // POST /v1/reviews/:review_id/reject
+export const requestReview // POST /v1/reviews
+export const approveReview // POST /v1/reviews/:review_id/approve
+export const rejectReview // POST /v1/reviews/:review_id/reject
 export const requestReviewChanges // POST /v1/reviews/:review_id/request_changes
-export const cancelReview         // POST /v1/reviews/:review_id/cancel
+export const cancelReview // POST /v1/reviews/:review_id/cancel
 ```
 
 ## Algorithm
@@ -54,6 +54,19 @@ corresponding `ReviewService` method, and encode the mutated review at `200`.
 
 MEDIUM (0.55). Thin transport handlers carrying the `review:*` scope gates and
 the review→work→workspace authorization hop.
+
+## Grill Log
+
+- **Q:** Why was this module split out of [[router]] rather than left inline?
+  **A:** Registering the review-comment and grill gate routes pushed `router.ts`
+  to 536 lines, past the 500-line file-size gate. The review lifecycle handlers
+  were the most cohesive extractable block and already mirror the sibling
+  [[resume-routes]]/[[memory-routes]] pattern, so moving them restores headroom
+  without changing behavior. _Rejected:_ raising the file-size limit.
+
+- **Q:** Why doesn't `requestReview` transition the work to `needs_review`?
+  **A:** `ReviewService.request` owns that transition (running → needs_review);
+  duplicating it here would double-fire the work state machine and its events.
 
 ## Referenced by
 

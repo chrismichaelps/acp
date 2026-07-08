@@ -52,6 +52,21 @@ or `--review`-scoped requests.
 MEDIUM (0.58). Isolates grill-gate parser rules and extends the CLI
 feature-registry split for the central parser.
 
+## Grill Log
+
+- **Q:** The plan sketched `grill open --by <worker>`, so why does the
+  implementation omit `--by`?
+  **A:** `OpenGrillPayload` has no `opened_by`; [[grill-routes]] `openGrill`
+  derives the opener from the authenticated session actor. Sending `--by` would
+  be an ignored excess field and could imply a client can spoof the opener, so it
+  is dropped. _Rejected:_ forwarding a caller-supplied `opened_by`.
+
+- **Q:** Why fail the verdict command when neither or both of
+  `--accept`/`--reject` are present rather than defaulting?
+  **A:** A verdict is a deliberate accept-or-reject decision; defaulting either
+  way would let a typo silently pass or fail a blocker. The guard forces exactly
+  one, mirroring the server's `'accepted' | 'rejected'` literal.
+
 ## Referenced by
 
 [[cli-commands]] · [[grill-routes]] · [[cli-usage]] · [[cli/_MOC]]

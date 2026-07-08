@@ -23,13 +23,13 @@ boundary behind the `workspace:write` / `workspace:read` scopes.
 ## Interface
 
 ```typescript
-export const openGrill          // POST /v1/reviews/:review_id/grill
-export const addGrillQuestion   // POST /v1/grills/:grill_id/questions
-export const answerGrillQuestion// POST /v1/grill-questions/:question_id/answer
-export const setGrillVerdict    // POST /v1/grill-questions/:question_id/verdict
-export const evaluateGrill      // POST /v1/grills/:grill_id/evaluate
-export const getGrill           // GET  /v1/grills/:grill_id
-export const listReviewGrills   // GET  /v1/reviews/:review_id/grills
+export const openGrill // POST /v1/reviews/:review_id/grill
+export const addGrillQuestion // POST /v1/grills/:grill_id/questions
+export const answerGrillQuestion // POST /v1/grill-questions/:question_id/answer
+export const setGrillVerdict // POST /v1/grill-questions/:question_id/verdict
+export const evaluateGrill // POST /v1/grills/:grill_id/evaluate
+export const getGrill // GET  /v1/grills/:grill_id
+export const listReviewGrills // GET  /v1/reviews/:review_id/grills
 ```
 
 ## Algorithm
@@ -61,6 +61,22 @@ and encodes the `{ grill, questions }` [[GrillDetail]] composite at `200`;
 
 MEDIUM (0.64). Thin transport handlers carrying scope gates plus the
 question→grill→workspace authorization walk for id-keyed question mutations.
+
+## Grill Log
+
+- **Q:** Why do the `answer`/`verdict` routes resolve workspace through
+  `grillQuestion` (question → grill → workspace) instead of reading it off the
+  question?
+  **A:** A [[GrillQuestion]] deliberately stores only `grill_id`, not a
+  duplicated `workspace_id`; the parent [[Grill]] is the single owner of tenant
+  scope. The helper walks one hop up so the question record stays minimal and the
+  authorization decision has one source. _Rejected:_ denormalizing
+  `workspace_id` onto every question.
+
+- **Q:** Why does `getGrill` return `GrillDetail` rather than the bare `Grill`?
+  **A:** A resuming reviewer needs the grill and its questions together to see
+  outstanding obligations; splitting them into two reads would re-introduce the
+  N+1 the resume packet exists to avoid.
 
 ## Referenced by
 

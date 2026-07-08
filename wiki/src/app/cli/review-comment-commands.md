@@ -22,7 +22,9 @@ live outside the central `parseArgs` dispatcher and alongside the sibling
 ## Interface
 
 ```typescript
-export const reviewCommentCommandHandlers: Readonly<Record<string, CommandHandler>>
+export const reviewCommentCommandHandlers: Readonly<
+  Record<string, CommandHandler>
+>
 ```
 
 `review comment --review --work --workspace --artifact --file --side --body
@@ -53,6 +55,22 @@ required `--work` collection.
 
 MEDIUM (0.55). Isolates review-comment parser rules and extends the CLI
 feature-registry split for the central parser.
+
+## Grill Log
+
+- **Q:** Why coerce `--line` with `Number(...)` instead of forwarding the raw
+  flag string?
+  **A:** The server `target.line` is `Schema.Number`; a string `"42"` fails the
+  body decode with a 400. The CLI emits a JSON number so the request matches the
+  contract, and omits the key entirely when the flag is absent or bare so the
+  optional `Option` stays `None`. _Rejected:_ sending `line` as a string and
+  letting the server reject it.
+
+- **Q:** Why do the three-token `resolve`/`reopen`/`list` keys coexist with the
+  two-token add key without ambiguity?
+  **A:** [[cli-commands]] resolves the longest matching token prefix first, so
+  `review comment resolve <id>` binds the three-token handler while
+  `review comment --review …` falls through to the two-token add.
 
 ## Referenced by
 

@@ -20,6 +20,12 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
 - [[workspace-routes]] — workspace list/create/update HTTP handlers.
 - [[worker-routes]] — host-scoped worker registry read handlers.
 - [[resume-routes]] — work-scoped read handlers for handoff and recovery.
+- [[review-routes]] — review lifecycle mutation handlers (request/approve/reject
+  /request-changes/cancel).
+- [[review-comment-routes]] — diff-anchored review comment add/resolve/reopen
+  /list handlers.
+- [[grill-routes]] — forced senior-question grill gate handlers (open/ask/answer
+  /verdict/evaluate/get/list).
 - [[memory-routes]] — workspace memory create/list HTTP handlers.
 - [[event-routes]] — workspace event replay and SSE stream handlers.
 - [[rpc-endpoint]] — `POST /rpc` JSON-RPC framing over the in-process router.

@@ -25,10 +25,10 @@ and `GET /v1/work/:work_id/review-comments`. Split out of the near-limit
 ## Interface
 
 ```typescript
-export const addReviewComment       // POST /v1/reviews/:review_id/comments
-export const resolveReviewComment   // POST /v1/review-comments/:comment_id/resolve
-export const reopenReviewComment    // POST /v1/review-comments/:comment_id/reopen
-export const listReviewComments     // GET  /v1/reviews/:review_id/comments
+export const addReviewComment // POST /v1/reviews/:review_id/comments
+export const resolveReviewComment // POST /v1/review-comments/:comment_id/resolve
+export const reopenReviewComment // POST /v1/review-comments/:comment_id/reopen
+export const listReviewComments // GET  /v1/reviews/:review_id/comments
 export const listWorkReviewComments // GET  /v1/work/:work_id/review-comments
 ```
 
@@ -60,6 +60,23 @@ the oldest-first array at `200`.
 
 MEDIUM (0.6). Thin transport handlers carrying the scope gate and the
 resource→workspace authorization hop for id-keyed mutations.
+
+## Grill Log
+
+- **Q:** The path carries `:review_id` and the body carries `review_id` too —
+  which wins, and why keep both?
+  **A:** The body's `AddReviewCommentPayload` is authoritative (the service reads
+  `payload.review_id`); the path segment only routes and namespaces the
+  collection under the review. They are expected to agree, but the handler never
+  copies the path onto the payload — doing so would mask a client mismatch and
+  duplicate the single source of truth. _Rejected:_ overwriting
+  `body.review_id` with the path param.
+
+- **Q:** Why authorize resolve/reopen through `resource-workspace-auth`
+  `reviewComment` instead of a body `workspace_id` like add does?
+  **A:** Those routes are keyed only by `comment_id` with no body — the tenant
+  scope must be derived from the loaded comment, and 404 (not 403) is returned
+  for a missing comment before authorization can even name a workspace.
 
 ## Referenced by
 
