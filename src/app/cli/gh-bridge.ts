@@ -4,6 +4,7 @@ import { Config, Effect } from 'effect'
 import {
   GitHubGateway,
   type GitHubError,
+  type MergeMethod,
   parsePrRef,
 } from '../../infrastructure/github/index.js'
 import { acpGet, acpPost, BridgeError } from './gh-bridge-support.js'
@@ -11,10 +12,13 @@ import {
   acpCommentsAwaitingGithubPost,
   acpCommentsAwaitingResolvePropagation,
   buildExternalIdIndex,
+  evaluateMergeGate,
+  formatDecision,
   githubCommentsAwaitingAcpImport,
   toAcpImportPayload,
   toGitHubSide,
   type WireComment,
+  type WireResume,
 } from './gh-reconcile.js'
 
 interface WorkWire {
@@ -181,6 +185,61 @@ const importPr = (
     return yield* Effect.void
   })
 
+const MERGE_METHODS = ['squash', 'merge', 'rebase'] as const
+
+const resolveMergeMethod = (
+  raw: string | undefined,
+): Effect.Effect<MergeMethod, BridgeError> => {
+  const value = raw ?? 'squash'
+  return (MERGE_METHODS as readonly string[]).includes(value)
+    ? Effect.succeed(value as MergeMethod)
+    : Effect.fail(
+        new BridgeError({
+          message: `invalid --method: ${value} (expected squash|merge|rebase)`,
+        }),
+      )
+}
+
+/**
+ * Post the ACP decision as a PR issue comment, then merge only if the read-only
+ * gate is satisfied (review approved, grill passed, no open comments). The gate
+ * never mutates ACP state; a blocked merge fails without calling gateway.merge.
+ */
+const mergePr = (
+  ctx: BridgeContext,
+): Effect.Effect<
+  void,
+  BridgeError | GitHubError,
+  GitHubGateway | HttpClient.HttpClient
+> =>
+  Effect.gen(function* () {
+    const ref = yield* parsePrRef(ctx.argv[2])
+    const flags = parseGhFlags(ctx.argv.slice(3))
+    const workId = yield* requireFlag(flags, 'work')
+    const method = yield* resolveMergeMethod(flags.method)
+
+    const gh = yield* GitHubGateway
+    const resume = (yield* acpGet(
+      ctx.baseUrl,
+      ctx.token,
+      `/v1/work/${workId}/resume`,
+    )) as WireResume
+
+    yield* gh.postIssueComment(ref, formatDecision(resume))
+
+    const gate = evaluateMergeGate(resume)
+    if (!gate.ok) {
+      return yield* Effect.fail(
+        new BridgeError({
+          message: `merge blocked: ${gate.reasons.join('; ')}`,
+        }),
+      )
+    }
+
+    yield* gh.merge(ref, method)
+    return yield* Effect.void
+  })
+
 export const runGhBridge = (
   argv: readonly string[],
 ): Effect.Effect<
@@ -211,7 +270,7 @@ export const runGhBridge = (
 
     if (subcommand === 'import') return yield* importPr(ctx)
     if (subcommand === 'sync') return yield* syncPr(ctx)
-    if (subcommand === 'merge') return yield* Effect.die('Task 9')
+    if (subcommand === 'merge') return yield* mergePr(ctx)
     return yield* Effect.fail(
       new BridgeError({ message: `unknown gh subcommand: ${subcommand}` }),
     )

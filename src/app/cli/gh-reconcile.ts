@@ -78,3 +78,54 @@ export const toAcpImportPayload = (
   origin: 'github',
   external_id: ghComment.id,
 })
+
+/** Merge-gate evaluation from a work's resume packet (wire form). */
+export interface WireReview {
+  readonly state: string
+}
+
+export interface WireGrill {
+  readonly state: string
+}
+
+export interface WireResume {
+  readonly reviews: readonly WireReview[]
+  readonly open_comments: readonly unknown[]
+  readonly latest_grill: WireGrill | null | undefined
+}
+
+export interface MergeGate {
+  readonly ok: boolean
+  readonly reasons: readonly string[]
+}
+
+const isApproved = (resume: WireResume): boolean =>
+  resume.reviews.some((review) => review.state === 'approved')
+
+const isGrillPassed = (resume: WireResume): boolean =>
+  resume.latest_grill?.state === 'passed'
+
+/**
+ * Read-only gate: merge is allowed only when a review is approved, the latest
+ * grill passed, and no review comments remain open. Never mutates ACP state.
+ */
+export const evaluateMergeGate = (resume: WireResume): MergeGate => {
+  const reasons: string[] = []
+  if (!isApproved(resume)) reasons.push('review not approved')
+  if (!isGrillPassed(resume)) reasons.push('grill not passed')
+  const openCount = resume.open_comments.length
+  if (openCount > 0) reasons.push(`${String(openCount)} unresolved comment(s)`)
+  return { ok: reasons.length === 0, reasons }
+}
+
+/** One-line decision summary posted to the PR as an issue comment. */
+export const formatDecision = (resume: WireResume): string => {
+  const grillWord = resume.latest_grill?.state ?? 'none'
+  const reviewWord = isApproved(resume)
+    ? 'approved'
+    : resume.reviews.length === 0
+      ? 'none'
+      : resume.reviews[resume.reviews.length - 1].state
+  const openWord = `${String(resume.open_comments.length)} unresolved`
+  return `ACP gate — review: ${reviewWord}, grill: ${grillWord}, ${openWord}`
+}
