@@ -22,7 +22,11 @@ the `gh` CLI through the confined [[node-process-io|runProcess]] primitive.
 ### Signatures
 
 ```typescript
-export type RunProcess = (command: string, args: readonly string[], options?: { input?: string }) => Effect<ProcessResult>
+export type RunProcess = (
+  command: string,
+  args: readonly string[],
+  options?: { input?: string },
+) => Effect<ProcessResult>
 export const makeGhGateway: (run: RunProcess) => GitHubGatewayApi
 export const GitHubGatewayGhLive: Layer.Layer<GitHubGateway>
 ```

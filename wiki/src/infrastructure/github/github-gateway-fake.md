@@ -22,11 +22,21 @@ run over a live ACP server with no `gh` subprocess.
 ### Signatures
 
 ```typescript
-export interface FakeSeed { pull: PullRequestRef; diff: string; comments: GitHubReviewComment[] }
-export interface FakeState {
-  postedComments: unknown[]; resolvedThreads: unknown[]; issueComments: unknown[]; merged: unknown[]
+export interface FakeSeed {
+  pull: PullRequestRef
+  diff: string
+  comments: GitHubReviewComment[]
 }
-export const makeGitHubGatewayFake: (seed: FakeSeed) => { layer: Layer<GitHubGateway>; state: FakeState }
+export interface FakeState {
+  postedComments: unknown[]
+  resolvedThreads: unknown[]
+  issueComments: unknown[]
+  merged: unknown[]
+}
+export const makeGitHubGatewayFake: (seed: FakeSeed) => {
+  layer: Layer<GitHubGateway>
+  state: FakeState
+}
 ```
 
 ### Linkage

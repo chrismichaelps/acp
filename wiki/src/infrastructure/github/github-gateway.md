@@ -26,13 +26,27 @@ depends on an abstract GitHub port rather than the `gh` process. Real adapter is
 export interface GitHubGatewayApi {
   readonly fetchPullRequest: (ref: PrRef) => Effect<PullRequestRef, GitHubError>
   readonly fetchDiff: (ref: PrRef) => Effect<string, GitHubError>
-  readonly listReviewComments: (ref: PrRef) => Effect<readonly GitHubReviewComment[], GitHubError>
-  readonly postReviewComment: (ref: PrRef, input: PostCommentInput) => Effect<GitHubReviewComment, GitHubError>
-  readonly resolveReviewThread: (ref: PrRef, externalId: string) => Effect<void, GitHubError>
-  readonly postIssueComment: (ref: PrRef, body: string) => Effect<void, GitHubError>
+  readonly listReviewComments: (
+    ref: PrRef,
+  ) => Effect<readonly GitHubReviewComment[], GitHubError>
+  readonly postReviewComment: (
+    ref: PrRef,
+    input: PostCommentInput,
+  ) => Effect<GitHubReviewComment, GitHubError>
+  readonly resolveReviewThread: (
+    ref: PrRef,
+    externalId: string,
+  ) => Effect<void, GitHubError>
+  readonly postIssueComment: (
+    ref: PrRef,
+    body: string,
+  ) => Effect<void, GitHubError>
   readonly merge: (ref: PrRef, method: MergeMethod) => Effect<void, GitHubError>
 }
-export class GitHubGateway extends Context.Tag('GitHubGateway')<GitHubGateway, GitHubGatewayApi>() {}
+export class GitHubGateway extends Context.Tag('GitHubGateway')<
+  GitHubGateway,
+  GitHubGatewayApi
+>() {}
 ```
 
 Value shapes (`PrRef`, `PullRequestRef`, `GitHubReviewComment`, `PostCommentInput`,

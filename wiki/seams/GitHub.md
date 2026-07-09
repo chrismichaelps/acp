@@ -30,10 +30,10 @@ Operations: `fetchPullRequest`, `fetchDiff`, `listReviewComments`,
 
 ## Adapters
 
-| Adapter | Type       | Path                                                       | Last verified | Status  |
-| ------- | ---------- | --------------------------------------------------------- | ------------- | ------- |
-| gh CLI  | production | @root/src/infrastructure/github/github-gateway-gh.ts      | 2026-07-08    | CURRENT |
-| Fake    | test       | @root/src/infrastructure/github/github-gateway-fake.ts    | 2026-07-08    | CURRENT |
+| Adapter | Type       | Path                                                   | Last verified | Status  |
+| ------- | ---------- | ------------------------------------------------------ | ------------- | ------- |
+| gh CLI  | production | @root/src/infrastructure/github/github-gateway-gh.ts   | 2026-07-08    | CURRENT |
+| Fake    | test       | @root/src/infrastructure/github/github-gateway-fake.ts | 2026-07-08    | CURRENT |
 
 The real adapter shells out to the `gh` CLI via the confined
 [[node-process-io|runProcess]] primitive (argv array, `shell: false`); it relies

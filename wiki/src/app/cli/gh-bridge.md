@@ -27,7 +27,11 @@ server layer depends on `gh` — the [[GitHub]] seam is composed only here.
 ```typescript
 export const runGhBridge: (
   argv: readonly string[],
-) => Effect<void, BridgeError | GitHubError, GitHubGateway | HttpClient.HttpClient>
+) => Effect<
+  void,
+  BridgeError | GitHubError,
+  GitHubGateway | HttpClient.HttpClient
+>
 ```
 
 ### Linkage
