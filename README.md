@@ -51,6 +51,50 @@ a recovering worker can replay history and catch up before it acts.
 
 ---
 
+## How it works
+
+ACP is a single long-lived **host process**. Clients never talk to each other;
+they talk to the host, and the host owns the durable state. Every transport —
+REST, native RPC, JSON-RPC, SSE — is served over the **same application
+graph**, so a workspace created over REST is immediately visible to a
+JSON-RPC client and streams to an SSE subscriber. There is one `Storage`
+instance behind them all.
+
+```mermaid
+flowchart LR
+    C["Clients<br/>acp CLI · first-party TS · JSON-RPC / stdio"]
+    C --> T["Transport<br/>REST · native RPC · JSON-RPC · SSE"]
+    T --> AU["Auth + scope check"]
+    AU --> D["Domain services<br/>work · lease · review · checkpoint · …"]
+    D --> ST[("Storage port<br/>in-memory · SQLite · Postgres")]
+    D --> EV["Event log<br/>one monotonic event per mutation"]
+    EV --> ST
+    EV --> BR["Event broker"] --> SUB["Live subscribers<br/>SSE · WebSocket"]
+    ST -. "replay on recover" .-> D
+```
+
+A single mutation always takes the same path, whichever transport carries it:
+
+1. **Authorize.** The transport resolves the actor and checks its scopes; a
+   missing credential is `401`, an insufficient one is `403`.
+2. **Apply.** A domain service validates the change against its invariants — a
+   work-unit transition, a lease that isn't already held, a review gate that is
+   green — and writes the new state through the `Storage` port.
+3. **Record.** The same operation appends **exactly one** event to the
+   workspace's strictly monotonic log (`workspace_id, seq`). State and history
+   are written together, so they can never disagree.
+4. **Fan out.** The event broker pushes the new event to any live SSE/WebSocket
+   subscribers; durable replay stays backed by storage.
+
+**Recovery is replay.** Because progress lives in the event log rather than any
+agent's memory, a worker that crashes and restarts catches up by replaying
+`events list --after <last_seq>` before it acts — no shared conversation, no lost
+context. Storage (in-memory, SQLite, Postgres) and live fan-out (in-process,
+`pg-notify`) are chosen at the host boundary behind ports, so the protocol
+behaves identically from a laptop to a multi-replica deployment.
+
+---
+
 ## Get started in 60 seconds
 
 The fastest way to _use_ ACP is the Dockerized host plus the `acp` wrapper. One
