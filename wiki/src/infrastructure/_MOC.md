@@ -36,6 +36,10 @@ construction and hides it behind narrow service tags.
 
 - [[platform-node/_MOC|Platform Node MOC]] — Node-specific runtime Layers.
 
+## github/
+
+- [[github/_MOC|GitHub MOC]] — GitHub interaction seam (edge) + gh/fake adapters.
+
 ## Referenced by
 
 [[src/_MOC]]

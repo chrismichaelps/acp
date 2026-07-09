@@ -49,5 +49,8 @@ export const usage = `acp — Agent Coordination Protocol CLI
   acp memory list --workspace <id> [--after <seq>] [--limit <n>] [--work <id>] [--kind <k>] [--key <k>] [--label <l>]
   acp events list --workspace <id> [--after <seq>] [--limit <n>] [--type <event_type>]
   acp events stream --workspace <id>
+  acp gh import <pr> --work <id> --workspace <id>
+  acp gh sync <pr> --work <id> --review <id> --artifact <id>
+  acp gh merge <pr> --work <id> [--method squash|merge|rebase]
 
 Targets ACP_BASE_URL (default http://localhost:$ACP_PORT).`
