@@ -95,8 +95,8 @@ export const ArtifactServiceLive: Layer.Layer<
 2. `get` loads one Artifact; absence is `Option.none`.
 3. `readContent` loads optional private content and fails `StorageError` if the
    stored value is not a string.
-4. `listForWork` and `listForWorkspace` decode the artifact collection and filter
-   by work or workspace.
+4. `listForWork` and `listForWorkspace` use [[storage]] `queryBy` on indexed
+   `work_id` / `workspace_id`, then schema-decode each matching row.
 5. `update` requires an existing Artifact, validates optional replacement content
    size, saves the metadata replacement with stable identity fields, switches
    between external URI and host content according to the payload, emits

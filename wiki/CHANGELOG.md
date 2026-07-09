@@ -2,6 +2,15 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-09 · Feature 580 scale tier (domain queryBy migration) · closed the
+  O(N)→O(log N) loop on scoped domain reads: work-units, artifacts, checkpoints,
+  leases, and reviews `listForWork` now use indexed [[storage]] `queryBy` instead
+  of `list`+filter. Adapter conformance suite asserts `queryBy` + version-CAS
+  parity across InMemory/SQLite. Host-scoped registries (workspaces, workers,
+  sessions) and review `listForWorkspace` (work join; no workspace index) keep
+  full-collection reads by design. Seam [[Storage]] + domain service algorithms
+  updated · risk LOW · [[ADR-0010-context-exchange-optimization]]
+
 - 2026-07-08 · gh-driven-workflow feature (Sub-project B) · bound ACP's native
   review gate to real GitHub PRs behind a new edge seam. Added the [[GitHub]]
   `Context.Tag` ([[github-gateway]]) with a `gh`-CLI adapter ([[github-gateway-gh]])
