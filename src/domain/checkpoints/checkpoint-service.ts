@@ -129,27 +129,21 @@ const make = Effect.gen(function* () {
       }),
     )
 
-  const all = () =>
-    Effect.flatMap(storage.list(collection), (stored) =>
+  const queryDecoded = (field: 'work_id' | 'workspace_id', value: string) =>
+    Effect.flatMap(storage.queryBy(collection, [{ field, value }]), (stored) =>
       Effect.forEach(Chunk.toReadonlyArray(stored), decodeStoredCheckpoint),
     )
 
   const listForWork: CheckpointServiceApi['listForWork'] = (workId) =>
-    Effect.map(all(), (checkpoints) =>
-      [
-        ...checkpoints.filter((checkpoint) => checkpoint.work_id === workId),
-      ].sort(newestFirst),
+    Effect.map(queryDecoded('work_id', workId), (checkpoints) =>
+      [...checkpoints].sort(newestFirst),
     )
 
   const listForWorkspace: CheckpointServiceApi['listForWorkspace'] = (
     workspaceId,
   ) =>
-    Effect.map(all(), (checkpoints) =>
-      [
-        ...checkpoints.filter(
-          (checkpoint) => checkpoint.workspace_id === workspaceId,
-        ),
-      ].sort(newestFirst),
+    Effect.map(queryDecoded('workspace_id', workspaceId), (checkpoints) =>
+      [...checkpoints].sort(newestFirst),
     )
 
   const create: CheckpointServiceApi['create'] = (input) => {
