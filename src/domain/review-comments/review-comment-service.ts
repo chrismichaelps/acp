@@ -43,6 +43,11 @@ export interface ReviewCommentServiceApi {
     actor: WorkerId,
     now: Timestamp,
   ) => Effect.Effect<ReviewCommentType, ReviewCommentTransitionError>
+  readonly setExternalId: (
+    id: ReviewCommentId,
+    externalId: string,
+    now: Timestamp,
+  ) => Effect.Effect<ReviewCommentType, ReviewCommentTransitionError>
   readonly get: (
     id: ReviewCommentId,
   ) => Effect.Effect<Option.Option<ReviewCommentType>, StorageError>
@@ -179,6 +184,8 @@ const make = Effect.gen(function* () {
       in_reply_to: input.payload.in_reply_to,
       created_at: input.now,
       resolved_at: Option.none(),
+      origin: input.payload.origin,
+      external_id: input.payload.external_id,
     }
     return Effect.gen(function* () {
       yield* save(comment)
@@ -244,10 +251,25 @@ const make = Effect.gen(function* () {
   const listForWork: ReviewCommentServiceApi['listForWork'] = (workId) =>
     queryDecoded('work_id', workId)
 
+  const setExternalId: ReviewCommentServiceApi['setExternalId'] = (
+    id,
+    externalId,
+  ) =>
+    Effect.gen(function* () {
+      const current = yield* requireComment(id)
+      const next: ReviewCommentType = {
+        ...current,
+        external_id: Option.some(externalId),
+      }
+      yield* save(next)
+      return next
+    })
+
   return {
     add,
     resolve,
     reopen,
+    setExternalId,
     get,
     listForReview,
     listForWork,

@@ -2,6 +2,23 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-08 · gh-driven-workflow feature (Sub-project B) · bound ACP's native
+  review gate to real GitHub PRs behind a new edge seam. Added the [[GitHub]]
+  `Context.Tag` ([[github-gateway]]) with a `gh`-CLI adapter ([[github-gateway-gh]])
+  and a scripted fake ([[github-gateway-fake]]), fed by a confined
+  [[node-process-io|runProcess]] execFile primitive (argv array, `shell: false`;
+  ACP never handles a GitHub token). Added the `acp gh import|sync|merge` bridge
+  ([[gh-bridge]] + `gh-reconcile`): import pulls a PR diff into `diff`/`pull_request`
+  artifacts; sync is an idempotent bidirectional review-comment reconcile keyed on
+  provenance + `external_id` (new additive `origin`/`external_id` on
+  [[review-comment-service|ReviewComment]] + a `setExternalId` service method and
+  `POST /v1/review-comments/:id/external-id` route); merge posts a decision issue
+  comment and gate-checks the [[resume-schema|resume packet]] (review approved +
+  grill passed + no open comments) read-only before `gh pr merge`. A pure-core
+  invariant test forbids the github infra / `child_process` / `gh` in the domain
+  core and main server layer · validation: typecheck, lint, prettier, file-size,
+  and full Vitest passed locally · risk MEDIUM
+
 - 2026-07-07 · pr-review-grill-gate feature · added an ACP-native senior review
   gate: diff-anchored [[review-comment-service|review comments]] and a forced
   senior-question [[grill-service|grill]] (open → ask → answer → verdict →

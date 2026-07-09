@@ -3,12 +3,19 @@ import { HttpClient, HttpClientRequest } from '@effect/platform'
 import { NodeHttpClient, NodeRuntime } from '@effect/platform-node'
 import { Config, Console, Effect, Either, Stream } from 'effect'
 import { nodeArgv } from '../../infrastructure/platform-node/index.js'
+import { GitHubGatewayGhLive } from '../../infrastructure/github/index.js'
 import { applyClientFilter, runCliRequest, withBearerToken } from './client.js'
 import { CliError, parseArgs } from './commands.js'
+import { runGhBridge } from './gh-bridge.js'
 import { usage } from './usage.js'
 
 const program = Effect.gen(function* () {
-  const parsed = parseArgs(nodeArgv())
+  const argv = nodeArgv()
+  if (argv[0] === 'gh') {
+    return yield* runGhBridge(argv).pipe(Effect.provide(GitHubGatewayGhLive))
+  }
+
+  const parsed = parseArgs(argv)
   if (Either.isLeft(parsed)) {
     yield* Console.error(parsed.left.message)
     yield* Console.error(usage)

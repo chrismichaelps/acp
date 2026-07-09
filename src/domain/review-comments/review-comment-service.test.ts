@@ -101,4 +101,30 @@ describe('ReviewCommentService', () => {
     expect(result.state).toBe('resolved')
     expect(Option.isSome(result.resolved_at)).toBe(true)
   })
+
+  it('setExternalId stamps a GitHub comment id without emitting a transition', () => {
+    const result = runSync(
+      Effect.gen(function* () {
+        const svc = yield* ReviewCommentService
+        yield* svc.add({
+          id: reviewCommentId,
+          payload: payload(),
+          author: worker1,
+          now: timestamp,
+        })
+        yield* svc.setExternalId(reviewCommentId, 'gh_c_9', laterTimestamp)
+        const found = yield* svc.get(reviewCommentId)
+        return found
+      }),
+    )
+
+    expect(Option.isSome(result)).toBe(true)
+    if (Option.isSome(result)) {
+      expect(Option.isSome(result.value.external_id)).toBe(true)
+      expect(
+        Option.isSome(result.value.external_id) &&
+          result.value.external_id.value,
+      ).toBe('gh_c_9')
+    }
+  })
 })

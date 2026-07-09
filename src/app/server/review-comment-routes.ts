@@ -69,6 +69,27 @@ export const reopenReviewComment = respond(
   }),
 )
 
+export const setReviewCommentExternalId = respond(
+  'POST /v1/review-comments/:comment_id/external-id',
+)(
+  Effect.gen(function* () {
+    const service = yield* ReviewCommentService
+    const idClock = yield* IdClock
+    const commentId = yield* commentIdParam()
+    const now = yield* idClock.now
+    yield* target.reviewComment('workspace:write', commentId)
+    const body = yield* HttpServerRequest.schemaBodyJson(
+      Schema.Struct({ external_id: Schema.NonEmptyString }),
+    )
+    const updated = yield* service.setExternalId(
+      commentId,
+      body.external_id,
+      now,
+    )
+    return yield* ok(200)(ReviewComment, updated)
+  }),
+)
+
 export const listReviewComments = respond(
   'GET /v1/reviews/:review_id/comments',
 )(
