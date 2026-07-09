@@ -392,6 +392,28 @@ same image runs every profile; only environment differs. See
 [`wiki/references/deployment.md`](./wiki/references/deployment.md) for the
 platform-by-platform runbook.
 
+### Optional edge proxy (Traefik)
+
+Front the ACP host with a free, clone-and-go reverse proxy:
+
+```bash
+npm run acp:edge:up        # sqlite base + Traefik edge
+# or: npm run acp:ha:edge:up
+
+# through the proxy (self-signed TLS):
+curl -k -H 'Host: acp.localhost' https://127.0.0.1/ready
+```
+
+Traefik serves `https://acp.localhost` (self-signed cert), a dashboard on
+`http://127.0.0.1:8080`, and load-balances across HA replicas
+(`docker compose --profile ha --profile edge up --scale acp-ha=3`). The raw
+`4317` port stays published, so `./bin/acp` is unaffected.
+
+**Opt-in basic-auth** (demo): generate a hash and attach the middleware —
+`htpasswd -nbB acp acp` → add an `acp-auth` `basicAuth` middleware to
+`traefik/dynamic.yml` and append `acp-auth@file` to the router's
+`traefik.http.routers.acp.middlewares` label.
+
 ### Storage adapters
 
 Storage is selected at the host boundary behind a single port, so persistence is
