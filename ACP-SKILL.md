@@ -108,7 +108,43 @@ open ─▶ claimed ─▶ running ─▶ needs_review ─▶ approved ─▶ co
 `blocked`, `rejected`, `cancelled` are the other terminal/holding states.
 `review request` is the only path that performs `running → needs_review`.
 
-## 4. Full command surface
+## 4. The review gate
+
+A review is more than approve/reject. A reviewer can anchor **diff-anchored
+comments** to a file and line on an artifact and open a **grill** — a set of
+forced senior-level questions the worker must answer. The gate passes only when
+every blocker question is `accepted` and every review comment is `resolved`:
+
+1. **Comment.** Reviewer: `review comment --review <id> --work <id> --workspace
+   <id> --artifact <id> --file <f> --side new --body "…"`. The worker addresses it
+   and the reviewer runs `review comment resolve <comment_id>`.
+2. **Grill.** Reviewer: `grill open …`, then `grill ask <grill_id> --severity
+   blocker --prompt "…"`. The worker answers with `grill answer <question_id>
+   --answer "…"`; the reviewer records `grill verdict <question_id> --accept`.
+3. **Evaluate.** Reviewer: `grill evaluate <grill_id>` computes pass/fail —
+   `passed` requires every blocker accepted and every comment resolved.
+4. **Approve.** On a green gate, `review approve <id> --met <csv>`.
+
+The `work resume <id>` packet carries `open_comments` and `latest_grill`, so a
+returning reviewer sees outstanding gate obligations in a single read.
+
+## 5. GitHub-driven workflow (optional)
+
+`acp gh` binds the ACP review gate to a real GitHub pull request. It is a
+CLI-only bridge over the `gh` CLI (using `gh`'s own auth — ACP never reads,
+stores, or forwards a token); the protocol host has no GitHub dependency.
+
+- `acp gh import <pr> --work <id> --workspace <id>` — pull the PR diff into a
+  `diff` artifact and a `pull_request` artifact on the work.
+- `acp gh sync <pr> --work <id> --review <id> --artifact <id>` — idempotent
+  two-way reconcile of review comments between ACP and the PR (imports GitHub
+  comments, posts ACP comments, propagates resolution). Safe to re-run.
+- `acp gh merge <pr> --work <id> [--method squash|merge|rebase]` — post the ACP
+  decision as a PR comment, then merge **only if** the gate is green (a review
+  approved, the latest grill passed, no open comments). A blocked merge exits
+  non-zero and never merges.
+
+## 6. Full command surface
 
 ```
 session    init      --worker <id> --name <n> [--kind <k>] [--vendor <v>] [--capabilities <csv>] [--permissions <csv>]
@@ -124,15 +160,25 @@ artifact   pr --workspace <id> --work <id> --url <u> [--summary <s>] | update <i
 review     request --work <id> --by <id> [--reviewer <id>] | list --work <id>|--workspace <id>
 review     approve <id> --met <csv> [--signature <s> --signature-algorithm <alg> --signature-key <key-id> [--signed-at <iso>]]
 review     reject <id> | request-changes <id> | cancel <id>
+review     comment --review <id> --work <id> --workspace <id> --artifact <id> --file <f> --side old|new --body <t> [--line <n>] [--reply-to <id>]
+review     comment resolve <comment_id> | reopen <comment_id> | list --review <id>|--work <id>
+grill      open --review <id> --work <id> --workspace <id> | ask <grill_id> --severity blocker|major|minor --prompt <q>
+grill      answer <question_id> --answer <t> | verdict <question_id> --accept|--reject
+grill      evaluate <grill_id> | get <grill_id> | list --review <id>
+gh         import <pr> --work <id> --workspace <id> | sync <pr> --work <id> --review <id> --artifact <id>
+gh         merge <pr> --work <id> [--method squash|merge|rebase]
 memory     create --workspace <id> --kind <k> --key <k> --summary <s> --content <c> [--work <id>] [--labels <csv>]
 memory     list --workspace <id> [--after <seq>] [--limit <n>] [--work <id>] [--kind <k>] [--key <k>] [--label <l>]
 events     list --workspace <id> [--after <seq>] | stream --workspace <id>
 ```
 
+`<pr>` is a PR URL or `owner/repo#number`. The `gh` bridge requires the `gh` CLI
+installed and authenticated (it uses `gh`'s own auth — ACP never handles a token).
+
 `workspace kind` ∈ `git_repository | git_worktree | directory | container |
 cloud_sandbox | ci_job`. Every command prints JSON on stdout.
 
-## 5. Errors you must handle
+## 7. Errors you must handle
 
 Failures are `{"error":{"code":...,"message":...}}`.
 
@@ -147,7 +193,7 @@ Failures are `{"error":{"code":...,"message":...}}`.
 `conflict` and `rate_limited` are reserved with no current producer — don't
 depend on them.
 
-## 6. Rules of the road
+## 8. Rules of the road
 
 - **Lease before you edit.** Leases are advisory (they don't lock the FS), but a
   `lease_conflict` means another worker owns that file — respect it.
