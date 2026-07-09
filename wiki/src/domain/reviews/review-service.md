@@ -106,7 +106,10 @@ export interface ReviewServiceApi {
    and transitions the WorkUnit to `changes_requested`.
 5. `cancel` saves `cancelled`, emits `review.cancelled`, and transitions the
    WorkUnit back to `running`.
-6. `listForWorkspace` resolves each review's WorkUnit to filter by workspace.
+6. `listForWork` uses [[storage]] `queryBy` on indexed `work_id`.
+7. `listForWorkspace` still full-lists the review collection and joins each
+   review's WorkUnit for workspace filter — reviews carry `work_id` but not
+   `workspace_id`, so they are not workspace-indexed.
 
 ## Negative Logic (Prohibited Paths)
 

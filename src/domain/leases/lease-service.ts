@@ -226,14 +226,19 @@ const make = Effect.gen(function* () {
       }),
     )
 
+  // Host-wide decode for expireAllDue (sweeper leadership); not a scoped read.
   const all = () =>
     Effect.flatMap(storage.list(collection), (stored) =>
       Effect.forEach(Chunk.toReadonlyArray(stored), decodeStoredLease),
     )
 
   const list: LeaseServiceApi['list'] = (workspaceId) =>
-    Effect.map(all(), (leases) =>
-      leases.filter((lease) => lease.workspace_id === workspaceId),
+    Effect.flatMap(
+      storage.queryBy(collection, [
+        { field: 'workspace_id', value: workspaceId },
+      ]),
+      (stored) =>
+        Effect.forEach(Chunk.toReadonlyArray(stored), decodeStoredLease),
     )
 
   const requireLease = (leaseId: LeaseId) =>

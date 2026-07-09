@@ -218,28 +218,34 @@ const make = Effect.gen(function* () {
       }),
     )
 
-  const all = () =>
-    Effect.flatMap(storage.list(collection), (stored) =>
-      Effect.forEach(Chunk.toReadonlyArray(stored), decodeStoredReview),
-    )
-
+  // Reviews carry work_id but not workspace_id — listForWork is an indexed
+  // queryBy; listForWorkspace still joins through work (no workspace index).
   const listForWork: ReviewServiceApi['listForWork'] = (workId) =>
-    Effect.map(all(), (reviews) =>
-      reviews.filter((review) => review.work_id === workId),
+    Effect.flatMap(
+      storage.queryBy(collection, [{ field: 'work_id', value: workId }]),
+      (stored) =>
+        Effect.forEach(Chunk.toReadonlyArray(stored), decodeStoredReview),
     )
 
   const listForWorkspace: ReviewServiceApi['listForWorkspace'] = (
     workspaceId,
   ) =>
-    Effect.flatMap(all(), (reviews) =>
-      Effect.map(
-        Effect.forEach(reviews, (review) =>
-          Effect.map(requireWork(review.work_id), (work) => ({ review, work })),
-        ),
-        (pairs) =>
-          pairs
-            .filter((pair) => pair.work.workspace_id === workspaceId)
-            .map((pair) => pair.review),
+    Effect.flatMap(storage.list(collection), (stored) =>
+      Effect.flatMap(
+        Effect.forEach(Chunk.toReadonlyArray(stored), decodeStoredReview),
+        (reviews) =>
+          Effect.map(
+            Effect.forEach(reviews, (review) =>
+              Effect.map(requireWork(review.work_id), (work) => ({
+                review,
+                work,
+              })),
+            ),
+            (pairs) =>
+              pairs
+                .filter((pair) => pair.work.workspace_id === workspaceId)
+                .map((pair) => pair.review),
+          ),
       ),
     )
 

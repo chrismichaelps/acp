@@ -118,15 +118,16 @@ export const LeaseServiceLive: Layer.Layer<
    row and retries once; otherwise it saves an `active` lease and emits
    `lease.requested` + `lease.granted`.
 2. `get` loads one lease by id; absence is `Option.none`.
-3. `list` decodes the `lease` collection and filters by `workspace_id`.
+3. `list` uses [[storage]] `queryBy` on indexed `workspace_id` (CLI `--holder`
+   filtering stays client-side).
 4. `renew` requires the lease to still be active and unexpired at `now`, extends
    `expires_at`, saves, and emits `lease.renewed`.
 5. `release` and `revoke` require `active`, save the terminal state, remove the
    resource row only when it still points at the same lease id, and emit
    `lease.released` or `lease.revoked`.
-6. `expireDue` scans active leases in a workspace, marks those whose
-   `expires_at <= now` as `expired`, removes their resource rows, and emits
-   `lease.expired`.
+6. `expireDue` scans active leases in a workspace (via scoped `list`), marks those
+   whose `expires_at <= now` as `expired`, removes their resource rows, and emits
+   `lease.expired`. `expireAllDue` is host-wide (`storage.list`) for the sweeper.
 
 ## Negative Logic (Prohibited Paths)
 

@@ -333,4 +333,35 @@ describe('LeaseService', () => {
       expect(error.left._tag).toBe('InvalidStateTransitionError')
     }
   })
+
+  it('lists leases scoped to a single workspace', () => {
+    const otherWorkspaceId = Schema.decodeUnknownSync(WorkspaceId)(
+      'workspace_lease_other',
+    )
+    const otherWorkspaceLeaseId = Schema.decodeUnknownSync(LeaseId)(
+      'lease_other_workspace',
+    )
+
+    const ids = runSync(
+      Effect.gen(function* () {
+        const leases = yield* LeaseService
+        yield* leases.request(requestInput())
+        yield* leases.request(
+          requestInput(
+            otherWorkspaceLeaseId,
+            Schema.decodeUnknownSync(RequestLeasePayload)({
+              workspace_id: otherWorkspaceId,
+              holder: workerId,
+              resource: { kind: 'file', uri: 'file://src/other.ts' },
+              ttl_seconds: 60,
+            }),
+          ),
+        )
+        const scoped = yield* leases.list(workspaceId)
+        return scoped.map((lease) => lease.id)
+      }),
+    )
+
+    expect(ids).toEqual([leaseId])
+  })
 })

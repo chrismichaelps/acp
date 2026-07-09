@@ -26,29 +26,50 @@ network-durable path for multi-replica hosting (ADR-0008).
 
 ## Interface
 
-A keyed, append-aware persistence port. Pure interface (`Context.Tag`), no Effect
-construction leaked. Returns `Option` for absence, typed `StorageError` on failure.
-Operations: `put`, `get`, `list`, `remove`, `appendEvent`/`readEventsAfter`
-for the ordered per-workspace [[Event]] log, and `pruneEventsBefore` (retention:
-delete events older than a cutoff, always sparing each workspace's newest event so
-the append `seq` high-water-mark never resets).
+A keyed, append-aware, **queryable** persistence port. Pure interface
+(`Context.Tag`), no Effect construction leaked. Returns `Option` for absence,
+typed `StorageError` on failure.
+
+Operations:
+
+- KV: `put`, `get`, `getVersioned`, `list`, `queryBy`, `remove`,
+  `putIfAbsent`, `replaceIf`, `replaceIfVersion`
+- Events: `appendEvent` / `readEventsAfter`, `pruneEventsBefore` (retention:
+  delete events older than a cutoff, always sparing each workspace's newest event
+  so the append `seq` high-water-mark never resets)
+- Memory: `appendMemory` / `readMemory`
+
+Scale-tier additions (Feature 580 / [[ADR-0010-context-exchange-optimization]]
+slices 2–3):
+
+- `getVersioned` / `replaceIfVersion` — monotonic per-row `version` for O(1) CAS
+  instead of full-blob equality
+- `queryBy(collection, filters, opts?)` — equality predicates over promoted
+  indexed columns (`workspace_id`, `work_id`, `state`, `assigned_to`,
+  `priority`, `holder`, `kind`, `review_id`, `grill_id`); returns values ordered
+  by `id`, optional `limit`; unknown filter field → `StorageError`
 
 ## Adapters
 
 | Adapter  | Type       | Path                                                | Last verified | Status   |
 | -------- | ---------- | --------------------------------------------------- | ------------- | -------- |
-| InMemory | production | @root/src/infrastructure/storage/in-memory-store.ts | 2026-06-25    | CURRENT  |
-| SQLite   | production | @root/src/infrastructure/storage/sqlite-store.ts    | 2026-06-27    | VERIFIED |
-| Postgres | production | @root/src/infrastructure/storage/postgres-store.ts  | 2026-07-03    | VERIFIED |
+| InMemory | production | @root/src/infrastructure/storage/in-memory-store.ts | 2026-07-09    | CURRENT  |
+| SQLite   | production | @root/src/infrastructure/storage/sqlite-store.ts    | 2026-07-09    | VERIFIED |
+| Postgres | production | @root/src/infrastructure/storage/postgres-store.ts  | 2026-07-09    | VERIFIED |
 | Stub     | test       | (reuses InMemory)                                   | —             | —        |
 
 ## Health
 
-DRIFT 0 (HEALTHY). InMemory and SQLite adapters are code-complete and tested for
-KV roundtrip, list/remove, monotonic per-workspace event seq, workspace isolation,
-readEventsAfter, and persistence across reopened SQLite Layer instances. Public
-surface in [[storage-index]], interface in [[storage]], adapters in
-[[in-memory-store]] and [[sqlite-store]].
+DRIFT 0 (HEALTHY). All three adapters implement version-column CAS and indexed
+`queryBy` with shared [[index-columns]] allowlist. Conformance suite
+(`query-conformance.test.ts`) asserts InMemory ↔ SQLite parity for filter
+ordering/limit/predicate and stale-version CAS; Postgres is covered by its
+connection-guarded store test. Domain scoped reads (work-units, artifacts,
+checkpoints, leases, reviews `listForWork`) use `queryBy` — O(log N + k) instead
+of full-collection scan. Host-scoped registries (workspaces, workers, sessions)
+and review `listForWorkspace` (join through work; reviews lack `workspace_id`)
+correctly keep `storage.list`. Public surface in [[storage-index]], interface in
+[[storage]], adapters in [[in-memory-store]], [[sqlite-store]], [[postgres-store]].
 
 ## Deepening
 

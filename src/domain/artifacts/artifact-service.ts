@@ -239,22 +239,17 @@ const make = Effect.gen(function* () {
       }),
     )
 
-  const all = () =>
-    Effect.flatMap(storage.list(collection), (stored) =>
+  const queryDecoded = (field: 'work_id' | 'workspace_id', value: string) =>
+    Effect.flatMap(storage.queryBy(collection, [{ field, value }]), (stored) =>
       Effect.forEach(Chunk.toReadonlyArray(stored), decodeStoredArtifact),
     )
 
   const listForWork: ArtifactServiceApi['listForWork'] = (workId) =>
-    Effect.map(all(), (artifacts) =>
-      artifacts.filter((artifact) => artifact.work_id === workId),
-    )
+    queryDecoded('work_id', workId)
 
   const listForWorkspace: ArtifactServiceApi['listForWorkspace'] = (
     workspaceId,
-  ) =>
-    Effect.map(all(), (artifacts) =>
-      artifacts.filter((artifact) => artifact.workspace_id === workspaceId),
-    )
+  ) => queryDecoded('workspace_id', workspaceId)
 
   const create: ArtifactServiceApi['create'] = (input) => {
     const artifact: Artifact = {

@@ -104,8 +104,9 @@ export const WorkUnitServiceLive: Layer.Layer<
    saves the updated state, and emits the corresponding work/review event.
 4. `get` returns `Option.none` for absence and decodes stored records through
    [[work-unit.schema]] for drift protection.
-5. `listForWorkspace` decodes stored records and filters by `workspace_id`,
-   returning the current metadata index for workspace discoverability.
+5. `listForWorkspace` uses [[storage]] `queryBy` on the indexed `workspace_id`
+   column (O(log N + k)), then schema-decodes each row for workspace
+   discoverability.
 
 ## State Machine
 

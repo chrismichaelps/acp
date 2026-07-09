@@ -63,8 +63,8 @@ export interface CheckpointServiceApi {
 1. `create` builds a Checkpoint from the create payload, saves it, emits
    `checkpoint.created`, and returns the stored value.
 2. `get` loads one Checkpoint; absence is `Option.none`.
-3. `listForWork` and `listForWorkspace` decode all checkpoints, filter by scope,
-   and sort newest-first by `created_at`.
+3. `listForWork` and `listForWorkspace` use [[storage]] `queryBy` on indexed
+   `work_id` / `workspace_id`, then sort newest-first by `created_at`.
 4. `latestForWork` returns the first item from `listForWork`, or `Option.none`.
 
 ## Negative Logic (Prohibited Paths)
