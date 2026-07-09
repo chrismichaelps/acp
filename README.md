@@ -166,19 +166,66 @@ acp session init --worker agent_codex --name Codex --kind agent \
 
 ### Work lifecycle
 
-Work units move through an explicit state machine. Illegal jumps return
-`invalid_state_transition` (HTTP 409).
+A work unit is a small state machine, and that machine is the contract every
+transport enforces identically. The server rejects any jump the machine doesn't
+allow with `invalid_state_transition` (HTTP 409), and every accepted transition
+appends exactly one event to the workspace log — so the state a work unit is in
+and the history of how it got there are the same fact, read two ways.
 
-```
-open ─▶ claimed ─▶ running ─▶ needs_review ─▶ approved ─▶ completed
-                      ▲            │
-                      └── changes_requested ◀┘
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> open
+    open --> claimed
+    claimed --> running
+    running --> needs_review
+    running --> blocked
+    blocked --> running
+    needs_review --> approved
+    needs_review --> changes_requested
+    needs_review --> running
+    changes_requested --> running
+    approved --> completed
+    needs_review --> rejected
+    open --> cancelled
+    claimed --> cancelled
+    running --> cancelled
+    completed --> [*]
+    rejected --> [*]
+    cancelled --> [*]
 ```
 
-`review request` performs `running -> needs_review`; a reviewer's
-`request-changes` moves the work to `changes_requested`, from which the worker
-returns to `running`, writes a new checkpoint, and re-requests review.
-`blocked`, `rejected`, and `cancelled` are the other terminal/holding states.
+Read it in three parts:
+
+- **The happy path** is `open → claimed → running → needs_review → approved →
+completed`. A worker claims open work, starts it, submits it for review, and
+  finishes once the gate is green.
+- **The review loop** is what makes work correct rather than merely done. From
+  `needs_review` a reviewer can `approve`, `reject` (terminal), or
+  `request-changes` — which returns the unit to `changes_requested → running` so
+  the worker writes a fresh checkpoint and resubmits. A worker can also pull work
+  straight back to `running` to keep editing before any verdict lands.
+  `blocked ⇄ running` is the same idea for a worker that hits an external
+  dependency.
+- **Terminal states** are `completed`, `rejected`, and `cancelled`. `cancelled`
+  is reachable from any pre-review state to abandon work cleanly; nothing leaves
+  a terminal state.
+
+Each edge is a named event, which is what a recovering worker replays to
+reconstruct where a unit stands:
+
+| Transition                         | CLI / trigger                   | Event emitted              |
+| ---------------------------------- | ------------------------------- | -------------------------- |
+| `open → claimed`                   | `work claim`                    | `work.claimed`             |
+| `claimed → running`                | `work update --state running`   | `work.started`             |
+| `running → needs_review`           | `review request`                | `work.needs_review`        |
+| `running → blocked`                | `work update --state blocked`   | `work.blocked`             |
+| `blocked → running`                | `work update --state running`   | `work.unblocked`           |
+| `needs_review → approved`          | `review approve`                | `review.approved`          |
+| `needs_review → changes_requested` | `review request-changes`        | `review.changes_requested` |
+| `needs_review → rejected`          | `review reject`                 | `review.rejected`          |
+| `approved → completed`             | `work update --state completed` | `work.completed`           |
+| `* → cancelled`                    | `work update --state cancelled` | `work.cancelled`           |
 
 ### Leases
 
@@ -202,11 +249,11 @@ forced senior-level questions the worker must answer. The gate passes only when
 every blocker question is `accepted` and every review comment is `resolved`:
 
 1. **Comment.** Reviewer: `review comment --review <id> --work <id> --workspace
-   <id> --artifact <id> --file <f> --side new --body "…"`. The worker addresses it
+<id> --artifact <id> --file <f> --side new --body "…"`. The worker addresses it
    and the reviewer runs `review comment resolve <comment_id>`.
 2. **Grill.** Reviewer: `grill open …`, then `grill ask <grill_id> --severity
-   blocker --prompt "…"`. The worker answers with `grill answer <question_id>
-   --answer "…"`; the reviewer records `grill verdict <question_id> --accept`.
+blocker --prompt "…"`. The worker answers with `grill answer <question_id>
+--answer "…"`; the reviewer records `grill verdict <question_id> --accept`.
 3. **Evaluate.** Reviewer: `grill evaluate <grill_id>` computes pass/fail —
    `passed` requires every blocker accepted and every comment resolved.
 4. **Approve.** On a green gate, `review approve <id> --met <csv>`.
