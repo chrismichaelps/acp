@@ -33,3 +33,15 @@ jobs:
 
       - name: Run HA dogfood
         run: node scripts/acp-docker-ha-dogfood.mjs
+
+  edge-smoke:
+    name: Traefik edge profile smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Run edge smoke test
+        run: node scripts/acp-docker-edge-smoke.mjs

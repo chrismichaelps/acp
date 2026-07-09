@@ -25,6 +25,11 @@
     "acp:ha:up": "docker compose --profile ha up -d --build",
     "acp:ha:down": "docker compose --profile ha down",
     "acp:ha:logs": "docker compose logs -f acp-ha",
+    "acp:edge:up": "docker compose --profile sqlite --profile edge up -d --build",
+    "acp:edge:down": "docker compose --profile sqlite --profile edge down",
+    "acp:edge:logs": "docker compose logs -f traefik",
+    "acp:ha:edge:up": "docker compose --profile ha --profile edge up -d --build",
+    "acp:ha:edge:down": "docker compose --profile ha --profile edge down",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
