@@ -190,16 +190,15 @@ const make = Effect.gen(function* () {
       }),
     )
 
-  const all = () =>
-    Effect.flatMap(storage.list(collection), (stored) =>
-      Effect.forEach(Chunk.toReadonlyArray(stored), decodeStoredWork),
-    )
-
   const listForWorkspace: WorkUnitServiceApi['listForWorkspace'] = (
     workspaceId,
   ) =>
-    Effect.map(all(), (workUnits) =>
-      workUnits.filter((work) => work.workspace_id === workspaceId),
+    Effect.flatMap(
+      storage.queryBy(collection, [
+        { field: 'workspace_id', value: workspaceId },
+      ]),
+      (stored) =>
+        Effect.forEach(Chunk.toReadonlyArray(stored), decodeStoredWork),
     )
 
   const requireWork = (workId: WorkId) =>
