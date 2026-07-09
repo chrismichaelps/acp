@@ -31,6 +31,13 @@ services:
     volumes:
       - acp-data:/data
     restart: unless-stopped
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.acp.rule=Host(`acp.localhost`)'
+      - 'traefik.http.routers.acp.entrypoints=web,websecure'
+      - 'traefik.http.routers.acp.tls=true'
+      - 'traefik.http.services.acp.loadbalancer.server.port=4317'
+      - 'traefik.http.routers.acp.middlewares=acp-ratelimit@file,acp-compress@file,acp-headers@file'
 
   # ---- ha: Postgres-backed host with pg-notify event fan-out ----
   db:
@@ -70,6 +77,28 @@ services:
       ACP_STORAGE_ADAPTER: postgres
       ACP_EVENT_BROKER: pg-notify
       ACP_DATABASE_URL: postgres://acp:acp@db:5432/acp
+    restart: unless-stopped
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.acp.rule=Host(`acp.localhost`)'
+      - 'traefik.http.routers.acp.entrypoints=web,websecure'
+      - 'traefik.http.routers.acp.tls=true'
+      - 'traefik.http.services.acp.loadbalancer.server.port=4317'
+      - 'traefik.http.routers.acp.middlewares=acp-ratelimit@file,acp-compress@file,acp-headers@file'
+
+  # ---- edge: Traefik reverse proxy (overlay on either base profile) ----
+  traefik:
+    profiles: ['edge']
+    image: traefik:v3.1
+    container_name: acp-traefik
+    ports:
+      - '80:80'
+      - '443:443'
+      - '8080:8080'
+    volumes:
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
 
 volumes:
