@@ -99,14 +99,34 @@ checkpoint, and re-request review.
 
 Illegal jumps return `invalid_state_transition` (HTTP 409).
 
-```
-open ─▶ claimed ─▶ running ─▶ needs_review ─▶ approved ─▶ completed
-                      ▲            │
-                      └── changes_requested ◀┘
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> open
+    open --> claimed
+    claimed --> running
+    running --> needs_review
+    running --> blocked
+    blocked --> running
+    needs_review --> approved
+    needs_review --> changes_requested
+    needs_review --> running
+    changes_requested --> running
+    approved --> completed
+    needs_review --> rejected
+    open --> cancelled
+    claimed --> cancelled
+    running --> cancelled
+    completed --> [*]
+    rejected --> [*]
+    cancelled --> [*]
 ```
 
-`blocked`, `rejected`, `cancelled` are the other terminal/holding states.
-`review request` is the only path that performs `running → needs_review`.
+Happy path: `open → claimed → running → needs_review → approved → completed`.
+`review request` is the only path that performs `running → needs_review`;
+`request-changes` sends work to `changes_requested → running`; `blocked ⇄
+running` covers external stalls. `completed`, `rejected`, and `cancelled` are
+terminal, and `cancelled` is reachable from any pre-review state.
 
 ## 4. The review gate
 
@@ -116,11 +136,11 @@ forced senior-level questions the worker must answer. The gate passes only when
 every blocker question is `accepted` and every review comment is `resolved`:
 
 1. **Comment.** Reviewer: `review comment --review <id> --work <id> --workspace
-   <id> --artifact <id> --file <f> --side new --body "…"`. The worker addresses it
+<id> --artifact <id> --file <f> --side new --body "…"`. The worker addresses it
    and the reviewer runs `review comment resolve <comment_id>`.
 2. **Grill.** Reviewer: `grill open …`, then `grill ask <grill_id> --severity
-   blocker --prompt "…"`. The worker answers with `grill answer <question_id>
-   --answer "…"`; the reviewer records `grill verdict <question_id> --accept`.
+blocker --prompt "…"`. The worker answers with `grill answer <question_id>
+--answer "…"`; the reviewer records `grill verdict <question_id> --accept`.
 3. **Evaluate.** Reviewer: `grill evaluate <grill_id>` computes pass/fail —
    `passed` requires every blocker accepted and every comment resolved.
 4. **Approve.** On a green gate, `review approve <id> --met <csv>`.

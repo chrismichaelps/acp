@@ -19,12 +19,34 @@ changes_requested · approved · rejected · completed · cancelled` (state mach
 
 ## State Machine (authoritative)
 
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> open
+    open --> claimed
+    claimed --> running
+    running --> needs_review
+    running --> blocked
+    blocked --> running
+    needs_review --> approved
+    needs_review --> changes_requested
+    needs_review --> running
+    changes_requested --> running
+    approved --> completed
+    needs_review --> rejected
+    open --> cancelled
+    claimed --> cancelled
+    running --> cancelled
+    completed --> [*]
+    rejected --> [*]
+    cancelled --> [*]
 ```
-open → claimed → running → (blocked ⇄ running) → needs_review → approved → completed
-open|claimed|running → cancelled
-needs_review → rejected
-needs_review → changes_requested → running
-```
+
+Happy path: `open → claimed → running → needs_review → approved → completed`.
+`blocked ⇄ running` and `changes_requested → running` are the two return loops;
+`cancelled` is reachable from any pre-review state; `completed`, `rejected`, and
+`cancelled` are terminal. The authoritative edge set lives in `allowedTransitions`
+in [[work-unit-service]].
 
 `changes_requested` is part of [[WorkUnit]] state because the spec §14 state
 machine requires it, even though the §10.3 allowed-state prose omitted it.
