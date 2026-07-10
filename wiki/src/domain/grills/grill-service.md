@@ -136,4 +136,4 @@ seams are [[Storage]], [[EventStore]], and [[ReviewCommentService]].
 
 ## Referenced by
 
-[[grills/_MOC]] · [[Grill]] · [[GrillQuestion]] · [[ReviewComment]] · [[src/_MOC]]
+[[grill-index]] · [[grills/_MOC]] · [[Grill]] · [[ReviewComment]] · [[src/_MOC]]

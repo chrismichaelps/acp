@@ -7,6 +7,7 @@ tags: [moc, src, infrastructure, events]
 
 Concrete event fan-out adapters behind the domain [[EventBroker]] seam.
 
+- [[events-index]] — opaque infrastructure event-adapter barrel.
 - [[pg-notify-event-broker]] — Postgres LISTEN/NOTIFY broker for multi-replica
   live event fan-out.
 

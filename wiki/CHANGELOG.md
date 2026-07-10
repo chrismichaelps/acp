@@ -2,6 +2,19 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-10 · production source-mirror parity · distilled all 9 previously
+  unregistered production/support modules, defined [[Host]], [[Grill]], and
+  [[ReviewComment]], added missing domain/source MOCs, and reconciled outbound /
+  inbound links; mirror debt is now 88 missing tests, 0 missing production, and 4
+  known RPC naming orphans · validation: exact path audit + Prettier · risk LOW ·
+  [[source-mirror-2026-07-10]]
+
+- 2026-07-10 · source mirror audit · measured 250 TypeScript files against 157
+  mirrored pages: 97 missing (9 production/support + 88 tests) and 4 orphaned RPC
+  test pages; selected production parity → orphan rename → bounded test batches →
+  enforcement, with implementation hard-locked until relevant pages exist · risk
+  LOW · [[source-mirror-2026-07-10]]
+
 - 2026-07-10 · GitHub-bridge sandbox dogfood lane · added the opt-in
   `dogfood:docker-gh-sandbox` lane (host bridge + Docker ACP host) and proved
   `acp gh` import, idempotent bidirectional sync, and denied-before-allowed merge

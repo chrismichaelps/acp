@@ -16,7 +16,10 @@ must resolve to a page here (Constitution Invariant 4).
 - [[Checkpoint]] — a resumable summary of partial progress.
 - [[Memory]] — durable workspace context for agent handoff and recall.
 - [[Review]] — an explicit approval / rejection gate.
+- [[ReviewComment]] — a diff-anchored, resolvable remark within a Review.
+- [[Grill]] — a forced senior-question round within a Review.
 - [[Event]] — an immutable append-only record; the coordination primitive.
+- [[Host]] — the ACP process serving protocol state and transports.
 
 ## Referenced by
 
