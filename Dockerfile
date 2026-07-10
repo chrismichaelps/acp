@@ -23,7 +23,8 @@ RUN pnpm build && pnpm prune --prod
 FROM node:24-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production \
-    ACP_PORT=4317
+    ACP_PORT=4317 \
+    MSGPACKR_NATIVE_ACCELERATION_DISABLED=true
 
 COPY --from=builder --chown=node:node /app/package.json ./package.json
 COPY --from=builder --chown=node:node /app/node_modules ./node_modules

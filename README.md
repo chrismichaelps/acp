@@ -536,6 +536,12 @@ pnpm test
 still emitted. The Docker builder copies both configurations and runs that same
 checked production build.
 
+Production images use msgpackr's supported pure-JavaScript decoder path.
+`pnpm-workspace.yaml` declines only the optional `msgpackr-extract` install
+script, while the runtime sets `MSGPACKR_NATIVE_ACCELERATION_DISABLED=true`.
+The addon accelerates string decoding but is not required for transport
+correctness; native Effect RPC remains covered by the Docker self-dogfood gate.
+
 Beyond unit tests, several lanes exercise ACP against a _live_ host:
 
 - **`pnpm dogfood:docker-self`** — builds the production image once. It
