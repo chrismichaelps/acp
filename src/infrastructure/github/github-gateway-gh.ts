@@ -3,6 +3,7 @@ import { Effect, Layer } from 'effect'
 import { runProcess, type ProcessResult } from '../platform-node/index.js'
 import { GitHubError } from './github-error.js'
 import { GitHubGateway, type GitHubGatewayApi } from './github-gateway.js'
+import { makeReviewThreadResolver } from './github-review-thread.js'
 import type {
   GitHubReviewComment,
   MergeMethod,
@@ -72,6 +73,24 @@ const toReviewComment = (raw: RawReviewComment): GitHubReviewComment => ({
 const resolveReviewThreadMutation =
   'mutation($threadId: ID!) { resolveReviewThread(input: { threadId: $threadId }) { thread { id } } }'
 
+const resolveReviewThread = (run: RunProcess, ref: PrRef, externalId: string) =>
+  Effect.flatMap(
+    makeReviewThreadResolver(ghText(run))(ref, externalId),
+    (thread) =>
+      thread.isResolved
+        ? Effect.void
+        : Effect.asVoid(
+            ghText(run)([
+              'api',
+              'graphql',
+              '-f',
+              `query=${resolveReviewThreadMutation}`,
+              '-F',
+              `threadId=${thread.id}`,
+            ]),
+          ),
+  )
+
 export const makeGhGateway = (run: RunProcess): GitHubGatewayApi => ({
   fetchPullRequest: (ref) =>
     Effect.map(
@@ -139,17 +158,8 @@ export const makeGhGateway = (run: RunProcess): GitHubGatewayApi => ({
       ]),
       toReviewComment,
     ),
-  resolveReviewThread: (_ref: PrRef, externalId: string) =>
-    Effect.asVoid(
-      ghText(run)([
-        'api',
-        'graphql',
-        '-f',
-        `query=${resolveReviewThreadMutation}`,
-        '-F',
-        `threadId=${externalId}`,
-      ]),
-    ),
+  resolveReviewThread: (ref: PrRef, externalId: string) =>
+    resolveReviewThread(run, ref, externalId),
   postIssueComment: (ref: PrRef, body: string) =>
     Effect.asVoid(
       ghText(run)([

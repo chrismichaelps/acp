@@ -38,7 +38,8 @@ returns canned `gh` output and asserts argv; `GitHubGatewayGhLive` binds the rea
 ### Linkage
 
 - **Requires:** [[node-process-io]] (`runProcess`/`ProcessResult`),
-  [[github-gateway]], [[github-types]], [[github-error]].
+  [[github-gateway]], [[github-types]], [[github-error]],
+  [[github-review-thread]].
 - **Consumed by:** [[cli-main]] (provides `GitHubGatewayGhLive` on the `gh` path).
 
 ## Algorithm
@@ -50,7 +51,10 @@ as JSON (parse failure → `GitHubError`). Methods map to `gh` invocations:
 - `fetchPullRequest` → `gh pr view <n> --repo o/r --json number,url,headRefOid,baseRefOid,state,mergeable,title` (mergeable `=== 'MERGEABLE'`).
 - `fetchDiff` → `gh pr diff <n> --repo o/r`.
 - `listReviewComments` / `postReviewComment` → `gh api repos/o/r/pulls/<n>/comments` (REST), mapped through `toReviewComment` (`user.login → author`, `in_reply_to_id → in_reply_to`, `resolved` always `false`).
-- `resolveReviewThread` → `gh api graphql` with the `resolveReviewThread` mutation.
+- `resolveReviewThread` → [[github-review-thread]] pages through GraphQL review
+  threads to translate the stored REST comment database id into a thread node id;
+  already-resolved threads are a no-op, otherwise `gh api graphql` sends the
+  `resolveReviewThread` mutation with the node id.
 - `postIssueComment` → `gh pr comment <n> --body <b> --repo o/r`.
 - `merge` → `gh pr merge <n> --<method> --repo o/r`.
 
@@ -59,7 +63,9 @@ as JSON (parse failure → `GitHubError`). Methods map to `gh` invocations:
 Only [[node-process-io]] spawns a process; this module never calls
 `child_process` directly. Arguments are always an argv array (`shell: false`) — no
 shell-string interpolation. ACP never reads/stores/forwards a token; auth is
-`gh`'s own. A non-zero exit is a typed `GitHubError`, never a throw.
+`gh`'s own. A non-zero exit, invalid REST comment id, malformed GraphQL response,
+or missing review thread is a typed `GitHubError`, never a throw. Never pass a
+REST comment database id directly to the GraphQL mutation.
 
 ## Grill Log
 
@@ -69,3 +75,8 @@ shell-string interpolation. ACP never reads/stores/forwards a token; auth is
 - **Q (major):** Why REST for comments but GraphQL for resolve? **A:** thread
   resolution is only exposed via the GraphQL `resolveReviewThread` mutation; the
   comment list/post live on the REST pulls/comments endpoint.
+- **Q (blocker):** Where should REST comment id → GraphQL thread id translation
+  live? **A:** inside [[github-review-thread]], behind the production adapter.
+  ACP keeps one stable external comment id while the adapter hides GitHub's API
+  mismatch. _Rejected:_ store GraphQL thread ids in the domain record (leaks
+  provider-specific resolution mechanics into comment reconciliation).
