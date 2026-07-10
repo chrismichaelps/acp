@@ -17,7 +17,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.7.0 --activate
       # Builds once, proves domain/transport/auth/persistence behavior, then
       # reuses the image for the HA and edge child gates.
       - name: Run complete Docker self-dogfood
-        run: npm run dogfood:docker-self
+        run: pnpm dogfood:docker-self

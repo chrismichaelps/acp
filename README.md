@@ -528,7 +528,7 @@ pnpm test
 
 Beyond unit tests, several lanes exercise ACP against a _live_ host:
 
-- **`npm run dogfood:docker-self`** — builds the production image once. It
+- **`pnpm dogfood:docker-self`** — builds the production image once. It
   exercises every local domain and transport through the compiled public entry
   points,
   restarts the SQLite container to prove named-volume durability, verifies
