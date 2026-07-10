@@ -88,6 +88,7 @@ services:
       ACP_STORAGE_ADAPTER: postgres
       ACP_EVENT_BROKER: pg-notify
       ACP_DATABASE_URL: postgres://acp:acp@db:5432/acp
+      ACP_SWEEP_INTERVAL: '${ACP_SWEEP_INTERVAL:-60 seconds}'
     restart: unless-stopped
     labels:
       - 'traefik.enable=true'
@@ -108,7 +109,7 @@ services:
   # ---- edge: Traefik reverse proxy (overlay on either base profile) ----
   traefik:
     profiles: ['edge']
-    image: traefik:v3.1
+    image: traefik:v3.7.7
     container_name: acp-traefik
     ports:
       - '80:80'

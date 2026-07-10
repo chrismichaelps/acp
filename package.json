@@ -19,6 +19,7 @@
     "dogfood:cli": "node scripts/acp-cli-dogfood-multi-agent.mjs",
     "dogfood:docker-cli": "node scripts/acp-docker-cli-dogfood.mjs",
     "dogfood:docker-ha": "node scripts/acp-docker-ha-dogfood.mjs",
+    "dogfood:docker-edge": "node scripts/acp-docker-edge-smoke.mjs",
     "acp:up": "docker compose --profile sqlite up -d --build",
     "acp:down": "docker compose --profile sqlite down",
     "acp:logs": "docker compose logs -f acp",

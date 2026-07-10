@@ -2,9 +2,11 @@
 // Proves the edge profile fronts both ACP deployment profiles and discovers
 // every healthy HA replica without changing the direct 4317 entry point.
 import { execFileSync, spawnSync } from 'node:child_process'
+import process from 'node:process'
 import { setTimeout as delay } from 'node:timers/promises'
 
 const HOST = 'acp.localhost'
+const skipBuild = process.env.ACP_DOCKER_SKIP_BUILD === 'true'
 const sqliteCompose = ['compose', '--profile', 'sqlite', '--profile', 'edge']
 const haCompose = ['compose', '--profile', 'ha', '--profile', 'edge']
 
@@ -77,10 +79,33 @@ function backendCount(service) {
   return Array.isArray(servers) ? servers.length : 0
 }
 
-async function waitForReady(label) {
+function providerFailure(compose) {
+  try {
+    const logs = dcCapture(compose, [
+      'logs',
+      '--no-color',
+      '--tail',
+      '80',
+      'traefik',
+    ])
+    return logs
+      .split('\n')
+      .find((line) => line.includes('Failed to retrieve information'))
+  } catch {
+    return undefined
+  }
+}
+
+async function waitForReady(compose, label) {
   for (let i = 0; i < 60; i++) {
     const code = curlStatus('http://127.0.0.1/ready', ['-H', `Host: ${HOST}`])
     if (code === '200') return
+    if (i >= 5 && i % 5 === 0) {
+      const failure = providerFailure(compose)
+      if (failure !== undefined) {
+        throw new Error(`${label} Traefik Docker provider failed: ${failure}`)
+      }
+    }
     await delay(2000)
   }
   throw new Error(
@@ -104,8 +129,8 @@ async function waitForBackends(expected, label) {
 
 async function verifyEdge(compose, label, expectedBackends, upArgs = []) {
   try {
-    dc(compose, ['up', '-d', '--build', ...upArgs])
-    await waitForReady(label)
+    dc(compose, ['up', '-d', ...(skipBuild ? [] : ['--build']), ...upArgs])
+    await waitForReady(compose, label)
 
     const http = curlStatus('http://127.0.0.1/ready', ['-H', `Host: ${HOST}`])
     assert(http === '200', `${label} HTTP :80 returned ${http}`)
