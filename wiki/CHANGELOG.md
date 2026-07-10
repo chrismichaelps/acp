@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-10 · Traefik socket-proxy hardening · removed Traefik's direct Docker
+  socket mount; added pinned Tecnativa proxy `v0.1.1` on an internal control
+  network with read-only version/ping/event/container/network access; edge
+  smoke now denies mutations and unrelated image, volume, and system APIs while
+  retaining SQLite and two-replica HA discovery · risk MEDIUM ·
+  [[ADR-0008-deployment-storage-topology]]
+
 - 2026-07-09 · Docker runtime and HA self-dogfood hardening · pinned Traefik
   `v3.7.7` for Docker Engine 29 provider compatibility and made edge failures
   surface immediately; pruned production dependencies in the build stage so

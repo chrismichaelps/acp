@@ -134,12 +134,14 @@ state. Traefik (free OSS) is the reference implementation, wired as an opt-in
   `docker compose --profile ha --profile edge up --scale acp-ha=3` scales the
   `hosted`/`self-host-ha` topology behind one address with no router config
   change.
-- **Production posture.** A stricter production edge drops the `4317`
-  host-publish entirely once the proxy is the only intended entry point
-  (proxy-only ingress), disables or authenticates the dashboard, and restricts
-  Docker API access instead of mounting the daemon socket directly. The default
-  dev/self-host posture keeps `4317` published for direct `bin/acp` access
-  alongside the proxy.
+- **Docker discovery boundary.** Traefik does not mount the daemon socket. A
+  pinned Tecnativa socket proxy owns the read-only mount and exposes only
+  version, ping, event, container, and network reads over a private internal
+  network shared with Traefik; mutation methods and unrelated API sections are
+  denied. This narrows, but does not eliminate, the host-level trust boundary.
+  A stricter production edge also drops the `4317` host publish once proxy-only
+  ingress is desired and disables or authenticates the dashboard. The default
+  dev/self-host posture retains direct `bin/acp` access alongside the proxy.
 
 ### Operational contract (production-ready across profiles)
 

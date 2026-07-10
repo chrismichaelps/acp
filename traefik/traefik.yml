@@ -14,6 +14,7 @@ api:
 
 providers:
   docker:
+    endpoint: 'tcp://docker-socket-proxy:2375'
     exposedByDefault: false # only services with traefik.enable=true are routed
   file:
     filename: /etc/traefik/dynamic.yml
