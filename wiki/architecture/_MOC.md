@@ -59,6 +59,16 @@ None yet (no 3+ external-seam hops).
 
 Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 
+## Mirror Integrity
+
+[[source-mirror-2026-07-10]] found 250 TypeScript source files, 157 mirrored
+non-MOC pages, 97 missing mirrors (9 production/support modules + 88 tests), and
+4 orphaned RPC pages caused by `-test.md` instead of `.test.md` naming. The nine
+production/support modules are now distilled, leaving 88 missing test mirrors and
+the same four path orphans. The depth distribution above is therefore an
+active-module baseline, not a complete source inventory. RPC orphan repair is the
+next documentation-first slice.
+
 ## ADRs
 
 - [[ADR-0001-architecture-foundation]] — ACCEPTED.

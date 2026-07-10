@@ -9,6 +9,7 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
 [[acp-http-api]] to the domain services.
 
 - [[server-index]] — opaque server barrel (router + id-clock + http-app).
+- [[health-routes]] — unauthenticated Host liveness/readiness probes.
 - [[id-clock]] — id/timestamp minting primitive for the composition root.
 - [[acp-router]] — `HttpRouter` wiring all v0.1 routes to services + SSE + `/rpc`.
 - [[session-capabilities-test]] — focused HTTP regression for advertised host

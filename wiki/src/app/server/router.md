@@ -90,6 +90,7 @@ export const acpRouter: HttpRouter.HttpRouter<
 - **Requires:** domain service barrels used by inline handlers, [[event-store]],
   [[id-clock]], [[acp-http-api]] (payload schemas), [[route-support]],
   [[workspace-routes]], [[worker-routes]], [[resume-routes]], [[event-routes]],
+  [[health-routes]],
   [[sse-event-stream]], [[rpc-endpoint]] (`POST /rpc` handler)
 - **Consumed by:** [[server-main]] (the Node entrypoint).
 

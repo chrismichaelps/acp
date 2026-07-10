@@ -100,6 +100,7 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 ### Linkage
 
 - **Requires:** [[work-unit.schema]], [[worker.schema]], [[workspace.schema]],
+  [[acp-http-api-resume]],
   [[lease.schema]], [[artifact.schema]], [[checkpoint.schema]], [[review.schema]],
   [[event.schema]], [[error.schema]]
 - **Consumed by:** future HTTP handler/server layer and generated clients.

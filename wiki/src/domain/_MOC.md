@@ -32,6 +32,14 @@ They depend on seams such as [[Storage]], never on HTTP, JSON-RPC, or Node APIs.
 
 - [[reviews/_MOC|Reviews MOC]] — human-in-the-loop Review gates for WorkUnits.
 
+## review-comments/
+
+- [[review-comments/_MOC|Review Comments MOC]] — diff-anchored ReviewComment lifecycle.
+
+## grills/
+
+- [[grills/_MOC|Grills MOC]] — forced senior-question evidence for Review gates.
+
 ## sessions/
 
 - [[sessions/_MOC|Sessions MOC]] — Session registry binding bearer tokens to workers (spec §8/§9).

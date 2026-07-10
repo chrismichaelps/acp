@@ -67,6 +67,14 @@ not delete the distilled content.
 No implementation code is authorized during steps 1–3; these are restoration of
 the constitutional wiki registry.
 
+## Progress
+
+- ✅ Production parity: all nine production/support pages distilled with domain
+  vocabulary, MOCs, linkage, negative logic, depth, and Grill Logs.
+- Current audit: 88 missing mirrors, all tests; 0 missing production/support; 4
+  known RPC naming orphans.
+- Next: rename/reconcile the four RPC roundtrip pages to exact `.test.md` paths.
+
 ## Grill Log
 
 - **Q:** Do test files require mirrors? **A:** Yes. FMCF's 1:1 law says every

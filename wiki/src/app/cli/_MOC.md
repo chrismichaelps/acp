@@ -29,7 +29,10 @@ Mirror of `@root/src/app/cli/`. The `acp` command-line client of [[acp-router]].
 - [[cli-worker-commands]] — worker registry command map.
 - [[cli-workspace-commands]] — workspace lifecycle command map.
 - [[cli-client]] — `HttpClient` sender against the local host.
+- [[cli-dogfood-support]] — live multi-agent CLI harness and gate fixtures.
 - [[gh-bridge]] — `acp gh import|sync|merge` bridge binding the review gate to GitHub PRs.
+- [[gh-bridge-support]] — typed ACP GET/POST helpers for the GitHub bridge.
+- [[gh-reconcile]] — pure comment reconciliation and merge-gate rules.
 - [[cli-main]] — Node entrypoint; prints JSON results.
 - [[cli-usage]] — usage text printed for invalid local commands.
 

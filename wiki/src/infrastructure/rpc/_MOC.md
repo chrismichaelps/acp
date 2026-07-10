@@ -26,6 +26,7 @@ first-party Effect RPC contract selected by [[ADR-0007-effect-rpc-adoption]].
 - [[rpc-telemetry-middleware]] — wrap-style native RPC completion telemetry
   using Effect log annotations and spans.
 - [[rpc-error]] — domain-error to `ProtocolError` mapper for native RPC.
+- [[acp-rpc-test-support]] — shared native RPC test runtime and payload helpers.
 - [[acp-rpc-roundtrip-test]] — first generated-client contract smoke test.
 - [[acp-rpc-roundtrip-work-lease-test]] — generated-client coverage for
   worker, workspace, work, and lease methods.
