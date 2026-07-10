@@ -1,0 +1,128 @@
+/**
+ * @Acp.App.Server.ResumeWorkspace — global-workspace shaping for the resume packet.
+ *
+ * The resume packet is the shared workspace an agent reads to resume work. Global
+ * Workspace Theory says such a workspace has *limited capacity* and admits content
+ * by *salience*, and is *written once, read many*. This module supplies the two
+ * pure pieces that make the packet behave that way without breaking any consumer:
+ *
+ *   - `budgetResume` bounds the inline artifacts/reviews to the most salient N and
+ *     broadcasts the remainder as references (opt-in via `?budget=`);
+ *   - `resumeDigest`/`etagOf` give the packet a stable ETag so an agent that
+ *     already holds it revalidates cheaply (If-None-Match -> 304).
+ *
+ * Correctness guard: budgeting never drops gate-critical reviews — an `approved`
+ * review and the review tied to the latest grill are always pinned into the inline
+ * set — so a budgeted packet can never flip the merge gate's decision.
+ */
+import { createHash } from 'node:crypto'
+import type { Artifact, Review, ReviewId } from '../../protocol/schema/index.js'
+
+export interface ElidedRefs {
+  readonly count: number
+  readonly ids: readonly string[]
+}
+
+export interface ResumeElision {
+  readonly artifacts?: ElidedRefs
+  readonly reviews?: ElidedRefs
+}
+
+export interface BudgetedResume {
+  readonly artifacts: readonly Artifact[]
+  readonly reviews: readonly Review[]
+  readonly elided: ResumeElision | undefined
+}
+
+/** Most-recent first; id as a deterministic tiebreak so ordering is stable. */
+const recencyDesc = <
+  T extends { readonly created_at: string; readonly id: string },
+>(
+  a: T,
+  b: T,
+): number => {
+  const delta = Date.parse(b.created_at) - Date.parse(a.created_at)
+  if (delta !== 0) return delta
+  return a.id < b.id ? 1 : a.id > b.id ? -1 : 0
+}
+
+/** Parse a `?budget=` value: a non-negative integer, else null (no budgeting). */
+export const parseBudget = (raw: string | undefined): number | null => {
+  if (raw === undefined || raw === '') return null
+  const value = Number(raw)
+  return Number.isInteger(value) && value >= 0 ? value : null
+}
+
+/**
+ * Bound inline artifacts/reviews to the `budget` most salient, eliding the rest to
+ * `{ count, ids }` references. `budget === null` disables budgeting (full packet).
+ * Gate-critical reviews are pinned and survive even a budget of 0.
+ */
+export const budgetResume = (
+  artifacts: readonly Artifact[],
+  reviews: readonly Review[],
+  latestGrillReviewId: ReviewId | null,
+  budget: number | null,
+): BudgetedResume => {
+  if (budget === null || budget < 0)
+    return { artifacts, reviews, elided: undefined }
+
+  const artByRecency = [...artifacts].sort(recencyDesc)
+  const keptArtifacts = artByRecency.slice(0, budget)
+  const elidedArtifacts = artByRecency.slice(budget)
+
+  const isPinned = (review: Review): boolean =>
+    review.state === 'approved' || review.id === latestGrillReviewId
+  const pinned = reviews.filter(isPinned)
+  const pinnedIds = new Set(pinned.map((review) => review.id))
+  const rest = reviews
+    .filter((review) => !pinnedIds.has(review.id))
+    .sort(recencyDesc)
+  const fill = Math.max(budget - pinned.length, 0)
+  const keptRest = rest.slice(0, fill)
+  const elidedReviews = rest.slice(fill)
+  const keptReviews = [...pinned, ...keptRest].sort(recencyDesc)
+
+  const elision: ResumeElision = {
+    ...(elidedArtifacts.length > 0
+      ? {
+          artifacts: {
+            count: elidedArtifacts.length,
+            ids: elidedArtifacts.map((artifact) => artifact.id),
+          },
+        }
+      : {}),
+    ...(elidedReviews.length > 0
+      ? {
+          reviews: {
+            count: elidedReviews.length,
+            ids: elidedReviews.map((review) => review.id),
+          },
+        }
+      : {}),
+  }
+  const hasElision =
+    elision.artifacts !== undefined || elision.reviews !== undefined
+  return {
+    artifacts: keptArtifacts,
+    reviews: keptReviews,
+    elided: hasElision ? elision : undefined,
+  }
+}
+
+/**
+ * Stable digest of the *full* resume state plus the budget. Encoding is
+ * deterministic, so re-computing on an unchanged work yields the same hash; any
+ * change to any entity (even an elided one) or to the budget busts it.
+ */
+export const resumeDigest = (
+  encodedFullPacket: string,
+  budget: number | null,
+): string =>
+  createHash('sha256')
+    .update(encodedFullPacket)
+    .update(`|budget=${budget === null ? 'full' : String(budget)}`)
+    .digest('hex')
+
+/** HTTP entity-tag form of a digest (quoted, per RFC 7232). */
+export const etagOf = (digest: string): string => `"${digest}"`

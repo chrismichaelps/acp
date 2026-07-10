@@ -28,6 +28,16 @@ pattern and the Postgres/`seq` topology), and the state-first design principle i
 parallel work sequences against it. Slices 1–3 (the scale tier) are approved to
 start first.
 
+**Implemented (2026-07-10) — resume packet as a bounded global workspace (B4).**
+`GET /v1/work/:id/resume` now carries a stable `sha256` `ETag` and answers a
+matching `If-None-Match` with `304 Not Modified` (write-once-read-many), and an
+opt-in `?budget=N` returns a salience-ranked view that inlines the N most-recent
+artifacts/reviews and elides the rest to `{ count, ids }` references. The pure
+[[resume-workspace]] module carries the shaping and the correctness guard that
+pins gate-critical reviews, so a budgeted packet can never flip the merge gate.
+This is the transport-level slice of B4; the content-addressed [[Blob]] store and
+delta [[Handoff]] record remain the deeper, still-staged wins.
+
 This ADR is the comprehensive technical design for **Feature 580 — Optimize ACP
 for Multi-Agent Context Exchange**. It is organized to answer, in order: what the
 current system does, where it bottlenecks, how many tokens that costs, and the

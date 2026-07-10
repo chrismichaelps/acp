@@ -5,6 +5,7 @@ import {
   flag,
   optional,
   optionalClientFilter,
+  optionalQuery,
   positional,
   type CommandHandler,
 } from './command-support.js'
@@ -53,12 +54,16 @@ export const workCommandHandlers: Readonly<Record<string, CommandHandler>> = {
       }
     }),
 
-  'work resume': ({ positionals }) =>
+  'work resume': ({ positionals, flags }) =>
     Either.gen(function* () {
       const workId = yield* positional(positionals, 0, 'work_id')
+      // `--budget N` asks the host for a salience-bounded resume packet; omitted
+      // means the full packet (unchanged default).
+      const query = optionalQuery(flags, 'budget')
+      const suffix = query.length > 0 ? `?${query.join('&')}` : ''
       return {
         method: 'GET',
-        path: `/v1/work/${encodePathSegment(workId)}/resume`,
+        path: `/v1/work/${encodePathSegment(workId)}/resume${suffix}`,
         label: 'work resume',
       }
     }),

@@ -38,7 +38,9 @@ export const getArtifactContent: HttpRouter handler
 
 - `GET /v1/work/{work_id}` → [[WorkUnit]]
 - `GET /v1/work/{work_id}/resume` → compact resume packet (`work`,
-  `latest_checkpoint`, `artifacts`, `reviews`, `open_comments`, `latest_grill`)
+  `latest_checkpoint`, `artifacts`, `reviews`, `open_comments`, `latest_grill`,
+  optional `elided`). Carries an `ETag`; `If-None-Match` yields `304`. Accepts
+  `?budget=N` for a salience-bounded view (see [[resume-workspace]]).
 - `GET /v1/work/{work_id}/checkpoints` → newest-first [[Checkpoint]][]
 - `GET /v1/work/{work_id}/checkpoints/latest` → latest [[Checkpoint]]
 - `GET /v1/work/{work_id}/artifacts` → [[Artifact]][]
@@ -59,6 +61,18 @@ reviews via [[grill-service]] `listForReview` — `Option.none` when the work ha
 no grills. List endpoints return empty arrays for existing work with
 no checkpoints, artifacts, or reviews. The latest-checkpoint endpoint returns
 `404 not_found` when the work exists but no checkpoint has been published.
+
+`getWorkResumePacket` also shapes the packet as a bounded global workspace via
+[[resume-workspace]]. It encodes the full packet, derives a stable `sha256`
+`ETag` over that encoding plus the `?budget=` value, and returns `304 Not
+Modified` (empty body, same `ETag`) when the request's `If-None-Match` matches —
+write-once-read-many revalidation instead of re-downloading. With `?budget=N` it
+inlines the `N` most salient (most-recent) artifacts and reviews and moves the
+remainder to `elided: { artifacts?, reviews? }` reference sets. Budgeting is
+opt-in and never drops gate-critical reviews (an `approved` review and the one
+tied to `latest_grill` are pinned), so a budgeted packet cannot flip the merge
+gate; `open_comments`, `latest_grill`, `work`, and `latest_checkpoint` are never
+budgeted.
 
 `getArtifactContent` reads `artifact_id`, authorizes `workspace:read`, verifies
 the [[Artifact]] metadata exists, then returns host-stored content when present.

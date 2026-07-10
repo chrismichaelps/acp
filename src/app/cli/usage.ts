@@ -11,7 +11,7 @@ export const usage = `acp — Agent Coordination Protocol CLI
   acp work create <title> --workspace <id> [--priority <p>] [--description <d>]
   acp work list --workspace <id> [--state <state>] [--priority <priority>] [--assigned-to <worker_id>]
   acp work get <work_id>
-  acp work resume <work_id>
+  acp work resume <work_id> [--budget <n>]
   acp work claim <work_id> --worker <id>
   acp work update <work_id> --state <state>
   acp lease request --workspace <id> --holder <id> --kind <k> --uri <u> [--ttl <n>]
