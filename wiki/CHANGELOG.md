@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-10 · resume packet as a global workspace · gave
+  `GET /v1/work/:id/resume` a stable `sha256` ETag with `If-None-Match` → `304`
+  revalidation and an opt-in `?budget=N` salience-bounded view that elides
+  lower-salience artifacts/reviews to `{count, ids}` refs; gate-critical reviews
+  (approved + latest-grill) are pinned so a budgeted packet cannot flip the merge
+  gate; pure [[resume-workspace]] module, additive `elided` field, backward
+  compatible · risk LOW · [[ADR-0010-context-exchange-optimization]] · refs #580
+
 - 2026-07-10 · foundational CLI test mirrors · distilled the injected HTTP/auth
   and response-filter client contract, duplicate-safe longest-prefix command
   registry, aggregate argv projection, and focused event/lease/work parser

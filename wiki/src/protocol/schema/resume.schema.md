@@ -38,6 +38,12 @@ work units never open a [[Grill]]; when present it is the newest grill by
 `created_at` across the work's reviews. Both are additive — existing consumers
 ignore the extra fields.
 
+`elided` (`ResumeElision`) is an optional field present only on a `?budget=`
+read: `{ artifacts?: { count, ids }, reviews?: { count, ids } }` names the
+inline content that [[resume-workspace]] moved to references so a caller can
+fetch it on demand. It is omitted on full packets, so existing consumers and the
+merge gate see the unchanged shape.
+
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT embed artifact content in the resume packet.

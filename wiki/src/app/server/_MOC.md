@@ -21,6 +21,8 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
 - [[workspace-routes]] — workspace list/create/update HTTP handlers.
 - [[worker-routes]] — host-scoped worker registry read handlers.
 - [[resume-routes]] — work-scoped read handlers for handoff and recovery.
+- [[resume-workspace]] — salience budgeting + ETag digest that shapes the resume
+  packet as a bounded global workspace.
 - [[review-routes]] — review lifecycle mutation handlers (request/approve/reject
   /request-changes/cancel).
 - [[review-comment-routes]] — diff-anchored review comment add/resolve/reopen

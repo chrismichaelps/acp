@@ -1,4 +1,9 @@
 /** @Acp.App.Server.ResumeRoutes — work-scoped handoff read handlers */
+import {
+  Headers,
+  HttpServerRequest,
+  HttpServerResponse,
+} from '@effect/platform'
 import { Effect, Option, Schema } from 'effect'
 import { ArtifactService } from '../../domain/artifacts/index.js'
 import { CheckpointService } from '../../domain/checkpoints/index.js'
@@ -18,6 +23,12 @@ import {
 import type { ArtifactId, WorkId } from '../../protocol/schema/index.js'
 import type { WorkUnitServiceApi } from '../../domain/work-units/index.js'
 import { authorizeWorkspace, ok, pathParam, respond } from './route-support.js'
+import {
+  budgetResume,
+  etagOf,
+  parseBudget,
+  resumeDigest,
+} from './resume-workspace.js'
 
 const workIdParam = () =>
   Effect.map(pathParam('work_id'), (workId) => workId as WorkId)
@@ -74,14 +85,60 @@ export const getWorkResumePacket = respond('GET /v1/work/:work_id/resume')(
         }),
       Option.none<(typeof grillLists)[number][number]>(),
     )
-    return yield* ok(200)(WorkResumePacket, {
+
+    // The full, unbudgeted packet is the canonical state the ETag is computed
+    // over; the response body may be a bounded, salience-ranked view of it.
+    const fullPacket = {
       work: foundWork,
       latest_checkpoint: latest,
       artifacts: foundArtifacts,
       reviews: foundReviews,
       open_comments: openComments,
       latest_grill: latestGrill,
+    }
+    const request = yield* HttpServerRequest.HttpServerRequest
+    const query = new URL(request.url, 'http://acp.local').searchParams
+    const budget = parseBudget(query.get('budget') ?? undefined)
+
+    const encodedFull = yield* Schema.encode(WorkResumePacket)(fullPacket)
+    const etag = etagOf(resumeDigest(JSON.stringify(encodedFull), budget))
+
+    // Write-once-read-many: a caller that already holds this packet revalidates
+    // with If-None-Match and gets 304 instead of re-downloading the whole thing.
+    const ifNoneMatch = Option.getOrElse(
+      Headers.get(request.headers, 'if-none-match'),
+      () => '',
+    )
+    if (ifNoneMatch === etag) {
+      return HttpServerResponse.empty({ status: 304 }).pipe(
+        HttpServerResponse.setHeader('etag', etag),
+      )
+    }
+
+    const latestGrillReviewId = Option.match(latestGrill, {
+      onNone: () => null,
+      onSome: (grill) => grill.review_id,
     })
+    const budgeted = budgetResume(
+      foundArtifacts,
+      foundReviews,
+      latestGrillReviewId,
+      budget,
+    )
+    const encodedBody =
+      budget === null
+        ? encodedFull
+        : yield* Schema.encode(WorkResumePacket)({
+            ...fullPacket,
+            artifacts: budgeted.artifacts,
+            reviews: budgeted.reviews,
+            ...(budgeted.elided === undefined
+              ? {}
+              : { elided: budgeted.elided }),
+          })
+    return HttpServerResponse.unsafeJson(encodedBody, { status: 200 }).pipe(
+      HttpServerResponse.setHeader('etag', etag),
+    )
   }),
 )
 
