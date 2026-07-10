@@ -87,7 +87,9 @@ acp review approve review_xxx --met "correctness"   # a reviewer does this
 acp work update work_xxx --state completed
 acp lease release lease_xxx
 
-# Recover after any restart BEFORE acting: replay, then subscribe.
+# Recover after any restart BEFORE acting: read the bounded handoff, replay,
+# then subscribe. Choose a budget that fits your context window.
+acp work resume work_xxx --budget 8
 acp events list --workspace workspace_xxx --after 0
 acp events stream --workspace workspace_xxx
 ```
@@ -148,6 +150,21 @@ blocker --prompt "…"`. The worker answers with `grill answer <question_id>
 The `work resume <id>` packet carries `open_comments` and `latest_grill`, so a
 returning reviewer sees outstanding gate obligations in a single read.
 
+For long-running work, prefer `acp work resume <id> --budget <n>`. The bounded
+packet always keeps `work`, `latest_checkpoint`, `open_comments`, and
+`latest_grill` inline; it keeps the most-recent artifact metadata and review
+records up to the requested capacity, then reports the remainder under
+`elided.artifacts` / `elided.reviews` as `{count, ids}` references. Approved
+reviews and the review tied to `latest_grill` are pinned even when that exceeds
+the budget, so context shaping cannot hide a merge-gate obligation. Omit
+`--budget` when you need the full backward-compatible packet.
+
+Direct HTTP clients also receive a stable `ETag` from
+`GET /v1/work/<id>/resume` (including budgeted reads). Re-send it in
+`If-None-Match`; unchanged state returns `304` with no response body. Any packet
+change, including an elided entity, invalidates the tag. The CLI exposes
+`--budget` today but does not persist/re-send ETags for you.
+
 ## 5. GitHub-driven workflow (optional)
 
 `acp gh` binds the ACP review gate to a real GitHub pull request. It is a
@@ -171,7 +188,7 @@ session    init      --worker <id> --name <n> [--kind <k>] [--vendor <v>] [--cap
 worker     list | get <worker_id>
 workspace  create --name <n> --kind <k> --uri <u> [--default-branch <b>] | update <id> | archive <id> | list
 work       create <title> --workspace <id> [--priority <p>] [--description <d>]
-work       list --workspace <id> | get <id> | claim <id> --worker <id> | update <id> --state <state>
+work       list --workspace <id> | get <id> | resume <id> [--budget <n>] | claim <id> --worker <id> | update <id> --state <state>
 lease      request --workspace <id> --holder <id> --kind <k> --uri <u> [--ttl <n>]
 lease      list --workspace <id> | renew <id> [--ttl <n>] | revoke <id> | release <id>
 checkpoint create --workspace <id> --work <id> --summary <s> | list --work <id>|--workspace <id> | latest --work <id>
