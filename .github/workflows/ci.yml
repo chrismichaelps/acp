@@ -39,6 +39,9 @@ jobs:
       - name: Check env example
         run: pnpm check:env
 
+      - name: Check edge runtime pins
+        run: pnpm check:edge-runtime-pins
+
       - name: Typecheck
         run: pnpm typecheck
 

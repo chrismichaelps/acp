@@ -420,6 +420,22 @@ internal control network. Only version, ping, event, container, and network
 reads are enabled. The proxy still owns the privileged socket mount, so this
 narrows the trust boundary rather than making Docker daemon access harmless.
 
+The edge runtime is supported and tested with these exact multi-architecture
+release tags:
+
+| Component           | Supported image                               |
+| ------------------- | --------------------------------------------- |
+| Traefik             | `traefik:v3.7.7`                              |
+| Docker socket proxy | `ghcr.io/tecnativa/docker-socket-proxy:0.1.1` |
+
+Dependabot checks only these two Compose dependencies monthly and opens a
+separate reviewable PR for each available release. An update must keep an exact
+release tag, resolve for both AMD64 and ARM64, and pass the complete Docker
+self-dogfood gate before merge; do not substitute `latest`, a floating
+major/minor tag, or an architecture-specific digest. The socket proxy's Git
+release can lead its public container tags, so confirm that the proposed tag is
+actually published before changing the pin.
+
 **Opt-in basic-auth** (demo): generate a hash and attach the middleware —
 `htpasswd -nbB acp acp` → add an `acp-auth` `basicAuth` middleware to
 `traefik/dynamic.yml` and append `acp-auth@file` to the router's
