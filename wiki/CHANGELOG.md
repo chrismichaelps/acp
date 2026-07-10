@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-10 · GitHub-bridge sandbox dogfood lane · added the opt-in
+  `dogfood:docker-gh-sandbox` lane (host bridge + Docker ACP host) proving
+  `acp gh` import, idempotent bidirectional sync, and denied-before-allowed merge
+  against a disposable PR; refuses any repo lacking the `acp-disposable-sandbox`
+  topic, keeps credentials owned by `gh`, and stays out of the offline CI gate ·
+  risk LOW · [[gh-bridge]] · refs #268
+
 - 2026-07-10 · ADR-0008 implementation reconciliation · replaced the stale
   direction-only deployment record with a source-backed implemented/partial/
   deferred ledger; aligned the canonical profile table with `AppConfig`, marked

@@ -45,7 +45,11 @@ fake is an in-memory scripted double recording posts/resolves/merges.
 DRIFT 0 (HEALTHY). Both adapters are code-complete and tested: the gh adapter for
 argv construction + JSON/GraphQL parsing and non-zero-exit → `GitHubError`; the
 fake for post→list reflection and merge/resolve recording. The bridge
-([[gh-bridge]]) is proven end-to-end over a live ACP server + fake gateway.
+([[gh-bridge]]) is proven end-to-end over a live ACP server + fake gateway. An
+opt-in Docker lane (`dogfood:docker-gh-sandbox`, see [[gh-bridge]]) additionally
+exercises the real `gh` adapter against a disposable PR — import, idempotent
+bidirectional sync, and a denied-before-allowed merge — without joining the
+offline CI gate, since a live merge needs external authenticated authority.
 
 ## Deepening
 

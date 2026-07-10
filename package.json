@@ -22,6 +22,7 @@
     "dogfood:docker-self": "node scripts/acp-docker-self-dogfood.mjs",
     "dogfood:docker-ha": "node scripts/acp-docker-ha-dogfood.mjs",
     "dogfood:docker-edge": "node scripts/acp-docker-edge-smoke.mjs",
+    "dogfood:docker-gh-sandbox": "node scripts/acp-docker-gh-sandbox.mjs",
     "acp:up": "docker compose --profile sqlite up -d --build",
     "acp:down": "docker compose --profile sqlite down",
     "acp:logs": "docker compose logs -f acp",
