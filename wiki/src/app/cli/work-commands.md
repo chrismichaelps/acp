@@ -73,4 +73,4 @@ command map and further reduces the central parser's file-size pressure.
 
 ## Referenced by
 
-[[cli-commands]] · [[cli/_MOC]]
+[[work-commands.test]] · [[cli-commands]] · [[cli/_MOC]]

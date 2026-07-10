@@ -60,4 +60,4 @@ new lease actions local to one module.
 
 ## Referenced by
 
-[[cli-commands]] · [[cli/_MOC]]
+[[lease-commands.test]] · [[cli-commands]] · [[cli/_MOC]]

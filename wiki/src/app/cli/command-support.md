@@ -69,5 +69,6 @@ command maps while preserving a small, stable helper interface.
 
 ## Referenced by
 
-[[cli-checkpoint-commands]] · [[cli-commands]] · [[cli-event-commands]] ·
-[[cli-lease-commands]] · [[cli-memory-commands]] · [[cli/_MOC]]
+[[command-registry.test]] · [[commands.test]] · [[cli-checkpoint-commands]] ·
+[[cli-commands]] · [[cli-event-commands]] · [[cli-lease-commands]] ·
+[[cli-memory-commands]] · [[cli/_MOC]]

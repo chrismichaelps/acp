@@ -66,10 +66,12 @@ non-MOC pages, 97 missing mirrors (9 production/support modules + 88 tests), and
 4 orphaned RPC pages caused by `-test.md` instead of `.test.md` naming. The nine
 production/support modules are now distilled and the four RPC pages use exact
 `.test.md` paths. The first bounded test batch now registers the app layer,
-logging, stdio framing, and config profile contracts, leaving 80 missing test
-mirrors with no production gaps or orphans. The depth distribution above is
-therefore an active-module baseline, not a complete source inventory. Bounded CLI
-test distillation is the next documentation-first slice.
+logging, stdio framing, and config profile contracts. The foundational CLI
+client, registry, aggregate parser, event, lease, and work tests are also
+registered, leaving 74 missing test mirrors with no production gaps or orphans.
+The depth distribution above is therefore an active-module baseline, not a
+complete source inventory. The remaining focused CLI tests are the next
+documentation-first slice.
 
 ## ADRs
 

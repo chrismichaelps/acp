@@ -26,6 +26,9 @@ tags: [handoff]
 - Distilled the app layer, logging, stdio frame, and config executable contracts;
   added `config/_MOC` and reconciled source/module backlinks. The audit now
   reports 80 missing test mirrors and 0 orphans.
+- Distilled the foundational CLI client, registry, aggregate parser, event,
+  lease, and work tests and reconciled CLI module/MOC links. The audit now
+  reports 74 missing test mirrors and 0 orphans.
 
 ## Decided (do not re-litigate)
 
@@ -36,21 +39,22 @@ tags: [handoff]
 
 ## Open / Remaining
 
-- 80 missing test mirrors: app 33, domain 13, infrastructure 29, and protocol 5.
+- 74 missing test mirrors: app 27, domain 13, infrastructure 29, and protocol 5.
 
 ## Exact next action
 
-DNA Engineer: read and distill the first bounded foundational CLI test batch:
+DNA Engineer: read and distill the seven remaining focused CLI tests:
 
-1. `@root/src/app/cli/client.test.ts`
-2. `@root/src/app/cli/command-registry.test.ts`
-3. `@root/src/app/cli/commands.test.ts`
-4. `@root/src/app/cli/event-commands.test.ts`
-5. `@root/src/app/cli/lease-commands.test.ts`
-6. `@root/src/app/cli/work-commands.test.ts`
+1. `@root/src/app/cli/cli-dogfood-multi-agent.test.ts`
+2. `@root/src/app/cli/gh-bridge.test.ts`
+3. `@root/src/app/cli/gh-merge.test.ts`
+4. `@root/src/app/cli/gh-reconcile.test.ts`
+5. `@root/src/app/cli/grill-commands.test.ts`
+6. `@root/src/app/cli/memory-commands.test.ts`
+7. `@root/src/app/cli/review-comment-commands.test.ts`
 
 Update the CLI MOC and source backlinks, then rerun the bidirectional path audit.
-Expected result: 74 missing tests and 0 orphans.
+Expected result: 67 missing tests and 0 orphans.
 
 ## Links
 

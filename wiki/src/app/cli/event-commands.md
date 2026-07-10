@@ -55,4 +55,4 @@ transport semantics isolated from the central command registry.
 
 ## Referenced by
 
-[[cli-commands]] · [[cli/_MOC]]
+[[event-commands.test]] · [[cli-commands]] · [[cli/_MOC]]
