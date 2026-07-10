@@ -101,4 +101,12 @@ describe('work commands', () => {
       label: 'work resume',
     })
   })
+
+  it('passes --budget through as a resume query for a bounded packet', () => {
+    expect(right(['work', 'resume', 'work_1', '--budget', '5'])).toEqual({
+      method: 'GET',
+      path: '/v1/work/work_1/resume?budget=5',
+      label: 'work resume',
+    })
+  })
 })

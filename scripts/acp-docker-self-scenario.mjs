@@ -279,6 +279,21 @@ export const runFeatureScenario = async (cli, runId) => {
     'resume packet omitted durable context',
   )
 
+  // Token-efficiency: a budgeted resume bounds inline artifacts and elides the
+  // rest to references, proving the global-workspace shaping end-to-end.
+  const budgetedResume = await expectOk(
+    cli,
+    'work resume budgeted',
+    reader.token,
+    ['work', 'resume', work.id, '--budget', '1'],
+  )
+  assert(
+    budgetedResume.artifacts.length === 1 &&
+      budgetedResume.elided?.artifacts?.count === 1 &&
+      budgetedResume.elided.artifacts.ids.length === 1,
+    'budgeted resume did not bound artifacts to references',
+  )
+
   const typedEvents = await expectOk(cli, 'events list typed', reader.token, [
     'events',
     'list',
