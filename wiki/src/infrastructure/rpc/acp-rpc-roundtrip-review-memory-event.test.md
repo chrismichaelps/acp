@@ -7,7 +7,11 @@ seam: '[[Transport]]'
 depth_score: 0.45
 depth_status: SHALLOW
 tags: [test, rpc, roundtrip, review, memory, event]
-aliases: [acp-rpc-roundtrip-review-memory-event-test]
+aliases:
+  [
+    acp-rpc-roundtrip-review-memory-event.test,
+    acp-rpc-roundtrip-review-memory-event-test,
+  ]
 ---
 
 # ACP RPC Roundtrip Review Memory Event Test

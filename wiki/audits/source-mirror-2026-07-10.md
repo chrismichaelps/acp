@@ -19,14 +19,14 @@ mapping to find orphaned wiki pages.
 | Measure                    | Count |
 | -------------------------- | ----: |
 | TypeScript source files    |   250 |
-| Non-MOC source wiki pages  |   157 |
-| Missing mirrors            |    97 |
-| Missing production/support |     9 |
-| Missing tests              |    88 |
-| Orphaned pages             |     4 |
+| Non-MOC source wiki pages  |   166 |
+| Missing mirrors            |    84 |
+| Missing production/support |     0 |
+| Missing tests              |    84 |
+| Orphaned pages             |     0 |
 
-Missing mirrors by source area: `app` 40 · `config` 1 · `domain` 15 ·
-`infrastructure` 36 · `protocol` 5.
+Missing mirrors by source area: `app` 36 · `config` 1 · `domain` 13 ·
+`infrastructure` 29 · `protocol` 5.
 
 ## Production / Support Hard-Lock
 
@@ -42,17 +42,18 @@ These modules are `UNREGISTERED` and cannot be changed until distilled:
 8. `@root/src/infrastructure/http/acp-http-api-resume.ts`
 9. `@root/src/infrastructure/rpc/acp-rpc-test-support.ts`
 
-## Orphaned Pages
+## Repaired Orphaned Pages
 
-Four RPC roundtrip pages use `-test.md` while source uses `.test.ts`:
+Four RPC roundtrip pages used `-test.md` while source uses `.test.ts`:
 
-- `acp-rpc-roundtrip-artifact-checkpoint-test.md`
-- `acp-rpc-roundtrip-review-memory-event-test.md`
-- `acp-rpc-roundtrip-test.md`
-- `acp-rpc-roundtrip-work-lease-test.md`
+- `acp-rpc-roundtrip-artifact-checkpoint.test.md`
+- `acp-rpc-roundtrip-review-memory-event.test.md`
+- `acp-rpc-roundtrip.test.md`
+- `acp-rpc-roundtrip-work-lease.test.md`
 
-Rename each to the exact `.test.md` mirror path and update its aliases/links; do
-not delete the distilled content.
+Each now uses the exact `.test.md` mirror path. The legacy `-test` name remains
+an alias so existing external wiki references degrade safely, while repository
+links target the canonical dotted name.
 
 ## Selected Sequence
 
@@ -71,9 +72,12 @@ the constitutional wiki registry.
 
 - ✅ Production parity: all nine production/support pages distilled with domain
   vocabulary, MOCs, linkage, negative logic, depth, and Grill Logs.
-- Current audit: 88 missing mirrors, all tests; 0 missing production/support; 4
-  known RPC naming orphans.
-- Next: rename/reconcile the four RPC roundtrip pages to exact `.test.md` paths.
+- ✅ RPC orphan repair: four roundtrip pages renamed to exact `.test.md` mirrors;
+  old names retained as aliases and all repository backlinks reconciled.
+- Current audit: 84 missing mirrors, all tests; 0 missing production/support; 0
+  orphaned pages.
+- Next: distill the four app/config boundary tests (`app-live`, `logging`, stdio
+  frames, and app config) as the first bounded test-parity batch.
 
 ## Grill Log
 

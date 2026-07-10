@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-10 · RPC test mirror-name parity · renamed four existing RPC
+  roundtrip pages from legacy `-test.md` names to their exact `.test.md` source
+  mirrors, retained the old names as compatibility aliases, and reconciled MOC,
+  source-page, audit, and historical backlinks; mirror debt is now 84 missing
+  tests, 0 missing production/support, and 0 orphaned pages · validation: exact
+  bidirectional path audit + Prettier · risk LOW ·
+  [[source-mirror-2026-07-10]]
+
 - 2026-07-10 · production source-mirror parity · distilled all 9 previously
   unregistered production/support modules, defined [[Host]], [[Grill]], and
   [[ReviewComment]], added missing domain/source MOCs, and reconciled outbound /
@@ -744,7 +752,7 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 - 2026-06-30 · rpc-roundtrip-coverage slice · added generated-client native RPC
   round-trip coverage for the worker/workspace/work/lease,
   artifact/checkpoint, and review/memory/event verticals, extending
-  [[acp-rpc-roundtrip-test]] from an initial workspace smoke into subsystem
+  [[acp-rpc-roundtrip.test]] from an initial workspace smoke into subsystem
   parity coverage against [[acp-rpc-server]]; added wiki mirrors for the
   round-trip test files and refreshed [[acp-rpc-client]]/[[acp-rpc-server]] to
   name the coverage boundary · validation: focused round-trip tests green ·
@@ -826,7 +834,7 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   transport seam — [[acp-rpc-server]] (`AcpRpcHandlersLive`, handlers ⊕ AppLive ⊕
   IdClockLive, requirement `never`), [[acp-rpc-client]] (generated typed
   `makeAcpRpcClient` + `acpRpcClientHttpLayer` JSON streaming-HTTP protocol), and
-  [[acp-rpc-roundtrip-test]] proving a real `RpcTest` client round-trip
+  [[acp-rpc-roundtrip.test]] proving a real `RpcTest` client round-trip
   (encode→serialize→handler→typed decode) including per-call bearer auth and a
   typed `unauthorized` denial; refreshed [[protocol-implementation-2026-06-28]] to
   select host RpcServer HTTP-route mounting as the next slice · validation:

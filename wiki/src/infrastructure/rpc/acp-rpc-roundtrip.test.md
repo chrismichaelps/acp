@@ -7,7 +7,7 @@ seam: '[[Transport]]'
 depth_score: 0.35
 depth_status: SHALLOW
 tags: [test, rpc, roundtrip]
-aliases: [acp-rpc-roundtrip-test]
+aliases: [acp-rpc-roundtrip.test, acp-rpc-roundtrip-test]
 ---
 
 # ACP RPC Roundtrip Test

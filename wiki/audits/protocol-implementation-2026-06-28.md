@@ -417,17 +417,17 @@ authorization stays permanently**, not as a temporary migration artifact.
 
 With that decision closed, the live frontier returns to the broader
 [[ADR-0007-effect-rpc-adoption]] migration: growing native RPC client coverage
-(beyond [[acp-rpc-roundtrip-test]] and the [[native-rpc-route]] live-socket
+(beyond [[acp-rpc-roundtrip.test]] and the [[native-rpc-route]] live-socket
 regression) toward parity with the hand-mapped JSON-RPC method surface, so that
 first-party TypeScript consumers can choose the typed native client without
 waiting on JSON-RPC command-map behavior.
 
-That coverage is now materially broader. [[acp-rpc-roundtrip-work-lease-test]]
+That coverage is now materially broader. [[acp-rpc-roundtrip-work-lease.test]]
 drives the generated client through worker discovery, workspace mutation, work
 claim/state transitions, and lease request/renew/release/revoke.
-[[acp-rpc-roundtrip-artifact-checkpoint-test]] covers artifact
+[[acp-rpc-roundtrip-artifact-checkpoint.test]] covers artifact
 create/update/content/list/delete and checkpoint create/list/latest reads.
-[[acp-rpc-roundtrip-review-memory-event-test]] covers all review outcomes,
+[[acp-rpc-roundtrip-review-memory-event.test]] covers all review outcomes,
 memory create/list, and unary event listing. The remaining native RPC migration
 frontier is no longer basic method reachability; it is transport parity and
 client adoption work: prove these verticals over mounted HTTP where the behavior

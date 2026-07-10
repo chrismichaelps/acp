@@ -27,12 +27,12 @@ first-party Effect RPC contract selected by [[ADR-0007-effect-rpc-adoption]].
   using Effect log annotations and spans.
 - [[rpc-error]] — domain-error to `ProtocolError` mapper for native RPC.
 - [[acp-rpc-test-support]] — shared native RPC test runtime and payload helpers.
-- [[acp-rpc-roundtrip-test]] — first generated-client contract smoke test.
-- [[acp-rpc-roundtrip-work-lease-test]] — generated-client coverage for
+- [[acp-rpc-roundtrip.test]] — first generated-client contract smoke test.
+- [[acp-rpc-roundtrip-work-lease.test]] — generated-client coverage for
   worker, workspace, work, and lease methods.
-- [[acp-rpc-roundtrip-artifact-checkpoint-test]] — generated-client coverage
+- [[acp-rpc-roundtrip-artifact-checkpoint.test]] — generated-client coverage
   for artifact evidence and checkpoint resume methods.
-- [[acp-rpc-roundtrip-review-memory-event-test]] — generated-client coverage
+- [[acp-rpc-roundtrip-review-memory-event.test]] — generated-client coverage
   for review gates, memory records, and event listing.
 
 ## Referenced by

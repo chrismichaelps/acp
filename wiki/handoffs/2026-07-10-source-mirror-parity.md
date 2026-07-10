@@ -20,6 +20,9 @@ tags: [handoff]
   Grills, and Review Comments MOCs.
 - Reconciled affected CLI, server, domain, events, HTTP, RPC, router, and API
   linkage. Exact path audit and Prettier pass.
+- Renamed the four RPC roundtrip pages to exact `.test.md` mirror paths,
+  retained their legacy `-test` aliases, and reconciled repository backlinks.
+  The bidirectional audit now reports 84 missing test mirrors and 0 orphans.
 
 ## Decided (do not re-litigate)
 
@@ -30,16 +33,21 @@ tags: [handoff]
 
 ## Open / Remaining
 
-- 88 missing test mirrors: app/config 37, domain 13, infrastructure 33, and
-  protocol 5. RPC orphan repair will reduce infrastructure to 29.
-- Four RPC pages use `-test.md` instead of exact `.test.md` source mirroring.
+- 84 missing test mirrors: app/config 37, domain 13, infrastructure 29, and
+  protocol 5.
 
 ## Exact next action
 
-DNA Engineer: read the four RPC source tests and existing distilled pages, then
-rename each wiki page to the exact `.test.md` path, preserve content, reconcile
-aliases/MOC links, and rerun the bidirectional path audit. Expected result: 84
-missing tests and 0 orphans.
+DNA Engineer: read and distill the four small app/config boundary tests as the
+first bounded parity batch:
+
+1. `@root/src/app/app-live.test.ts`
+2. `@root/src/app/logging.test.ts`
+3. `@root/src/app/stdio/frames.test.ts`
+4. `@root/src/config/app-config.test.ts`
+
+Update their folder MOCs and source backlinks, then rerun the bidirectional path
+audit. Expected result: 80 missing tests and 0 orphans.
 
 ## Links
 
