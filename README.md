@@ -414,8 +414,11 @@ Traefik serves `https://acp.localhost` (self-signed cert), a dashboard on
 replica keeps raw host port `4317` for `./bin/acp`; scaled replicas receive the
 next available ports in `4318`–`4326`, while Traefik reaches every replica on
 its internal `4317` endpoint. The unauthenticated dashboard is loopback-only;
-production deployments must secure or disable it and restrict Docker API
-access.
+production deployments must secure or disable it. Traefik has no daemon-socket
+mount: it discovers backends through a pinned read-only socket proxy on an
+internal control network. Only version, ping, event, container, and network
+reads are enabled. The proxy still owns the privileged socket mount, so this
+narrows the trust boundary rather than making Docker daemon access harmless.
 
 **Opt-in basic-auth** (demo): generate a hash and attach the middleware —
 `htpasswd -nbB acp acp` → add an `acp-auth` `basicAuth` middleware to

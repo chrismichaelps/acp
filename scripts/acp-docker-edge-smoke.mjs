@@ -23,6 +23,10 @@ function dcCapture(compose, args) {
   }).trim()
 }
 
+function dockerCapture(args) {
+  return execFileSync('docker', args, { encoding: 'utf8' }).trim()
+}
+
 function curl(args) {
   return spawnSync('curl', ['-sS', '--max-time', '5', ...args], {
     encoding: 'utf8',
@@ -79,6 +83,107 @@ function backendCount(service) {
   return Array.isArray(servers) ? servers.length : 0
 }
 
+function inspectContainer(containerId) {
+  return JSON.parse(dockerCapture(['inspect', containerId]))[0]
+}
+
+function verifyProxyBoundary(compose, label) {
+  const proxyId = dcCapture(compose, ['ps', '-q', 'docker-socket-proxy'])
+  const traefikId = dcCapture(compose, ['ps', '-q', 'traefik'])
+  assert(proxyId !== '', `${label} socket proxy is not running`)
+  assert(traefikId !== '', `${label} Traefik is not running`)
+
+  const proxy = inspectContainer(proxyId)
+  const traefik = inspectContainer(traefikId)
+  const proxyNetworks = Object.keys(proxy.NetworkSettings.Networks ?? {})
+  const controlNetwork = proxyNetworks.find((name) =>
+    name.endsWith('_edge-control'),
+  )
+  assert(
+    proxyNetworks.length === 1 && controlNetwork !== undefined,
+    `${label} socket proxy escaped the internal control network`,
+  )
+  const control = inspectContainer(controlNetwork)
+  assert(
+    control.Internal === true,
+    `${label} socket proxy network is not internal`,
+  )
+  assert(
+    Object.keys(control.Containers ?? {}).length === 2 &&
+      control.Containers?.[proxyId] !== undefined &&
+      control.Containers?.[traefikId] !== undefined,
+    `${label} control network is not limited to proxy and Traefik`,
+  )
+  assert(
+    Object.keys(proxy.HostConfig.PortBindings ?? {}).length === 0,
+    `${label} socket proxy published a host port`,
+  )
+  assert(
+    proxy.Mounts.some(
+      (mount) =>
+        mount.Destination === '/var/run/docker.sock' && mount.RW === false,
+    ),
+    `${label} socket proxy does not own the read-only daemon mount`,
+  )
+  assert(
+    !traefik.Mounts.some(
+      (mount) => mount.Destination === '/var/run/docker.sock',
+    ),
+    `${label} Traefik still mounts the Docker daemon socket`,
+  )
+
+  const probe = `
+const base = 'http://docker-socket-proxy:2375'
+const status = async (path, method = 'GET') =>
+  (await fetch(base + path, { method })).status
+let version
+for (let attempt = 0; attempt < 40; attempt += 1) {
+  try {
+    version = await status('/version')
+    if (version === 200) break
+  } catch {}
+  await new Promise((resolve) => setTimeout(resolve, 250))
+}
+if (version !== 200) throw new Error('socket proxy did not become ready')
+console.log(JSON.stringify({
+  version,
+  containers: await status('/containers/json'),
+  networks: await status('/networks'),
+  images: await status('/images/json'),
+  info: await status('/info'),
+  volumes: await status('/volumes'),
+  mutation: await status('/containers/does-not-exist/start', 'POST'),
+}))
+`
+  const result = spawnSync(
+    'docker',
+    [
+      'run',
+      '--rm',
+      '--network',
+      controlNetwork,
+      'node:24-slim',
+      'node',
+      '--input-type=module',
+      '-e',
+      probe,
+    ],
+    { encoding: 'utf8' },
+  )
+  assert(
+    result.status === 0,
+    `${label} socket proxy probe failed: ${result.stderr || result.stdout}`,
+  )
+  const statuses = JSON.parse(result.stdout.trim().split('\n').at(-1))
+  assert(statuses.version === 200, `${label} proxy denied Docker version`)
+  assert(statuses.containers === 200, `${label} proxy denied containers`)
+  assert(statuses.networks === 200, `${label} proxy denied networks`)
+  assert(statuses.images === 403, `${label} proxy exposed images`)
+  assert(statuses.info === 403, `${label} proxy exposed system info`)
+  assert(statuses.volumes === 403, `${label} proxy exposed volumes`)
+  assert(statuses.mutation === 403, `${label} proxy allowed a mutation`)
+}
+
 function providerFailure(compose) {
   try {
     const logs = dcCapture(compose, [
@@ -130,6 +235,7 @@ async function waitForBackends(expected, label) {
 async function verifyEdge(compose, label, expectedBackends, upArgs = []) {
   try {
     dc(compose, ['up', '-d', ...(skipBuild ? [] : ['--build']), ...upArgs])
+    verifyProxyBoundary(compose, label)
     await waitForReady(compose, label)
 
     const http = curlStatus('http://127.0.0.1/ready', ['-H', `Host: ${HOST}`])

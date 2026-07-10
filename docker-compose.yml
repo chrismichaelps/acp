@@ -106,11 +106,31 @@ services:
       - 'traefik.http.routers.acp-secure.middlewares=acp-ratelimit@file,acp-compress@file,acp-headers@file'
       - 'traefik.http.services.acp.loadbalancer.server.port=4317'
 
+  # ---- edge: least-privilege Docker discovery for Traefik ----
+  docker-socket-proxy:
+    profiles: ['edge']
+    image: ghcr.io/tecnativa/docker-socket-proxy:0.1.1
+    container_name: acp-docker-socket-proxy
+    environment:
+      CONTAINERS: '1'
+      EVENTS: '1'
+      NETWORKS: '1'
+      PING: '1'
+      POST: '0'
+      VERSION: '1'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - edge-control
+    restart: unless-stopped
+
   # ---- edge: Traefik reverse proxy (overlay on either base profile) ----
   traefik:
     profiles: ['edge']
     image: traefik:v3.7.7
     container_name: acp-traefik
+    depends_on:
+      - docker-socket-proxy
     ports:
       - '80:80'
       - '443:443'
@@ -118,9 +138,15 @@ services:
     volumes:
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - default
+      - edge-control
     restart: unless-stopped
 
 volumes:
   acp-data:
   acp-pgdata:
+
+networks:
+  edge-control:
+    internal: true
