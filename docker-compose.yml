@@ -109,7 +109,7 @@ services:
   # ---- edge: least-privilege Docker discovery for Traefik ----
   docker-socket-proxy:
     profiles: ['edge']
-    image: ghcr.io/tecnativa/docker-socket-proxy:0.1.1
+    image: ghcr.io/tecnativa/docker-socket-proxy:v0.4.2
     container_name: acp-docker-socket-proxy
     environment:
       CONTAINERS: '1'
