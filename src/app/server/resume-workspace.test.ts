@@ -39,10 +39,12 @@ describe('budgetResume', () => {
     artifact('a_mid', '2026-07-02T00:00:00.000Z'),
   ]
 
-  it('returns everything and no elision when budget is null', () => {
-    const result = budgetResume(artifacts, [], null, null)
-    expect(result.artifacts).toHaveLength(3)
-    expect(result.elided).toBeUndefined()
+  it('returns everything and no elision when budget is null or negative', () => {
+    for (const budget of [null, -1]) {
+      const result = budgetResume(artifacts, [], null, budget)
+      expect(result.artifacts).toHaveLength(3)
+      expect(result.elided).toBeUndefined()
+    }
   })
 
   it('keeps the most-recent N artifacts and elides the rest to refs', () => {
