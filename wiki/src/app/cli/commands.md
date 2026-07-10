@@ -187,4 +187,6 @@ dispatch path. The parser remains trivially testable without a server.
 [[cli-event-commands]] · [[cli-lease-commands]] · [[cli-memory-commands]] ·
 [[cli-review-commands]] · [[cli-session-commands]] · [[cli-work-commands]] ·
 [[cli-worker-commands]] · [[cli-workspace-commands]] ·
-[[artifact-pr-command-test]] · [[Transport]] · [[src/_MOC]]
+[[artifact-pr-command-test]] · [[command-registry.test]] · [[commands.test]] ·
+[[event-commands.test]] · [[lease-commands.test]] · [[work-commands.test]] ·
+[[Transport]] · [[src/_MOC]]

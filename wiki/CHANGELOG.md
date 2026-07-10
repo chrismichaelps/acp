@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-10 · foundational CLI test mirrors · distilled the injected HTTP/auth
+  and response-filter client contract, duplicate-safe longest-prefix command
+  registry, aggregate argv projection, and focused event/lease/work parser
+  behavior; reconciled CLI MOC and production backlinks; mirror debt is now 74
+  missing tests with no production gaps or orphans · validation: exact
+  bidirectional path audit + Prettier · risk LOW ·
+  [[source-mirror-2026-07-10]]
+
 - 2026-07-10 · app/config boundary test mirrors · distilled executable contracts
   for application-layer composition and SQLite persistence, log-level mapping,
   incremental UTF-8 stdio framing, and config defaults/profile precedence; added

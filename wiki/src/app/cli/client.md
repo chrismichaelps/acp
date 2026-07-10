@@ -76,5 +76,5 @@ transport-agnostic via the `HttpClient` tag (testable against the router).
 
 ## Referenced by
 
-[[cli-index]] · [[cli-main]] · [[session-auth-flow-test]] · [[Transport]] ·
-[[src/_MOC]]
+[[client.test]] · [[cli-index]] · [[cli-main]] · [[session-auth-flow-test]] ·
+[[Transport]] · [[src/_MOC]]
