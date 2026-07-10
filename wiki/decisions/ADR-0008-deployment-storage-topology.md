@@ -13,8 +13,22 @@ aliases: [ADR-0008, ADR-0008-deployment-storage-topology]
 ACCEPTED — 2026-07-02. Builds on the seam topology of
 [[ADR-0001-architecture-foundation]] (Storage/Transport seams) and the
 Effect-native transport direction of [[ADR-0007-effect-rpc-adoption]].
-Implementation is staged and NOT yet started; this ADR records the direction so
-parallel work sequences against it.
+The decision remains unchanged. Its reference implementation is substantially
+landed; the status ledger below records the current realization without treating
+deferred deployment products as shipped.
+
+### Implementation status (2026-07-10)
+
+| Capability                       | Status          | Current evidence and boundary                                                                                                                                                                                                   |
+| -------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Storage seam                     | **Implemented** | `src/app/storage-live.ts` selects memory, SQLite, or Postgres; `src/infrastructure/storage/postgres-store.ts` supplies the network adapter and atomic per-workspace sequences.                                                  |
+| EventBroker seam                 | **Partial**     | `src/app/event-broker-live.ts` selects `in-process` or `pg-notify`; `src/infrastructure/events/pg-notify-event-broker.ts` provides cross-replica fan-out. Redis is deferred.                                                    |
+| Identity/auth seam               | **Partial**     | HTTP and native RPC authorize bearer session IDs, permission scopes, and optional `workspace_ids`; `ACP_REQUIRE_WORKSPACE_BINDINGS` makes bindings mandatory. External token issuance/resolution and OIDC are deferred.         |
+| Named runtime profiles           | **Implemented** | `src/config/app-config.ts` defines `local`, `single-node`, `hosted`, and `self-host-ha` presets with explicit `ACP_*` overrides.                                                                                                |
+| Reference Compose topologies     | **Partial**     | `docker-compose.yml` ships a SQLite daily-driver and Postgres/pg-notify HA profile. It deliberately overrides auth off for local dogfood; no managed-hosting manifest is shipped.                                               |
+| Sweeper leadership and retention | **Implemented** | `src/app/server/sweeper-leadership.ts` uses a Postgres transaction advisory lock; `sweeper.ts` evicts sessions, expires leases, and prunes retained events.                                                                     |
+| Optional edge tier               | **Implemented** | Compose overlays Traefik and a restricted Docker socket proxy; `scripts/acp-docker-edge-smoke.mjs` tests SQLite and two-replica HA discovery and routing.                                                                       |
+| Release/production operations    | **Partial**     | The repository builds one non-root Docker image and declares npm bins. Registry publication, versioned migration orchestration, managed hosting, production certificates, and an explicit connection-drain policy are deferred. |
 
 ## Context
 
@@ -22,26 +36,28 @@ The reference host runs as a single long-lived Node process:
 `src/app/server/main.ts` launches `HttpAppLive` via `NodeRuntime.runMain` +
 `Layer.launch` on `NodeHttpServerLive`. `HttpAppLive` merges the HTTP/RPC router
 with `SweeperLive` — a never-terminating background eviction daemon — over a
-single shared `AppLive`, so **routes, sweeper, and all state live in one process**.
+single shared `AppLive`, so routes and the sweeper share one configured runtime.
+Durable state and live fan-out may now live in Postgres; memory, SQLite, and the
+in-process broker remain process-local choices.
 
 Two questions forced this decision:
 
 1. **"Can we deploy ACP to Vercel?"** A 2026-07-02 architecture review found the
    host is fundamentally incompatible with stateless serverless functions, for
    three reasons that the [[Storage]] seam does **not** cover:
-   - **Fan-out is in-process.** [[event-store]] holds a single
-     `PubSub.unbounded<Event>` (`src/domain/events/event-store.ts`). Every SSE
-     stream (`GET /v1/events/stream`) and every WebSocket subscription
-     ([[rpc-socket]]) reads from it. A subscriber only receives events published
-     **by the same process** — two serverless invocations each get an empty
-     PubSub.
+   - **Fan-out was in-process.** At decision time, [[event-store]] owned one
+     process-local `PubSub`; separate invocations could not share live events.
+     The implemented [[event-broker]] seam now adds Postgres `LISTEN/NOTIFY` for
+     persistent multi-replica hosts, but does not make ephemeral function
+     invocations a supported runtime.
    - **Connections are long-lived.** SSE holds an open streaming response
      indefinitely; the `GET /rpc` socket "lives exactly as long as the socket."
-     Serverless functions cold-start per request and die on timeout (10s default,
-     300s max on Vercel).
+     Ephemeral, timeout-bound function invocations do not own that lifecycle.
    - **The sweeper is a daemon.** `SweeperLive` is an `Effect.forever` loop; there
-     is no serverless process to host it, and lease expiry _emits_ `lease.expired`
-     events (`lease-service.ts`), so it cannot be replaced by passive DB TTL.
+     is no serverless process to host it, and lease expiry _emits_
+     `lease.expired` events (`lease-service.ts`). Postgres advisory-lock
+     leadership now makes one replica execute each sweep, but a persistent
+     process is still required.
 
 2. **"Deploy the server, but let developers use their own database."** A single
    running process connects to exactly one database, so "bring your own DB" is not
@@ -54,13 +70,11 @@ Two questions forced this decision:
    - **Self-hosted (single-tenant):** each developer/org runs their own host and
      sets their own `DATABASE_URL`; the database is per-deployment.
 
-The seam foundation is already strong. [[Storage]] is a clean `Context.Tag` with
-two adapters (`InMemory`, `SQLite`) selected by `ACP_STORAGE_ADAPTER` in
-`src/app/storage-live.ts`; all durable domain state flows through its 35 call
-sites inside the ten domain services — no route or transport code touches storage
-directly. What is missing for horizontal/self-serve deployment is a **network**
-storage adapter, a **cross-process** event fan-out, and a **multi-tenant auth**
-resolver — none of which require domain changes.
+At decision time, [[Storage]] was already a clean `Context.Tag` with InMemory and
+SQLite adapters. The implementation retained that boundary and added Postgres,
+an [[event-broker]] seam, and workspace-scoped bearer sessions without making
+routes or transports own persistence. External identity resolution remains a
+deployment integration rather than a completed runtime adapter.
 
 ## Decision
 
@@ -71,40 +85,41 @@ them.
 
 ### Three config-selected seams
 
-1. **Storage** _(exists; add one adapter)._ `memory | sqlite | postgres`. Add a
-   `postgres` `StorageApi` `Layer` mirroring [[sqlite-store]], plus one branch in
-   [[storage-live]]. Driver: **`@effect/sql-pg`** (Effect-native connection
-   pooling + migrations; coherent with the all-Effect stack — no raw `pg`). The
-   monotonic per-workspace `seq` — today assigned by counting rows
-   (`in-memory-store.ts`), which races across processes — becomes a Postgres
-   `BIGSERIAL`/sequence so ordering is atomic under concurrent writers.
+1. **Storage — implemented.** `memory | sqlite | postgres` are selected in
+   [[storage-live]]. The Postgres `StorageApi` layer uses **`@effect/sql-pg`**
+   for scoped connections and atomic per-workspace event/memory sequences. It
+   initializes the current schema on layer construction; a versioned migration
+   runner remains deferred.
 
-2. **EventBroker** _(new seam; the core new work)._ Extract the in-process
-   `PubSub` from [[event-store]] behind an `EventBroker` `Context.Tag` with three
-   adapters:
-   - `in-process` — the current `PubSub` (single node; behaviour-preserving).
-   - `pg-notify` — Postgres `LISTEN/NOTIFY` fan-out (multi-replica HA with **no
-     second dependency** beyond the Postgres already used for storage).
-   - `redis` — Redis pub/sub (optional; for deployments that already run Redis or
-     need higher fan-out throughput).
-     The [[EventStream]] SSE/WebSocket adapters render whatever the broker yields and
-     are unchanged. This is what makes SSE/WebSocket correct across replicas.
+2. **EventBroker — partial.** [[event-store]] publishes through an
+   `EventBroker` `Context.Tag` with two implemented adapters:
+   - `in-process` — process-local `PubSub` for one node.
+   - `pg-notify` — Postgres `LISTEN/NOTIFY` fan-out for multi-replica HA with no
+     second stateful dependency.
+   - `redis` — **deferred**; no config value, dependency, or adapter ships.
+     The [[EventStream]] SSE/WebSocket adapters render whichever implemented
+     broker yields events and remain transport concerns.
 
-3. **Identity/Auth** _(exists as a flag; make it real)._ `ACP_REQUIRE_AUTH`
-   already gates auth. Add a token→workspace resolver so a developer's token
-   scopes them to their workspace(s) for the hosted topology; self-hosted uses a
-   static token or leaves auth off.
+3. **Identity/Auth — partial.** `ACP_REQUIRE_AUTH` enforces bearer session IDs
+   and permission scopes. Sessions may carry `workspace_ids`, and
+   `ACP_REQUIRE_WORKSPACE_BINDINGS` requires a non-empty binding and enforces it
+   across HTTP and native RPC. The runtime does not issue external developer
+   tokens or integrate OIDC; an identity provider must initialize the scoped ACP
+   session through a trusted boundary.
 
 ### Deployment profiles (presets over the seams)
 
 `ACP_PROFILE` selects a preset; individual `ACP_*` vars still override.
 
-| Profile        | Storage           | EventBroker     | Auth            | Target          | Audience              |
-| -------------- | ----------------- | --------------- | --------------- | --------------- | --------------------- |
-| `local`        | memory            | in-process      | off             | `npx acp`       | dev laptop / CI       |
-| `single-node`  | postgres (sqlite) | in-process      | static token    | 1 container     | small team, self-host |
-| `hosted`       | postgres          | pg-notify       | token→workspace | N replicas + LB | our managed service   |
-| `self-host-ha` | postgres          | pg-notify/redis | static / OIDC   | N replicas      | enterprise / on-prem  |
+The executable presets in `src/config/app-config.ts` are canonical. Explicit
+`ACP_*` variables override any preset.
+
+| Profile        | Storage  | EventBroker | Bearer auth | Workspace binding | Shipped reference                                                                                                                          |
+| -------------- | -------- | ----------- | ----------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `local`        | memory   | in-process  | off         | optional          | Direct Node/CLI default. Compose's `sqlite` profile starts here and overrides storage to SQLite.                                           |
+| `single-node`  | sqlite   | in-process  | required    | optional          | One-process self-host preset; no dedicated Compose service because the `sqlite` service is the auth-off daily driver.                      |
+| `hosted`       | postgres | pg-notify   | required    | required          | Runtime preset only; managed hosting, external identity, and LB manifests are not shipped.                                                 |
+| `self-host-ha` | postgres | pg-notify   | required    | required          | Compose `ha` uses this preset but explicitly disables auth/bindings for local dogfood; operators must enable both for a shared deployment. |
 
 ### Serverless is out of scope for the runtime
 
@@ -132,8 +147,8 @@ state. Traefik (free OSS) is the reference implementation, wired as an opt-in
 - **Load balancing.** Traefik's Docker provider discovers `acp-ha` replicas via
   labels and load-balances across them, so
   `docker compose --profile ha --profile edge up --scale acp-ha=3` scales the
-  `hosted`/`self-host-ha` topology behind one address with no router config
-  change.
+  reference `self-host-ha` topology behind one address with no router config
+  change. The repository does not ship a managed `hosted` deployment.
 - **Docker discovery boundary.** Traefik does not mount the daemon socket. A
   pinned Tecnativa socket proxy owns the read-only mount and exposes only
   version, ping, event, container, and network reads over a private internal
@@ -142,29 +157,38 @@ state. Traefik (free OSS) is the reference implementation, wired as an opt-in
   A stricter production edge also drops the `4317` host publish once proxy-only
   ingress is desired and disables or authenticates the dashboard. The default
   dev/self-host posture retains direct `bin/acp` access alongside the proxy.
+  Exact Traefik/socket-proxy release tags and their narrow Dependabot update
+  policy are documented in the README.
 
-### Operational contract (production-ready across profiles)
+### Operational contract
 
-- **Sweeper under replication.** Keep the in-process daemon for `local`/
-  `single-node`. For multi-replica profiles, elect a single sweeper via a Postgres
-  **advisory lock** (`pg_try_advisory_lock`) — one replica sweeps, others no-op —
-  so lease-expiry events still fire exactly once without an external cron.
-- **Event retention.** `ACP_EVENT_RETENTION_DAYS` is currently declared but
-  **unenforced** (no consumer); on a durable backend the event log grows
-  unbounded. Enforcement moves into the swept work.
-- **Migrations.** The `postgres` adapter ships a versioned schema + migration
-  runner (`@effect/sql` migrator); `single-node` may migrate on boot, `hosted`
-  gates migrations behind a deploy step.
-- **Connection pooling.** The `postgres` adapter pools connections. If any
-  deployment ever fronts Postgres from a serverless tier, a pooler
-  (PgBouncer / Neon proxy) is required to avoid connection storms.
-- **Delivery semantics.** Live SSE/WebSocket is best-effort; durable catch-up is
-  the `GET /v1/events` replay by `seq`. Clients reconcile via replay after
-  reconnect (already supported). The broker does not add delivery guarantees.
-- **Health & lifecycle.** `hosted`/`self-host-ha` expose liveness/readiness and
-  drain SSE/WebSocket on graceful shutdown.
-- **Packaging.** Publish a Docker image + npm bin; the same image runs every
-  profile via env.
+- **Implemented — sweeper under replication.** `SweeperLeadershipLive` keeps an
+  in-process single writer for memory/SQLite and uses
+  `pg_try_advisory_xact_lock` for Postgres. One replica performs session
+  eviction, lease expiry, and retention per tick without an external cron.
+- **Implemented — event retention.** `ACP_EVENT_RETENTION_DAYS` defaults to 30;
+  `sweepOnce` calls `EventStore.pruneBefore`, while values at or below zero
+  disable pruning. Storage adapters preserve each workspace's newest event so
+  sequence high-water marks do not reset.
+- **Partial — migrations.** SQLite and Postgres initialize/extend their schemas
+  idempotently at adapter startup. There is no versioned migration ledger or
+  separate hosted deploy step yet; operators must not infer zero-downtime schema
+  orchestration from the startup DDL.
+- **Implemented — connection scoping.** `@effect/sql-pg` owns scoped Postgres
+  clients for storage, broker, and sweeper leadership. A serverless pooler is
+  irrelevant to the supported persistent runtime and remains an operator concern
+  for any external architecture.
+- **Implemented — delivery semantics.** Live SSE/WebSocket delivery is
+  best-effort; durable `GET /v1/events` replay by `seq` is the reconnect path.
+  `pg-notify` carries an event pointer and reads the durable event back; it does
+  not promise queue semantics.
+- **Partial — health and lifecycle.** Unauthenticated `/health` and
+  storage-backed `/ready` probes ship and the Docker image declares `/ready` as
+  its health check. Runtime resources are scoped by Effect/NodeRuntime, but an
+  explicit SSE/WebSocket drain deadline and shutdown regression are deferred.
+- **Partial — packaging.** One multi-stage, non-root Docker build runs every
+  profile and `package.json` declares the `acp`/`acp-jsonrpc-stdio` bins. Registry
+  publication and release automation are not claimed by this ADR.
 
 ## Rationale
 
@@ -182,16 +206,13 @@ raw driver.
 
 ## Consequences
 
-The `EventBroker` extraction touches the central [[event-store]] and must be
-sequenced against parallel transport work (as [[ADR-0007-effect-rpc-adoption]]
-warned for the router). `@effect/sql` and `@effect/sql-pg` become new
-dependencies (pre-1.0, may churn — the `StorageApi`/`EventBroker` Tags are the
-stable surface; adapters are swappable). The `seq`-by-row-count implementation in
-[[in-memory-store]] is retained for `memory`/`sqlite` but explicitly documented as
-single-process-only; correctness under replication is a property of the `postgres`
-adapter's sequence. Serverless is closed as a runtime target. Nothing changes for
-`local` developers: `memory` + `in-process` + no auth remains the default, so the
-existing test and dogfood tiers are unaffected.
+The [[event-broker]] extraction and Postgres adapter are now behind stable
+`Context.Tag` surfaces; `@effect/sql` and `@effect/sql-pg` remain pre-1.0
+dependencies whose churn should stay inside adapters. Memory and SQLite are
+single-process deployment choices; Postgres allocates event and memory sequence
+numbers atomically for replication. Serverless remains closed as a runtime
+target. `local` still defaults to memory + in-process + no auth, while the
+reference SQLite Compose service explicitly overrides only the storage adapter.
 
 ## Alternatives
 
@@ -214,11 +235,21 @@ at ACP's fan-out scale. Kept as an optional adapter.
 
 ## Validation
 
-Direction only; no code yet. Evidence: the 2026-07-02 architecture map of
-`src/app/server/main.ts`, `src/domain/events/event-store.ts`,
-`src/infrastructure/storage/*`, `src/infrastructure/sse/*`, and
-`src/app/server/{rpc-socket,sweeper}.ts`, plus the confirmed absence of any
-SQL/Redis dependency in `package.json` (all-Effect stack).
+Current implementation evidence:
+
+- profile presets and override behavior: `src/config/app-config.ts` and
+  `app-config.test.ts`;
+- storage/broker selection: `src/app/{storage-live,event-broker-live}.ts`, with
+  adapter tests under `src/infrastructure/{storage,events}`;
+- auth and workspace boundaries: `src/app/server/route-support.ts`,
+  `src/infrastructure/rpc/rpc-auth.ts`, and their workspace-scope tests;
+- retention and single-writer HA sweeps: `src/app/server/sweeper.ts`,
+  `src/app/server/sweeper-leadership.ts`, and tests;
+- executable topology: `docker-compose.yml`, `Dockerfile`, Traefik config, and
+  `scripts/acp-docker-{ha-dogfood,edge-smoke}.mjs`;
+- end-to-end regression: the complete Docker self-dogfood CI job exercises
+  production image behavior, restart/auth boundaries, Postgres/pg-notify HA,
+  and SQLite/two-replica edge routing.
 
 ## Referenced by
 

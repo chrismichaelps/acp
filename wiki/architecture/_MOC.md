@@ -14,12 +14,12 @@ deepening SKIP/SELECTIVE, ADRs light.
 ConfigLayer
   ├── LoggerLayer
   ├── StorageLayer (seam)
-  │     └── EventStoreLayer
+  ├── EventBrokerLayer (in-process | pg-notify)
+  │     └── EventStoreLayer (durable append + live publish)
   ├── WorkUnit / Worker / Workspace / Lease / Artifact / Checkpoint / Review services
   └── TransportLayer (seam)
-        ├── HttpApiLayer
-        ├── JsonRpcCore
-        └── SseEventStreamLayer
+        ├── REST + native Effect RPC
+        └── SSE + WebSocket EventStream
 ```
 
 ## Depth Distribution (target 60 DEEP / 30 MEDIUM / 10 SHALLOW)
@@ -39,15 +39,15 @@ pass-throughs._
 
 ## Seam Health Table
 
-| Seam            | Capacity        | Lifecycle   | Drift | Status  |
-| --------------- | --------------- | ----------- | ----- | ------- |
-| [[Storage]]     | CRITICAL (6)    | CRITICAL    | 0     | HEALTHY |
-| [[Transport]]   | CRITICAL (5)    | EXPLORATORY | 0     | HEALTHY |
-| [[EventStream]] | EXPLORATORY (3) | EXPLORATORY | 0     | HEALTHY |
+| Seam            | Capacity     | Lifecycle   | Drift | Status  |
+| --------------- | ------------ | ----------- | ----- | ------- |
+| [[Storage]]     | CRITICAL (6) | CRITICAL    | 0     | HEALTHY |
+| [[Transport]]   | CRITICAL (5) | EXPLORATORY | 0     | HEALTHY |
+| [[EventStream]] | CRITICAL (6) | CRITICAL    | 0     | HEALTHY |
 
 ## Lifecycle Map
 
-EXPLORATORY: Transport, EventStream · CRITICAL: Storage · collapse-eligible: none.
+EXPLORATORY: Transport · CRITICAL: Storage, EventStream · collapse-eligible: none.
 
 ## Chain Risk
 
@@ -63,6 +63,9 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 - [[ADR-0002-json-rpc-transport-framing]] — ACCEPTED.
 - [[ADR-0004-protocol-version-codecs-generated-client]] — ACCEPTED.
 - [[ADR-0005-worker-presence-scope]] — ACCEPTED.
+- [[ADR-0008-deployment-storage-topology]] — ACCEPTED; Postgres/pg-notify,
+  workspace-scoped auth, replicated sweeps, retention, Compose, and edge are
+  landed; managed hosting and external identity remain deferred.
 
 ## Build Order (vertical slices)
 

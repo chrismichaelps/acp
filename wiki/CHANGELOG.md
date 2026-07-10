@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-10 · ADR-0008 implementation reconciliation · replaced the stale
+  direction-only deployment record with a source-backed implemented/partial/
+  deferred ledger; aligned the canonical profile table with `AppConfig`, marked
+  Postgres, pg-notify, workspace-bound auth, sweeper leadership, retention,
+  Compose, and edge behavior as landed, and kept Redis, OIDC, managed hosting,
+  production TLS, versioned migrations, and release publication explicitly
+  unshipped · risk LOW · [[ADR-0008-deployment-storage-topology]]
+
 - 2026-07-10 · Edge runtime update policy · retained exact multi-architecture
   pins for Traefik `v3.7.7` and the Docker socket proxy `v0.1.1`; added a
   monthly Compose-only Dependabot allowlist for those two images, a local/CI
