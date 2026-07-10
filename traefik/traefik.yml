@@ -1,0 +1,23 @@
+# traefik/traefik.yml — static config: entrypoints, providers, dashboard.
+# Free OSS core only; no ACME, no external providers.
+entryPoints:
+  web:
+    address: ':80'
+  websecure:
+    address: ':443'
+  traefik:
+    address: ':8080'
+
+api:
+  dashboard: true
+  insecure: true # local dashboard on :8080, no auth — dev convenience only
+
+providers:
+  docker:
+    exposedByDefault: false # only services with traefik.enable=true are routed
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+
+log:
+  level: INFO

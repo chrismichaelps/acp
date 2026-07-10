@@ -2,6 +2,15 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-09 · Traefik edge proxy · added an opt-in `edge` Compose profile
+  fronting the ACP host with TLS termination, rate-limiting, compression,
+  security headers, HA load-balancing, and a live dashboard — free OSS,
+  clone-and-go (`npm run acp:edge:up`). Traefik owns `:80`/`:443`/`:8080`;
+  `4317` stays published so `./bin/acp` is unaffected; self-signed TLS by
+  default (no ACME); load-balances across `acp-ha` replicas via `--scale`; an
+  opt-in basic-auth toggle (`htpasswd -nbB acp acp`) is documented but not
+  shipped live · risk LOW · [[ADR-0008-deployment-storage-topology]]
+
 - 2026-07-09 · Feature 580 scale tier (domain queryBy migration) · closed the
   O(N)→O(log N) loop on scoped domain reads: work-units, artifacts, checkpoints,
   leases, and reviews `listForWork` now use indexed [[storage]] `queryBy` instead

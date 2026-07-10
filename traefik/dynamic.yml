@@ -1,0 +1,16 @@
+# traefik/dynamic.yml — dynamic config: middlewares, hot-reloaded on change.
+# Attached to the ACP router via labels in docker-compose.yml.
+http:
+  middlewares:
+    acp-ratelimit:
+      rateLimit:
+        average: 100
+        burst: 50
+    acp-compress:
+      compress: {}
+    acp-headers:
+      headers:
+        stsSeconds: 31536000
+        contentTypeNosniff: true
+        frameDeny: true
+        browserXssFilter: true

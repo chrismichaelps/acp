@@ -31,6 +31,21 @@ services:
     volumes:
       - acp-data:/data
     restart: unless-stopped
+    labels:
+      - 'traefik.enable=true'
+      # Plain-HTTP router on :80 (no tls — a router with a TLS section serves
+      # HTTPS only, which would 404 plain HTTP and break the :80 smoke check).
+      - 'traefik.http.routers.acp.rule=Host(`acp.localhost`)'
+      - 'traefik.http.routers.acp.entrypoints=web'
+      - 'traefik.http.routers.acp.service=acp'
+      - 'traefik.http.routers.acp.middlewares=acp-ratelimit@file,acp-compress@file,acp-headers@file'
+      # HTTPS router on :443 (self-signed default cert), same backing service.
+      - 'traefik.http.routers.acp-secure.rule=Host(`acp.localhost`)'
+      - 'traefik.http.routers.acp-secure.entrypoints=websecure'
+      - 'traefik.http.routers.acp-secure.tls=true'
+      - 'traefik.http.routers.acp-secure.service=acp'
+      - 'traefik.http.routers.acp-secure.middlewares=acp-ratelimit@file,acp-compress@file,acp-headers@file'
+      - 'traefik.http.services.acp.loadbalancer.server.port=4317'
 
   # ---- ha: Postgres-backed host with pg-notify event fan-out ----
   db:
@@ -70,6 +85,36 @@ services:
       ACP_STORAGE_ADAPTER: postgres
       ACP_EVENT_BROKER: pg-notify
       ACP_DATABASE_URL: postgres://acp:acp@db:5432/acp
+    restart: unless-stopped
+    labels:
+      - 'traefik.enable=true'
+      # Plain-HTTP router on :80 (no tls — a router with a TLS section serves
+      # HTTPS only, which would 404 plain HTTP and break the :80 smoke check).
+      - 'traefik.http.routers.acp.rule=Host(`acp.localhost`)'
+      - 'traefik.http.routers.acp.entrypoints=web'
+      - 'traefik.http.routers.acp.service=acp'
+      - 'traefik.http.routers.acp.middlewares=acp-ratelimit@file,acp-compress@file,acp-headers@file'
+      # HTTPS router on :443 (self-signed default cert), same backing service.
+      - 'traefik.http.routers.acp-secure.rule=Host(`acp.localhost`)'
+      - 'traefik.http.routers.acp-secure.entrypoints=websecure'
+      - 'traefik.http.routers.acp-secure.tls=true'
+      - 'traefik.http.routers.acp-secure.service=acp'
+      - 'traefik.http.routers.acp-secure.middlewares=acp-ratelimit@file,acp-compress@file,acp-headers@file'
+      - 'traefik.http.services.acp.loadbalancer.server.port=4317'
+
+  # ---- edge: Traefik reverse proxy (overlay on either base profile) ----
+  traefik:
+    profiles: ['edge']
+    image: traefik:v3.1
+    container_name: acp-traefik
+    ports:
+      - '80:80'
+      - '443:443'
+      - '8080:8080'
+    volumes:
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
 
 volumes:

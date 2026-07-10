@@ -113,6 +113,30 @@ runtime. They may front a `hosted` deployment as domain, edge routing, docs, and
 static auth UI, proxying to the persistent host. This is recorded so the question
 is settled and not re-litigated per session.
 
+### Edge tier (optional)
+
+A reverse proxy is an optional edge tier in front of any profile, not a fourth
+config-selected seam — it terminates TLS and load-balances but holds no ACP
+state. Traefik (free OSS) is the reference implementation, wired as an opt-in
+`edge` Compose profile that overlays either the `single-node` or
+`self-host-ha` base:
+
+- **Ownership split.** Traefik owns `:80`/`:443` (public ingress) and `:8080`
+  (its dashboard); `acp`/`acp-ha` keep publishing `4317` directly so the
+  `./bin/acp` wrapper is unaffected whether or not the edge profile is running.
+- **TLS.** Self-signed by default (no ACME/Let's Encrypt dependency, no public
+  DNS requirement) — appropriate for clone-and-go and internal deployments;
+  operators front it with a real certificate at their own domain when needed.
+- **Load balancing.** Traefik's Docker provider discovers `acp-ha` replicas via
+  labels and load-balances across them, so
+  `docker compose --profile ha --profile edge up --scale acp-ha=3` scales the
+  `hosted`/`self-host-ha` topology behind one address with no router config
+  change.
+- **Production posture.** A stricter production edge drops the `4317`
+  host-publish entirely once the proxy is the only intended entry point
+  (proxy-only ingress); the default dev/self-host posture keeps `4317`
+  published for direct `bin/acp` access alongside the proxy.
+
 ### Operational contract (production-ready across profiles)
 
 - **Sweeper under replication.** Keep the in-process daemon for `local`/
