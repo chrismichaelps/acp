@@ -107,16 +107,22 @@ describe('AcpRpcSessionWorkerWorkspaceHandlersLive', () => {
       })
 
       const session = yield* initialize(payload, rpcOptions())
-      return yield* sessions.get(session.session_id)
+      return {
+        responseWorkspaceIds: session.workspace_ids,
+        stored: yield* sessions.get(session.session_id),
+      }
     })
 
     const stored = await Effect.runPromise(
       Effect.provide(program, RuntimeWithApp),
     )
 
-    expect(Option.getOrThrow(Option.getOrThrow(stored).workspace_ids)).toEqual([
+    expect(Option.getOrThrow(stored.responseWorkspaceIds)).toEqual([
       'workspace_rpc',
     ])
+    expect(
+      Option.getOrThrow(Option.getOrThrow(stored.stored).workspace_ids),
+    ).toEqual(['workspace_rpc'])
   })
 
   it('requires workspace bindings during session initialization when configured', async () => {

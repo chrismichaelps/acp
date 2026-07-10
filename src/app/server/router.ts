@@ -172,6 +172,7 @@ const initializeSession = respond('POST /v1/session/initialize')(
       protocol_version: ACP_PROTOCOL_VERSION,
       host,
       capabilities: hostCapabilities,
+      workspace_ids: payload.workspace_ids,
     })
   }),
 )

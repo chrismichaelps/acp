@@ -110,4 +110,67 @@ describe('CLI authenticated session flow', () => {
       (JSON.parse(created.body) as { created_by: string }).created_by,
     ).toBe('agent_codex')
   })
+
+  it('reports and enforces workspace bindings created through the CLI', async () => {
+    const client = makeClient()
+    const layer = Layer.succeed(HttpClient.HttpClient, client)
+
+    const init = await Effect.runPromise(
+      runCliRequest(
+        right([
+          'session',
+          'init',
+          '--worker',
+          'agent_bound',
+          '--name',
+          'Bound Agent',
+          '--permissions',
+          'work:create',
+          '--workspace',
+          'workspace_allowed',
+        ]),
+        'http://acp.test',
+      ).pipe(Effect.provide(layer)),
+    )
+
+    expect(init.status).toBe(200)
+    const session = JSON.parse(init.body) as {
+      session_id: string
+      workspace_ids: readonly string[]
+    }
+    expect(session.workspace_ids).toEqual(['workspace_allowed'])
+
+    const allowed = await Effect.runPromise(
+      runCliRequest(
+        right([
+          'work',
+          'create',
+          'Allowed work',
+          '--workspace',
+          'workspace_allowed',
+        ]),
+        'http://acp.test',
+        session.session_id,
+      ).pipe(Effect.provide(layer)),
+    )
+    const denied = await Effect.runPromise(
+      runCliRequest(
+        right([
+          'work',
+          'create',
+          'Denied work',
+          '--workspace',
+          'workspace_denied',
+        ]),
+        'http://acp.test',
+        session.session_id,
+      ).pipe(Effect.provide(layer)),
+    )
+
+    expect(allowed.status).toBe(201)
+    expect(denied.status).toBe(403)
+    expect(
+      (JSON.parse(denied.body) as { error: { code: string } }).error.code,
+    ).toBe('forbidden')
+  })
 })
