@@ -23,6 +23,7 @@ export { CliError, type CliRequest } from './command-support.js'
 
 interface ArgCursor {
   readonly flags: Record<string, string>
+  readonly flagValues: Partial<Record<string, readonly string[]>>
   readonly index: number
   readonly positionals: string[]
 }
@@ -51,9 +52,14 @@ const argTokenParsers: readonly ArgTokenParser[] = [
       const valueIndex = cursor.index + 1
       const value = argv[valueIndex]
       const hasValue = valueIndex < argv.length && !isFlagToken(value)
+      const parsedValue = hasValue ? value : 'true'
       return {
         ...cursor,
-        flags: { ...cursor.flags, [key]: hasValue ? value : 'true' },
+        flags: { ...cursor.flags, [key]: parsedValue },
+        flagValues: {
+          ...cursor.flagValues,
+          [key]: [...(cursor.flagValues[key] ?? []), parsedValue],
+        },
         index: cursor.index + (hasValue ? 2 : 1),
       }
     },
@@ -69,13 +75,22 @@ const argTokenParsers: readonly ArgTokenParser[] = [
 ]
 
 const splitArgs = (argv: readonly string[]): Parsed => {
-  let cursor: ArgCursor = { flags: {}, index: 0, positionals: [] }
+  let cursor: ArgCursor = {
+    flags: {},
+    flagValues: {},
+    index: 0,
+    positionals: [],
+  }
   while (cursor.index < argv.length) {
     const token = argv[cursor.index]
     const parser = argTokenParsers.find((candidate) => candidate.matches(token))
     cursor = parser?.read(argv, cursor) ?? cursor
   }
-  return { flags: cursor.flags, positionals: cursor.positionals }
+  return {
+    flags: cursor.flags,
+    flagValues: cursor.flagValues,
+    positionals: cursor.positionals,
+  }
 }
 
 const unknown = (argv: readonly string[]): Either.Either<never, CliError> =>

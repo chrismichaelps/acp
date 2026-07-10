@@ -1,7 +1,6 @@
 import { setTimeout as delay } from 'node:timers/promises'
 import {
   assert,
-  containerFetch,
   dockerOk,
   expectError,
   expectOk,
@@ -88,40 +87,34 @@ export const proveAuth = async ({ image, authContainer, runId }) => {
     '--uri',
     `docker://denied/${runId}`,
   ])
-  const session = await containerFetch(
-    authContainer,
-    '/v1/session/initialize',
-    {
-      method: 'POST',
-      body: {
-        worker: {
-          id: `agent_bound_${runId}`,
-          name: 'Bound agent',
-          kind: 'agent',
-        },
-        permissions: ['work:create'],
-        workspace_ids: [allowed.id],
-      },
-    },
-  )
+  const session = await expectOk(cli, 'workspace-bound session init', '', [
+    'session',
+    'init',
+    '--worker',
+    `agent_bound_${runId}`,
+    '--name',
+    'Bound agent',
+    '--permissions',
+    'work:create',
+    '--workspace',
+    allowed.id,
+  ])
   assert(
-    session.status === 200,
-    'workspace-bound session initialization failed',
+    JSON.stringify(session.workspace_ids) === JSON.stringify([allowed.id]),
+    'workspace-bound session did not report its binding',
   )
-  const token = session.body.session_id
-  const accepted = await containerFetch(authContainer, '/v1/work', {
-    method: 'POST',
-    token,
-    body: { workspace_id: allowed.id, title: 'Allowed bound work' },
-  })
-  const rejected = await containerFetch(authContainer, '/v1/work', {
-    method: 'POST',
-    token,
-    body: { workspace_id: denied.id, title: 'Denied bound work' },
-  })
-  assert(accepted.status === 201, 'bound workspace write was rejected')
-  assert(
-    rejected.status === 403 && rejected.body.error.code === 'forbidden',
-    'cross-workspace bound write was not forbidden',
+  await expectOk(cli, 'bound workspace write', session.session_id, [
+    'work',
+    'create',
+    'Allowed bound work',
+    '--workspace',
+    allowed.id,
+  ])
+  await expectError(
+    cli,
+    'cross-workspace bound write',
+    session.session_id,
+    ['work', 'create', 'Denied bound work', '--workspace', denied.id],
+    'forbidden',
   )
 }

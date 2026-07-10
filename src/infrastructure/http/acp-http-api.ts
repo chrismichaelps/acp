@@ -152,6 +152,7 @@ export const InitializeSessionResponse = Schema.Struct({
   protocol_version: Schema.Literal(ACP_PROTOCOL_VERSION),
   host: HostDescriptor,
   capabilities: HostCapabilities,
+  workspace_ids: InitializeSessionPayload.fields.workspace_ids,
 })
 export type InitializeSessionResponse = typeof InitializeSessionResponse.Type
 

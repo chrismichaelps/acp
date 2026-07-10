@@ -199,10 +199,14 @@ Here `acp` is shorthand for `node dist/app/cli/main.js`:
 ```bash
 export ACP_BASE_URL=http://localhost:4317
 acp session init --worker agent_codex --name Codex --kind agent \
-  --permissions workspace:read,workspace:write,work:create
+  --permissions workspace:read,workspace:write,work:create \
+  --workspace workspace_primary
 ```
 
-`session init` returns a `session_id` used as the bearer token once auth is on.
+`session init` returns a `session_id` used as the bearer token once auth is on
+and reports its `workspace_ids` binding when one was requested. Repeat
+`--workspace` or provide comma-separated identifiers to bind more than one
+workspace; omitting the flag creates an unbound session.
 
 ---
 
@@ -485,7 +489,7 @@ shell rather than committing them.
 ## CLI command reference
 
 ```
-session init      --worker <id> --name <n> [--kind <k>] [--vendor <v>] [--capabilities <csv>] [--permissions <csv>]
+session init      --worker <id> --name <n> [--kind <k>] [--vendor <v>] [--capabilities <csv>] [--permissions <csv>] [--workspace <id[,id...]> ...]
 worker  list | get <worker_id>
 workspace create | update <id> | archive <id> | list
 work    create <title> --workspace <id> [--priority <p>] [--description <d>]

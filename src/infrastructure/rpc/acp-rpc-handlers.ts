@@ -138,6 +138,7 @@ const sessionInitializeHandler = AcpRpcGroup.toLayerHandler(
         protocol_version: ACP_PROTOCOL_VERSION,
         host,
         capabilities: hostCapabilities,
+        workspace_ids: payload.workspace_ids,
       }
     }),
 )

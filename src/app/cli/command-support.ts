@@ -23,6 +23,7 @@ export class CliError extends Data.TaggedError('CliError')<{
 export interface Parsed {
   readonly positionals: readonly string[]
   readonly flags: Readonly<Record<string, string>>
+  readonly flagValues: Readonly<Partial<Record<string, readonly string[]>>>
 }
 
 export type CommandHandler = (

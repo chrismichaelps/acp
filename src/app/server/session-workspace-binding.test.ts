@@ -70,5 +70,9 @@ describe('session workspace binding policy', () => {
     expect(missing.status).toBe(400)
     expect(empty.status).toBe(400)
     expect(bound.status).toBe(200)
+    expect(
+      ((await bound.json()) as { workspace_ids: readonly string[] })
+        .workspace_ids,
+    ).toEqual(['workspace_bound'])
   })
 })
