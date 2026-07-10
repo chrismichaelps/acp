@@ -105,16 +105,47 @@ GitHub token and ACP never persists one.
 - Docker, and `export ACP_GH_SANDBOX_REPO=<owner>/<repo>`.
 
 **Run / rerun.** `pnpm dogfood:docker-gh-sandbox`. The lane identifies or creates
-an open `acp-sandbox/<run-id>` PR, so reruns are idempotent; `sync` is asserted to
-add no duplicate comments on a second pass.
+an open `acp-sandbox/<run-id>` PR. A new branch creates its nested sandbox marker
+directory before writing the diff fixture. Reusing a retained PR measures comment
+growth from the PR's existing baseline, then asserts that a second `sync` adds no
+GitHub or ACP duplicates. Each whole rerun intentionally adds one fresh ACP-origin
+and one fresh GitHub-origin comment pair for that run; idempotency applies to
+reconciliation, not to repeated scenario seeding.
 
 **Cleanup.** By default the lane tears down the Docker stack and closes the PR +
 deletes its branch. Set `ACP_GH_SANDBOX_KEEP=true` to retain the stack and PR for
-inspection. `ACP_DOCKER_SKIP_BUILD=true` / `ACP_GH_SANDBOX_SKIP_BUILD=true` reuse
-an existing image / host `dist`.
+inspection. The host CLI is rebuilt from the current checkout by default, even
+when `dist` already exists. `ACP_DOCKER_SKIP_BUILD=true` reuses the Docker image;
+`ACP_GH_SANDBOX_SKIP_BUILD=true` reuses an existing host `dist` and fails early if
+that entrypoint is absent.
 
 **On failure.** A failed run may leave the disposable PR open and its
 `acp-sandbox/<run-id>` branch present (and, if teardown was skipped, the Docker
 stack). All are harmless on a disposable repo and cleared by a rerun or manual
 `gh pr close --delete-branch`; no non-sandbox repo is ever touched, and no
 credential is persisted.
+
+**Validation status.** Offline formatting, lint, typecheck, syntax, and CI Docker
+gates pass; the local full suite reports 474 passed and 13 skipped, including
+focused support regressions for current-checkout builds, missing skip-build output,
+and nested marker creation. The live lane remains pending until an authenticated
+repository carrying the `acp-disposable-sandbox` topic is available; no current
+account repository has that sentinel, so the lane has correctly not mutated GitHub
+yet.
+
+## Sandbox Grill Log
+
+- **Q:** Can the lane accidentally test stale host bridge code when `dist` already
+  exists? **A:** No. Default execution always rebuilds the host CLI; only the
+  explicit `ACP_GH_SANDBOX_SKIP_BUILD=true` escape hatch may reuse `dist`, and it
+  must verify the entrypoint exists. _Rejected:_ build only when absent (silently
+  validates an older checkout).
+- **Q:** How does a fresh PR create `sandbox/<run-id>.md` when the repository has no
+  `sandbox/` directory? **A:** Create the marker's parent directory recursively
+  before writing it. _Rejected:_ require the disposable repository to pre-create
+  fixture directories (unnecessary hidden setup).
+- **Q:** How can a retained PR be reused without assuming it has zero comments?
+  **A:** Capture the GitHub comment baseline, assert the current run adds exactly
+  the seeded GitHub comment plus the mirrored ACP comment, then assert the second
+  sync leaves both sides unchanged. _Rejected:_ absolute count `2` (fails valid
+  retained-PR reruns and does not isolate reconciliation idempotency).

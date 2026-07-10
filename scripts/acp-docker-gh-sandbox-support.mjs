@@ -10,9 +10,9 @@
  */
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import process from 'node:process'
 import { assert, runProcess } from './acp-docker-self-support.mjs'
 
@@ -85,15 +85,23 @@ export const assertSandboxRef = (ref, repo) => {
   )
 }
 
-/** Ensure the host has a built `acp` CLI for the bridge; build once if absent. */
-export const ensureHostCli = async () => {
-  if (process.env.ACP_GH_SANDBOX_SKIP_BUILD === 'true') return
-  if (existsSync(DIST_MAIN)) return
-  const result = await runProcess('node', ['--run', 'build'], {
+/** Build the current host CLI unless explicit reuse was requested. */
+export const ensureHostCli = async ({
+  run = runProcess,
+  exists = existsSync,
+} = {}) => {
+  if (process.env.ACP_GH_SANDBOX_SKIP_BUILD === 'true') {
+    assert(
+      exists(DIST_MAIN),
+      `ACP_GH_SANDBOX_SKIP_BUILD=true requires existing ${DIST_MAIN}`,
+    )
+    return
+  }
+  const result = await run('node', ['--run', 'build'], {
     timeoutMs: 600_000,
   })
   assert(result.ok, `host build failed: ${result.stderr || result.stdout}`)
-  assert(existsSync(DIST_MAIN), `build did not produce ${DIST_MAIN}`)
+  assert(exists(DIST_MAIN), `build did not produce ${DIST_MAIN}`)
 }
 
 /**
@@ -145,6 +153,16 @@ export const findOpenSandboxPr = async (repo, branch) => {
   return value === '' ? null : Number(value)
 }
 
+/** Write the nested marker that gives the sandbox PR a reviewable diff. */
+export const writeSandboxMarker = async (directory, path, runId) => {
+  const target = join(directory, path)
+  await mkdir(dirname(target), { recursive: true })
+  await writeFile(
+    target,
+    `# ACP sandbox ${runId}\n\nDisposable PR for the GitHub-bridge dogfood lane.\n`,
+  )
+}
+
 /**
  * Identify or create a disposable PR from `acp-sandbox/<runId>`. The branch adds
  * one file so the diff has a concrete path/line for review comments. Returns
@@ -171,10 +189,7 @@ export const identifyOrCreatePr = async (repo, runId) => {
     const clone = await gh(['repo', 'clone', repo, dir, '--', '--depth', '1'])
     assert(clone.ok, `gh repo clone failed: ${clone.stderr}`)
     await git(dir, ['checkout', '-b', branch])
-    await writeFile(
-      join(dir, path),
-      `# ACP sandbox ${runId}\n\nDisposable PR for the GitHub-bridge dogfood lane.\n`,
-    )
+    await writeSandboxMarker(dir, path, runId)
     await git(dir, ['add', '-A'])
     await git(dir, [
       '-c',
@@ -261,6 +276,10 @@ export const countGithubReviewComments = async (repo, number) => {
   assert(result.ok, `counting review comments failed: ${result.stderr}`)
   return Number(result.stdout.trim())
 }
+
+/** Expected count after seeding GitHub once and mirroring ACP comments once. */
+export const expectedFirstSyncCommentCount = (githubBaseline, acpSeedCount) =>
+  githubBaseline + acpSeedCount + 1
 
 /** Read the PR's merge state: 'OPEN' | 'MERGED' | 'CLOSED'. */
 export const prState = async (repo, number) => {

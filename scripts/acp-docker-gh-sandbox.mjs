@@ -16,7 +16,7 @@
  * Prerequisites and cleanup are documented in wiki/src/app/cli/gh-bridge.md.
  *   ACP_GH_SANDBOX_REPO=owner/repo   (required; must carry the sentinel topic)
  *   ACP_GH_SANDBOX_KEEP=true         (optional; retain PR, branch, and stack)
- *   ACP_GH_SANDBOX_SKIP_BUILD=true   (optional; reuse existing host dist/image)
+ *   ACP_GH_SANDBOX_SKIP_BUILD=true   (optional; reuse existing host dist)
  */
 import process from 'node:process'
 import {
@@ -34,6 +34,7 @@ import {
   cleanupPr,
   countGithubReviewComments,
   ensureHostCli,
+  expectedFirstSyncCommentCount,
   identifyOrCreatePr,
   makeBridge,
   prState,
@@ -274,6 +275,14 @@ const main = async () => {
     )
 
     // 2) sync (bidirectional) is idempotent across repeated runs.
+    const ghBeforeFirst = await countGithubReviewComments(repo, pr.number)
+    const acpBeforeFirst = (
+      await countAcpComments(cli, seed.planner.token, seed.work.id)
+    ).length
+    assert(
+      acpBeforeFirst === 1,
+      `expected 1 seeded ACP comment before sync, got ${String(acpBeforeFirst)}`,
+    )
     await seedGithubReviewComment(
       repo,
       pr,
@@ -294,13 +303,17 @@ const main = async () => {
     const acpAfterFirst = (
       await countAcpComments(cli, seed.planner.token, seed.work.id)
     ).length
-    assert(
-      ghAfterFirst === 2,
-      `expected 2 GitHub comments after sync, got ${ghAfterFirst}`,
+    const expectedAfterFirst = expectedFirstSyncCommentCount(
+      ghBeforeFirst,
+      acpBeforeFirst,
     )
     assert(
-      acpAfterFirst === 2,
-      `expected 2 ACP comments after sync, got ${acpAfterFirst}`,
+      ghAfterFirst === expectedAfterFirst,
+      `expected ${String(expectedAfterFirst)} GitHub comments after sync, got ${String(ghAfterFirst)}`,
+    )
+    assert(
+      acpAfterFirst === expectedAfterFirst,
+      `expected ${String(expectedAfterFirst)} ACP comments after sync, got ${String(acpAfterFirst)}`,
     )
 
     await bridge(syncArgs)
@@ -309,12 +322,12 @@ const main = async () => {
       await countAcpComments(cli, seed.planner.token, seed.work.id)
     ).length
     assert(
-      ghAfterSecond === 2,
-      `sync not idempotent on GitHub: ${ghAfterSecond}`,
+      ghAfterSecond === ghAfterFirst,
+      `sync not idempotent on GitHub: ${String(ghAfterFirst)} -> ${String(ghAfterSecond)}`,
     )
     assert(
-      acpAfterSecond === 2,
-      `sync not idempotent in ACP: ${acpAfterSecond}`,
+      acpAfterSecond === acpAfterFirst,
+      `sync not idempotent in ACP: ${String(acpAfterFirst)} -> ${String(acpAfterSecond)}`,
     )
 
     // 3) merge is blocked while the gate is red; gh merge is never called.
