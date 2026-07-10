@@ -406,8 +406,12 @@ curl -k -H 'Host: acp.localhost' https://127.0.0.1/ready
 
 Traefik serves `https://acp.localhost` (self-signed cert), a dashboard on
 `http://127.0.0.1:8080`, and load-balances across HA replicas
-(`docker compose --profile ha --profile edge up --scale acp-ha=3`). The raw
-`4317` port stays published, so `./bin/acp` is unaffected.
+(`docker compose --profile ha --profile edge up --scale acp-ha=3`). The first HA
+replica keeps raw host port `4317` for `./bin/acp`; scaled replicas receive the
+next available ports in `4318`–`4326`, while Traefik reaches every replica on
+its internal `4317` endpoint. The unauthenticated dashboard is loopback-only;
+production deployments must secure or disable it and restrict Docker API
+access.
 
 **Opt-in basic-auth** (demo): generate a hash and attach the middleware —
 `htpasswd -nbB acp acp` → add an `acp-auth` `basicAuth` middleware to

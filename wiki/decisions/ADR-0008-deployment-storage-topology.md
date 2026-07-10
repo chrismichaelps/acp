@@ -122,8 +122,10 @@ state. Traefik (free OSS) is the reference implementation, wired as an opt-in
 `self-host-ha` base:
 
 - **Ownership split.** Traefik owns `:80`/`:443` (public ingress) and `:8080`
-  (its dashboard); `acp`/`acp-ha` keep publishing `4317` directly so the
-  `./bin/acp` wrapper is unaffected whether or not the edge profile is running.
+  (its loopback-only dashboard); `acp` keeps publishing `4317`, while the first
+  `acp-ha` replica receives `4317` and scaled replicas receive the next available
+  port through `4326`. The `./bin/acp` wrapper therefore retains its direct
+  `4317` entry point while Traefik uses each replica's internal `4317` endpoint.
 - **TLS.** Self-signed by default (no ACME/Let's Encrypt dependency, no public
   DNS requirement) — appropriate for clone-and-go and internal deployments;
   operators front it with a real certificate at their own domain when needed.
@@ -134,8 +136,10 @@ state. Traefik (free OSS) is the reference implementation, wired as an opt-in
   change.
 - **Production posture.** A stricter production edge drops the `4317`
   host-publish entirely once the proxy is the only intended entry point
-  (proxy-only ingress); the default dev/self-host posture keeps `4317`
-  published for direct `bin/acp` access alongside the proxy.
+  (proxy-only ingress), disables or authenticates the dashboard, and restricts
+  Docker API access instead of mounting the daemon socket directly. The default
+  dev/self-host posture keeps `4317` published for direct `bin/acp` access
+  alongside the proxy.
 
 ### Operational contract (production-ready across profiles)
 

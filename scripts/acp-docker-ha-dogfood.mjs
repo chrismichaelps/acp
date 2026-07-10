@@ -91,18 +91,26 @@ const assert = (condition, message) => {
   if (!condition) throw new Error(`assertion failed: ${message}`)
 }
 
-const healthStatus = async () => {
-  const { stdout } = await docker(
-    ['inspect', '-f', '{{.State.Health.Status}}', 'acp-host-ha'],
-    { capture: true },
-  ).catch(() => ({ stdout: 'none' }))
-  return stdout.trim()
+const healthStatuses = async () => {
+  const { stdout } = await compose(['ps', '-q', 'acp-ha'], { capture: true })
+  const containerIds = stdout.split('\n').filter(Boolean)
+  return Promise.all(
+    containerIds.map(async (containerId) => {
+      const inspected = await docker(
+        ['inspect', '-f', '{{.State.Health.Status}}', containerId],
+        { capture: true },
+      ).catch(() => ({ stdout: 'none' }))
+      return inspected.stdout.trim()
+    }),
+  )
 }
 
 const waitForHealthy = async (label) => {
   const deadline = Date.now() + 180_000
   for (;;) {
-    if ((await healthStatus()) === 'healthy') return
+    const statuses = await healthStatuses()
+    if (statuses.length > 0 && statuses.every((status) => status === 'healthy'))
+      return
     if (Date.now() > deadline) {
       await compose(['logs'], { capture: false }).catch(() => undefined)
       throw new Error(`${label} did not become healthy`)
