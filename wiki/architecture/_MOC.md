@@ -39,15 +39,17 @@ pass-throughs._
 
 ## Seam Health Table
 
-| Seam            | Capacity     | Lifecycle   | Drift | Status  |
-| --------------- | ------------ | ----------- | ----- | ------- |
-| [[Storage]]     | CRITICAL (6) | CRITICAL    | 0     | HEALTHY |
-| [[Transport]]   | CRITICAL (5) | EXPLORATORY | 0     | HEALTHY |
-| [[EventStream]] | CRITICAL (6) | CRITICAL    | 0     | HEALTHY |
+| Seam            | Capacity        | Lifecycle   | Drift | Status  |
+| --------------- | --------------- | ----------- | ----- | ------- |
+| [[Storage]]     | CRITICAL (6)    | CRITICAL    | 0     | HEALTHY |
+| [[Transport]]   | CRITICAL (5)    | EXPLORATORY | 0     | HEALTHY |
+| [[EventStream]] | CRITICAL (6)    | CRITICAL    | 0     | HEALTHY |
+| [[GitHub]]      | EXPLORATORY (2) | EXPLORATORY | 0     | HEALTHY |
 
 ## Lifecycle Map
 
-EXPLORATORY: Transport · CRITICAL: Storage, EventStream · collapse-eligible: none.
+EXPLORATORY: Transport, GitHub · CRITICAL: Storage, EventStream ·
+collapse-eligible: none.
 
 ## Chain Risk
 
@@ -142,6 +144,8 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 70. ✅ Native Effect RPC checkpoint handlers
 71. ✅ Re-audit remaining native RPC handler gaps after checkpoint handlers
 72. ✅ Lease readback parity across REST, CLI, JSON-RPC, native RPC, and dogfood
+73. ✅ GitHub bridge live sandbox dogfood — guarded real import/sync/thread
+    resolution/denied-before-allowed merge with repeatable cleanup
 
 ## Referenced by
 

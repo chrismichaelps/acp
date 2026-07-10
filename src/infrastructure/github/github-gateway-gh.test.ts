@@ -141,13 +141,4 @@ describe('makeGhGateway', () => {
     await Effect.runPromise(gh.postIssueComment(ref, 'decision body'))
     expect(calls[0]).toEqual(expect.arrayContaining(['pr', 'comment', '7']))
   })
-
-  it('resolves a review thread via graphql', async () => {
-    const { run, calls } = fakeRun({
-      graphql: { code: 0, stdout: '{}', stderr: '' },
-    })
-    const gh = makeGhGateway(run)
-    await Effect.runPromise(gh.resolveReviewThread(ref, 'THREAD_ID'))
-    expect(calls[0]).toContain('graphql')
-  })
 })

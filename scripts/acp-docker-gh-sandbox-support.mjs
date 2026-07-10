@@ -24,6 +24,7 @@ export const DIST_MAIN = 'dist/app/cli/main.js'
 
 const REPO_RE = /^[\w.-]+\/[\w.-]+$/
 const REF_RE = /^([\w.-]+)\/([\w.-]+)#(\d+)$/
+const SANDBOX_MARKER_RE = /^sandbox\/[\w.-]+\.md$/
 
 /** Read and validate ACP_GH_SANDBOX_REPO as `owner/repo`; abort otherwise. */
 export const requireSandboxRepo = () => {
@@ -320,6 +321,58 @@ export const cleanupPr = async (repo, pr) => {
     'DELETE',
     `repos/${repo}/git/refs/heads/${pr.branch}`,
   ]).catch(() => undefined)
+}
+
+/** Delete the merged marker and verify the sandbox default branch is clean. */
+export const cleanupMergedMarker = async (repo, pr, run = gh) => {
+  assertSandboxRef(pr.ref, repo)
+  assert(
+    SANDBOX_MARKER_RE.test(pr.path),
+    `refusing to delete non-sandbox marker path: ${pr.path}`,
+  )
+  const endpoint = `repos/${repo}/contents/${pr.path}`
+  const readMarker = () => run(['api', endpoint, '--jq', '.sha'])
+  const current = await readMarker()
+  if (!current.ok) {
+    assert(
+      current.stderr.includes('404'),
+      `cannot inspect merged sandbox marker: ${current.stderr.trim()}`,
+    )
+    return false
+  }
+
+  const branchResult = await run([
+    'repo',
+    'view',
+    repo,
+    '--json',
+    'defaultBranchRef',
+    '--jq',
+    '.defaultBranchRef.name',
+  ])
+  assert(
+    branchResult.ok && branchResult.stdout.trim() !== '',
+    `cannot resolve sandbox default branch: ${branchResult.stderr.trim()}`,
+  )
+  const deleted = await run([
+    'api',
+    '--method',
+    'DELETE',
+    endpoint,
+    '-f',
+    `message=chore(sandbox): clean dogfood marker ${pr.branch}`,
+    '-f',
+    `sha=${current.stdout.trim()}`,
+    '-f',
+    `branch=${branchResult.stdout.trim()}`,
+  ])
+  assert(deleted.ok, `deleting merged sandbox marker failed: ${deleted.stderr}`)
+  const remaining = await readMarker()
+  assert(
+    !remaining.ok && remaining.stderr.includes('404'),
+    `merged sandbox marker still exists: ${pr.path}`,
+  )
+  return true
 }
 
 /** Detached child-process runner with inherited stdio for visible steps. */

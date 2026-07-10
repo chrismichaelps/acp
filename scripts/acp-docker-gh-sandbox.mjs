@@ -31,6 +31,7 @@ import {
 } from './acp-docker-self-support.mjs'
 import {
   assertSandboxRef,
+  cleanupMergedMarker,
   cleanupPr,
   countGithubReviewComments,
   ensureHostCli,
@@ -337,9 +338,10 @@ const main = async () => {
     const blockedState = await prState(repo, pr.number)
     assert(blockedState === 'OPEN', `blocked merge left PR in ${blockedState}`)
 
-    // 4) satisfy the gate (resolve comments, pass grill, approve), then merge.
-    await passGrill(cli, seed)
+    // 4) resolve locally, propagate resolution, then pass grill and approve.
     await resolveOpenComments(cli, seed.reviewer.token, seed.work.id)
+    await bridge(syncArgs)
+    await passGrill(cli, seed)
     await expectOk(cli, 'review approve', seed.reviewer.token, [
       'review',
       'approve',
@@ -350,6 +352,7 @@ const main = async () => {
     await bridge(['merge', pr.ref, '--work', seed.work.id])
     const mergedState = await prState(repo, pr.number)
     assert(mergedState === 'MERGED', `allowed merge left PR in ${mergedState}`)
+    if (!keep) await cleanupMergedMarker(repo, pr)
 
     console.log(
       JSON.stringify(
@@ -363,6 +366,7 @@ const main = async () => {
             'sync-bidirectional-idempotent',
             'merge-denied-before-allowed',
             'merge-in-sandbox-only',
+            ...(keep ? [] : ['cleanup-restores-default-branch']),
           ],
         },
         null,
