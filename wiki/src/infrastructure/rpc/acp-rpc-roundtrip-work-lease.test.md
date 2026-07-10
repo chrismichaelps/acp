@@ -7,7 +7,7 @@ seam: '[[Transport]]'
 depth_score: 0.45
 depth_status: SHALLOW
 tags: [test, rpc, roundtrip, work, lease]
-aliases: [acp-rpc-roundtrip-work-lease-test]
+aliases: [acp-rpc-roundtrip-work-lease.test, acp-rpc-roundtrip-work-lease-test]
 ---
 
 # ACP RPC Roundtrip Work Lease Test

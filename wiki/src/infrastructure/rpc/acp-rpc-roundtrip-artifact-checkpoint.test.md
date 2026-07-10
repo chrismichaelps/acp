@@ -7,7 +7,11 @@ seam: '[[Transport]]'
 depth_score: 0.45
 depth_status: SHALLOW
 tags: [test, rpc, roundtrip, artifact, checkpoint]
-aliases: [acp-rpc-roundtrip-artifact-checkpoint-test]
+aliases:
+  [
+    acp-rpc-roundtrip-artifact-checkpoint.test,
+    acp-rpc-roundtrip-artifact-checkpoint-test,
+  ]
 ---
 
 # ACP RPC Roundtrip Artifact Checkpoint Test

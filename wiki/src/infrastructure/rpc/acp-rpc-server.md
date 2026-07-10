@@ -67,8 +67,8 @@ dependency boundary the typed transport depends on.
 ## Referenced by
 
 [[acp-rpc-client]] · [[acp-rpc-handlers]] ·
-[[acp-rpc-roundtrip-artifact-checkpoint-test]] ·
-[[acp-rpc-roundtrip-review-memory-event-test]] ·
-[[acp-rpc-roundtrip-test]] · [[acp-rpc-roundtrip-work-lease-test]] ·
+[[acp-rpc-roundtrip-artifact-checkpoint.test]] ·
+[[acp-rpc-roundtrip-review-memory-event.test]] ·
+[[acp-rpc-roundtrip.test]] · [[acp-rpc-roundtrip-work-lease.test]] ·
 [[rpc-auth-middleware]] · [[rpc-telemetry-middleware]] ·
 [[native-rpc-route]] · [[rpc-index]] · [[rpc/_MOC]]
