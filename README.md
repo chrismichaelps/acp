@@ -534,8 +534,13 @@ Beyond unit tests, several lanes exercise ACP against a _live_ host:
   replayed event types. This is the proof the daily-driver image is real.
 - **`node scripts/acp-docker-ha-dogfood.mjs`** (`dogfood:docker-ha`) — runs the
   Compose `ha` profile with separate planner, worker, and reviewer identities,
-  forces claim and lease races, restarts the host mid-lifecycle, and replays the
-  Postgres event history to confirm a monotonic record survives.
+  forces claim and lease races, proves Postgres event fan-out across two host
+  replicas, verifies the sweeper emits exactly one lease-expiry event, restarts
+  the hosts mid-lifecycle, and replays the monotonic event history.
+- **`node scripts/acp-docker-edge-smoke.mjs`** (`dogfood:docker-edge`) — fronts
+  both the SQLite and two-replica HA profiles with Traefik, then verifies
+  HTTP/HTTPS routing, security headers, dashboard health, and exact backend
+  discovery.
 - **`scripts/live-test/`** — the real-agent harness: genuinely autonomous agents
   (planner / two workers / reviewer), each given only a role and the `acp` CLI,
   coordinate through a live SQLite-backed, auth-on host. A verifier then asserts

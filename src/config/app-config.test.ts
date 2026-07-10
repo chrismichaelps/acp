@@ -80,6 +80,7 @@ describe('AppConfig', () => {
       ['ACP_STORAGE_ADAPTER', 'sqlite'],
       ['ACP_EVENT_BROKER', 'pg-notify'],
       ['ACP_SQLITE_PATH', '/tmp/acp.sqlite'],
+      ['ACP_SWEEP_INTERVAL', '250 millis'],
       ['ACP_MAX_ARTIFACT_SIZE_MB', '4'],
       ['ACP_REQUIRE_AUTH', 'true'],
       ['ACP_REQUIRE_WORKSPACE_BINDINGS', 'true'],
@@ -89,6 +90,7 @@ describe('AppConfig', () => {
     expect(cfg.storageAdapter).toBe('sqlite')
     expect(cfg.eventBroker).toBe('pg-notify')
     expect(cfg.sqlitePath).toBe('/tmp/acp.sqlite')
+    expect(Duration.toMillis(cfg.sweepInterval)).toBe(250)
     expect(cfg.maxArtifactSizeBytes).toBe(4 * 1024 * 1024)
     expect(cfg.requireAuth).toBe(true)
     expect(cfg.requireWorkspaceBindings).toBe(true)

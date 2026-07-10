@@ -16,21 +16,17 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
 
 COPY tsconfig.json ./
 COPY src ./src
-RUN pnpm build
+RUN pnpm build && pnpm prune --prod
 
-# ---- runtime: production deps + compiled output only ----
+# ---- runtime: pruned production deps + compiled output only ----
 FROM node:24-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production \
     ACP_PORT=4317
 
-RUN corepack enable && corepack prepare pnpm@11.7.0 --activate
-
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm install --prod --frozen-lockfile
-
-COPY --from=builder /app/dist ./dist
+COPY --from=builder --chown=node:node /app/package.json ./package.json
+COPY --from=builder --chown=node:node /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/dist ./dist
 
 # Durable-storage mount point for the sqlite adapter. Created and owned by the
 # runtime `node` user so a named/bind volume mounted here is writable without

@@ -10,6 +10,8 @@ import { setTimeout as delay } from 'node:timers/promises'
 
 const runId = process.env.ACP_DOGFOOD_RUN_ID ?? Date.now().toString(36)
 const keepStack = process.env.ACP_DOCKER_HA_KEEP_STACK === 'true'
+const skipBuild = process.env.ACP_DOCKER_SKIP_BUILD === 'true'
+process.env.ACP_SWEEP_INTERVAL ??= '250 millis'
 const composeArgs = ['compose', '--profile', 'ha']
 
 const sharedPermissions = ['workspace:read', 'event:read']
@@ -91,9 +93,13 @@ const assert = (condition, message) => {
   if (!condition) throw new Error(`assertion failed: ${message}`)
 }
 
-const healthStatuses = async () => {
+const serviceContainerIds = async () => {
   const { stdout } = await compose(['ps', '-q', 'acp-ha'], { capture: true })
-  const containerIds = stdout.split('\n').filter(Boolean)
+  return stdout.split('\n').filter(Boolean)
+}
+
+const healthStatuses = async () => {
+  const containerIds = await serviceContainerIds()
   return Promise.all(
     containerIds.map(async (containerId) => {
       const inspected = await docker(
@@ -155,6 +161,90 @@ const cli = async (token, args) => {
   }
 }
 
+const cliOnContainer = async (containerId, token, args) => {
+  const result = await docker(
+    [
+      'exec',
+      '-e',
+      'ACP_BASE_URL=http://127.0.0.1:4317',
+      '-e',
+      `ACP_RPC_TOKEN=${token}`,
+      containerId,
+      'node',
+      'dist/app/cli/main.js',
+      ...args,
+    ],
+    { capture: true },
+  )
+  return parsePayload(result.stdout)
+}
+
+const subscribeOnContainer = (containerId, token, workspaceId) =>
+  new Promise((resolvePromise, rejectPromise) => {
+    const script = `
+const [token, workspaceId] = process.argv.slice(1)
+const controller = new AbortController()
+const timeout = setTimeout(() => controller.abort(), 15000)
+try {
+  const response = await fetch(
+    'http://127.0.0.1:4317/v1/events/stream?workspace_id=' + encodeURIComponent(workspaceId),
+    { headers: { authorization: 'Bearer ' + token }, signal: controller.signal },
+  )
+  const decoder = new TextDecoder()
+  let buffered = ''
+  for await (const chunk of response.body) {
+    buffered += decoder.decode(chunk, { stream: true })
+    const match = buffered.match(/data: (\\{[^\\n]+\\})/)
+    if (match) { console.log(match[1]); break }
+  }
+} finally { clearTimeout(timeout) }
+`
+    const child = spawn(
+      'docker',
+      [
+        'exec',
+        containerId,
+        'node',
+        '--input-type=module',
+        '-e',
+        script,
+        token,
+        workspaceId,
+      ],
+      { stdio: ['ignore', 'pipe', 'pipe'] },
+    )
+    let stdout = ''
+    let stderr = ''
+    child.stdout.on('data', (chunk) => (stdout += chunk))
+    child.stderr.on('data', (chunk) => (stderr += chunk))
+    child.on('error', rejectPromise)
+    child.on('close', (code) => {
+      if (code === 0 && stdout.trim() !== '') {
+        resolvePromise(JSON.parse(stdout.trim()))
+      } else {
+        rejectPromise(
+          new Error(`cross-replica subscriber failed (${code}): ${stderr}`),
+        )
+      }
+    })
+  })
+
+const waitForExpiredLease = async (token, workspaceId, leaseId) => {
+  const deadline = Date.now() + 15_000
+  for (;;) {
+    const leases = await expectOk(token, 'lease expiry readback', [
+      'lease',
+      'list',
+      '--workspace',
+      workspaceId,
+    ])
+    const lease = leases.find((item) => item.id === leaseId)
+    if (lease?.state === 'expired') return lease
+    if (Date.now() >= deadline) throw new Error('lease did not expire')
+    await delay(250)
+  }
+}
+
 const expectOk = async (token, label, args) => {
   const result = await cli(token, args)
   if (!result.ok) {
@@ -205,8 +295,19 @@ const classifyRace = (agent, result, conflictCode) => {
 
 const main = async () => {
   try {
-    await compose(['up', '-d', '--build'])
+    await compose([
+      'up',
+      '-d',
+      ...(skipBuild ? [] : ['--build']),
+      '--scale',
+      'acp-ha=2',
+    ])
     await waitForHealthy('acp-host-ha')
+    const replicas = await serviceContainerIds()
+    assert(
+      replicas.length === 2,
+      `expected 2 HA replicas, got ${replicas.length}`,
+    )
 
     const [planner, workerA, workerB, reviewer] = await Promise.all([
       initAgent('planner', plannerPermissions, [
@@ -249,6 +350,26 @@ const main = async () => {
       '--priority',
       'high',
     ])
+
+    const crossReplicaEvent = subscribeOnContainer(
+      replicas[0],
+      planner.token,
+      workspace.id,
+    )
+    await delay(750)
+    const crossReplicaWork = await cliOnContainer(replicas[1], planner.token, [
+      'work',
+      'create',
+      'Cross-replica pg-notify probe',
+      '--workspace',
+      workspace.id,
+    ])
+    const observedCrossReplicaEvent = await crossReplicaEvent
+    assert(
+      observedCrossReplicaEvent.type === 'work.created' &&
+        observedCrossReplicaEvent.work_id === crossReplicaWork.id,
+      `cross-replica event mismatch: ${JSON.stringify(observedCrossReplicaEvent)}`,
+    )
 
     const plannerCheckpoint = await expectOk(
       planner.token,
@@ -531,6 +652,39 @@ const main = async () => {
     ])
     assert(completed.state === 'completed', 'work did not complete')
 
+    const expiringLease = await expectOk(
+      activeWorker.token,
+      'expiring lease request',
+      [
+        'lease',
+        'request',
+        '--workspace',
+        workspace.id,
+        '--holder',
+        activeWorker.workerId,
+        '--kind',
+        'file',
+        '--uri',
+        `file:///tmp/acp-ha-expiry-${runId}`,
+        '--ttl',
+        '1',
+      ],
+    )
+    await waitForExpiredLease(reviewer.token, workspace.id, expiringLease.id)
+    const expiryEvents = await expectOk(reviewer.token, 'lease expiry events', [
+      'events',
+      'list',
+      '--workspace',
+      workspace.id,
+      '--type',
+      'lease.expired',
+    ])
+    assert(
+      expiryEvents.length === 1 &&
+        expiryEvents[0].data?.lease_id === expiringLease.id,
+      `expected one expiry event, got ${JSON.stringify(expiryEvents)}`,
+    )
+
     await restartHost('acp-host-ha after completion restart')
 
     const persistedWork = await expectOk(
@@ -575,6 +729,7 @@ const main = async () => {
         {
           ok: true,
           profile: 'ha',
+          replicas: replicas.length,
           run_id: runId,
           workspace_id: workspace.id,
           work_id: work.id,
@@ -589,6 +744,8 @@ const main = async () => {
           second_review_state: approved.state,
           approval_signature_key: approved.approval_signature?.key_id,
           completed_state: persistedWork.state,
+          cross_replica_event_id: observedCrossReplicaEvent.id,
+          lease_expiry_event_id: expiryEvents[0].id,
           event_count: events.length,
           event_types: eventTypes,
         },

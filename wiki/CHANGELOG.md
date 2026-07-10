@@ -2,6 +2,16 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-09 · Docker runtime and HA self-dogfood hardening · pinned Traefik
+  `v3.7.7` for Docker Engine 29 provider compatibility and made edge failures
+  surface immediately; pruned production dependencies in the build stage so
+  the runtime image no longer ships pnpm and fell from 594 MB to 445 MB; reused
+  prebuilt images across composed gates; strengthened HA dogfood to require two
+  healthy replicas, cross-replica Postgres notification delivery, and exactly
+  one sweeper-driven `lease.expired` event · validation: production image boot,
+  SQLite/HA edge smoke, and two-replica HA lifecycle passed locally · risk
+  MEDIUM · [[ADR-0008-deployment-storage-topology]]
+
 - 2026-07-09 · Traefik HA edge regression gate · removed the fixed `acp-ha`
   container name and replaced its fixed host binding with the bounded
   `4317`–`4326` range, so Compose can create multiple HA replicas while keeping
