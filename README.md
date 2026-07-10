@@ -530,6 +530,12 @@ pnpm lint
 pnpm test
 ```
 
+`tsconfig.json` owns full-source typechecking and test discovery.
+`tsconfig.build.json` is the production-emission boundary: `pnpm build` cleans
+`dist`, excludes test-only TypeScript, and fails if a test or fixture module is
+still emitted. The Docker builder copies both configurations and runs that same
+checked production build.
+
 Beyond unit tests, several lanes exercise ACP against a _live_ host:
 
 - **`pnpm dogfood:docker-self`** — builds the production image once. It
