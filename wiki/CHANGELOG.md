@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-10 · bounded resume agent guidance · updated the public README, root
+  agent skill, and its canonical integration reference with bounded resume
+  commands, `elided` reference semantics, gate-critical review pinning, and the
+  HTTP-only ETag revalidation boundary; command references now match the live CLI
+  and Docker dogfood description · risk LOW ·
+  [[ADR-0010-context-exchange-optimization]]
+
 - 2026-07-10 · resume packet as a global workspace · gave
   `GET /v1/work/:id/resume` a stable `sha256` ETag with `If-None-Match` → `304`
   revalidation and an opt-in `?budget=N` salience-bounded view that elides

@@ -89,9 +89,9 @@ against the live host.
      fresh checkpoint, re-request review.
 10. **Finish and release.** `work update <id> --state completed`, then
     `lease release <lease_id>` for every lease you hold.
-11. **Recover, any time.** After a restart, replay `events list --workspace <id>
---after <last_seq>` before opening a live `events stream` — never act on
-    stale in-process state.
+11. **Recover, any time.** After a restart, read a bounded current handoff with
+    `work resume <id> --budget <n>`. Replay events from the last seen sequence,
+    then open a live `events stream` — never act on stale in-process state.
 
 ## Work lifecycle
 
@@ -146,6 +146,21 @@ blocker --prompt "…"`. The worker answers with `grill answer <question_id>
 The `work resume <id>` packet carries `open_comments` and `latest_grill`, so a
 returning reviewer sees outstanding gate obligations in a single read.
 
+For long-running work, prefer `acp work resume <id> --budget <n>`. The bounded
+packet always keeps `work`, `latest_checkpoint`, `open_comments`, and
+`latest_grill` inline; it keeps the most-recent artifact metadata and review
+records up to the requested capacity, then reports the remainder under
+`elided.artifacts` / `elided.reviews` as `{count, ids}` references. Approved
+reviews and the review tied to `latest_grill` are pinned even when that exceeds
+the budget, so context shaping cannot hide a merge-gate obligation. Omit
+`--budget` when you need the full backward-compatible packet.
+
+Direct HTTP clients also receive a stable `ETag` from
+`GET /v1/work/<id>/resume` (including budgeted reads). Re-send it in
+`If-None-Match`; unchanged state returns `304` with no response body. Any packet
+change, including an elided entity, invalidates the tag. The CLI exposes
+`--budget` today but does not persist/re-send ETags for you.
+
 ## GitHub-driven workflow (optional)
 
 `acp gh` binds the ACP review gate to a real GitHub pull request. It is a
@@ -171,7 +186,7 @@ session    init      --worker <id> --name <n> [--kind <k>] [--vendor <v>] [--cap
 worker     list | get <worker_id>
 workspace  create --name <n> --kind <k> --uri <u> [--default-branch <b>] | update <id> | archive <id> | list
 work       create <title> --workspace <id> [--priority <p>] [--description <d>]
-work       list --workspace <id> | get <id> | claim <id> --worker <id> | update <id> --state <state>
+work       list --workspace <id> | get <id> | resume <id> [--budget <n>] | claim <id> --worker <id> | update <id> --state <state>
 lease      request --workspace <id> --holder <id> --kind <k> --uri <u> [--ttl <n>]
 lease      list --workspace <id> | renew <id> [--ttl <n>] | revoke <id> | release <id>
 checkpoint create --workspace <id> --work <id> --summary <s> | list --work <id>|--workspace <id> | latest --work <id>

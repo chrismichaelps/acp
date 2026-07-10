@@ -309,6 +309,21 @@ blocker --prompt "…"`. The worker answers with `grill answer <question_id>
 The `work resume <id>` packet carries `open_comments` and `latest_grill`, so a
 returning reviewer sees outstanding gate obligations in a single read.
 
+For accumulated work, `acp work resume <id> --budget <n>` returns a bounded
+working set: `work`, `latest_checkpoint`, `open_comments`, and `latest_grill`
+stay inline; the most-recent artifact metadata and reviews fill the requested
+capacity; and older entries become `elided.artifacts` / `elided.reviews`
+`{count, ids}` references. Approved reviews and the review tied to the latest
+grill are pinned even if they exceed the budget, preserving the GitHub merge
+gate. Omitting `--budget` returns the unchanged full packet.
+
+The REST route also emits a stable `sha256` `ETag` for each full or budgeted
+view. An HTTP client can send that value as `If-None-Match` on its next
+`GET /v1/work/<id>/resume`; unchanged state returns `304` with an empty body,
+while any change — including to an elided entity — invalidates the tag. The CLI
+currently exposes the budget but leaves conditional revalidation to direct HTTP
+clients.
+
 ### GitHub-driven workflow (optional)
 
 `acp gh` binds the ACP review gate to a real GitHub pull request. It is a
@@ -512,7 +527,7 @@ session init      --worker <id> --name <n> [--kind <k>] [--vendor <v>] [--capabi
 worker  list | get <worker_id>
 workspace create | update <id> | archive <id> | list
 work    create <title> --workspace <id> [--priority <p>] [--description <d>]
-work    list --workspace <id> [--state <state>] [--priority <p>] [--assigned-to <worker_id>] | get <id> | resume <id> | claim <id> --worker <id> | update <id> --state <state>
+work    list --workspace <id> [--state <state>] [--priority <p>] [--assigned-to <worker_id>] | get <id> | resume <id> [--budget <n>] | claim <id> --worker <id> | update <id> --state <state>
 lease   request --workspace <id> --holder <id> --kind <k> --uri <u> [--ttl <n>]
 lease   list --workspace <id> [--holder <holder>] | renew <id> [--ttl <n>] | revoke <id> | release <id>
 checkpoint create --workspace <id> --work <id> --summary <s> | list | latest --work <id>
@@ -568,8 +583,9 @@ Beyond unit tests, several lanes exercise ACP against a _live_ host:
   points,
   restarts the SQLite container to prove named-volume durability, verifies
   bearer permissions and workspace binding, then reuses the image for the HA
-  and edge gates. The authenticated GitHub bridge remains an explicit opt-in
-  sandbox gap tracked in issue #268.
+  and edge gates. The production-image scenario also proves that a budgeted
+  resume bounds inline artifacts and reports the remainder as references. The
+  authenticated GitHub bridge remains an explicit opt-in sandbox lane.
 - **`node scripts/acp-docker-cli-dogfood.mjs`** (`dogfood:docker-cli`) — builds
   the production image, runs ACP as a container, and drives the compiled CLI
   inside it through a full workspace/work/review lifecycle, verifying the
