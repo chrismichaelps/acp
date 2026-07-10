@@ -528,6 +528,13 @@ pnpm test
 
 Beyond unit tests, several lanes exercise ACP against a _live_ host:
 
+- **`npm run dogfood:docker-self`** — builds the production image once. It
+  exercises every local domain and transport through the compiled public entry
+  points,
+  restarts the SQLite container to prove named-volume durability, verifies
+  bearer permissions and workspace binding, then reuses the image for the HA
+  and edge gates. The authenticated GitHub bridge remains an explicit opt-in
+  sandbox gap tracked in issue #268.
 - **`node scripts/acp-docker-cli-dogfood.mjs`** (`dogfood:docker-cli`) — builds
   the production image, runs ACP as a container, and drives the compiled CLI
   inside it through a full workspace/work/review lifecycle, verifying the
