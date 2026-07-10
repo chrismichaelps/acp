@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-10 · Edge runtime update policy · retained exact multi-architecture
+  pins for Traefik `v3.7.7` and the Docker socket proxy `v0.1.1`; added a
+  monthly Compose-only Dependabot allowlist for those two images, a local/CI
+  guard against floating tags, and a documented review boundary requiring the
+  complete Docker self-dogfood gate for every runtime update · risk LOW ·
+  [[ADR-0008-deployment-storage-topology]]
+
 - 2026-07-10 · Traefik socket-proxy hardening · removed Traefik's direct Docker
   socket mount; added pinned Tecnativa proxy `v0.1.1` on an internal control
   network with read-only version/ping/event/container/network access; edge
