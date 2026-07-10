@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-09 · Traefik HA edge regression gate · removed the fixed `acp-ha`
+  container name and replaced its fixed host binding with the bounded
+  `4317`–`4326` range, so Compose can create multiple HA replicas while keeping
+  the first direct endpoint on `4317`; restricted the insecure dashboard to
+  loopback and expanded Docker CI to require routing, TLS security headers,
+  host-rule rejection, dashboard service health, and two discovered HA
+  backends · risk MEDIUM · [[ADR-0008-deployment-storage-topology]]
+
 - 2026-07-09 · Traefik edge proxy · added an opt-in `edge` Compose profile
   fronting the ACP host with TLS termination, rate-limiting, compression,
   security headers, HA load-balancing, and a live dashboard — free OSS,
