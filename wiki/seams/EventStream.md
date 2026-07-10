@@ -24,9 +24,11 @@ separate host-presence stream is justified.
 
 ## Interface
 
-Backed by an Effect `PubSub` fed by the [[EventStore]]. A subscriber receives a
-`Stream` of events filtered by workspace (and optionally type). The transport
-adapter renders the stream into its wire format (SSE `event:`/`data:` frames).
+Backed by the [[event-broker]] selected by `ACP_EVENT_BROKER`: an Effect
+`PubSub` for one process or Postgres `LISTEN/NOTIFY` for persistent replicas. A
+subscriber receives a `Stream` of events filtered by workspace (and optionally
+type). The transport adapter renders the stream into its wire format (SSE
+`event:`/`data:` frames).
 
 ## Adapters
 
@@ -37,11 +39,11 @@ adapter renders the stream into its wire format (SSE `event:`/`data:` frames).
 
 ## Health
 
-DRIFT 0 (HEALTHY). SSE adapter code-complete and tested (4 targeted tests: frame
-shape, UTF-8 byte rendering, streaming response metadata, heartbeat comment).
-WebSocket subscription is tested over a real upgraded socket by subscribing to a
-workspace, publishing a later work event, and receiving an `events.event`
-notification.
+DRIFT 0 (HEALTHY). SSE adapter code-complete and tested (frame shape, UTF-8 byte
+rendering, streaming response metadata, heartbeat comment). WebSocket
+subscription is tested over a real upgraded socket. The pg-notify broker is
+adapter-tested, and Docker HA dogfood proves an event written through one replica
+reaches a subscriber on another while durable replay remains storage-backed.
 
 ## Deepening
 
@@ -51,13 +53,11 @@ ADR: [[ADR-0001-architecture-foundation]],
 for SSE; WebSocket unsubscribe is connection close until the protocol defines an
 explicit unsubscribe method.
 
-> **Cross-process fan-out (planned, [[ADR-0008-deployment-storage-topology]]).**
-> The single in-process `PubSub` is process-local: a subscriber only receives
-> events published by the same process, so live SSE/WebSocket fan-out is
-> single-node today. ADR-0008 extracts an `EventBroker` `Context.Tag` behind the
-> PubSub with `in-process` (current), `pg-notify` (Postgres `LISTEN/NOTIFY`, HA
-> with no extra dependency), and optional `redis` adapters. The SSE/WebSocket
-> adapters above are unchanged — they render whatever the broker yields.
+> **Cross-process fan-out ([[ADR-0008-deployment-storage-topology]]).** The
+> implemented `EventBroker` `Context.Tag` offers `in-process` and `pg-notify`.
+> Postgres notifications carry durable event pointers, so HA subscribers load
+> the stored event rather than trusting an ephemeral payload. Redis remains a
+> deferred alternative: it is not a config value or shipped adapter.
 
 ## Referenced by
 

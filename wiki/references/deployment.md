@@ -10,8 +10,10 @@ How to run the ACP reference host so developers can use it. The runtime is a
 single long-lived Node process (`dist/app/server/main.js`), so it wants a
 **persistent container host** — Railway, Fly.io, Render, a VM, or Kubernetes.
 Serverless functions (Vercel/Lambda) are **not** a supported runtime target; see
-[[ADR-0008-deployment-storage-topology]] for why (in-process fan-out, long-lived
-SSE/WebSocket, the sweeper daemon).
+[[ADR-0008-deployment-storage-topology]] for why (long-lived SSE/WebSocket, the
+sweeper daemon, and process-scoped runtime resources). Postgres/pg-notify makes
+persistent replicas correct; it does not turn the host into an ephemeral
+function.
 
 ## Container image
 
@@ -44,16 +46,25 @@ All configuration is environment variables (see `.env.example` and
 [[ADR-0008-deployment-storage-topology]] for the profile matrix). The
 deployment-shaping ones:
 
-| Variable              | Default      | Notes                                                                              |
-| --------------------- | ------------ | ---------------------------------------------------------------------------------- |
-| `ACP_PORT`            | `4317`       | Bind port; the image `EXPOSE`s it.                                                 |
-| `ACP_STORAGE_ADAPTER` | `memory`     | `memory` (ephemeral) · `sqlite` (needs a volume) · `postgres` (network-durable).   |
-| `ACP_SQLITE_PATH`     | `acp.sqlite` | With `sqlite`, mount a writable volume and point this at it.                       |
-| `ACP_DATABASE_URL`    | unset        | Required for the `postgres` storage adapter and `pg-notify` event broker.          |
-| `ACP_EVENT_BROKER`    | `in-process` | `in-process` for one node · `pg-notify` for Postgres-backed multi-replica fan-out. |
-| `ACP_REQUIRE_AUTH`    | `false`      | Turn on for any shared/hosted deployment.                                          |
-| `ACP_SESSION_TTL`     | `1h`         | Session eviction window (swept in-process).                                        |
-| `ACP_SWEEP_INTERVAL`  | `60s`        | Lease/session eviction cadence.                                                    |
+| Variable                         | Default      | Notes                                                                                             |
+| -------------------------------- | ------------ | ------------------------------------------------------------------------------------------------- |
+| `ACP_PROFILE`                    | `local`      | Preset: `local`, `single-node`, `hosted`, or `self-host-ha`; every setting below can override it. |
+| `ACP_PORT`                       | `4317`       | Bind port; the image `EXPOSE`s it.                                                                |
+| `ACP_STORAGE_ADAPTER`            | profile      | `memory` (ephemeral) · `sqlite` (needs a volume) · `postgres` (network-durable).                  |
+| `ACP_SQLITE_PATH`                | `acp.sqlite` | With `sqlite`, mount a writable volume and point this at it.                                      |
+| `ACP_DATABASE_URL`               | unset        | Required for the `postgres` storage adapter and `pg-notify` event broker.                         |
+| `ACP_EVENT_BROKER`               | profile      | `in-process` for one node · `pg-notify` for Postgres-backed multi-replica fan-out.                |
+| `ACP_REQUIRE_AUTH`               | profile      | `hosted`/`self-host-ha` default on; require it for any shared deployment.                         |
+| `ACP_REQUIRE_WORKSPACE_BINDINGS` | profile      | `hosted`/`self-host-ha` default on; requires each new session to name at least one workspace.     |
+| `ACP_SESSION_TTL`                | `1h`         | Session eviction window.                                                                          |
+| `ACP_SWEEP_INTERVAL`             | `60s`        | Session/lease/retention sweep cadence; Postgres replicas elect one tick leader.                   |
+| `ACP_EVENT_RETENTION_DAYS`       | `30`         | Event retention window; values at or below zero disable pruning.                                  |
+
+The repository's Compose services are intentionally developer-oriented: the
+`sqlite` service uses the `local` profile and overrides storage to SQLite; the
+`ha` service uses `self-host-ha` plus Postgres/pg-notify but overrides auth and
+workspace bindings off. Set both security flags to `true` before treating either
+service as shared infrastructure. There is no managed-hosting or OIDC manifest.
 
 ### Storage choice by intent
 

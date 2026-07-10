@@ -22,8 +22,10 @@ tags: [moc, adr]
   Effect/TS, so JSON-RPC 2.0 wire compatibility is dropped.
 - [[ADR-0008-deployment-storage-topology]] — ACCEPTED — one binary, three
   config-selected seams (Storage / EventBroker / Auth) and named deployment
-  profiles; add a Postgres storage adapter and a cross-process event broker
-  (Postgres LISTEN/NOTIFY); serverless is out for the runtime.
+  profiles; Postgres storage, pg-notify fan-out, scoped bearer sessions, HA
+  sweeper leadership, retention, and the optional edge tier are implemented;
+  Redis, external identity/OIDC, managed hosting, and release operations remain
+  deferred or partial; serverless is out for the runtime.
 - [[ADR-0009-workspace-scoped-sessions]] — ACCEPTED — hosted ACP sessions carry
   optional workspace bindings; permission scopes say what a session may do,
   workspace bindings say where it may do it.
