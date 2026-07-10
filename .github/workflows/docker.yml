@@ -1,6 +1,6 @@
-# Docker guard: proves the production image and both Compose profiles work on a
-# Docker-capable runner every PR. Separate from ci.yml (Local Gates) because it
-# needs a Docker daemon and is slower.
+# Docker guard: proves the complete production image surface on a Docker-capable
+# runner every PR. Separate from ci.yml (Local Gates) because it needs a Docker
+# daemon and is slower.
 name: Docker
 
 on:
@@ -9,39 +9,19 @@ on:
     branches: [main]
 
 jobs:
-  docker-cli-dogfood:
-    name: Docker-hosted CLI dogfood
+  docker-self-dogfood:
+    name: Complete Docker self-dogfood
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      # Builds the image, runs the host, drives the compiled CLI inside the
-      # container through the full lifecycle, and asserts the event sequence.
-      - name: Run docker-cli dogfood
-        run: node scripts/acp-docker-cli-dogfood.mjs
-
-  ha-profile-smoke:
-    name: Postgres/HA profile durability
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Run HA dogfood
-        run: node scripts/acp-docker-ha-dogfood.mjs
-
-  edge-smoke:
-    name: Traefik sqlite/HA edge smoke
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Run edge smoke test
-        run: node scripts/acp-docker-edge-smoke.mjs
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@11.7.0 --activate
+      # Builds once, proves domain/transport/auth/persistence behavior, then
+      # reuses the image for the HA and edge child gates.
+      - name: Run complete Docker self-dogfood
+        run: pnpm dogfood:docker-self
