@@ -97,5 +97,5 @@ providers across entrypoints.
 
 ## Referenced by
 
-[[app/_MOC]] · [[server-main]] · [[route-support]] · [[app-config]] ·
-[[Transport]]
+[[logging.test]] · [[app/_MOC]] · [[server-main]] · [[route-support]] ·
+[[app-config]] · [[Transport]]
