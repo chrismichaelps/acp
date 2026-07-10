@@ -23,6 +23,9 @@ tags: [handoff]
 - Renamed the four RPC roundtrip pages to exact `.test.md` mirror paths,
   retained their legacy `-test` aliases, and reconciled repository backlinks.
   The bidirectional audit now reports 84 missing test mirrors and 0 orphans.
+- Distilled the app layer, logging, stdio frame, and config executable contracts;
+  added `config/_MOC` and reconciled source/module backlinks. The audit now
+  reports 80 missing test mirrors and 0 orphans.
 
 ## Decided (do not re-litigate)
 
@@ -33,21 +36,21 @@ tags: [handoff]
 
 ## Open / Remaining
 
-- 84 missing test mirrors: app/config 37, domain 13, infrastructure 29, and
-  protocol 5.
+- 80 missing test mirrors: app 33, domain 13, infrastructure 29, and protocol 5.
 
 ## Exact next action
 
-DNA Engineer: read and distill the four small app/config boundary tests as the
-first bounded parity batch:
+DNA Engineer: read and distill the first bounded foundational CLI test batch:
 
-1. `@root/src/app/app-live.test.ts`
-2. `@root/src/app/logging.test.ts`
-3. `@root/src/app/stdio/frames.test.ts`
-4. `@root/src/config/app-config.test.ts`
+1. `@root/src/app/cli/client.test.ts`
+2. `@root/src/app/cli/command-registry.test.ts`
+3. `@root/src/app/cli/commands.test.ts`
+4. `@root/src/app/cli/event-commands.test.ts`
+5. `@root/src/app/cli/lease-commands.test.ts`
+6. `@root/src/app/cli/work-commands.test.ts`
 
-Update their folder MOCs and source backlinks, then rerun the bidirectional path
-audit. Expected result: 80 missing tests and 0 orphans.
+Update the CLI MOC and source backlinks, then rerun the bidirectional path audit.
+Expected result: 74 missing tests and 0 orphans.
 
 ## Links
 

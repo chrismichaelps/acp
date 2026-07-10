@@ -101,5 +101,5 @@ deleting it scatters `process.env` reads and magic numbers across the codebase.
 
 ## Referenced by
 
-[[lease.schema]] · [[sse-event-stream]] · [[app-logging]] ·
-[[architecture/_MOC]] · [[src/_MOC]]
+[[app-config.test]] · [[config/_MOC]] · [[lease.schema]] · [[sse-event-stream]] ·
+[[app-logging]] · [[architecture/_MOC]] · [[src/_MOC]]

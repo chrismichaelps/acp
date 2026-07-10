@@ -71,4 +71,5 @@ especially with partial chunks and non-ASCII payloads.
 
 ## Referenced by
 
-[[stdio-index]] · [[stdio-main]] · [[Transport]] · [[src/_MOC]]
+[[stdio-frames.test]] · [[stdio-index]] · [[stdio-main]] · [[Transport]] ·
+[[src/_MOC]]

@@ -27,7 +27,9 @@ file has exactly one page here. A source file with no page is UNREGISTERED.
 
 ## config/
 
-- [[app-config]] — typed `ACP_*` configuration + Layer.
+- [[config/_MOC|Config]] — typed runtime configuration registry.
+- [[app-config]] · [[app-config.test]] — typed `ACP_*` Layer and its executable
+  defaults/profile contract.
 
 ## app/
 

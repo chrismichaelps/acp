@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-10 · app/config boundary test mirrors · distilled executable contracts
+  for application-layer composition and SQLite persistence, log-level mapping,
+  incremental UTF-8 stdio framing, and config defaults/profile precedence; added
+  the missing config source MOC and reconciled module backlinks; mirror debt is
+  now 80 missing tests with no production gaps or orphans · validation: exact
+  bidirectional path audit + Prettier · risk LOW ·
+  [[source-mirror-2026-07-10]]
+
 - 2026-07-10 · RPC test mirror-name parity · renamed four existing RPC
   roundtrip pages from legacy `-test.md` names to their exact `.test.md` source
   mirrors, retained the old names as compatibility aliases, and reconciled MOC,

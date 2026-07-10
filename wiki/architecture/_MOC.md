@@ -65,10 +65,11 @@ Depth → · Coupling → · Debt → (baseline established 2026-06-25).
 non-MOC pages, 97 missing mirrors (9 production/support modules + 88 tests), and
 4 orphaned RPC pages caused by `-test.md` instead of `.test.md` naming. The nine
 production/support modules are now distilled and the four RPC pages use exact
-`.test.md` paths, leaving 84 missing test mirrors with no production gaps or
-orphans. The depth distribution above is therefore an active-module baseline,
-not a complete source inventory. Bounded app/config test distillation is the next
-documentation-first slice.
+`.test.md` paths. The first bounded test batch now registers the app layer,
+logging, stdio framing, and config profile contracts, leaving 80 missing test
+mirrors with no production gaps or orphans. The depth distribution above is
+therefore an active-module baseline, not a complete source inventory. Bounded CLI
+test distillation is the next documentation-first slice.
 
 ## ADRs
 
