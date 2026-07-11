@@ -443,13 +443,14 @@ release tags:
 | Traefik             | `traefik:v3.7.7`                              |
 | Docker socket proxy | `ghcr.io/tecnativa/docker-socket-proxy:0.1.1` |
 
-Dependabot checks only these two Compose dependencies monthly and opens a
-separate reviewable PR for each available release. An update must keep an exact
-release tag, resolve for both AMD64 and ARM64, and pass the complete Docker
-self-dogfood gate before merge; do not substitute `latest`, a floating
-major/minor tag, or an architecture-specific digest. The socket proxy's Git
-release can lead its public container tags, so confirm that the proposed tag is
-actually published before changing the pin.
+Dependabot checks Traefik monthly. Socket-proxy updates are manual because its
+Git releases can lead its public GHCR tags: an upstream release alone is not a
+deployable image. Before changing that pin, confirm the exact candidate manifest
+exists in GHCR for both AMD64 and ARM64, then update this table and run the
+complete Docker self-dogfood gate. Every edge update must keep an exact release
+tag; do not substitute `latest`, a floating major/minor tag, or an
+architecture-specific digest. The aggregate self-dogfood runs the pin/update
+policy guard before building, then proves both SQLite and HA edge profiles.
 
 **Opt-in basic-auth** (demo): generate a hash and attach the middleware —
 `htpasswd -nbB acp acp` → add an `acp-auth` `basicAuth` middleware to

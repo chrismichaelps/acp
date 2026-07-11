@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-10 · socket-proxy update-policy regression · stopped Dependabot from
+  treating upstream Git-only socket-proxy releases as deployable Compose image
+  upgrades while retaining monthly Traefik updates; the aggregate Docker
+  self-dogfood now runs the exact-pin/automation guard before building, with
+  focused success, ordering, and preflight-failure coverage · risk LOW · refs
+  #297 · [[ADR-0008-deployment-storage-topology]]
+
 - 2026-07-10 · bounded resume agent guidance · updated the public README, root
   agent skill, and its canonical integration reference with bounded resume
   commands, `elided` reference semantics, gate-critical review pinning, and the

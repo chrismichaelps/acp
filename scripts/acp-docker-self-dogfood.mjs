@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process'
+import { pathToFileURL } from 'node:url'
 import {
   assert,
   containerFetch,
@@ -41,7 +42,10 @@ const runVisible = (command, args, env = {}) =>
     })
   })
 
-const main = async () => {
+export const runEdgeRuntimePreflight = (runner = runVisible) =>
+  runner('node', ['scripts/check-edge-runtime-pins.mjs'])
+
+const runDockerSelfScenario = async () => {
   await cleanup()
   await runVisible('docker', ['build', '-t', image, '.'])
   await dockerOk(['tag', image, 'acp:latest'])
@@ -125,4 +129,18 @@ const main = async () => {
   }
 }
 
-await main()
+export const main = async ({
+  preflight = runEdgeRuntimePreflight,
+  scenario = runDockerSelfScenario,
+} = {}) => {
+  await preflight()
+  return scenario()
+}
+
+const entryPath = process.argv[1]
+if (
+  entryPath !== undefined &&
+  pathToFileURL(entryPath).href === import.meta.url
+) {
+  await main()
+}
