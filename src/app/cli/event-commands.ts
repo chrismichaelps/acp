@@ -3,7 +3,6 @@ import { Either } from 'effect'
 import {
   flag,
   integerFlag,
-  optionalClientFilter,
   optionalQuery,
   positiveIntegerFlag,
   type CommandHandler,
@@ -29,16 +28,15 @@ export const eventCommandHandlers: Readonly<Record<string, CommandHandler>> = {
       if ('limit' in flags) {
         yield* positiveIntegerFlag(flags, 'limit')
       }
-      const clientFilters = optionalClientFilter(flags, 'type')
       const query = [
         `workspace_id=${encodeURIComponent(workspaceId)}`,
         `after_seq=${afterSeq.toString()}`,
         ...optionalQuery(flags, 'limit'),
+        ...optionalQuery(flags, 'type'),
       ].join('&')
       return {
         method: 'GET',
         path: `/v1/events?${query}`,
-        ...(clientFilters.length > 0 ? { clientFilters } : {}),
         label: 'events list',
       }
     }),

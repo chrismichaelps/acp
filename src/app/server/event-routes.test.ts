@@ -83,6 +83,64 @@ describe('event routes', () => {
     expect(await afterFirst.json()).toEqual([])
   })
 
+  it('filters replayed events by type server-side', async () => {
+    const handler = makeHandler()
+    const token = await initSession(handler, [
+      'work:create',
+      'work:claim',
+      'event:read',
+    ])
+    const created = await handler(
+      new Request('http://acp.test/v1/work', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          workspace_id: 'workspace_typefilter',
+          title: 'Typed replay',
+        }),
+      }),
+    )
+    const work = (await created.json()) as { id: string }
+    await handler(
+      new Request(`http://acp.test/v1/work/${work.id}/claim`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ worker_id: worker.id }),
+      }),
+    )
+
+    const replay = async (query: string) => {
+      const res = await handler(
+        new Request(
+          `http://acp.test/v1/events?workspace_id=workspace_typefilter&after_seq=0${query}`,
+          { method: 'GET', headers: { authorization: `Bearer ${token}` } },
+        ),
+      )
+      expect(res.status).toBe(200)
+      return (await res.json()) as { type: string }[]
+    }
+
+    // Unfiltered sees both events; a type filter narrows to one; an unknown
+    // type yields an empty replay (not the whole log).
+    expect((await replay('')).map((e) => e.type)).toEqual([
+      'work.created',
+      'work.claimed',
+    ])
+    expect((await replay('&type=work.created')).map((e) => e.type)).toEqual([
+      'work.created',
+    ])
+    expect((await replay('&type=work.claimed')).map((e) => e.type)).toEqual([
+      'work.claimed',
+    ])
+    expect(await replay('&type=not_a_real_event')).toEqual([])
+  })
+
   it('limits replayed workspace events at the route boundary', async () => {
     const handler = makeHandler()
     const token = await initSession(handler, [

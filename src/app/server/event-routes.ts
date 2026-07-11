@@ -21,7 +21,14 @@ export const replayEvents = respond('GET /v1/events')(
       params.after_seq,
       params.limit,
     )
-    return yield* ok(200)(Schema.Array(Event), Chunk.toReadonlyArray(replay))
+    const all = Chunk.toReadonlyArray(replay)
+    // Optional type filter, applied within the read window (same semantics the
+    // CLI used client-side), so every transport can filter by type server-side.
+    const filtered =
+      params.type === undefined
+        ? all
+        : all.filter((event) => event.type === params.type)
+    return yield* ok(200)(Schema.Array(Event), filtered)
   }),
 )
 
