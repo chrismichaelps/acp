@@ -2,6 +2,15 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-11 · server-side event type filter · live dogfood surfaced that
+  `GET /v1/events` silently ignored a `type` filter (contract declared only
+  `workspace_id`/`after_seq`/`limit`; the CLI filtered `--type` client-side, so
+  non-CLI transports got the whole log). Added an optional lenient `type` query to
+  [[acp-http-api-events|EventsReplayParams]], filtered the replay in
+  [[event-routes]] within the read window, and migrated [[event-commands]] from a
+  client filter to the server query; unknown types return an empty replay ·
+  risk LOW · [[event-routes]]
+
 - 2026-07-10 · agent permission documentation guard · corrected the root ACP
   skill's invalid `review:request` bootstrap scope to `review:create`; added a
   schema-derived checker for permission tokens in the skill, README, and

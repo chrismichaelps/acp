@@ -40,7 +40,8 @@ export const streamEvents: Effect<
 
 ### Routes
 
-- `GET /v1/events?workspace_id=<id>&after_seq=<n>&limit=<n>` → `event:read`
+- `GET /v1/events?workspace_id=<id>&after_seq=<n>&limit=<n>&type=<event_type>` →
+  `event:read`
 - `GET /v1/events/stream?workspace_id=<id>` → `event:read`, live SSE stream
 
 ### Linkage
@@ -52,10 +53,14 @@ export const streamEvents: Effect<
 ## Algorithm
 
 `replayEvents` decodes `workspace_id`, optional non-negative integer
-`after_seq`, and optional positive integer `limit` query params, authorizes
-`event:read`, delegates to [[event-store]] `readAfter`, converts the returned
-`Chunk` to a JSON array, and schema-encodes each [[Event]] through
-[[route-support]] `ok`. `streamEvents`
+`after_seq`, optional positive integer `limit`, and an optional lenient `type`
+query param, authorizes `event:read`, delegates to [[event-store]] `readAfter`,
+converts the returned `Chunk` to a JSON array, and — when `type` is present —
+keeps only events of that type within the read window before schema-encoding each
+[[Event]] through [[route-support]] `ok`. Server-side type filtering is honored on
+every transport (an unknown type yields an empty replay, not the whole log); the
+CLI now passes `--type` as this query param rather than filtering client-side.
+`streamEvents`
 decodes the existing live query params, authorizes the same `event:read` scope,
 and delegates to [[sse-event-stream]] without changing its wire format. Both
 handlers pass stable route templates to [[route-support]] `respond` so replay

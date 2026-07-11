@@ -34,7 +34,7 @@ describe('event command parsing', () => {
     })
   })
 
-  it('records events list --type as a client-side filter', () => {
+  it('passes events list --type through as a server-side query filter', () => {
     expect(
       right([
         'events',
@@ -48,8 +48,7 @@ describe('event command parsing', () => {
       ]),
     ).toEqual({
       method: 'GET',
-      path: '/v1/events?workspace_id=workspace%201&after_seq=7',
-      clientFilters: [{ field: 'type', value: 'work.completed' }],
+      path: '/v1/events?workspace_id=workspace%201&after_seq=7&type=work.completed',
       label: 'events list',
     })
   })

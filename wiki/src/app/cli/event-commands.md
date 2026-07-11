@@ -25,19 +25,19 @@ export const eventCommandHandlers: Readonly<Record<string, CommandHandler>>
 ```
 
 `events list --workspace <id> [--after <seq>] [--limit <n>]
-[--type <event_type>]` maps to `GET /v1/events?workspace_id=&after_seq=`, adds a
-server-side `limit` query when supplied, and records a client-side `type` filter
-for [[cli-client]] when `--type` is supplied. `events stream --workspace <id>`
-maps to `GET /v1/events/stream?workspace_id=` and sets `stream: true`.
+[--type <event_type>]` maps to `GET /v1/events?workspace_id=&after_seq=` and adds
+server-side `limit` and `type` queries when supplied. `events stream --workspace
+<id>` maps to `GET /v1/events/stream?workspace_id=` and sets `stream: true`.
 
 ## Algorithm
 
 Both handlers require `--workspace` and URL-encode it into a query parameter.
 `events list` defaults `--after` to `0`, validates any provided cursor as a
 non-negative safe integer, validates `--limit` as a positive safe integer, and
-may add a `type` client filter so agents can print a narrow event class into
-context. `--limit` is server-side because event replay can be large; `--type`
-remains client-side because event payload typing is still open.
+adds `--type` as a server-side `type` query so agents can print a narrow event
+class into context. Both `--limit` and `--type` are server-side: event replay can
+be large, and filtering by type on the host lets every transport — not just the
+CLI — narrow the replay (an unknown type returns an empty replay).
 `events stream` marks the request as streaming so [[cli-main]] can keep the
 response open instead of routing it through the normal one-shot client.
 

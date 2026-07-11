@@ -30,21 +30,25 @@ export const EventsReplayParams: Schema.Struct<{
   workspace_id: WorkspaceId
   after_seq: number
   limit: Option<number>
+  type?: string
 }>
 export const EventsGroup: HttpApiGroup.HttpApiGroup<'events', ...>
 ```
 
 ### Routes
 
-`GET /v1/events?workspace_id=...&after_seq=...&limit=...` replays ordered
+`GET /v1/events?workspace_id=...&after_seq=...&limit=...&type=...` replays ordered
 workspace events after a non-negative sequence cursor, optionally capped by a
-positive row limit. `GET /v1/events/stream?workspace_id=...` declares the live
-SSE stream surface for clients that prefer subscription over polling.
+positive row limit and narrowed to a single event `type` within the read window.
+`GET /v1/events/stream?workspace_id=...` declares the live SSE stream surface for
+clients that prefer subscription over polling.
 
 ## Algorithm
 
 `EventsReplayParams` validates the storage scan key directly: `workspace_id`, an
-`after_seq` cursor defaulting to zero, and an optional positive `limit`. The
+`after_seq` cursor defaulting to zero, an optional positive `limit`, and an
+optional lenient `type` filter (a plain string, so an unknown type yields an
+empty replay rather than a `400`). The
 group declares both event endpoints with the shared `ProtocolError` schema and
 returns arrays of [[Event]] records in the reflected API contract; the runtime
 streaming response remains implemented in [[event-routes]].
