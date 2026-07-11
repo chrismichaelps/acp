@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
-import { main, runEdgeRuntimePreflight } from './acp-docker-self-dogfood.mjs'
+import { main, runRepositoryPreflights } from './acp-docker-self-dogfood.mjs'
 
 describe('complete Docker self-dogfood orchestration', () => {
-  it('runs the edge runtime policy guard through Node', async () => {
+  it('runs repository policy guards through Node in order', async () => {
     const calls = []
-    await runEdgeRuntimePreflight((command, args) => {
+    await runRepositoryPreflights((command, args) => {
       calls.push({ command, args })
       return Promise.resolve()
     })
@@ -13,6 +13,10 @@ describe('complete Docker self-dogfood orchestration', () => {
       {
         command: 'node',
         args: ['scripts/check-edge-runtime-pins.mjs'],
+      },
+      {
+        command: 'node',
+        args: ['scripts/check-agent-doc-permissions.mjs'],
       },
     ])
   })

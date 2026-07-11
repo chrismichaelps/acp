@@ -42,8 +42,10 @@ const runVisible = (command, args, env = {}) =>
     })
   })
 
-export const runEdgeRuntimePreflight = (runner = runVisible) =>
-  runner('node', ['scripts/check-edge-runtime-pins.mjs'])
+export const runRepositoryPreflights = async (runner = runVisible) => {
+  await runner('node', ['scripts/check-edge-runtime-pins.mjs'])
+  await runner('node', ['scripts/check-agent-doc-permissions.mjs'])
+}
 
 const runDockerSelfScenario = async () => {
   await cleanup()
@@ -130,7 +132,7 @@ const runDockerSelfScenario = async () => {
 }
 
 export const main = async ({
-  preflight = runEdgeRuntimePreflight,
+  preflight = runRepositoryPreflights,
   scenario = runDockerSelfScenario,
 } = {}) => {
   await preflight()

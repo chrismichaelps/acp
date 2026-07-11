@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-10 · agent permission documentation guard · corrected the root ACP
+  skill's invalid `review:request` bootstrap scope to `review:create`; added a
+  schema-derived checker for permission tokens in the skill, README, and
+  canonical agent reference; Local Gates and aggregate Docker self-dogfood now
+  reject vocabulary drift before build · risk LOW · refs #299
+
 - 2026-07-10 · socket-proxy update-policy regression · stopped Dependabot from
   treating upstream Git-only socket-proxy releases as deployable Compose image
   upgrades while retaining monthly Traefik updates; the aggregate Docker

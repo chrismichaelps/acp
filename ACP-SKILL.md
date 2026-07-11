@@ -58,7 +58,7 @@ This is the exact sequence you follow. Every command is real and verified.
 ```bash
 # (auth-on hosts only) register yourself and capture the bearer token.
 acp session init --worker agent_codex --name Codex --kind agent \
-  --permissions workspace:read,workspace:write,work:create,lease:create,review:request
+  --permissions workspace:read,workspace:write,work:create,lease:create,review:create
 
 # Discover open work — or open your own.
 acp work list --workspace workspace_xxx

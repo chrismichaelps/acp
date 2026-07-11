@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "check:agent-permissions": "node scripts/check-agent-doc-permissions.mjs",
     "check:env": "node scripts/check-env-example.mjs",
     "check:edge-runtime-pins": "node scripts/check-edge-runtime-pins.mjs",
     "check:file-size": "node scripts/check-file-size.mjs",

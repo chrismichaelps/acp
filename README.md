@@ -580,8 +580,9 @@ correctness; native Effect RPC remains covered by the Docker self-dogfood gate.
 Beyond unit tests, several lanes exercise ACP against a _live_ host:
 
 - **`pnpm dogfood:docker-self`** — builds the production image once. It
-  exercises every local domain and transport through the compiled public entry
-  points,
+  first validates edge runtime policy and agent-facing permission examples,
+  then exercises every local domain and transport through the compiled public
+  entry points,
   restarts the SQLite container to prove named-volume durability, verifies
   bearer permissions and workspace binding, then reuses the image for the HA
   and edge gates. The production-image scenario also proves that a budgeted
