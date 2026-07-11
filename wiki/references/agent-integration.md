@@ -144,7 +144,13 @@ blocker --prompt "…"`. The worker answers with `grill answer <question_id>
 4. **Approve.** On a green gate, `review approve <id> --met <csv>`.
 
 The `work resume <id>` packet carries `open_comments` and `latest_grill`, so a
-returning reviewer sees outstanding gate obligations in a single read.
+returning reviewer sees outstanding gate obligations in a single read. The packet
+is token-bounded: every read returns a strong `ETag`, so on a re-read send
+`If-None-Match: <etag>` and treat `304 Not Modified` as "nothing changed" instead
+of re-downloading. When you only need the freshest context, `work resume <id>
+--budget <n>` inlines the `n` most-recent artifacts/reviews and elides the rest to
+`{ count, ids }` refs (gate-critical reviews are always pinned); omit `--budget`
+for the full packet.
 
 ## GitHub-driven workflow (optional)
 
@@ -171,7 +177,7 @@ session    init      --worker <id> --name <n> [--kind <k>] [--vendor <v>] [--cap
 worker     list | get <worker_id>
 workspace  create --name <n> --kind <k> --uri <u> [--default-branch <b>] | update <id> | archive <id> | list
 work       create <title> --workspace <id> [--priority <p>] [--description <d>]
-work       list --workspace <id> | get <id> | claim <id> --worker <id> | update <id> --state <state>
+work       list --workspace <id> | get <id> | resume <id> [--budget <n>] | claim <id> --worker <id> | update <id> --state <state>
 lease      request --workspace <id> --holder <id> --kind <k> --uri <u> [--ttl <n>]
 lease      list --workspace <id> | renew <id> [--ttl <n>] | revoke <id> | release <id>
 checkpoint create --workspace <id> --work <id> --summary <s> | list --work <id>|--workspace <id> | latest --work <id>

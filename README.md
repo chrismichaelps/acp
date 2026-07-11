@@ -309,6 +309,22 @@ blocker --prompt "…"`. The worker answers with `grill answer <question_id>
 The `work resume <id>` packet carries `open_comments` and `latest_grill`, so a
 returning reviewer sees outstanding gate obligations in a single read.
 
+**Token-efficient resume (the shared workspace stays bounded).** Because agents
+coordinate by re-reading published state, the resume packet is designed like a
+_global workspace_ — limited capacity, admitted by salience, written once and
+read many:
+
+- **Revalidate, don't re-download.** Every `GET /v1/work/<id>/resume` returns a
+  strong `ETag`. A client that already holds the packet sends `If-None-Match` and
+  gets `304 Not Modified` (empty body) when nothing changed — so re-polling an
+  unchanged work unit costs ~no tokens.
+- **Bound what you inline.** `work resume <id> --budget <n>` (query `?budget=n`)
+  returns a salience-ranked view: the `n` most-recent artifacts and reviews are
+  inlined and the rest are elided to `{ count, ids }` references you fetch on
+  demand. Gate-critical reviews (an approved review and the one tied to the
+  latest grill) are always pinned, so a budgeted packet never changes a gate
+  decision; omitting `--budget` returns the full packet, unchanged.
+
 ### GitHub-driven workflow (optional)
 
 `acp gh` binds the ACP review gate to a real GitHub pull request. It is a
@@ -512,7 +528,7 @@ session init      --worker <id> --name <n> [--kind <k>] [--vendor <v>] [--capabi
 worker  list | get <worker_id>
 workspace create | update <id> | archive <id> | list
 work    create <title> --workspace <id> [--priority <p>] [--description <d>]
-work    list --workspace <id> [--state <state>] [--priority <p>] [--assigned-to <worker_id>] | get <id> | resume <id> | claim <id> --worker <id> | update <id> --state <state>
+work    list --workspace <id> [--state <state>] [--priority <p>] [--assigned-to <worker_id>] | get <id> | resume <id> [--budget <n>] | claim <id> --worker <id> | update <id> --state <state>
 lease   request --workspace <id> --holder <id> --kind <k> --uri <u> [--ttl <n>]
 lease   list --workspace <id> [--holder <holder>] | renew <id> [--ttl <n>] | revoke <id> | release <id>
 checkpoint create --workspace <id> --work <id> --summary <s> | list | latest --work <id>
