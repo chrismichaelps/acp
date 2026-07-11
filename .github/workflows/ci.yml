@@ -39,6 +39,9 @@ jobs:
       - name: Check env example
         run: pnpm check:env
 
+      - name: Check agent permission docs
+        run: pnpm check:agent-permissions
+
       - name: Check edge runtime pins
         run: pnpm check:edge-runtime-pins
 

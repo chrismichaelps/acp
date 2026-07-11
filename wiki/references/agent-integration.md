@@ -69,7 +69,8 @@ The canonical sequence a worker follows. Each step is a real command, verified
 against the live host.
 
 1. **Register** (auth-on hosts only). `session init` mints a `session_id` used as
-   the bearer token, scoped to explicit permissions.
+   the bearer token, scoped to explicit permissions. Requesting a review uses
+   `review:create`; review creation is the request authorization boundary.
 2. **Find or open work.** `work list --workspace <id>` to discover open work, or
    `work create` to open your own.
 3. **Claim it.** `work claim <work_id> --worker <you>` — moves `open → claimed`.
