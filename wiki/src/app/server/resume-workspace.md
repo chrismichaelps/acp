@@ -70,4 +70,5 @@ salience budgeting safe for the merge gate and the digest contract that makes
 
 ## Referenced by
 
-[[resume-routes]] · [[ADR-0010-context-exchange-optimization]] · [[server/_MOC]]
+[[resume-workspace.test]] · [[resume-workspace-routes.test]] · [[resume-routes]] ·
+[[ADR-0010-context-exchange-optimization]] · [[server/_MOC]]

@@ -38,6 +38,9 @@ tags: [handoff]
   orphans.
 - Distilled artifact, event, grill, lease, review-comment, and worker route
   tests. The audit now reports 58 missing test mirrors and 0 orphans.
+- Distilled resume composition, ETag/budget routes, pure salience/pinning,
+  hosted session binding, and workspace aggregate tests. The audit now reports
+  53 missing test mirrors and 0 orphans.
 
 ## Decided (do not re-litigate)
 
@@ -48,21 +51,22 @@ tags: [handoff]
 
 ## Open / Remaining
 
-- 58 missing test mirrors: app/server 11, domain 13, infrastructure 29, and
+- 53 missing test mirrors: app/server 6, domain 13, infrastructure 29, and
   protocol 5.
 
 ## Exact next action
 
-DNA Engineer: read and distill the resume/workspace server batch:
+DNA Engineer: finish app/server parity by reading and distilling:
 
-1. `@root/src/app/server/resume-routes.test.ts`
-2. `@root/src/app/server/resume-workspace-routes.test.ts`
-3. `@root/src/app/server/resume-workspace.test.ts`
-4. `@root/src/app/server/session-workspace-binding.test.ts`
-5. `@root/src/app/server/workspace-routes.test.ts`
+1. `@root/src/app/server/live-boot.test.ts`
+2. `@root/src/app/server/mutation-workspace-scope-routes.test.ts`
+3. `@root/src/app/server/native-rpc-route.test.ts`
+4. `@root/src/app/server/sweeper-leadership.test.ts`
+5. `@root/src/app/server/sweeper.test.ts`
+6. `@root/src/app/server/workspace-scope-routes.test.ts`
 
 Update the server MOC and source backlinks, then rerun the bidirectional path
-audit. Expected result: 53 missing tests and 0 orphans.
+audit. Expected result: 47 missing tests, 0 app gaps, and 0 orphans.
 
 ## Links
 

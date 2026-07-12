@@ -157,4 +157,4 @@ minting, and scopes while preserving the service as the state owner.
 
 ## Referenced by
 
-[[acp-router]] · [[server/_MOC]]
+[[workspace-routes.test]] · [[acp-router]] · [[server/_MOC]]

@@ -75,8 +75,10 @@ identity, aggregate REST, JSON-RPC HTTP, and JSON-RPC WebSocket tests are now
 registered, leaving 64 missing test mirrors with no production gaps or orphans.
 The depth distribution above is therefore an active-module baseline, not a
 complete source inventory. Artifact, event, grill, lease, review-comment, and
-worker route tests are now registered, leaving 58 missing tests. Resume/workspace
-server suites are the next documentation-first slice.
+worker route tests are registered. Resume handoff, ETag/budget, pure salience,
+hosted binding, and workspace aggregate suites are also registered, leaving 53
+missing tests. The final server test batch is the next documentation-first
+slice.
 
 ## ADRs
 

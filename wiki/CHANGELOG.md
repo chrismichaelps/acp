@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-12 · resume/workspace server test mirrors · distilled full handoff
+  composition, ETag/budget representations, pure salience and gate pinning,
+  hosted session binding, and workspace-isolated work/evidence indexes;
+  reconciled server/config MOCs and owning module backlinks; mirror debt is now
+  53 missing tests with no production gaps or orphans · validation: exact
+  bidirectional path audit + repository-pinned Prettier · risk LOW ·
+  [[source-mirror-2026-07-10]]
+
 - 2026-07-12 · focused server route test mirrors · distilled artifact evidence,
   event replay/filter/auth, full grill evaluation, lease lifecycle/scope,
   review-comment state, and host-scoped worker read contracts; reconciled server

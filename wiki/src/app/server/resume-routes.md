@@ -101,4 +101,5 @@ authorization, and response encoding for the resume surface while keeping
 
 ## Referenced by
 
-[[acp-router]] · [[route-support]] · [[server/_MOC]]
+[[resume-routes.test]] · [[resume-workspace-routes.test]] · [[acp-router]] ·
+[[route-support]] · [[server/_MOC]]
