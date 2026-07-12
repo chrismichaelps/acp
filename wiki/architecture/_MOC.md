@@ -91,8 +91,10 @@ facade/runtime suites are now registered, leaving 22 infrastructure and protocol
 tests. Storage adapter, query, CAS, durability, plan, and retention contracts are
 now registered, leaving 16 RPC/protocol tests. The first bounded RPC handler
 batch now registers artifact, checkpoint, memory/event, review, and aggregate
-session/workspace/work/lease behavior. Eleven RPC/protocol tests remain; the
-second RPC batch is next.
+session/workspace/work/lease behavior. Generated-client ergonomics, exact
+contract metadata, and direct/derived
+workspace isolation suites now complete infrastructure parity. Five protocol
+tests remain before zero-drift enforcement can be designed.
 
 ## ADRs
 

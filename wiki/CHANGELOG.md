@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-12 · final native RPC test mirrors · distilled generated-client URL
+  and bearer helpers, exact contract scope/auth/telemetry metadata, and direct
+  plus derived evidence/review/work/lease workspace isolation; infrastructure
+  parity is complete and mirror debt is now 5 protocol tests with no production
+  gaps or orphans · validation: exact bidirectional path audit +
+  repository-pinned Prettier · risk LOW · [[source-mirror-2026-07-10]]
+
 - 2026-07-12 · native RPC handler test mirrors · distilled direct artifact,
   checkpoint, memory/event, review, and aggregate session/binding/workspace/work/
   lease behavior, including typed failures, scope denial, and middleware actor
