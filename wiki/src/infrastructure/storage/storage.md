@@ -80,6 +80,7 @@ export interface StorageApi {
     afterSeq: number,
     limit?: Option<number>,
   ) => Effect<Chunk<Event>, StorageError>
+  readonly pruneEventsBefore: (cutoff: string) => Effect<number, StorageError>
   readonly appendMemory: (
     workspaceId: string,
     draft: MemoryDraft,
@@ -101,6 +102,10 @@ export class Storage extends Context.Tag('Storage')<Storage, StorageApi>() {}
 - `readEventsAfter` owns the hot event replay query shape and accepts an optional
   positive limit so agents can fetch bounded context tails without pulling an
   entire workspace event log.
+- `pruneEventsBefore` removes events strictly older than an ISO-8601 cutoff but
+  always retains the highest-sequence event per workspace as its append
+  high-water mark. The returned count includes only deleted records; later
+  appends never reuse a pruned sequence.
 - `appendMemory` is the equivalent Memory path and exists to avoid generic `kv`
   scans for thousands of handoff/recall records.
 - `getVersioned`/`replaceIfVersion` add optimistic-concurrency-by-version: CAS
@@ -132,6 +137,8 @@ Interface only — no behavior. Behavior lives in adapters; see [[in-memory-stor
   exception because it requires `(workspace_id, seq)` cursor reads.
 - ❌ Do NOT implement replay limits above the seam when the adapter can push the
   cap into its `(workspace_id, seq)` query.
+- ❌ Do NOT prune the newest event in a workspace or reset sequence allocation to
+  the surviving row count.
 
 ## Grill Log
 
@@ -161,4 +168,5 @@ zero domain code. This is the seam's whole value.
 ## Referenced by
 
 [[storage-index]] · [[in-memory-store]] · [[event-store]] ·
-[[workspace-memory-records]] · [[Storage]] · [[src/_MOC]]
+[[workspace-memory-records]] · [[query-conformance.test]] · [[Storage]] ·
+[[src/_MOC]]

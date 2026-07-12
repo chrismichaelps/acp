@@ -86,6 +86,10 @@ orders ascending, applies the optional limit in SQL, decodes every row through
 keeps the existing cursor and optional filters in SQL so thousands of handoff or
 recall records do not require application-side scans.
 
+`pruneEventsBefore` deletes rows older than the cutoff only when their sequence is
+below the workspace maximum. Keeping the newest row preserves the append
+high-water mark while allowing aged history to be reclaimed.
+
 `getVersioned` selects `value, version` and returns both wrapped in an
 `Option`. `replaceIfVersion` is an O(1) compare-and-swap — `UPDATE kv SET value
 = ..., version = version + 1 WHERE collection = ... AND id = ... AND version =
@@ -105,6 +109,7 @@ columns, value-rewrite reprojection, limit, and allowlist rejection all pass).
 
 - ❌ Do NOT allocate event or memory sequence numbers outside Postgres.
 - ❌ Do NOT fetch unbounded event history when a replay limit was supplied.
+- ❌ Do NOT prune the highest-sequence event in a workspace.
 - ❌ Do NOT decode persisted JSON ad hoc; every event and memory row passes
   through its protocol schema.
 - ❌ Do NOT collapse this adapter into SQLite conditionals; the two durable
@@ -144,4 +149,5 @@ DEFAULT 1` in `schemaStatements`, run unconditionally on every boot alongside
 
 ## Referenced by
 
-[[storage-index]] · [[storage]] · [[Storage]] · [[src/_MOC]]
+[[storage-index]] · [[storage]] · [[postgres-store.test]] · [[Storage]] ·
+[[src/_MOC]]
