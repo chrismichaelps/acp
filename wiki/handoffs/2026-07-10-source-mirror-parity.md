@@ -52,6 +52,10 @@ tags: [handoff]
   inventory, HTTP error secrecy, subprocess outcome normalization, and SSE
   framing. Corrected the process adapter's owning page to cover `runProcess`.
   Infrastructure debt is now 24 tests; 29 total test mirrors remain.
+- Distilled focused JSON-RPC lease, memory, resume, review, and worker mappings;
+  broad envelope/id/error semantics; and runtime batch, notification, stream,
+  live-router, and authorization behavior. Infrastructure debt is now 17 tests;
+  22 total test mirrors remain.
 
 ## Decided (do not re-litigate)
 
@@ -62,22 +66,21 @@ tags: [handoff]
 
 ## Open / Remaining
 
-- 29 missing test mirrors: infrastructure 24 and protocol 5.
+- 22 missing test mirrors: infrastructure 17 and protocol 5.
 
 ## Exact next action
 
-DNA Engineer: read and distill the infrastructure JSON-RPC batch:
+DNA Engineer: read and distill the infrastructure storage batch:
 
-1. `@root/src/infrastructure/jsonrpc/json-rpc-lease-commands.test.ts`
-2. `@root/src/infrastructure/jsonrpc/json-rpc-memory-commands.test.ts`
-3. `@root/src/infrastructure/jsonrpc/json-rpc-resume-commands.test.ts`
-4. `@root/src/infrastructure/jsonrpc/json-rpc-review-commands.test.ts`
-5. `@root/src/infrastructure/jsonrpc/json-rpc-runtime.test.ts`
-6. `@root/src/infrastructure/jsonrpc/json-rpc-worker-commands.test.ts`
-7. `@root/src/infrastructure/jsonrpc/json-rpc.test.ts`
+1. `@root/src/infrastructure/storage/in-memory-store.test.ts`
+2. `@root/src/infrastructure/storage/index-columns.test.ts`
+3. `@root/src/infrastructure/storage/postgres-store.test.ts`
+4. `@root/src/infrastructure/storage/query-conformance.test.ts`
+5. `@root/src/infrastructure/storage/sqlite-store.query.test.ts`
+6. `@root/src/infrastructure/storage/sqlite-store.test.ts`
 
 Update the infrastructure MOCs and module backlinks, then rerun the bidirectional
-path audit. Expected result: 22 missing tests and 0 orphans.
+path audit. Expected result: 16 missing tests and 0 orphans.
 
 ## Links
 

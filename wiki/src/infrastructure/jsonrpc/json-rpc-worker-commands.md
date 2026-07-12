@@ -56,4 +56,4 @@ reads isolated from workspace resume and mutation commands.
 
 ## Referenced by
 
-[[json-rpc-command-map]] · [[jsonrpc/_MOC]]
+[[json-rpc-command-map]] · [[json-rpc-worker-commands.test]] · [[jsonrpc/_MOC]]

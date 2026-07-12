@@ -63,4 +63,4 @@ lifecycle JSON-RPC projection coherent while preserving command-map capacity.
 
 ## Referenced by
 
-[[json-rpc-command-map]] · [[jsonrpc/_MOC]]
+[[json-rpc-command-map]] · [[json-rpc-lease-commands.test]] · [[jsonrpc/_MOC]]
