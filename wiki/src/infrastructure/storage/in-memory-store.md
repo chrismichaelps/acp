@@ -65,6 +65,10 @@ Two `Ref`s constructed in the Layer's scoped effect:
   store, and return the full event. Atomic modify guarantees no two events share a seq.
 - **readEventsAfter** — read ref, get the chunk, filter by
   `e.seq > afterSeq`, then apply the optional limit with `Chunk.take`.
+- **pruneEventsBefore** — atomically remove events older than the cutoff while
+  retaining the highest-sequence event in every workspace. Sequence allocation
+  uses the surviving maximum plus one, never `Chunk.size + 1`, so pruning cannot
+  reuse a historical sequence.
 - **appendMemory** — same sequence-ownership pattern for [[Memory]] records.
 - **readMemory** — read ref, filter by `afterSeq` plus optional work id / kind / key /
   label, preserving chronological order.
@@ -81,6 +85,8 @@ All operations are total in memory, so each returns `Effect.succeed(...)`; the
   semantics in memory.
 - ❌ Do NOT ignore replay limits; in-memory tests mirror the production query
   contract even though the adapter is not SQL-backed.
+- ❌ Do NOT compute the next event sequence from row count after retention
+  pruning.
 - ❌ Do NOT let `queryBy` accept a filter field outside `INDEXED_FIELDS` — the
   allowlist check is the same guard the SQL adapters rely on; skipping it in memory
   would let a typo pass here and only fail in production.
@@ -111,4 +117,4 @@ forces every service to manage its own mutable state.
 ## Referenced by
 
 [[storage-index]] · [[storage]] · [[workspace-memory-records]] · [[Storage]] ·
-[[src/_MOC]]
+[[in-memory-store.test]] · [[query-conformance.test]] · [[src/_MOC]]

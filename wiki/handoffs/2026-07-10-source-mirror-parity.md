@@ -56,6 +56,11 @@ tags: [handoff]
   broad envelope/id/error semantics; and runtime batch, notification, stream,
   live-router, and authorization behavior. Infrastructure debt is now 17 tests;
   22 total test mirrors remain.
+- Distilled InMemory/SQLite/Postgres storage behavior, promoted columns, shared
+  query/version-CAS conformance, durable reopen, query plans, large-tail reads,
+  and retention. Restored `pruneEventsBefore` and newest-event watermark rules to
+  the seam and adapter pages. Infrastructure debt is now 11 tests; 16 total test
+  mirrors remain.
 
 ## Decided (do not re-litigate)
 
@@ -66,21 +71,20 @@ tags: [handoff]
 
 ## Open / Remaining
 
-- 22 missing test mirrors: infrastructure 17 and protocol 5.
+- 16 missing test mirrors: infrastructure RPC 11 and protocol 5.
 
 ## Exact next action
 
-DNA Engineer: read and distill the infrastructure storage batch:
+DNA Engineer: read and distill the first bounded infrastructure RPC batch:
 
-1. `@root/src/infrastructure/storage/in-memory-store.test.ts`
-2. `@root/src/infrastructure/storage/index-columns.test.ts`
-3. `@root/src/infrastructure/storage/postgres-store.test.ts`
-4. `@root/src/infrastructure/storage/query-conformance.test.ts`
-5. `@root/src/infrastructure/storage/sqlite-store.query.test.ts`
-6. `@root/src/infrastructure/storage/sqlite-store.test.ts`
+1. `@root/src/infrastructure/rpc/acp-rpc-artifact-handlers.test.ts`
+2. `@root/src/infrastructure/rpc/acp-rpc-checkpoint-handlers.test.ts`
+3. `@root/src/infrastructure/rpc/acp-rpc-memory-event-handlers.test.ts`
+4. `@root/src/infrastructure/rpc/acp-rpc-review-handlers.test.ts`
+5. `@root/src/infrastructure/rpc/acp-rpc-handlers.test.ts`
 
 Update the infrastructure MOCs and module backlinks, then rerun the bidirectional
-path audit. Expected result: 16 missing tests and 0 orphans.
+path audit. Expected result: 11 missing tests and 0 orphans.
 
 ## Links
 

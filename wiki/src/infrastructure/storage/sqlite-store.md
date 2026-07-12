@@ -122,6 +122,10 @@ query columns, and returns the decoded record. `readMemory` uses the
 `(workspace_id, seq)` cursor by default and may constrain by key or work id
 through secondary indexes.
 
+`pruneEventsBefore` executes a bounded delete that excludes each workspace's
+highest sequence, preserving the watermark even when every event is older than
+the cutoff.
+
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT expose SQLite statements or database handles through [[Storage]].
@@ -130,6 +134,8 @@ through secondary indexes.
   [[event.schema]].
 - ❌ Do NOT prepare statements per operation on hot paths; prepare once per Layer.
 - ❌ Do NOT full-scan the event table for replay; constrain by `(workspace_id, seq)`.
+- ❌ Do NOT prune the newest event in a workspace or derive the next sequence
+  from the remaining row count.
 - ❌ Do NOT apply event replay limits after row materialization; the prepared
   statement carries `LIMIT ?`.
 - ❌ Do NOT read Memory through the generic `kv` collection; use the dedicated
@@ -185,4 +191,5 @@ force domain services to know about SQL and durable ordering.
 ## Referenced by
 
 [[storage-index]] · [[storage]] · [[workspace-memory-records]] · [[Storage]] ·
+[[sqlite-store.test]] · [[sqlite-store.query.test]] · [[query-conformance.test]] ·
 [[src/_MOC]]

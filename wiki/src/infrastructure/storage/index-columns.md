@@ -41,3 +41,13 @@ field, includes it; otherwise nulls that field. Non-object inputs return all-nul
 ## Grill Log
 
 - Single source of truth for promoted columns; adapters must not diverge
+
+## Negative Logic (Prohibited Paths)
+
+- ❌ Do NOT return a partial key set; every `INDEXED_FIELDS` entry is present.
+- ❌ Do NOT promote non-string values into SQL equality columns.
+
+## Referenced by
+
+[[kv-statements]] · [[in-memory-store]] · [[sqlite-store]] · [[postgres-store]] ·
+[[index-columns.test]] · [[storage/_MOC]] · [[Storage]]
