@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-12 · final app/server test mirrors · distilled real socket boot,
+  direct and derived tenant authorization, full native typed RPC parity,
+  sweeper leadership, deterministic expiry/retention, and workspace-bound
+  evidence creation; app/config test parity is complete and mirror debt is now
+  47 domain/infrastructure/protocol tests with no production gaps or orphans ·
+  validation: exact bidirectional path audit + repository-pinned Prettier · risk
+  LOW · [[source-mirror-2026-07-10]]
+
 - 2026-07-12 · resume/workspace server test mirrors · distilled full handoff
   composition, ETag/budget representations, pure salience and gate pinning,
   hosted session binding, and workspace-isolated work/evidence indexes;

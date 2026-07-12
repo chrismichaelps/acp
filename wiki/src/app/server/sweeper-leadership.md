@@ -60,4 +60,5 @@ does not need a manual unlock path.
 
 ## Referenced by
 
-[[sweeper]] · [[http-app]] · [[app-config]] · [[server-index]]
+[[sweeper-leadership.test]] · [[sweeper.test]] · [[sweeper]] · [[http-app]] ·
+[[app-config]] · [[server-index]]

@@ -19,13 +19,13 @@ mapping to find orphaned wiki pages.
 | Measure                    | Count |
 | -------------------------- | ----: |
 | TypeScript source files    |   253 |
-| Non-MOC source wiki pages  |   200 |
-| Missing mirrors            |    53 |
+| Non-MOC source wiki pages  |   206 |
+| Missing mirrors            |    47 |
 | Missing production/support |     0 |
-| Missing tests              |    53 |
+| Missing tests              |    47 |
 | Orphaned pages             |     0 |
 
-Missing mirrors by source area: `app` 6 · `config` 0 · `domain` 13 ·
+Missing mirrors by source area: `app` 0 · `config` 0 · `domain` 13 ·
 `infrastructure` 29 · `protocol` 5.
 
 ## Production / Support Hard-Lock
@@ -89,9 +89,12 @@ the constitutional wiki registry.
   review-comment, and worker route executable contracts.
 - ✅ Resume/workspace server batch: registered handoff composition,
   ETag/budgeting, pure salience/pinning, hosted binding, and workspace indexes.
-- Current audit: 53 missing mirrors, all tests; 0 missing production/support; 0
+- ✅ Final app/server batch: registered real boot, direct/derived tenant auth,
+  native typed RPC, sweeper leadership, expiry/retention, and workspace scope.
+- Current audit: 47 missing mirrors, all tests; 0 app/config gaps; 0 missing
+  production/support; 0
   orphaned pages.
-- Next: finish the six remaining app/server test mirrors.
+- Next: distill a bounded domain service test batch.
 
 ## Grill Log
 

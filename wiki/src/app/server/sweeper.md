@@ -142,6 +142,6 @@ unit tests like other composition-root wiring ([[server-main]]).
 
 ## Referenced by
 
-[[http-app]] · [[server-index]] · [[session-service]] · [[lease-service]]
-· [[event-store]] · [[sweeper-leadership]] · [[app-config]] · [[Transport]]
-· [[src/_MOC]]
+[[sweeper.test]] · [[sweeper-leadership.test]] · [[http-app]] ·
+[[server-index]] · [[session-service]] · [[lease-service]] · [[event-store]] ·
+[[sweeper-leadership]] · [[app-config]] · [[Transport]] · [[src/_MOC]]
