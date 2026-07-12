@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-12 · final protocol test mirrors · distilled exhaustive protocol error
+  mapping/no-leak behavior, grill/review-comment option and provenance rules,
+  aggregate public schema laws, and exact version compatibility; added protocol
+  folder MOCs; source mirror parity is complete at 253/253 with zero missing
+  mirrors or orphans · validation: exact bidirectional path audit +
+  repository-pinned Prettier · risk LOW · [[source-mirror-2026-07-10]]
+
 - 2026-07-12 · final native RPC test mirrors · distilled generated-client URL
   and bearer helpers, exact contract scope/auth/telemetry metadata, and direct
   plus derived evidence/review/work/lease workspace isolation; infrastructure

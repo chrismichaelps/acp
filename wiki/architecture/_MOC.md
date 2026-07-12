@@ -92,9 +92,11 @@ tests. Storage adapter, query, CAS, durability, plan, and retention contracts ar
 now registered, leaving 16 RPC/protocol tests. The first bounded RPC handler
 batch now registers artifact, checkpoint, memory/event, review, and aggregate
 session/workspace/work/lease behavior. Generated-client ergonomics, exact
-contract metadata, and direct/derived
-workspace isolation suites now complete infrastructure parity. Five protocol
-tests remain before zero-drift enforcement can be designed.
+contract metadata, and direct/derived workspace isolation suites complete
+infrastructure parity. The final protocol suites and protocol folder MOCs close
+the audit at 253 source files, 253 exact non-MOC pages, zero missing mirrors, and
+zero orphans. The live-agent Docker dogfood runner is the next
+documentation-first feature.
 
 ## ADRs
 

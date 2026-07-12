@@ -1,7 +1,7 @@
 ---
 type: audit
 date: 2026-07-10
-status: OPEN
+status: COMPLETE
 tags: [audit, wiki, mirror]
 aliases: [source-mirror-2026-07-10]
 ---
@@ -19,14 +19,13 @@ mapping to find orphaned wiki pages.
 | Measure                    | Count |
 | -------------------------- | ----: |
 | TypeScript source files    |   253 |
-| Non-MOC source wiki pages  |   248 |
-| Missing mirrors            |     5 |
+| Non-MOC source wiki pages  |   253 |
+| Missing mirrors            |     0 |
 | Missing production/support |     0 |
-| Missing tests              |     5 |
+| Missing tests              |     0 |
 | Orphaned pages             |     0 |
 
-Missing mirrors by source area: `app` 0 · `config` 0 · `domain` 0 ·
-`infrastructure` 0 · `protocol` 5.
+All source areas have zero missing mirrors.
 
 ## Production / Support Hard-Lock
 
@@ -113,10 +112,13 @@ the constitutional wiki registry.
   contract registry/scope/telemetry metadata, and direct plus resource-derived
   workspace isolation for evidence, reviews, work, and leases. Infrastructure
   parity is complete.
-- Current audit: 5 missing mirrors, all protocol tests; 0 application/domain/
-  infrastructure gaps; 0 missing
-  production/support; 0 orphaned pages.
-- Next: distill the final protocol executable contracts.
+- ✅ Final protocol batch: registered exhaustive error mapping/no-leak behavior,
+  grill/review-comment schemas, aggregate public schema decoding laws, and exact
+  supported-version behavior; added the missing protocol folder MOCs.
+- Final audit: 253 source files, 253 exact non-MOC pages, 0 missing production or
+  test mirrors, and 0 orphaned pages.
+- Next: preserve zero drift while the real-agent Docker dogfood feature is
+  documented and implemented.
 
 ## Grill Log
 

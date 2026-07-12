@@ -3,8 +3,8 @@ date: 2026-07-10
 topic: source-mirror-parity
 from_role: Forensic Guardian
 to_role: DNA Engineer
-status: IN_PROGRESS
-maturity: EXPLORING
+status: COMPLETE
+maturity: STABLE
 tags: [handoff]
 ---
 
@@ -69,6 +69,9 @@ tags: [handoff]
   middleware metadata, direct workspace isolation, and derived evidence/review/
   work/lease tenancy. Infrastructure parity is complete; 5 protocol test mirrors
   remain.
+- Distilled the final error, grill, review-comment, aggregate schema, and version
+  suites; added protocol/errors/schema MOCs. Exact parity is now 253 source files
+  to 253 non-MOC pages, with zero missing mirrors and zero orphans.
 
 ## Decided (do not re-litigate)
 
@@ -79,21 +82,14 @@ tags: [handoff]
 
 ## Open / Remaining
 
-- 5 missing test mirrors, all protocol tests.
+- None. The source-mirror restoration objective is complete.
 
 ## Exact next action
 
-DNA Engineer: read and distill the final protocol batch:
-
-1. `@root/src/protocol/errors/protocol-error.test.ts`
-2. `@root/src/protocol/schema/grill.schema.test.ts`
-3. `@root/src/protocol/schema/review-comment.schema.test.ts`
-4. `@root/src/protocol/schema/schema.test.ts`
-5. `@root/src/protocol/version.test.ts`
-
-Update the protocol MOCs and module backlinks, then rerun the bidirectional path
-audit. Expected result: 0 missing tests and 0 orphans. Only after that zero-drift
-state is documented may the wiki-first mirror-enforcement design/code slice begin.
+Forensic Guardian: preserve the zero-drift baseline while the next feature is
+designed. The active product request is a real model-backed Docker ACP dogfood
+runner; document its provider-neutral external-runner boundary and acceptance
+evidence before changing the harness or package scripts.
 
 ## Links
 

@@ -18,6 +18,7 @@ file has exactly one page here. A source file with no page is UNREGISTERED.
 
 ## protocol/
 
+- [[protocol/_MOC]] — canonical protocol schemas, errors, and version contract.
 - [[protocol-version]] — canonical ACP version constant, supported-version schema,
   and handshake compatibility predicate.
 

@@ -59,4 +59,5 @@ change.
 
 ## Referenced by
 
-[[ADR-0004-protocol-version-codecs-generated-client]] · [[src/_MOC]]
+[[ADR-0004-protocol-version-codecs-generated-client]] ·
+[[protocol-version.test]] · [[protocol/_MOC]] · [[src/_MOC]]

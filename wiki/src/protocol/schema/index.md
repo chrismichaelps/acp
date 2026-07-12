@@ -38,4 +38,4 @@ MEDIUM (0.5). Pure aggregation; centralizes the public schema surface.
 
 ## Referenced by
 
-[[protocol-version]] · [[src/_MOC]]
+[[protocol-version]] · [[schema.test]] · [[schema/_MOC]] · [[src/_MOC]]
