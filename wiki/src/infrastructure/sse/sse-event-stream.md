@@ -76,4 +76,4 @@ out of domain services.
 
 ## Referenced by
 
-[[sse-index]] · [[EventStream]] · [[src/_MOC]]
+[[sse-index]] · [[sse-event-stream.test]] · [[EventStream]] · [[src/_MOC]]

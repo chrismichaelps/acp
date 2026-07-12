@@ -186,5 +186,5 @@ route drift between server handlers, generated clients, and tests.
 
 ## Referenced by
 
-[[http-index]] · [[acp-http-api-events]] · [[Transport]] · [[workspace-routes]]
-· [[event-routes]] · [[protocol-version]] · [[src/_MOC]]
+[[http-index]] · [[acp-http-api-events]] · [[acp-http-api.test]] · [[Transport]]
+· [[workspace-routes]] · [[event-routes]] · [[protocol-version]] · [[src/_MOC]]
