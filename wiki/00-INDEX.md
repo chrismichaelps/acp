@@ -17,6 +17,7 @@ truth; code is a projection of it (FMCF v4.0). Build the wiki first, then code t
 - [[seams/_MOC|Seams]] — Storage, Transport, EventStream boundaries.
 - [[decisions/_MOC|Decisions]] — ADRs.
 - [[audits/_MOC|Audits]] — source/code parity evidence and selected drift slices.
+- [[references/_MOC|References]] — integration, deployment, and dogfood guidance.
 - [[src/_MOC|Source Mirror]] — 1:1 mirror of `@root/src/`.
 
 ## Law Anchors

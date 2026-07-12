@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-12 · live-agent Docker dogfood design · audited scripted versus
+  model-backed coverage, accepted an external provider-neutral runner boundary,
+  specified hardened Docker bootstrap, supervised Codex roles, deterministic
+  contention, structured evidence, real fixture assertions, cleanup, and an
+  opt-in command; repaired the manual harness's stale missing design reference ·
+  risk MEDIUM · [[ADR-0011-live-agent-docker-dogfood-runner]] ·
+  [[live-agent-docker-dogfood]]
+
 - 2026-07-12 · final protocol test mirrors · distilled exhaustive protocol error
   mapping/no-leak behavior, grill/review-comment option and provenance rules,
   aggregate public schema laws, and exact version compatibility; added protocol
