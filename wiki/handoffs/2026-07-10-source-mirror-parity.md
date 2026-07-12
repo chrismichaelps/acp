@@ -41,6 +41,9 @@ tags: [handoff]
 - Distilled resume composition, ETag/budget routes, pure salience/pinning,
   hosted session binding, and workspace aggregate tests. The audit now reports
   53 missing test mirrors and 0 orphans.
+- Distilled real boot, direct/derived workspace authorization, native typed RPC,
+  sweeper leadership, expiry/retention, and direct workspace scope tests.
+  App/config parity is complete; 47 test mirrors remain.
 
 ## Decided (do not re-litigate)
 
@@ -51,22 +54,22 @@ tags: [handoff]
 
 ## Open / Remaining
 
-- 53 missing test mirrors: app/server 6, domain 13, infrastructure 29, and
-  protocol 5.
+- 47 missing test mirrors: domain 13, infrastructure 29, and protocol 5.
 
 ## Exact next action
 
-DNA Engineer: finish app/server parity by reading and distilling:
+DNA Engineer: read and distill the first bounded domain service batch:
 
-1. `@root/src/app/server/live-boot.test.ts`
-2. `@root/src/app/server/mutation-workspace-scope-routes.test.ts`
-3. `@root/src/app/server/native-rpc-route.test.ts`
-4. `@root/src/app/server/sweeper-leadership.test.ts`
-5. `@root/src/app/server/sweeper.test.ts`
-6. `@root/src/app/server/workspace-scope-routes.test.ts`
+1. `@root/src/domain/artifacts/artifact-service.test.ts`
+2. `@root/src/domain/checkpoints/checkpoint-service.test.ts`
+3. `@root/src/domain/events/event-broker.test.ts`
+4. `@root/src/domain/events/event-store.test.ts`
+5. `@root/src/domain/grills/grill-service.test.ts`
+6. `@root/src/domain/leases/lease-service.test.ts`
+7. `@root/src/domain/memory/memory-service.test.ts`
 
-Update the server MOC and source backlinks, then rerun the bidirectional path
-audit. Expected result: 47 missing tests, 0 app gaps, and 0 orphans.
+Update the domain MOCs and service backlinks, then rerun the bidirectional path
+audit. Expected result: 40 missing tests and 0 orphans.
 
 ## Links
 

@@ -112,5 +112,6 @@ state all compose.
 
 ## Referenced by
 
-[[server-index]] · [[server-main]] · [[native-rpc-route]] · [[acp-router]] ·
-[[Transport]] · [[src/_MOC]]
+[[live-boot.test]] · [[native-rpc-route.test]] · [[server-index]] ·
+[[server-main]] · [[native-rpc-route]] · [[acp-router]] · [[Transport]] ·
+[[src/_MOC]]

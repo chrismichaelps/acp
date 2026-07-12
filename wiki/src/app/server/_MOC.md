@@ -27,6 +27,10 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
   folding, and request lifecycle logging.
 - [[resource-workspace-auth]] — derived workspace authorization for by-id HTTP
   mutation routes.
+- [[mutation-workspace-scope-routes.test]] — cross-tenant denial across every
+  by-id mutation family.
+- [[workspace-scope-routes.test]] — direct work/artifact/checkpoint workspace
+  binding enforcement.
 - [[workspace-routes]] — workspace list/create/update HTTP handlers.
 - [[workspace-routes.test]] — isolated work/evidence indexes, scope, and binding.
 - [[worker-routes]] — host-scoped worker registry read handlers.
@@ -60,10 +64,15 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
   subscription behavior.
 - [[native-rpc-route]] — `/rpc/native` Effect RPC HTTP route plus legacy route
   registration on the host layer router.
+- [[native-rpc-route.test]] — live typed-client unary/stream parity and shared
+  REST state.
 - [[http-app]] — socket-agnostic host layer (router + sweeper over app + id-clock).
+- [[live-boot.test]] — real ephemeral TCP boot through health/session/work flow.
 - [[sweeper]] — background TTL eviction daemon (stale sessions, due leases).
+- [[sweeper.test]] — deterministic expiry, leadership skip/run, and retention.
 - [[sweeper-leadership]] — in-process or Postgres advisory-lock guard for
   replicated sweeper ticks.
+- [[sweeper-leadership.test]] — local execution and fail-fast Postgres config.
 - [[server-main]] — Node `HttpServer` entrypoint on `ACP_PORT` with structured
   Effect logging.
 
