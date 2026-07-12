@@ -3,7 +3,7 @@ date: 2026-07-12
 topic: live-agent-docker-dogfood
 from_role: Architect
 to_role: Shadow
-status: READY
+status: IN_PROGRESS
 maturity: EXPLORING
 tags: [handoff, dogfood, agents, docker]
 ---
@@ -21,6 +21,9 @@ tags: [handoff, dogfood, agents, docker]
   created work must finish, and workspace binding is disabled.
 - Accepted [[ADR-0011-live-agent-docker-dogfood-runner]] and specified
   [[live-agent-docker-dogfood]].
+- Projected the first implementation slice: rerun-safe two-task executable
+  fixture, deterministic shared-probe instructions, workspace-bound role
+  sessions, strict role result schemas, and focused setup/schema tests.
 
 ## Decided (do not re-litigate)
 
@@ -36,13 +39,13 @@ tags: [handoff, dogfood, agents, docker]
 
 Shadow: implement the accepted design in bounded files:
 
-1. Add a supervised external runner and testable support module under
+1. Replace the prototype verifier with pure, unit-tested invariant evaluation
+   covering role results, all work terminal, nonempty handoff, reviewer reads,
+   distinct actors, no active leases, API/SQLite parity, and fixture tests.
+2. Add a supervised external runner and testable support module under
    `scripts/live-test/`.
-2. Add structured result schemas for planner, worker, and reviewer.
-3. Repair setup, roles, and verifier to match the two-task deterministic
-   contention and hardened workspace-binding contract.
-4. Wire `pnpm dogfood:docker-agents` and focused unit tests.
-5. Run the command with real Codex processes, preserve the report/transcripts,
+3. Wire `pnpm dogfood:docker-agents` and focused unit tests.
+4. Run the command with real Codex processes, preserve the report/transcripts,
    record every bug or gap, fix verified defects, and rerun.
 
 ## Links

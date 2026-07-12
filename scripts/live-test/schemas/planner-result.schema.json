@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["workspace_id", "work"],
+  "properties": {
+    "workspace_id": { "type": "string", "pattern": "^workspace_" },
+    "work": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^work_" },
+          "title": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

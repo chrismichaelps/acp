@@ -27,20 +27,37 @@ if (!existsSync(join(workRepo, '.git'))) {
   git('config', 'user.name', 'ACP Test')
 }
 
-// task-a: a real bug to fix
-writeFileSync(
+const writeIfMissing = (path, content) => {
+  if (!existsSync(path)) writeFileSync(path, content)
+}
+
+writeIfMissing(
   join(workRepo, 'src/util-a.js'),
   'export function add(a, b) {\n  return a - b; // BUG: should be +\n}\n',
 )
-// task-b: a helper to add
-writeFileSync(
+writeIfMissing(
   join(workRepo, 'src/util-b.js'),
   'export const helpers = {\n  // TODO: add capitalize helper\n};\n',
 )
-// task-shared: the file BOTH workers will want -> forces a lease conflict
-writeFileSync(
+writeIfMissing(
   join(workRepo, 'src/shared.js'),
-  'export const VERSION = "0.0.0"; // needs bump\n',
+  'export const CONTENTION_PROBE = true;\n',
+)
+writeIfMissing(
+  join(workRepo, 'package.json'),
+  '{\n  "type": "module",\n  "scripts": { "test": "node test.mjs" }\n}\n',
+)
+writeIfMissing(
+  join(workRepo, 'test.mjs'),
+  `import assert from 'node:assert/strict'
+import { add } from './src/util-a.js'
+import { helpers } from './src/util-b.js'
+
+assert.equal(add(2, 3), 5)
+assert.equal(helpers.capitalize('agent'), 'Agent')
+assert.equal(helpers.capitalize(''), '')
+console.log('fixture tests passed')
+`,
 )
 
 git('add', '-A')

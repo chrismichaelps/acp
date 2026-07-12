@@ -1,6 +1,6 @@
 ---
 type: reference
-status: DESIGNED
+status: IMPLEMENTING
 date: 2026-07-12
 tags: [reference, dogfood, agents, docker, production]
 aliases: [live-agent-docker-dogfood]
@@ -55,6 +55,11 @@ Gates or required pull-request CI.
 - **Reviewer:** inspect memory before each decision, request changes on at least
   one initial review, approve a follow-up and other valid work, and report the
   exact memory ids inspected.
+
+The first implementation slice has landed the two-task executable fixture,
+rerun-safe setup, explicit contention-probe role instructions, workspace-bound
+session commands, and strict planner/worker/reviewer result schemas. Verifier and
+Docker/provider supervision remain the next projection steps.
 
 ## Negative Logic (Prohibited Paths)
 
