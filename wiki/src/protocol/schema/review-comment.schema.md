@@ -72,4 +72,5 @@ and optional line number; `side` disambiguates old (base) vs new (head) side of 
 
 ## Referenced by
 
-[[checkpoint.schema]] · [[src/_MOC]]
+[[checkpoint.schema]] · [[review-comment.schema.test]] · [[schema/_MOC]] ·
+[[src/_MOC]]

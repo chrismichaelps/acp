@@ -108,4 +108,5 @@ ad-hoc status codes across every transport handler.
 
 ## Referenced by
 
-[[error.schema]] · [[Transport]] · [[src/_MOC]]
+[[error.schema]] · [[protocol-error.test]] · [[errors/_MOC]] · [[Transport]] ·
+[[src/_MOC]]
