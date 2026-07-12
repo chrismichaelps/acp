@@ -80,4 +80,5 @@ resource→workspace authorization hop for id-keyed mutations.
 
 ## Referenced by
 
-[[router]] · [[review-comment-service]] · [[resource-workspace-auth]] · [[server/_MOC]]
+[[review-comment-routes.test]] · [[router]] · [[review-comment-service]] ·
+[[resource-workspace-auth]] · [[server/_MOC]]

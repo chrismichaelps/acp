@@ -102,4 +102,5 @@ streaming and replay reads out of the already-dense router composition.
 
 ## Referenced by
 
-[[acp-router]] · [[event-store]] · [[sse-event-stream]] · [[src/_MOC]]
+[[event-routes.test]] · [[acp-router]] · [[event-store]] ·
+[[sse-event-stream]] · [[src/_MOC]]

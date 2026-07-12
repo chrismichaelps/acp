@@ -74,8 +74,9 @@ work added two server test sources with a mirrored production module. Health,
 identity, aggregate REST, JSON-RPC HTTP, and JSON-RPC WebSocket tests are now
 registered, leaving 64 missing test mirrors with no production gaps or orphans.
 The depth distribution above is therefore an active-module baseline, not a
-complete source inventory. Focused server route suites are the next
-documentation-first slice.
+complete source inventory. Artifact, event, grill, lease, review-comment, and
+worker route tests are now registered, leaving 58 missing tests. Resume/workspace
+server suites are the next documentation-first slice.
 
 ## ADRs
 
