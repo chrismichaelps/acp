@@ -28,11 +28,19 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
 - [[resource-workspace-auth]] — derived workspace authorization for by-id HTTP
   mutation routes.
 - [[workspace-routes]] — workspace list/create/update HTTP handlers.
+- [[workspace-routes.test]] — isolated work/evidence indexes, scope, and binding.
 - [[worker-routes]] — host-scoped worker registry read handlers.
 - [[worker-routes.test]] — host-scoped list/get, scope, and not-found behavior.
 - [[resume-routes]] — work-scoped read handlers for handoff and recovery.
+- [[resume-routes.test]] — complete handoff composition, gate backlog, auth, and
+  missing-content behavior.
 - [[resume-workspace]] — salience budgeting + ETag digest that shapes the resume
   packet as a bounded global workspace.
+- [[resume-workspace.test]] — pure budget, pinning, elision, and digest contract.
+- [[resume-workspace-routes.test]] — HTTP ETag revalidation and budgeted/full
+  representations.
+- [[session-workspace-binding.test]] — hosted session initialization requires a
+  non-empty workspace binding.
 - [[review-routes]] — review lifecycle mutation handlers (request/approve/reject
   /request-changes/cancel).
 - [[review-comment-routes]] — diff-anchored review comment add/resolve/reopen
