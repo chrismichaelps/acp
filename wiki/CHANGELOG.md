@@ -39,6 +39,15 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   gate; pure [[resume-workspace]] module, additive `elided` field, backward
   compatible · risk LOW · [[ADR-0010-context-exchange-optimization]] · refs #580
 
+- 2026-07-10 · focused CLI test mirrors · distilled the full four-agent CLI
+  lifecycle, GitHub import/sync/merge orchestration, pure merge-gate reasoning,
+  forced grill verdicts, memory requests, and diff-anchored review comments;
+  reconciled CLI MOC and production backlinks, completing CLI test parity;
+  mirror debt is now 69 missing tests with no production gaps or orphans after
+  rebasing over the two new resume-workspace test sources ·
+  validation: exact bidirectional path audit + Prettier · risk LOW ·
+  [[source-mirror-2026-07-10]]
+
 - 2026-07-10 · foundational CLI test mirrors · distilled the injected HTTP/auth
   and response-filter client contract, duplicate-safe longest-prefix command
   registry, aggregate argv projection, and focused event/lease/work parser

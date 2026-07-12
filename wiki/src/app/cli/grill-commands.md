@@ -69,4 +69,5 @@ feature-registry split for the central parser.
 
 ## Referenced by
 
-[[cli-commands]] · [[grill-routes]] · [[cli-usage]] · [[cli/_MOC]]
+[[grill-commands.test]] · [[cli-commands]] · [[grill-routes]] · [[cli-usage]] ·
+[[cli/_MOC]]
