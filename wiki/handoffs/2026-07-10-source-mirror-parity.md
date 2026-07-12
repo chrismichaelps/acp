@@ -29,6 +29,10 @@ tags: [handoff]
 - Distilled the foundational CLI client, registry, aggregate parser, event,
   lease, and work tests and reconciled CLI module/MOC links. The audit now
   reports 74 missing test mirrors and 0 orphans.
+- Distilled the remaining multi-agent, GitHub bridge/merge/reconciliation,
+  grill, memory, and review-comment CLI tests. CLI test parity is complete and
+  rebased over the new bounded-resume sources. The audit now reports 69 missing
+  test mirrors and 0 orphans.
 
 ## Decided (do not re-litigate)
 
@@ -39,22 +43,21 @@ tags: [handoff]
 
 ## Open / Remaining
 
-- 74 missing test mirrors: app 27, domain 13, infrastructure 29, and protocol 5.
+- 69 missing test mirrors: app/server 22, domain 13, infrastructure 29, and
+  protocol 5.
 
 ## Exact next action
 
-DNA Engineer: read and distill the seven remaining focused CLI tests:
+DNA Engineer: read and distill the first bounded server transport/auth batch:
 
-1. `@root/src/app/cli/cli-dogfood-multi-agent.test.ts`
-2. `@root/src/app/cli/gh-bridge.test.ts`
-3. `@root/src/app/cli/gh-merge.test.ts`
-4. `@root/src/app/cli/gh-reconcile.test.ts`
-5. `@root/src/app/cli/grill-commands.test.ts`
-6. `@root/src/app/cli/memory-commands.test.ts`
-7. `@root/src/app/cli/review-comment-commands.test.ts`
+1. `@root/src/app/server/health-routes.test.ts`
+2. `@root/src/app/server/identity.test.ts`
+3. `@root/src/app/server/router.test.ts`
+4. `@root/src/app/server/rpc-endpoint.test.ts`
+5. `@root/src/app/server/rpc-socket.test.ts`
 
-Update the CLI MOC and source backlinks, then rerun the bidirectional path audit.
-Expected result: 67 missing tests and 0 orphans.
+Update the server MOC and source backlinks, then rerun the bidirectional path
+audit. Expected result: 64 missing tests and 0 orphans.
 
 ## Links
 

@@ -51,4 +51,4 @@ keeps the parser's public API stable as feature areas split out.
 
 ## Referenced by
 
-[[cli-commands]] · [[cli/_MOC]]
+[[memory-commands.test]] · [[cli-commands]] · [[cli/_MOC]]

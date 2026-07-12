@@ -13,8 +13,7 @@ aliases: [cli-event-commands.test, event-commands.test]
 ## Purpose
 
 Pin [[cli-event-commands]] replay and streaming request projection, including
-server query parameters, client-side type filtering, and replay-limit
-validation.
+server-side cursor, type, and replay-limit query parameters.
 
 ## Interface
 
@@ -25,22 +24,22 @@ registry.
 
 Assert `events stream` sets `stream: true` and URL-encodes the workspace query.
 Assert `events list` defaults `after_seq` to zero, accepts an explicit cursor,
-records `--type` as a client filter without changing the host route, and sends a
-positive `--limit` to the server. Reject zero as an invalid replay limit.
+passes `--type` through as an encoded server query, and sends a positive
+`--limit` to the server. Reject zero as an invalid replay limit.
 
 ## Negative Logic (Prohibited Paths)
 
-- ❌ Do NOT send `--type` as an unsupported server query; it is a client-side
-  filter.
+- ❌ Do NOT retain `--type` as a client filter; every transport must receive the
+  same server-filtered replay contract.
 - ❌ Do NOT omit the deterministic zero replay cursor.
 - ❌ Do NOT accept zero or negative replay limits.
 - ❌ Do NOT forget the streaming marker on the SSE request.
 
 ## Grill Log
 
-- **Q:** Why are type and limit projected differently? **A:** The host owns
-  replay bounds, while the current CLI narrows event type after fetch. _Rejected:_
-  pretending both flags share server support.
+- **Q:** Why move type filtering into the query? **A:** Replay semantics must be
+  transport-independent; CLI-only narrowing made HTTP/RPC consumers observe a
+  different event set. _Rejected:_ preserve the old client-only filter.
 
 ## Referenced by
 

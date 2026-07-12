@@ -68,10 +68,13 @@ production/support modules are now distilled and the four RPC pages use exact
 `.test.md` paths. The first bounded test batch now registers the app layer,
 logging, stdio framing, and config profile contracts. The foundational CLI
 client, registry, aggregate parser, event, lease, and work tests are also
-registered, leaving 74 missing test mirrors with no production gaps or orphans.
-The depth distribution above is therefore an active-module baseline, not a
-complete source inventory. The remaining focused CLI tests are the next
-documentation-first slice.
+registered. Focused multi-agent, GitHub bridge/merge/reconciliation, grill,
+memory, and review-comment tests complete CLI parity. Subsequent bounded-resume
+work added two server test sources with a mirrored production module, leaving 69
+missing test
+mirrors with no production gaps or orphans. The depth distribution above is
+therefore an active-module baseline, not a complete source inventory. Bounded
+server transport test distillation is the next documentation-first slice.
 
 ## ADRs
 

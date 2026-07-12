@@ -40,7 +40,7 @@ export const runGhBridge: (
   [[gh-bridge-support]] (`acpGet`/`acpPost`/`BridgeError`), [[gh-reconcile]]
   (comment reconcile + merge-gate helpers), `@effect/platform` `HttpClient`.
 - **Consumed by:** [[cli-main]] (dispatches `argv[0] === 'gh'` here, providing
-  `GitHubGatewayGhLive`).
+  `GitHubGatewayGhLive`), [[gh-bridge.test]], and [[gh-merge.test]].
 
 ## Algorithm
 
