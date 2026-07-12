@@ -14,6 +14,11 @@ lease lifecycle, checkpointing, memory, pull request artifact references, review
 request/approval, terminal work completion, event publication, and event replay
 all cross the same boundary an adapter would use.
 
+These existing `dogfood:codex*` commands are deterministic Codex-shaped scripts;
+they do not launch a model process. The distinct model-backed production lane is
+specified by [[live-agent-docker-dogfood]] and
+[[ADR-0011-live-agent-docker-dogfood-runner]].
+
 The repeatable smoke command is:
 
 ```bash
@@ -66,4 +71,5 @@ session-scoped rather than enforced against every actor-like payload field.
 
 ## Referenced by
 
-[[README]] · [[protocol-implementation-2026-06-28]]
+[[README]] · [[protocol-implementation-2026-06-28]] ·
+[[live-agent-docker-dogfood]] · [[references/_MOC]]

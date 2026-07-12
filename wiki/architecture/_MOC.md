@@ -107,6 +107,8 @@ documentation-first feature.
 - [[ADR-0008-deployment-storage-topology]] — ACCEPTED; Postgres/pg-notify,
   workspace-scoped auth, replicated sweeps, retention, Compose, and edge are
   landed; managed hosting and external identity remain deferred.
+- [[ADR-0011-live-agent-docker-dogfood-runner]] — ACCEPTED; supervised model
+  processes run outside the provider-neutral ACP image.
 
 ## Build Order (vertical slices)
 
