@@ -19,13 +19,13 @@ mapping to find orphaned wiki pages.
 | Measure                    | Count |
 | -------------------------- | ----: |
 | TypeScript source files    |   253 |
-| Non-MOC source wiki pages  |   184 |
-| Missing mirrors            |    69 |
+| Non-MOC source wiki pages  |   189 |
+| Missing mirrors            |    64 |
 | Missing production/support |     0 |
-| Missing tests              |    69 |
+| Missing tests              |    64 |
 | Orphaned pages             |     0 |
 
-Missing mirrors by source area: `app` 22 · `config` 0 · `domain` 13 ·
+Missing mirrors by source area: `app` 17 · `config` 0 · `domain` 13 ·
 `infrastructure` 29 · `protocol` 5.
 
 ## Production / Support Hard-Lock
@@ -83,9 +83,11 @@ the constitutional wiki registry.
 - Mainline bounded-resume work added a mirrored production module and two
   unmirrored server tests; event-type filtering also moved from client to server
   and its CLI test mirror is reconciled here.
-- Current audit: 69 missing mirrors, all tests; 0 missing production/support; 0
+- ✅ Server transport/auth batch: registered health, identity, aggregate router,
+  JSON-RPC HTTP, and JSON-RPC WebSocket executable contracts.
+- Current audit: 64 missing mirrors, all tests; 0 missing production/support; 0
   orphaned pages.
-- Next: distill a bounded server transport/auth foundation batch.
+- Next: distill a bounded focused server route batch.
 
 ## Grill Log
 

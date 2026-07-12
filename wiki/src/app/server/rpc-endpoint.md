@@ -100,5 +100,5 @@ v1Router + POST /rpc`, and dispatch targets `v1Router`. _Rationale:_ a clean
 
 ## Referenced by
 
-[[acp-router]] · [[rpc-socket]] · [[json-rpc-runtime]] · [[http-app]] ·
-[[Transport]] · [[src/_MOC]]
+[[rpc-endpoint.test]] · [[acp-router]] · [[rpc-socket]] ·
+[[json-rpc-runtime]] · [[http-app]] · [[Transport]] · [[src/_MOC]]

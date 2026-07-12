@@ -136,5 +136,6 @@ workspace event as an `events.event` notification.
 
 ## Referenced by
 
-[[acp-router]] · [[rpc-endpoint]] · [[json-rpc-runtime]] · [[event-store]] ·
-[[http-app]] · [[Transport]] · [[src/_MOC]]
+[[rpc-socket.test]] · [[acp-router]] · [[rpc-endpoint]] ·
+[[json-rpc-runtime]] · [[event-store]] · [[http-app]] · [[Transport]] ·
+[[src/_MOC]]

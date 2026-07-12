@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-12 · server transport/auth test mirrors · distilled unauthenticated
+  health probes, ordinary/secure identity minting, aggregate REST bootstrap and
+  authorization, shared-store JSON-RPC HTTP framing, and real WebSocket
+  auth/subscription behavior; reconciled server MOC and production backlinks;
+  mirror debt is now 64 missing tests with no production gaps or orphans ·
+  validation: exact bidirectional path audit + Prettier · risk LOW ·
+  [[source-mirror-2026-07-10]]
+
 - 2026-07-11 · server-side event type filter · live dogfood surfaced that
   `GET /v1/events` silently ignored a `type` filter (contract declared only
   `workspace_id`/`after_seq`/`limit`; the CLI filtered `--type` client-side, so
