@@ -80,4 +80,5 @@ question→grill→workspace authorization walk for id-keyed question mutations.
 
 ## Referenced by
 
-[[router]] · [[grill-service]] · [[resource-workspace-auth]] · [[server/_MOC]]
+[[grill-routes.test]] · [[router]] · [[grill-service]] ·
+[[resource-workspace-auth]] · [[server/_MOC]]

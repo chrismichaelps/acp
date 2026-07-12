@@ -73,4 +73,5 @@ keeps host presence reads centralized and separate from workspace routes/events.
 
 ## Referenced by
 
-[[acp-router]] · [[server/_MOC]] · [[ADR-0005-worker-presence-scope]]
+[[worker-routes.test]] · [[acp-router]] · [[server/_MOC]] ·
+[[ADR-0005-worker-presence-scope]]

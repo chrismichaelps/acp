@@ -208,6 +208,6 @@ composition behind a single router value. Deleting it scatters HTTP ceremony and
 
 ## Referenced by
 
-[[router.test]] · [[server-index]] · [[server-main]] · [[Transport]] ·
-[[route-support]] · [[workspace-routes]] · [[event-routes]] ·
-[[protocol-version]] · [[src/_MOC]]
+[[router.test]] · [[artifact-routes.test]] · [[lease-routes.test]] ·
+[[server-index]] · [[server-main]] · [[Transport]] · [[route-support]] ·
+[[workspace-routes]] · [[event-routes]] · [[protocol-version]] · [[src/_MOC]]

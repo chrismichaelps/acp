@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-12 · focused server route test mirrors · distilled artifact evidence,
+  event replay/filter/auth, full grill evaluation, lease lifecycle/scope,
+  review-comment state, and host-scoped worker read contracts; reconciled server
+  MOC and owning route/router backlinks; mirror debt is now 58 missing tests with
+  no production gaps or orphans · validation: exact bidirectional path audit +
+  Prettier · risk LOW · [[source-mirror-2026-07-10]]
+
 - 2026-07-12 · server transport/auth test mirrors · distilled unauthenticated
   health probes, ordinary/secure identity minting, aggregate REST bootstrap and
   authorization, shared-store JSON-RPC HTTP framing, and real WebSocket
