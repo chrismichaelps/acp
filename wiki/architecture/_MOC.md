@@ -81,7 +81,9 @@ missing tests. Real boot, both workspace authorization paths, native typed RPC,
 and sweeper/leadership suites complete app/config parity, leaving 47 domain,
 infrastructure, and protocol tests. Artifact, checkpoint, event broker/store,
 grill, lease, and memory service suites are now registered, leaving 40 tests.
-The remaining domain service suites are the next documentation-first slice.
+Review comment/review, session, WorkUnit, worker, and workspace suites complete
+domain parity, leaving 34 infrastructure and protocol tests. Cross-cutting
+infrastructure boundary suites are the next documentation-first slice.
 
 ## ADRs
 

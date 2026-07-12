@@ -149,4 +149,5 @@ collection, not Worker registry state.
 
 ## Referenced by
 
-[[sessions/_MOC]] · [[acp-router]] · [[Worker]] · [[src/_MOC]]
+[[session-service.test]] · [[sessions/_MOC]] · [[acp-router]] · [[Worker]] ·
+[[src/_MOC]]
