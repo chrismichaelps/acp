@@ -104,4 +104,5 @@ id semantics, delegate command mapping, and fold responses.
 
 ## Referenced by
 
-[[jsonrpc-index]] · [[json-rpc-command-map]] · [[Transport]] · [[src/_MOC]]
+[[jsonrpc-index]] · [[json-rpc-command-map]] · [[json-rpc.test]] · [[Transport]]
+· [[src/_MOC]]

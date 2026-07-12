@@ -86,7 +86,9 @@ domain parity, leaving 34 infrastructure and protocol tests. Cross-cutting
 infrastructure boundary suites now pin Postgres notification fan-out, the full
 REST inventory, HTTP error secrecy, subprocess outcomes, and SSE framing. The
 audit therefore leaves 29 infrastructure and protocol tests; JSON-RPC is the next
-documentation-first slice.
+documentation-first slice. Focused JSON-RPC projections and the broad
+facade/runtime suites are now registered, leaving 22 infrastructure and protocol
+tests. Storage is the next documentation-first slice.
 
 ## ADRs
 

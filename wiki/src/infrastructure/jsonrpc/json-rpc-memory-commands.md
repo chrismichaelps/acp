@@ -58,4 +58,5 @@ and preserves [[json-rpc-command-map]] capacity.
 
 ## Referenced by
 
-[[json-rpc-command-map]] · [[memory-routes]] · [[jsonrpc/_MOC]]
+[[json-rpc-command-map]] · [[json-rpc-memory-commands.test]] · [[memory-routes]]
+· [[jsonrpc/_MOC]]

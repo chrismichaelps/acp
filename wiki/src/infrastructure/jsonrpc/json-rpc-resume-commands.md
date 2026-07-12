@@ -68,4 +68,4 @@ groups additive modules.
 
 ## Referenced by
 
-[[json-rpc-command-map]] · [[jsonrpc/_MOC]]
+[[json-rpc-command-map]] · [[json-rpc-resume-commands.test]] · [[jsonrpc/_MOC]]

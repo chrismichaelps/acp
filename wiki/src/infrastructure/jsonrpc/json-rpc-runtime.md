@@ -129,4 +129,5 @@ in-process dispatch over the [[acp-router]] web handler (a JSON-RPC
 
 ## Referenced by
 
-[[jsonrpc-index]] · [[json-rpc]] · [[acp-router]] · [[Transport]] · [[src/_MOC]]
+[[jsonrpc-index]] · [[json-rpc]] · [[json-rpc-runtime.test]] · [[acp-router]] ·
+[[Transport]] · [[src/_MOC]]
