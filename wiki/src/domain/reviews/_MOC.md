@@ -12,6 +12,8 @@ rejection, and requested changes on [[WorkUnit]]s.
 
 - [[review-service-index]] — opaque Review service barrel.
 - [[review-service]] — Review gate lifecycle and WorkUnit outcome transitions.
+- [[review-service.test]] — requirements, signatures, outcomes, events, and
+  work/workspace indexes.
 
 ## Referenced by
 

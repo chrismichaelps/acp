@@ -46,6 +46,8 @@ tags: [handoff]
   App/config parity is complete; 47 test mirrors remain.
 - Distilled artifact, checkpoint, event broker/store, grill, lease, and memory
   domain suites. 40 test mirrors remain.
+- Distilled review comment/review, session, WorkUnit, worker, and workspace
+  domain suites. Domain parity is complete; 34 test mirrors remain.
 
 ## Decided (do not re-litigate)
 
@@ -56,21 +58,20 @@ tags: [handoff]
 
 ## Open / Remaining
 
-- 40 missing test mirrors: domain 6, infrastructure 29, and protocol 5.
+- 34 missing test mirrors: infrastructure 29 and protocol 5.
 
 ## Exact next action
 
-DNA Engineer: finish domain parity by reading and distilling:
+DNA Engineer: read and distill the cross-cutting infrastructure boundary batch:
 
-1. `@root/src/domain/review-comments/review-comment-service.test.ts`
-2. `@root/src/domain/reviews/review-service.test.ts`
-3. `@root/src/domain/sessions/session-service.test.ts`
-4. `@root/src/domain/work-units/work-unit-service.test.ts`
-5. `@root/src/domain/workers/worker-service.test.ts`
-6. `@root/src/domain/workspaces/workspace-service.test.ts`
+1. `@root/src/infrastructure/events/pg-notify-event-broker.test.ts`
+2. `@root/src/infrastructure/http/acp-http-api.test.ts`
+3. `@root/src/infrastructure/http/http-error-mapper.test.ts`
+4. `@root/src/infrastructure/platform-node/node-process-io.test.ts`
+5. `@root/src/infrastructure/sse/sse-event-stream.test.ts`
 
-Update the domain MOCs and service backlinks, then rerun the bidirectional path
-audit. Expected result: 34 missing tests, 0 domain gaps, and 0 orphans.
+Update the infrastructure MOCs and module backlinks, then rerun the bidirectional
+path audit. Expected result: 29 missing tests and 0 orphans.
 
 ## Links
 

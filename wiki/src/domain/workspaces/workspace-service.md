@@ -150,4 +150,5 @@ registry-with-events is the honest shape.
 
 ## Referenced by
 
-[[workspace-service-index]] · [[Workspace]] · [[src/_MOC]]
+[[workspace-service.test]] · [[workspace-service-index]] · [[Workspace]] ·
+[[src/_MOC]]

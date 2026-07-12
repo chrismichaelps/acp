@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-12 · final domain test mirrors · distilled review-comment provenance,
+  review/work outcomes and signatures, session bindings/actor lookup, CAS-safe
+  WorkUnit transitions, worker reconnect/presence, and one-way workspace archive
+  contracts; domain parity is complete and mirror debt is now 34 infrastructure
+  and protocol tests with no production gaps or orphans · validation: exact
+  bidirectional path audit + repository-pinned Prettier · risk LOW ·
+  [[source-mirror-2026-07-10]]
+
 - 2026-07-12 · core domain test mirrors · distilled artifact ownership/bounds,
   checkpoint ordering, broker fan-out, persisted event sequencing, grill outcome
   semantics, lease conflict/expiry, and memory cursor contracts; reconciled six

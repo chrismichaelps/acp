@@ -124,5 +124,5 @@ session identity are a transport-edge concern (spec §9), not registry state.
 
 ## Referenced by
 
-[[worker-service-index]] · [[Worker]] · [[worker-routes]] ·
+[[worker-service.test]] · [[worker-service-index]] · [[Worker]] · [[worker-routes]] ·
 [[ADR-0005-worker-presence-scope]] · [[src/_MOC]]
