@@ -79,8 +79,9 @@ worker route tests are registered. Resume handoff, ETag/budget, pure salience,
 hosted binding, and workspace aggregate suites are also registered, leaving 53
 missing tests. Real boot, both workspace authorization paths, native typed RPC,
 and sweeper/leadership suites complete app/config parity, leaving 47 domain,
-infrastructure, and protocol tests. Domain service suites are the next
-documentation-first slice.
+infrastructure, and protocol tests. Artifact, checkpoint, event broker/store,
+grill, lease, and memory service suites are now registered, leaving 40 tests.
+The remaining domain service suites are the next documentation-first slice.
 
 ## ADRs
 
