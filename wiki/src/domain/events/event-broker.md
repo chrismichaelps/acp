@@ -53,4 +53,5 @@ DEEP (0.66). The seam lets ACP swap in cross-process fan-out such as
 
 ## Referenced by
 
-[[event-store]] · [[event-store-index]] · [[event-broker-live]]
+[[event-broker.test]] · [[event-store]] · [[event-store-index]] ·
+[[event-broker-live]]

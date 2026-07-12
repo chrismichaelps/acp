@@ -93,4 +93,5 @@ each domain service and transport adapter.
 
 ## Referenced by
 
-[[event-store-index]] · [[Event]] · [[EventStream]] · [[src/_MOC]]
+[[event-store.test]] · [[event-store-index]] · [[Event]] · [[EventStream]] ·
+[[src/_MOC]]

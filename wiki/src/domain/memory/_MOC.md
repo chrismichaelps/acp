@@ -12,6 +12,7 @@ handoff and recall.
 
 - [[memory-service-index]] — opaque Memory service barrel.
 - [[memory-service]] — Memory creation, cursor reads, and event emission.
+- [[memory-service.test]] — sequence assignment, creation event, and filtered read.
 
 ## Referenced by
 

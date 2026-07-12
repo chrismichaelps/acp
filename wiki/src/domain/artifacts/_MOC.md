@@ -12,6 +12,8 @@ host-stored content for completed [[WorkUnit]] outputs.
 
 - [[artifact-service-index]] — opaque Artifact service barrel.
 - [[artifact-service]] — Artifact metadata registry, content bounds, and events.
+- [[artifact-service.test]] — content ownership, bounds, indexes, transitions,
+  deletion, and events.
 
 ## Referenced by
 

@@ -87,4 +87,5 @@ event emission, sorting, and latest-resume semantics behind one domain surface.
 
 ## Referenced by
 
-[[checkpoints/_MOC]] · [[Checkpoint]] · [[src/_MOC]]
+[[checkpoint-service.test]] · [[checkpoints/_MOC]] · [[Checkpoint]] ·
+[[src/_MOC]]

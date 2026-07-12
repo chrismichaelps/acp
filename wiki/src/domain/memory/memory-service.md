@@ -66,4 +66,5 @@ query shape behind a compact domain surface.
 
 ## Referenced by
 
-[[memory/_MOC]] · [[Memory]] · [[workspace-memory-records]] · [[src/_MOC]]
+[[memory-service.test]] · [[memory/_MOC]] · [[Memory]] ·
+[[workspace-memory-records]] · [[src/_MOC]]
