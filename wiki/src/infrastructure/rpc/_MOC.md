@@ -12,12 +12,17 @@ first-party Effect RPC contract selected by [[ADR-0007-effect-rpc-adoption]].
 - [[acp-rpc-contract]] — native first-party `RpcGroup` contract over ACP schemas.
 - [[acp-rpc-handlers]] — native handler verticals for session, worker,
   workspace, work, and lease operations.
+- [[acp-rpc-handlers.test]] — aggregate session/binding/workspace/work/lease executable contract.
 - [[acp-rpc-artifact-handlers]] — native artifact evidence handlers split from
   the aggregate handler layer.
+- [[acp-rpc-artifact-handlers.test]] — stored/external artifact lifecycle and actor contract.
 - [[acp-rpc-checkpoint-handlers]] — native checkpoint resume handlers split from
   the aggregate handler layer.
+- [[acp-rpc-checkpoint-handlers.test]] — ordering/latest/missing and actor contract.
 - [[acp-rpc-review-handlers]] — native human review gate handlers split from the
   aggregate handler layer.
+- [[acp-rpc-review-handlers.test]] — distinct review outcomes, indexes, transition, and actor contract.
+- [[acp-rpc-memory-event-handlers.test]] — recall/replay, scope, sequence, and actor contract.
 - [[rpc-auth]] — bearer-session authorization helper for native RPC handlers.
 - [[rpc-resource-workspace-auth]] — derived workspace authorization for native
   RPC work and lease resource ids.

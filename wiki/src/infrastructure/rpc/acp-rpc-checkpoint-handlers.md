@@ -67,4 +67,5 @@ file-size ceiling.
 
 ## Referenced by
 
-[[acp-rpc-handlers]] · [[rpc-index]] · [[rpc/_MOC]]
+[[acp-rpc-handlers]] · [[acp-rpc-checkpoint-handlers.test]] · [[rpc-index]] ·
+[[rpc/_MOC]]

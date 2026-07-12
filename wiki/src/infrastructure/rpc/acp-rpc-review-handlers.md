@@ -74,4 +74,5 @@ coupling and keeps the native RPC handler surface reviewable.
 
 ## Referenced by
 
-[[acp-rpc-handlers]] · [[rpc-index]] · [[rpc/_MOC]]
+[[acp-rpc-handlers]] · [[acp-rpc-review-handlers.test]] · [[rpc-index]] ·
+[[rpc/_MOC]]

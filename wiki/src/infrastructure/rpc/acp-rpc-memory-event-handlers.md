@@ -68,4 +68,5 @@ coupling and finishes the native handler set for [[acp-rpc-contract]].
 
 ## Referenced by
 
-[[acp-rpc-handlers]] · [[rpc-index]] · [[rpc/_MOC]]
+[[acp-rpc-handlers]] · [[acp-rpc-memory-event-handlers.test]] · [[rpc-index]] ·
+[[rpc/_MOC]]

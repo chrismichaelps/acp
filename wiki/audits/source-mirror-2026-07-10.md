@@ -19,14 +19,14 @@ mapping to find orphaned wiki pages.
 | Measure                    | Count |
 | -------------------------- | ----: |
 | TypeScript source files    |   253 |
-| Non-MOC source wiki pages  |   237 |
-| Missing mirrors            |    16 |
+| Non-MOC source wiki pages  |   242 |
+| Missing mirrors            |    11 |
 | Missing production/support |     0 |
-| Missing tests              |    16 |
+| Missing tests              |    11 |
 | Orphaned pages             |     0 |
 
 Missing mirrors by source area: `app` 0 · `config` 0 · `domain` 0 ·
-`infrastructure` 11 · `protocol` 5.
+`infrastructure` 6 · `protocol` 5.
 
 ## Production / Support Hard-Lock
 
@@ -106,9 +106,12 @@ the constitutional wiki registry.
   promoted-column extraction, shared query/CAS conformance, durable reopen and
   query-plan evidence; restored the omitted retention watermark contract on the
   seam and adapter pages.
-- Current audit: 16 missing mirrors, all tests; 0 app/config/domain gaps; 0 missing
+- ✅ First RPC batch: registered direct artifact, checkpoint, memory/event,
+  review, and aggregate session/binding/workspace/work/lease handler contracts,
+  including middleware actor precedence and typed failure paths.
+- Current audit: 11 missing mirrors, all tests; 0 app/config/domain gaps; 0 missing
   production/support; 0 orphaned pages.
-- Next: distill the first bounded infrastructure RPC executable contracts.
+- Next: distill the remaining infrastructure RPC executable contracts.
 
 ## Grill Log
 
