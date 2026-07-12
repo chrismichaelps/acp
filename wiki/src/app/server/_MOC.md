@@ -10,8 +10,13 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
 
 - [[server-index]] — opaque server barrel (router + id-clock + http-app).
 - [[health-routes]] — unauthenticated Host liveness/readiness probes.
+- [[health-routes.test]] — public liveness/readiness registration and response
+  contract.
 - [[id-clock]] — id/timestamp minting primitive for the composition root.
+- [[identity.test]] — ordinary id, ISO timestamp, and secure-token guarantees.
 - [[acp-router]] — `HttpRouter` wiring all v0.1 routes to services + SSE + `/rpc`.
+- [[router.test]] — aggregate bootstrap, auth, workspace/work, and review HTTP
+  contract.
 - [[session-capabilities-test]] — focused HTTP regression for advertised host
   capability flags.
 - [[route-support]] — shared authorization, response encoding, route error
@@ -32,7 +37,11 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
 - [[memory-routes]] — workspace memory create/list HTTP handlers.
 - [[event-routes]] — workspace event replay and SSE stream handlers.
 - [[rpc-endpoint]] — `POST /rpc` JSON-RPC framing over the in-process router.
+- [[rpc-endpoint.test]] — shared-store RPC/REST, notification, batch, and error
+  behavior.
 - [[rpc-socket]] — `GET /rpc` JSON-RPC WebSocket framing over the same router.
+- [[rpc-socket.test]] — real-upgrade auth, shared store, parse error, and event
+  subscription behavior.
 - [[native-rpc-route]] — `/rpc/native` Effect RPC HTTP route plus legacy route
   registration on the host layer router.
 - [[http-app]] — socket-agnostic host layer (router + sweeper over app + id-clock).

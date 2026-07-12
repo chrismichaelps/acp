@@ -33,6 +33,9 @@ tags: [handoff]
   grill, memory, and review-comment CLI tests. CLI test parity is complete and
   rebased over the new bounded-resume sources. The audit now reports 69 missing
   test mirrors and 0 orphans.
+- Distilled health, identity, aggregate REST router, JSON-RPC HTTP, and real
+  WebSocket server tests. The audit now reports 64 missing test mirrors and 0
+  orphans.
 
 ## Decided (do not re-litigate)
 
@@ -43,21 +46,22 @@ tags: [handoff]
 
 ## Open / Remaining
 
-- 69 missing test mirrors: app/server 22, domain 13, infrastructure 29, and
+- 64 missing test mirrors: app/server 17, domain 13, infrastructure 29, and
   protocol 5.
 
 ## Exact next action
 
-DNA Engineer: read and distill the first bounded server transport/auth batch:
+DNA Engineer: read and distill the focused server route batch:
 
-1. `@root/src/app/server/health-routes.test.ts`
-2. `@root/src/app/server/identity.test.ts`
-3. `@root/src/app/server/router.test.ts`
-4. `@root/src/app/server/rpc-endpoint.test.ts`
-5. `@root/src/app/server/rpc-socket.test.ts`
+1. `@root/src/app/server/artifact-routes.test.ts`
+2. `@root/src/app/server/event-routes.test.ts`
+3. `@root/src/app/server/grill-routes.test.ts`
+4. `@root/src/app/server/lease-routes.test.ts`
+5. `@root/src/app/server/review-comment-routes.test.ts`
+6. `@root/src/app/server/worker-routes.test.ts`
 
 Update the server MOC and source backlinks, then rerun the bidirectional path
-audit. Expected result: 64 missing tests and 0 orphans.
+audit. Expected result: 58 missing tests and 0 orphans.
 
 ## Links
 

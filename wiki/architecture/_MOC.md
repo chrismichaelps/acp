@@ -70,11 +70,12 @@ logging, stdio framing, and config profile contracts. The foundational CLI
 client, registry, aggregate parser, event, lease, and work tests are also
 registered. Focused multi-agent, GitHub bridge/merge/reconciliation, grill,
 memory, and review-comment tests complete CLI parity. Subsequent bounded-resume
-work added two server test sources with a mirrored production module, leaving 69
-missing test
-mirrors with no production gaps or orphans. The depth distribution above is
-therefore an active-module baseline, not a complete source inventory. Bounded
-server transport test distillation is the next documentation-first slice.
+work added two server test sources with a mirrored production module. Health,
+identity, aggregate REST, JSON-RPC HTTP, and JSON-RPC WebSocket tests are now
+registered, leaving 64 missing test mirrors with no production gaps or orphans.
+The depth distribution above is therefore an active-module baseline, not a
+complete source inventory. Focused server route suites are the next
+documentation-first slice.
 
 ## ADRs
 
