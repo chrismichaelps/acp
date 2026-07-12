@@ -50,4 +50,5 @@ durability and replay in the storage layer.
 
 ## Referenced by
 
-[[event-broker-live]] · [[infrastructure/events/_MOC]]
+[[event-broker-live]] · [[pg-notify-event-broker.test]] ·
+[[infrastructure/events/_MOC]]

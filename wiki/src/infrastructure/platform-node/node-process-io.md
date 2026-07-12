@@ -27,6 +27,16 @@ the entrypoints.
 export const nodeArgv: () => readonly string[]
 export const nodeStdin: () => AsyncIterable<unknown>
 export const nodeStdoutWrite: (chunk: string | Uint8Array) => void
+export interface ProcessResult {
+  readonly code: number
+  readonly stdout: string
+  readonly stderr: string
+}
+export const runProcess: (
+  command: string,
+  args: readonly string[],
+  options?: { readonly input?: string },
+) => Effect.Effect<ProcessResult>
 ```
 
 ### Linkage
@@ -41,11 +51,19 @@ tokens to [[cli-commands]]. `nodeStdin` returns the process stdin async iterable
 used by the JSON-RPC stdio frame loop. `nodeStdoutWrite` writes pre-framed bytes
 or strings to stdout without adding logging, newlines, or JSON decoration.
 
+`runProcess` executes a command with `execFile` and `shell: false`, captures up to
+64 MiB each of stdout/stderr, optionally closes stdin with caller-provided text,
+and returns every outcome as `ProcessResult`. Ordinary non-zero exits preserve
+their numeric status; spawn failures use `-1` and expose the OS diagnostic in
+stderr.
+
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT parse CLI commands here; [[cli-commands]] owns argv grammar.
 - ❌ Do NOT decode Content-Length frames here; [[stdio-frames]] owns framing.
 - ❌ Do NOT log from this adapter; stdout is protocol/user output.
+- ❌ Do NOT execute subprocesses through a shell.
+- ❌ Do NOT throw for an ordinary non-zero child exit.
 
 ## Depth
 
@@ -55,4 +73,5 @@ application logging concerns.
 
 ## Referenced by
 
-[[platform-node-index]] · [[cli-main]] · [[stdio-main]] · [[Transport]]
+[[platform-node-index]] · [[cli-main]] · [[stdio-main]] ·
+[[node-process-io.test]] · [[Transport]]

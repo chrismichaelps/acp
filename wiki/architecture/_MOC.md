@@ -83,7 +83,10 @@ infrastructure, and protocol tests. Artifact, checkpoint, event broker/store,
 grill, lease, and memory service suites are now registered, leaving 40 tests.
 Review comment/review, session, WorkUnit, worker, and workspace suites complete
 domain parity, leaving 34 infrastructure and protocol tests. Cross-cutting
-infrastructure boundary suites are the next documentation-first slice.
+infrastructure boundary suites now pin Postgres notification fan-out, the full
+REST inventory, HTTP error secrecy, subprocess outcomes, and SSE framing. The
+audit therefore leaves 29 infrastructure and protocol tests; JSON-RPC is the next
+documentation-first slice.
 
 ## ADRs
 

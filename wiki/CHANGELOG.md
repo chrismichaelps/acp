@@ -2,6 +2,14 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-12 · infrastructure boundary test mirrors · distilled live Postgres
+  persisted-pointer fan-out, capability and full reflected REST inventory, HTTP
+  status/no-leak behavior, shell-free subprocess outcomes, and SSE wire framing;
+  corrected the Node process adapter page to document `runProcess`; mirror debt
+  is now 29 infrastructure/protocol tests with no production gaps or orphans ·
+  validation: exact bidirectional path audit + repository-pinned Prettier · risk
+  LOW · [[source-mirror-2026-07-10]]
+
 - 2026-07-12 · final domain test mirrors · distilled review-comment provenance,
   review/work outcomes and signatures, session bindings/actor lookup, CAS-safe
   WorkUnit transitions, worker reconnect/presence, and one-way workspace archive

@@ -19,14 +19,14 @@ mapping to find orphaned wiki pages.
 | Measure                    | Count |
 | -------------------------- | ----: |
 | TypeScript source files    |   253 |
-| Non-MOC source wiki pages  |   219 |
-| Missing mirrors            |    34 |
+| Non-MOC source wiki pages  |   224 |
+| Missing mirrors            |    29 |
 | Missing production/support |     0 |
-| Missing tests              |    34 |
+| Missing tests              |    29 |
 | Orphaned pages             |     0 |
 
 Missing mirrors by source area: `app` 0 · `config` 0 · `domain` 0 ·
-`infrastructure` 29 · `protocol` 5.
+`infrastructure` 24 · `protocol` 5.
 
 ## Production / Support Hard-Lock
 
@@ -95,9 +95,13 @@ the constitutional wiki registry.
   grill, lease, and memory executable contracts.
 - ✅ Final domain batch: registered review comment/review, session, WorkUnit,
   worker, and workspace executable contracts; domain parity is complete.
-- Current audit: 34 missing mirrors, all tests; 0 app/config/domain gaps; 0 missing
+- ✅ Infrastructure boundary batch: registered live Postgres fan-out, the full
+  reflected REST inventory, HTTP error secrecy, shell-free subprocess outcomes,
+  and SSE wire-format executable contracts; corrected the owning process adapter
+  page to include `runProcess`.
+- Current audit: 29 missing mirrors, all tests; 0 app/config/domain gaps; 0 missing
   production/support; 0 orphaned pages.
-- Next: distill cross-cutting infrastructure boundary tests.
+- Next: distill infrastructure JSON-RPC executable contracts.
 
 ## Grill Log
 

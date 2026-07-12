@@ -48,6 +48,10 @@ tags: [handoff]
   domain suites. 40 test mirrors remain.
 - Distilled review comment/review, session, WorkUnit, worker, and workspace
   domain suites. Domain parity is complete; 34 test mirrors remain.
+- Distilled cross-process Postgres event delivery, the reflected v0.1 REST
+  inventory, HTTP error secrecy, subprocess outcome normalization, and SSE
+  framing. Corrected the process adapter's owning page to cover `runProcess`.
+  Infrastructure debt is now 24 tests; 29 total test mirrors remain.
 
 ## Decided (do not re-litigate)
 
@@ -58,20 +62,22 @@ tags: [handoff]
 
 ## Open / Remaining
 
-- 34 missing test mirrors: infrastructure 29 and protocol 5.
+- 29 missing test mirrors: infrastructure 24 and protocol 5.
 
 ## Exact next action
 
-DNA Engineer: read and distill the cross-cutting infrastructure boundary batch:
+DNA Engineer: read and distill the infrastructure JSON-RPC batch:
 
-1. `@root/src/infrastructure/events/pg-notify-event-broker.test.ts`
-2. `@root/src/infrastructure/http/acp-http-api.test.ts`
-3. `@root/src/infrastructure/http/http-error-mapper.test.ts`
-4. `@root/src/infrastructure/platform-node/node-process-io.test.ts`
-5. `@root/src/infrastructure/sse/sse-event-stream.test.ts`
+1. `@root/src/infrastructure/jsonrpc/json-rpc-lease-commands.test.ts`
+2. `@root/src/infrastructure/jsonrpc/json-rpc-memory-commands.test.ts`
+3. `@root/src/infrastructure/jsonrpc/json-rpc-resume-commands.test.ts`
+4. `@root/src/infrastructure/jsonrpc/json-rpc-review-commands.test.ts`
+5. `@root/src/infrastructure/jsonrpc/json-rpc-runtime.test.ts`
+6. `@root/src/infrastructure/jsonrpc/json-rpc-worker-commands.test.ts`
+7. `@root/src/infrastructure/jsonrpc/json-rpc.test.ts`
 
 Update the infrastructure MOCs and module backlinks, then rerun the bidirectional
-path audit. Expected result: 29 missing tests and 0 orphans.
+path audit. Expected result: 22 missing tests and 0 orphans.
 
 ## Links
 
