@@ -51,4 +51,5 @@ release, revocation, artifact mutation, evidence read, or review outcome.
 ## Referenced by
 
 [[acp-rpc-handlers]] · [[acp-rpc-artifact-handlers]] ·
-[[acp-rpc-review-handlers]] · [[rpc-auth]]
+[[acp-rpc-review-handlers]] · [[acp-rpc-derived-evidence-scope.test]] ·
+[[acp-rpc-review-scope.test]] · [[acp-rpc-work-lease-scope.test]] · [[rpc-auth]]

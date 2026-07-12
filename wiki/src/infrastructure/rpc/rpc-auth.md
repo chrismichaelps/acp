@@ -102,4 +102,6 @@ handler must share.
 
 ## Referenced by
 
-[[acp-rpc-handlers]] · [[rpc-auth-middleware]] · [[rpc-index]] · [[rpc/_MOC]]
+[[acp-rpc-handlers]] · [[rpc-auth-middleware]] ·
+[[acp-rpc-direct-workspace-scope.test]] · [[acp-rpc-review-scope.test]] ·
+[[acp-rpc-work-lease-scope.test]] · [[rpc-index]] · [[rpc/_MOC]]

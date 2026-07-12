@@ -93,6 +93,7 @@ first-party consumers integrate against.
 ## Referenced by
 
 [[acp-rpc-server]] · [[acp-rpc-contract]] ·
+[[acp-rpc-client.test]] ·
 [[acp-rpc-roundtrip-artifact-checkpoint.test]] ·
 [[acp-rpc-roundtrip-review-memory-event.test]] ·
 [[acp-rpc-roundtrip-work-lease.test]] · [[rpc-index]] · [[rpc/_MOC]]

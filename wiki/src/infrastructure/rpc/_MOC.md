@@ -10,6 +10,8 @@ first-party Effect RPC contract selected by [[ADR-0007-effect-rpc-adoption]].
 
 - [[rpc-index]] — opaque native RPC infrastructure barrel.
 - [[acp-rpc-contract]] — native first-party `RpcGroup` contract over ACP schemas.
+- [[acp-rpc-contract.test]] — exact operation, scope, auth, and telemetry registry contract.
+- [[acp-rpc-client.test]] — mounted URL and generated-client bearer ergonomics.
 - [[acp-rpc-handlers]] — native handler verticals for session, worker,
   workspace, work, and lease operations.
 - [[acp-rpc-handlers.test]] — aggregate session/binding/workspace/work/lease executable contract.
@@ -24,8 +26,12 @@ first-party Effect RPC contract selected by [[ADR-0007-effect-rpc-adoption]].
 - [[acp-rpc-review-handlers.test]] — distinct review outcomes, indexes, transition, and actor contract.
 - [[acp-rpc-memory-event-handlers.test]] — recall/replay, scope, sequence, and actor contract.
 - [[rpc-auth]] — bearer-session authorization helper for native RPC handlers.
+- [[acp-rpc-direct-workspace-scope.test]] — explicit-workspace read/write tenancy denial contract.
 - [[rpc-resource-workspace-auth]] — derived workspace authorization for native
   RPC work and lease resource ids.
+- [[acp-rpc-derived-evidence-scope.test]] — artifact/checkpoint derived-tenancy denial contract.
+- [[acp-rpc-review-scope.test]] — review request/outcome/read tenancy denial contract.
+- [[acp-rpc-work-lease-scope.test]] — work/lease by-id derived-tenancy denial contract.
 - [[rpc-auth-middleware]] — contract-annotated native RPC authorization
   middleware.
 - [[rpc-telemetry-middleware]] — wrap-style native RPC completion telemetry

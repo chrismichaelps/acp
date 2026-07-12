@@ -97,5 +97,6 @@ adapters.
 
 ## Referenced by
 
-[[rpc/_MOC]] · [[acp-rpc-handlers]] · [[ADR-0007-effect-rpc-adoption]] ·
+[[rpc/_MOC]] · [[acp-rpc-contract.test]] · [[acp-rpc-handlers]] ·
+[[ADR-0007-effect-rpc-adoption]] ·
 [[rpc-auth-middleware]] · [[rpc-telemetry-middleware]] · [[Transport]]
