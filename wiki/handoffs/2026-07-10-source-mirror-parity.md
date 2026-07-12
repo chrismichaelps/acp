@@ -61,6 +61,10 @@ tags: [handoff]
   and retention. Restored `pruneEventsBefore` and newest-event watermark rules to
   the seam and adapter pages. Infrastructure debt is now 11 tests; 16 total test
   mirrors remain.
+- Distilled native RPC artifact, checkpoint, memory/event, review, and aggregate
+  session/binding/workspace/work/lease handler behavior, including direct domain
+  dispatch, typed errors, scoped denial, and middleware actor precedence.
+  Infrastructure debt is now 6 tests; 11 total test mirrors remain.
 
 ## Decided (do not re-litigate)
 
@@ -71,20 +75,21 @@ tags: [handoff]
 
 ## Open / Remaining
 
-- 16 missing test mirrors: infrastructure RPC 11 and protocol 5.
+- 11 missing test mirrors: infrastructure RPC 6 and protocol 5.
 
 ## Exact next action
 
-DNA Engineer: read and distill the first bounded infrastructure RPC batch:
+DNA Engineer: read and distill the remaining infrastructure RPC batch:
 
-1. `@root/src/infrastructure/rpc/acp-rpc-artifact-handlers.test.ts`
-2. `@root/src/infrastructure/rpc/acp-rpc-checkpoint-handlers.test.ts`
-3. `@root/src/infrastructure/rpc/acp-rpc-memory-event-handlers.test.ts`
-4. `@root/src/infrastructure/rpc/acp-rpc-review-handlers.test.ts`
-5. `@root/src/infrastructure/rpc/acp-rpc-handlers.test.ts`
+1. `@root/src/infrastructure/rpc/acp-rpc-client.test.ts`
+2. `@root/src/infrastructure/rpc/acp-rpc-contract.test.ts`
+3. `@root/src/infrastructure/rpc/acp-rpc-derived-evidence-scope.test.ts`
+4. `@root/src/infrastructure/rpc/acp-rpc-direct-workspace-scope.test.ts`
+5. `@root/src/infrastructure/rpc/acp-rpc-review-scope.test.ts`
+6. `@root/src/infrastructure/rpc/acp-rpc-work-lease-scope.test.ts`
 
 Update the infrastructure MOCs and module backlinks, then rerun the bidirectional
-path audit. Expected result: 11 missing tests and 0 orphans.
+path audit. Expected result: 5 missing protocol tests and 0 orphans.
 
 ## Links
 

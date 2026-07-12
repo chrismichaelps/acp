@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-12 · native RPC handler test mirrors · distilled direct artifact,
+  checkpoint, memory/event, review, and aggregate session/binding/workspace/work/
+  lease behavior, including typed failures, scope denial, and middleware actor
+  precedence; mirror debt is now 11 RPC/protocol tests with no production gaps
+  or orphans · validation: exact bidirectional path audit + repository-pinned
+  Prettier · risk LOW · [[source-mirror-2026-07-10]]
+
 - 2026-07-12 · storage test mirrors · distilled InMemory/SQLite/Postgres keyed,
   CAS, sequence, query, durable reopen, large-tail, plan, and retention behavior;
   restored the omitted `pruneEventsBefore` newest-watermark contract on the seam

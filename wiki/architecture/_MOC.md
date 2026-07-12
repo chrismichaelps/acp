@@ -90,7 +90,9 @@ documentation-first slice. Focused JSON-RPC projections and the broad
 facade/runtime suites are now registered, leaving 22 infrastructure and protocol
 tests. Storage adapter, query, CAS, durability, plan, and retention contracts are
 now registered, leaving 16 RPC/protocol tests. The first bounded RPC handler
-batch is next.
+batch now registers artifact, checkpoint, memory/event, review, and aggregate
+session/workspace/work/lease behavior. Eleven RPC/protocol tests remain; the
+second RPC batch is next.
 
 ## ADRs
 

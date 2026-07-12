@@ -156,4 +156,4 @@ transport rewrite.
 
 ## Referenced by
 
-[[rpc-index]] · [[acp-rpc-contract]] · [[rpc/_MOC]]
+[[rpc-index]] · [[acp-rpc-contract]] · [[acp-rpc-handlers.test]] · [[rpc/_MOC]]
