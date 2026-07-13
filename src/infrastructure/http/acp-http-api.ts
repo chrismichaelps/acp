@@ -19,7 +19,6 @@ import {
   Event,
   Lease,
   LeaseId,
-  Permission,
   ProtocolError,
   RequestLeasePayload,
   RequestReviewPayload,
@@ -27,6 +26,7 @@ import {
   ReviewApprovalSignature,
   ReviewId,
   SessionId,
+  SessionPermissions,
   UpdateArtifactPayload,
   UpdateWorkspacePayload,
   WorkId,
@@ -121,7 +121,7 @@ export const InitializeSessionPayload = Schema.Struct({
       supports_leases: false,
     }),
   }),
-  permissions: Schema.optionalWith(Schema.Array(Permission), {
+  permissions: Schema.optionalWith(SessionPermissions, {
     default: () => [],
   }),
   workspace_ids: Schema.optionalWith(Schema.Array(WorkspaceId), {
@@ -149,6 +149,7 @@ export type HostCapabilities = typeof HostCapabilities.Type
 
 export const InitializeSessionResponse = Schema.Struct({
   session_id: SessionId,
+  permissions: SessionPermissions,
   protocol_version: Schema.Literal(ACP_PROTOCOL_VERSION),
   host: HostDescriptor,
   capabilities: HostCapabilities,
