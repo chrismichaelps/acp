@@ -601,7 +601,8 @@ Beyond unit tests, several lanes exercise ACP against a _live_ host:
   both the SQLite and two-replica HA profiles with Traefik, then verifies
   HTTP/HTTPS routing, security headers, dashboard health, and exact backend
   discovery.
-- **`scripts/live-test/`** — the real-agent harness: genuinely autonomous agents
+- **`scripts/live-test/`** — evidence contracts for operator-driven real-agent
+  audits: genuinely autonomous agents
   (planner / two workers / reviewer), each given only a role and the `acp` CLI,
   coordinate through a live SQLite-backed, auth-on host. A verifier then asserts
   six invariants — monotonic event seq, real lease contention, a

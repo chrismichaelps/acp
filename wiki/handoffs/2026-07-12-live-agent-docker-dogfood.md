@@ -28,11 +28,16 @@ tags: [handoff, dogfood, agents, docker]
   API/SQLite/role-result/fixture adapter. Added regressions for empty handoff,
   unfinished work, missing contention, event drift, and failed executable
   behavior.
+- Superseded the proposed provider runner with
+  [[ADR-0012-acp-self-agent-audit]]: use the existing production Docker host and
+  real agents directly against isolated ACP worktrees; add no orchestration MJS
+  or package command.
 
 ## Decided (do not re-litigate)
 
 - Provider processes stay outside ACP; no provider SDK/credentials in the image.
-- Default first adapter is host `codex exec` with workspace-write sandboxing.
+- No bespoke provider runner is added; the operator launches real agents while
+  ACP records coordination.
 - The lane is opt-in; deterministic `dogfood:docker-self` remains mandatory.
 - First prove the runner on an isolated two-task fixture; ACP repository clones
   are the next bounded slice.
@@ -41,15 +46,15 @@ tags: [handoff, dogfood, agents, docker]
 
 ## Exact next action
 
-Shadow: implement the accepted design in bounded files:
+Shadow: execute and prove the accepted design:
 
-1. Add a supervised external runner and testable support module under
-   `scripts/live-test/`.
-2. Wire `pnpm dogfood:docker-agents` and focused unit tests.
-3. Run the command with real Codex processes, preserve the report/transcripts,
-   record every bug or gap, fix verified defects, and rerun.
+1. Build and start the existing production ACP Docker image as `acp-self`.
+2. Initialize bound planner/worker/reviewer sessions and assign repository audit
+   work in ACP.
+3. Preserve durable evidence, record every bug or gap, fix verified defects
+   wiki-first, and exercise accepted fixes through the live container.
 
 ## Links
 
-[[ADR-0011-live-agent-docker-dogfood-runner]] ·
+[[ADR-0012-acp-self-agent-audit]] ·
 [[live-agent-docker-dogfood]] · [[codex-dogfood-production-testing]]

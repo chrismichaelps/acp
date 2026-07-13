@@ -33,9 +33,10 @@ tags: [moc, adr]
   queryable Storage port (kill full-collection scans), version-column CAS,
   content-addressed blob dedup, immutable delta-based handoff, runtime grill
   protocol, reusable context blocks, opt-in semantic recall. Scale tier first.
-- [[ADR-0011-live-agent-docker-dogfood-runner]] — ACCEPTED — keep model
-  providers outside ACP and add an opt-in supervised Docker/real-agent runner
-  with structured production evidence.
+- [[ADR-0011-live-agent-docker-dogfood-runner]] — SUPERSEDED — retained as the
+  rejected provider-runner design history.
+- [[ADR-0012-acp-self-agent-audit]] — ACCEPTED — use the existing production ACP
+  Docker host directly as the control plane for real-agent repository audits.
 
 ## Referenced by
 

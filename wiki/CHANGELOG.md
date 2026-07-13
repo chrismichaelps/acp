@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-12 · ACP-self agent audit decision · superseded the proposed bespoke
+  provider runner before implementation; real agents now use the existing
+  production Docker ACP host directly to inspect isolated ACP worktrees, with
+  durable ACP work/checkpoint/memory/review/event evidence and no new
+  orchestration MJS or package command · validation: wiki synchronization + live
+  `acp-self` audit pending · risk LOW · [[ADR-0012-acp-self-agent-audit]]
+
 - 2026-07-12 · live-agent verifier hardening · replaced the permissive manual
   verifier with pure invariant evaluation and strict API/SQLite/role/file
   evidence; empty handoff, unfinished work, missing contention, event drift,
