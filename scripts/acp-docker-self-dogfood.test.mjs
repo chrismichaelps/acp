@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
-import { main, runRepositoryPreflights } from './acp-docker-self-dogfood.mjs'
+import {
+  main,
+  proveComposeProjectIsolation,
+  runRepositoryPreflights,
+  verifyComposeProjectIsolation,
+  verifyGeneratedContainerNames,
+} from './acp-docker-self-dogfood.mjs'
 
 describe('complete Docker self-dogfood orchestration', () => {
   it('runs repository policy guards through Node in order', async () => {
@@ -47,5 +53,111 @@ describe('complete Docker self-dogfood orchestration', () => {
       }),
     ).rejects.toThrow('edge policy failed')
     expect(scenario).not.toHaveBeenCalled()
+  })
+
+  it('accepts distinct Compose projects without fixed container names', () => {
+    expect(() =>
+      verifyComposeProjectIsolation(
+        { name: 'acp-isolation-a', services: { acp: {} } },
+        { name: 'acp-isolation-b', services: { acp: {} } },
+      ),
+    ).not.toThrow()
+  })
+
+  it('rejects a daemon-global Compose container name', () => {
+    expect(() =>
+      verifyComposeProjectIsolation(
+        {
+          name: 'acp-isolation-a',
+          services: { acp: { container_name: 'acp-host' } },
+        },
+        { name: 'acp-isolation-b', services: { acp: {} } },
+      ),
+    ).toThrow('Compose service acp must not fix container_name')
+  })
+
+  it('creates, inspects, and cleans two project namespaces', async () => {
+    const run = vi.fn((args) => {
+      const project = args[args.indexOf('--project-name') + 1]
+      if (args.includes('config'))
+        return Promise.resolve(
+          JSON.stringify({ name: project, services: { acp: {} } }),
+        )
+      if (args.includes('ps'))
+        return Promise.resolve(JSON.stringify({ Name: `${project}-acp-1` }))
+      return Promise.resolve('')
+    })
+
+    await expect(
+      proveComposeProjectIsolation({
+        run,
+        projectNames: ['acp-isolation-a', 'acp-isolation-b'],
+      }),
+    ).resolves.toEqual([['acp-isolation-a-acp-1'], ['acp-isolation-b-acp-1']])
+
+    const commands = run.mock.calls.map(([args]) => args)
+    expect(commands.filter((args) => args.includes('create'))).toHaveLength(2)
+    expect(commands.filter((args) => args.includes('ps'))).toHaveLength(2)
+    expect(commands.filter((args) => args.includes('down'))).toHaveLength(2)
+    expect(
+      commands
+        .filter((args) => args.includes('down'))
+        .every(
+          (args) =>
+            args.includes('--volumes') && args.includes('--remove-orphans'),
+        ),
+    ).toBe(true)
+  })
+
+  it('cleans both projects when create fails', async () => {
+    const run = vi.fn((args) => {
+      const project = args[args.indexOf('--project-name') + 1]
+      if (args.includes('config'))
+        return Promise.resolve(
+          JSON.stringify({ name: project, services: { acp: {} } }),
+        )
+      if (args.includes('create') && project.endsWith('-b'))
+        return Promise.reject(new Error('create failed'))
+      return Promise.resolve('')
+    })
+
+    await expect(
+      proveComposeProjectIsolation({
+        run,
+        projectNames: ['acp-isolation-a', 'acp-isolation-b'],
+      }),
+    ).rejects.toThrow('create failed')
+    expect(
+      run.mock.calls.filter(([args]) => args.includes('down')),
+    ).toHaveLength(2)
+  })
+
+  it('cleans both projects when generated names overlap', async () => {
+    const run = vi.fn((args) => {
+      const project = args[args.indexOf('--project-name') + 1]
+      if (args.includes('config'))
+        return Promise.resolve(
+          JSON.stringify({ name: project, services: { acp: {} } }),
+        )
+      if (args.includes('ps'))
+        return Promise.resolve(JSON.stringify({ Name: 'acp-host' }))
+      return Promise.resolve('')
+    })
+
+    await expect(
+      proveComposeProjectIsolation({
+        run,
+        projectNames: ['acp-isolation-a', 'acp-isolation-b'],
+      }),
+    ).rejects.toThrow('overlapping container names: acp-host')
+    expect(
+      run.mock.calls.filter(([args]) => args.includes('down')),
+    ).toHaveLength(2)
+  })
+
+  it('rejects empty daemon container-name evidence', () => {
+    expect(() => verifyGeneratedContainerNames([], ['acp-b-acp-1'])).toThrow(
+      'first Compose project created no containers',
+    )
   })
 })

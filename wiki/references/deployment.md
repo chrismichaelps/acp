@@ -66,6 +66,22 @@ The repository's Compose services are intentionally developer-oriented: the
 workspace bindings off. Set both security flags to `true` before treating either
 service as shared infrastructure. There is no managed-hosting or OIDC manifest.
 
+Compose owns resource naming. No service fixes `container_name`, so each checkout
+or self-audit can select a distinct project namespace without colliding with
+another ACP stack on the same Docker daemon:
+
+```bash
+docker compose --project-name acp-feature-a --profile sqlite up -d --build
+docker compose --project-name acp-feature-b --profile sqlite up -d --build
+```
+
+Published host ports still need to differ when both stacks run simultaneously;
+project names isolate Docker resources, not host sockets. `bin/acp` intentionally
+uses Compose service discovery rather than container names, and therefore keeps
+working for the repository's default project. For a non-default project, set
+`COMPOSE_PROJECT_NAME` consistently when starting the stack and invoking the
+wrapper.
+
 ### Storage choice by intent
 
 - **`memory`** — demos, CI, ephemeral preview envs. State is lost on restart.

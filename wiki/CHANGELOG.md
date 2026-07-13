@@ -7,7 +7,16 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   production Docker ACP host directly to inspect isolated ACP worktrees, with
   durable ACP work/checkpoint/memory/review/event evidence and no new
   orchestration MJS or package command · validation: wiki synchronization + live
-  `acp-self` audit pending · risk LOW · [[ADR-0012-acp-self-agent-audit]]
+  `acp-self` audit · risk LOW · [[ADR-0012-acp-self-agent-audit]]
+
+- 2026-07-12 · Compose project isolation · defined Compose project names as the
+  container/network/volume namespace, prohibited daemon-global fixed container
+  names, and retained `bin/acp` discovery through stable service names; the
+  existing Docker self-dogfood gate renders every profile, creates two project
+  namespaces, inspects disjoint daemon-assigned container names, and guarantees
+  teardown while focused tests cover success and failure cleanup ·
+  validation: full repository gates + two-project Docker create proof · risk LOW ·
+  [[ADR-0008-deployment-storage-topology]] · [[deployment]]
 
 - 2026-07-12 · live-agent verifier hardening · replaced the permissive manual
   verifier with pure invariant evaluation and strict API/SQLite/role/file
