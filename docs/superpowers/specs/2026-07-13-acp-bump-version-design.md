@@ -114,11 +114,15 @@ Impure adapters that build `ChangeSignals` from the working tree:
 
 - **Commit collector** — `git log <lastTag>..HEAD` (fallback: all commits when no
   tag exists), parsed for conventional-commit type/scope/`!`/`BREAKING CHANGE`.
+  Commits that do not match the conventional grammar are recorded as
+  `type: 'unknown'` and contribute `none` (with a warning), never a silent bump.
 - **Protocol-surface collector** — `git diff --name-only <lastTag>..HEAD` over
-  `src/protocol/**`; classifies additive vs breaking heuristically (added
-  optional field → additive; removed/renamed/required-tightened → breaking →
-  flagged for human confirmation). Defaults to `none` when `src/protocol/**` is
-  untouched.
+  `src/protocol/**`. It reports only a boolean `protocolSurfaceChanged` plus the
+  list of touched files. It does **not** try to auto-classify breaking vs
+  additive from a textual diff (see Grill G3): when the surface changed, the
+  proposal is `none` accompanied by a **"protocol surface changed — decide
+  explicitly"** warning, and applying a protocol bump requires an explicit
+  `--protocol <level>`.
 
 ### 3. CLI/script wiring — `acp bump` (`scripts/acp-bump.mjs` + npm `bump`)
 
@@ -138,8 +142,11 @@ must be reproducible in CI/local shell). Flow:
 6. Optionally create a git tag (`--tag`), off by default.
 
 Flags: `acp bump [--release <level>] [--protocol <level>] [--since <ref>]
-[--yes] [--tag] [--force] [--dry-run]`. With no explicit level, both are
-inferred; explicit levels are validated by `validateOverride`.
+[--yes] [--tag] [--force] [--dry-run]`. With no explicit level, the release line
+is inferred and the protocol line defaults to `none` (only an explicit
+`--protocol` advances it). Explicit levels are validated by `validateOverride`.
+`--since` is a convenience override for the baseline ref; it defaults to the
+last release tag.
 
 ### 4. Documentation-first (FMCF)
 
@@ -189,6 +196,56 @@ Per the repo's ACP-self workflow, the *development* of this feature is
 coordinated through the Dockerized `acp` host: register the work item, record
 checkpoints per slice, and capture review evidence. The bump tool itself is a
 dev-tree command and does not depend on a running host at runtime.
+
+## Self-Grill (senior adversarial review)
+
+The design was grilled against senior objections; findings are folded in above.
+
+- **G1 — Is a bare `scripts/*.mjs` the right home, not a first-class CLI verb?**
+  Yes. Bumping edits the *working tree* and must run in CI/local shell; the `acp`
+  CLI forwards to the containerized RPC host, which cannot write host files.
+  `scripts/acp-bump.mjs` + an npm `bump` script matches the existing `check:*`
+  and `dogfood:*` script convention. Kept.
+- **G2 — Conventional-commit inference is only as good as the commit hygiene.**
+  Mitigated: non-conforming commits are `unknown` → contribute `none` with a
+  warning; they never cause a silent bump. The repo already enforces
+  conventional style, so this is the exception path, not the norm.
+- **G3 — Auto-classifying protocol breaking-vs-additive from a text diff is
+  unsound.** Correct — dropped. The collector reports only *whether* the protocol
+  surface changed; kind is a human decision via explicit `--protocol`. The
+  default protocol proposal is always `none`. This is the single most important
+  refinement: it prevents the tool from confidently mislabeling a wire break.
+- **G4 — Is the release line worth bumping when nothing reads `package.json`
+  version at runtime today?** Yes: release/tag hygiene, changelog anchoring, and
+  future publish all depend on it. Noted as a known-latent surface, not blocking.
+- **G5 — Zero tags today: the first inference would classify all of history.**
+  Handled by the Baseline story below — the first action establishes a `v1.0.0`
+  baseline tag without bumping, so subsequent runs classify only `baseline..HEAD`.
+- **G6 — Programmatic edits to `version.ts` (const + `SUPPORTED_*` set +
+  `Schema.Literal`) are brittle.** Accepted risk, contained by a targeted
+  integration test that runs the writer against the real `version.ts` and asserts
+  it still type-checks and re-exports the expected literals. Writes target the
+  specific literal lines only.
+- **G7 — Coupling both lines in one command.** Retained per the chosen unified
+  design, but the lines are independently controllable via flags and never
+  co-bump implicitly (Decoupling rule).
+
+## Baseline Story (first run, no tags)
+
+Because there are no git tags, the first invocation must not treat the entire
+history as a pending bump. `acp bump --baseline` (or the documented manual step)
+tags the current `package.json` version (`v1.0.0`) at `HEAD` **without** editing
+any version, establishing the reference point. Every later `acp bump` then
+classifies only `v1.0.0..HEAD`. If a bump is attempted with no tag present and
+`--baseline` was not run, the tool warns and requires `--since <ref>` or refuses.
+
+## Handoff
+
+This turn brainstormed, self-grilled, and specced the feature autonomously (no
+human approval gate, per direction). The next step is `writing-plans` to produce
+the phased implementation plan, then TDD execution slice-by-slice per the Build
+Order, with the feature's development coordinated through the Docker `acp-self`
+host when it is running. Branch: `feat/acp-bump-version` (off `main`).
 
 ## Build Order (slices)
 
