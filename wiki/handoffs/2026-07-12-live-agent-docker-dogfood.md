@@ -24,6 +24,10 @@ tags: [handoff, dogfood, agents, docker]
 - Projected the first implementation slice: rerun-safe two-task executable
   fixture, deterministic shared-probe instructions, workspace-bound role
   sessions, strict role result schemas, and focused setup/schema tests.
+- Replaced the prototype verifier with pure invariant evaluation plus an
+  API/SQLite/role-result/fixture adapter. Added regressions for empty handoff,
+  unfinished work, missing contention, event drift, and failed executable
+  behavior.
 
 ## Decided (do not re-litigate)
 
@@ -39,13 +43,10 @@ tags: [handoff, dogfood, agents, docker]
 
 Shadow: implement the accepted design in bounded files:
 
-1. Replace the prototype verifier with pure, unit-tested invariant evaluation
-   covering role results, all work terminal, nonempty handoff, reviewer reads,
-   distinct actors, no active leases, API/SQLite parity, and fixture tests.
-2. Add a supervised external runner and testable support module under
+1. Add a supervised external runner and testable support module under
    `scripts/live-test/`.
-3. Wire `pnpm dogfood:docker-agents` and focused unit tests.
-4. Run the command with real Codex processes, preserve the report/transcripts,
+2. Wire `pnpm dogfood:docker-agents` and focused unit tests.
+3. Run the command with real Codex processes, preserve the report/transcripts,
    record every bug or gap, fix verified defects, and rerun.
 
 ## Links

@@ -3,11 +3,11 @@
 Design source: `wiki/references/live-agent-docker-dogfood.md` and
 `wiki/decisions/ADR-0011-live-agent-docker-dogfood-runner.md`.
 
-Current status: the isolated two-task fixture, workspace-bound role prompts, and
-structured result schemas are hardened. The accepted implementation slice still
-must wire `pnpm dogfood:docker-agents`, launch real Codex processes against the
-production Docker image, and replace the prototype verifier. Until that command
-lands, this directory is not a turnkey production gate.
+Current status: the isolated two-task fixture, workspace-bound role prompts,
+structured result schemas, and strict API/SQLite/role/file verifier are hardened.
+The accepted implementation slice still must wire `pnpm dogfood:docker-agents`
+and launch supervised Codex processes against the production Docker image. Until
+that command lands, this directory is not a turnkey production gate.
 
 ## Layout
 
@@ -15,8 +15,9 @@ lands, this directory is not a turnkey production gate.
 - `roles/` — role-prompt templates handed to each subagent (goal + rules + CLI,
   no command script).
 - `schemas/` — strict final-result contracts consumed by the provider runner.
-- `verify.mjs` — prototype API/SQLite invariant verifier; known gaps are recorded
-  in the design handoff and must be fixed before the wired command is accepted.
+- `verify-support.mjs` — pure invariant evaluation used by focused regression
+  tests.
+- `verify.mjs` — strict API/SQLite/role-result/fixture adapter and report writer.
 
 ## Usage
 
