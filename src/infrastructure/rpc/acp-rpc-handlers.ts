@@ -135,6 +135,7 @@ const sessionInitializeHandler = AcpRpcGroup.toLayerHandler(
 
       return {
         session_id: sessionId,
+        permissions: payload.permissions,
         protocol_version: ACP_PROTOCOL_VERSION,
         host,
         capabilities: hostCapabilities,

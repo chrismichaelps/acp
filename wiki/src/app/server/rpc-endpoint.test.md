@@ -28,6 +28,13 @@ work progress, drive review approval, and delete an artifact through RPC. Requir
 notification-only input to return HTTP 204 with no body; require a mixed batch to
 return only id-bearing responses. Pin unknown method to `-32601` at HTTP 200 and
 malformed JSON to `-32700` at HTTP 200.
+Initialize sessions whose permissions include `review:collaborate` and
+`review:respond`, require the JSON-RPC responses to preserve each literal, and
+use their bearer tokens on the matching REST collaboration/answer mutations.
+JSON-RPC does not gain comment/grill command methods in this slice; the
+assertion owns permission/session propagation only. A request carrying both
+literals must return the existing JSON-RPC invalid-request mapping with the
+exact mutual-exclusion issue and no session id.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -36,6 +43,9 @@ malformed JSON to `-32700` at HTTP 200.
 - ❌ Do NOT include notification entries in batch output.
 - ❌ Do NOT translate JSON-RPC method/parse failures into HTTP 4xx statuses.
 - ❌ Do NOT bypass bearer scopes when dispatching into REST handlers.
+- ❌ Do NOT claim comment/grill command parity or invent JSON-RPC methods that
+  are absent from the current command map.
+- ❌ Do NOT accept both ADR-0013 role scopes in one JSON-RPC session.
 
 ## Grill Log
 

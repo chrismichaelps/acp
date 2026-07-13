@@ -17,18 +17,18 @@ The decision remains unchanged. Its reference implementation is substantially
 landed; the status ledger below records the current realization without treating
 deferred deployment products as shipped.
 
-### Implementation status (2026-07-10)
+### Implementation status (2026-07-12)
 
-| Capability                       | Status          | Current evidence and boundary                                                                                                                                                                                                   |
-| -------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Storage seam                     | **Implemented** | `src/app/storage-live.ts` selects memory, SQLite, or Postgres; `src/infrastructure/storage/postgres-store.ts` supplies the network adapter and atomic per-workspace sequences.                                                  |
-| EventBroker seam                 | **Partial**     | `src/app/event-broker-live.ts` selects `in-process` or `pg-notify`; `src/infrastructure/events/pg-notify-event-broker.ts` provides cross-replica fan-out. Redis is deferred.                                                    |
-| Identity/auth seam               | **Partial**     | HTTP and native RPC authorize bearer session IDs, permission scopes, and optional `workspace_ids`; `ACP_REQUIRE_WORKSPACE_BINDINGS` makes bindings mandatory. External token issuance/resolution and OIDC are deferred.         |
-| Named runtime profiles           | **Implemented** | `src/config/app-config.ts` defines `local`, `single-node`, `hosted`, and `self-host-ha` presets with explicit `ACP_*` overrides.                                                                                                |
-| Reference Compose topologies     | **Partial**     | `docker-compose.yml` ships a SQLite daily-driver and Postgres/pg-notify HA profile. It deliberately overrides auth off for local dogfood; no managed-hosting manifest is shipped.                                               |
-| Sweeper leadership and retention | **Implemented** | `src/app/server/sweeper-leadership.ts` uses a Postgres transaction advisory lock; `sweeper.ts` evicts sessions, expires leases, and prunes retained events.                                                                     |
-| Optional edge tier               | **Implemented** | Compose overlays Traefik and a restricted Docker socket proxy; `scripts/acp-docker-edge-smoke.mjs` tests SQLite and two-replica HA discovery and routing.                                                                       |
-| Release/production operations    | **Partial**     | The repository builds one non-root Docker image and declares npm bins. Registry publication, versioned migration orchestration, managed hosting, production certificates, and an explicit connection-drain policy are deferred. |
+| Capability                       | Status          | Current evidence and boundary                                                                                                                                                                                                                                                                   |
+| -------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Storage seam                     | **Implemented** | `src/app/storage-live.ts` selects memory, SQLite, or Postgres; `src/infrastructure/storage/postgres-store.ts` supplies the network adapter and atomic per-workspace sequences.                                                                                                                  |
+| EventBroker seam                 | **Partial**     | `src/app/event-broker-live.ts` selects `in-process` or `pg-notify`; `src/infrastructure/events/pg-notify-event-broker.ts` provides cross-replica fan-out. Redis is deferred.                                                                                                                    |
+| Identity/auth seam               | **Partial**     | HTTP and native RPC authorize bearer session IDs, permission scopes, and optional `workspace_ids`; `ACP_REQUIRE_WORKSPACE_BINDINGS` makes bindings mandatory. External token issuance/resolution and OIDC are deferred.                                                                         |
+| Named runtime profiles           | **Implemented** | `src/config/app-config.ts` defines `local`, `single-node`, `hosted`, and `self-host-ha` presets with explicit `ACP_*` overrides.                                                                                                                                                                |
+| Reference Compose topologies     | **Partial**     | `docker-compose.yml` ships a SQLite daily-driver and Postgres/pg-notify HA profile. Compose project names namespace every container, network, and volume so concurrent checkouts remain isolated. It deliberately overrides auth off for local dogfood; no managed-hosting manifest is shipped. |
+| Sweeper leadership and retention | **Implemented** | `src/app/server/sweeper-leadership.ts` uses a Postgres transaction advisory lock; `sweeper.ts` evicts sessions, expires leases, and prunes retained events.                                                                                                                                     |
+| Optional edge tier               | **Implemented** | Compose overlays Traefik and a restricted Docker socket proxy; `scripts/acp-docker-edge-smoke.mjs` tests SQLite and two-replica HA discovery and routing.                                                                                                                                       |
+| Release/production operations    | **Partial**     | The repository builds one non-root Docker image and declares npm bins. Registry publication, versioned migration orchestration, managed hosting, production certificates, and an explicit connection-drain policy are deferred.                                                                 |
 
 ## Context
 
@@ -105,7 +105,11 @@ them.
    `ACP_REQUIRE_WORKSPACE_BINDINGS` requires a non-empty binding and enforces it
    across HTTP and native RPC. The runtime does not issue external developer
    tokens or integrate OIDC; an identity provider must initialize the scoped ACP
-   session through a trusted boundary.
+   session through a trusted boundary. The current open `session.initialize`
+   accepts caller-selected identities, permissions, and bindings, so auth-on is
+   not sufficient for an untrusted public bootstrap. Local/self-dogfood assumes
+   a trusted issuer; production hosted issuance is the explicit
+   [[ADR-0015-trusted-session-issuance]] backlog.
 
 ### Deployment profiles (presets over the seams)
 
@@ -162,6 +166,16 @@ state. Traefik (free OSS) is the reference implementation, wired as an opt-in
 
 ### Operational contract
 
+- **Implemented — Compose project isolation.** Services do not set
+  `container_name`; Docker Compose derives container names from the project and
+  service names. Distinct `--project-name` values therefore cannot contend for
+  daemon-global container names. `bin/acp` discovers `acp` or `acp-ha` through
+  `docker compose ps`, so its service lookup remains stable without fixed names.
+  The Docker self-dogfood regression renders every profile under two project
+  names, rejects any explicit service-level `container_name`, creates the SQLite
+  service in both namespaces, and inspects the daemon-assigned names for
+  nonempty/disjoint identity. Both projects are torn down in a `finally` cleanup
+  path, including partial-create and assertion failures.
 - **Implemented — sweeper under replication.** `SweeperLeadershipLive` keeps an
   in-process single writer for memory/SQLite and uses
   `pg_try_advisory_xact_lock` for Postgres. One replica performs session
@@ -213,6 +227,8 @@ single-process deployment choices; Postgres allocates event and memory sequence
 numbers atomically for replication. Serverless remains closed as a runtime
 target. `local` still defaults to memory + in-process + no auth, while the
 reference SQLite Compose service explicitly overrides only the storage adapter.
+Compose project names, rather than fixed container names, define the isolation
+boundary for simultaneous checkouts and self-audits.
 
 ## Alternatives
 
@@ -247,6 +263,10 @@ Current implementation evidence:
   `src/app/server/sweeper-leadership.ts`, and tests;
 - executable topology: `docker-compose.yml`, `Dockerfile`, Traefik config, and
   `scripts/acp-docker-{ha-dogfood,edge-smoke}.mjs`;
+- Compose isolation: the Docker self-dogfood gate renders every service under
+  two named projects, rejects explicit `container_name`, creates both SQLite
+  services without starting their host ports, inspects disjoint daemon-assigned
+  names, and guarantees teardown on success or failure;
 - end-to-end regression: the complete Docker self-dogfood CI job exercises
   production image behavior, restart/auth boundaries, Postgres/pg-notify HA,
   and SQLite/two-replica edge routing.
@@ -255,4 +275,4 @@ Current implementation evidence:
 
 [[ADR-0001-architecture-foundation]] · [[ADR-0007-effect-rpc-adoption]] ·
 [[Storage]] · [[EventStream]] · [[Transport]] · [[event-store]] ·
-[[sweeper]] · [[decisions/_MOC]]
+[[sweeper]] · [[decisions/_MOC]] · [[ADR-0015-trusted-session-issuance]]

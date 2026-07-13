@@ -3,8 +3,8 @@ date: 2026-07-12
 topic: live-agent-docker-dogfood
 from_role: Architect
 to_role: Shadow
-status: IN_PROGRESS
-maturity: EXPLORING
+status: COMPLETE
+maturity: PROVEN
 tags: [handoff, dogfood, agents, docker]
 ---
 
@@ -28,28 +28,42 @@ tags: [handoff, dogfood, agents, docker]
   API/SQLite/role-result/fixture adapter. Added regressions for empty handoff,
   unfinished work, missing contention, event drift, and failed executable
   behavior.
+- Superseded the proposed provider runner with
+  [[ADR-0012-acp-self-agent-audit]]: use the existing production Docker host and
+  real agents directly against isolated ACP worktrees; add no orchestration MJS
+  or package command.
+- Ran the production ACP image as hardened `acp-self` with durable SQLite,
+  workspace bindings, distinct planner/workers/reviewer, isolated worktrees,
+  checkpoints, memories, artifacts, requested-changes loops, approvals, and
+  terminal work.
+- Found and fixed three production gaps through ACP work: daemon-global Compose
+  names (`work_mrihmddh1`), incomplete auth-on worker bootstrap
+  (`work_mrihmdv42`), and incomplete reviewer scope guidance
+  (`work_mrii6qjcy`). All reached `completed`; every lease was released; the
+  audit event log ended at sequence 190.
+- Re-ran the integrated `dogfood:docker-self` gate successfully across Compose
+  project isolation, SQLite/restart, hardened worker and reviewer lifecycles,
+  all transports, HA, and both edge topologies.
 
 ## Decided (do not re-litigate)
 
 - Provider processes stay outside ACP; no provider SDK/credentials in the image.
-- Default first adapter is host `codex exec` with workspace-write sandboxing.
+- No bespoke provider runner is added; the operator launches real agents while
+  ACP records coordination.
 - The lane is opt-in; deterministic `dogfood:docker-self` remains mandatory.
-- First prove the runner on an isolated two-task fixture; ACP repository clones
-  are the next bounded slice.
+- Repository audits use isolated ACP worktrees; the active developer worktree is
+  never a concurrent agent write target.
 - Success requires process, coordination, security, durable-event, structured
   evidence, and real fixture behavior proof.
 
 ## Exact next action
 
-Shadow: implement the accepted design in bounded files:
-
-1. Add a supervised external runner and testable support module under
-   `scripts/live-test/`.
-2. Wire `pnpm dogfood:docker-agents` and focused unit tests.
-3. Run the command with real Codex processes, preserve the report/transcripts,
-   record every bug or gap, fix verified defects, and rerun.
+Repeat `acp-self` periodically against bounded production-risk areas. The known
+authorization backlog is [[ADR-0013-review-collaboration-permission]]: replace
+the reviewer's coarse `workspace:write` dependency with a target-bound review
+collaboration scope before claiming capability-isolated least privilege.
 
 ## Links
 
-[[ADR-0011-live-agent-docker-dogfood-runner]] ·
+[[ADR-0012-acp-self-agent-audit]] ·
 [[live-agent-docker-dogfood]] · [[codex-dogfood-production-testing]]

@@ -20,6 +20,10 @@ a request field. The router supplies a resource id, this module loads the owning
 record, derives its `workspace_id`, and then delegates the final permission plus
 workspace binding check to [[route-support]] `authorizeWorkspace`.
 
+Review collaboration's scope-first, non-enumerating target rules are intentionally
+owned by the focused [[review-collaboration-auth]] module. The existing generic
+helper set and its compatibility behavior remain unchanged in ADR-0013.
+
 ## Interface
 
 The exported helpers are intentionally short because [[acp-router]] sits on the
@@ -52,7 +56,10 @@ artifact, or review services are invoked.
 - ❌ Do NOT add workspace ids to review records only to simplify authorization.
 - ❌ Do NOT collapse missing resources into forbidden; not-found semantics remain
   canonical when the caller is otherwise authorized for the target workspace.
+- ❌ Do NOT add the ADR-0013 collaboration target family here; the FMCF Split
+  Protocol assigns that policy to [[review-collaboration-auth]].
 
 ## Referenced by
 
-[[mutation-workspace-scope-routes.test]] · [[acp-router]] · [[route-support]]
+[[mutation-workspace-scope-routes.test]] · [[acp-router]] · [[route-support]] ·
+[[review-collaboration-auth]]

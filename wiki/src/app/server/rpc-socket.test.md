@@ -27,6 +27,12 @@ in the query and create work. Fetch that work through REST to prove socket and
 HTTP share one store. Send a non-JSON frame and require a `-32700` JSON-RPC error.
 Subscribe to workspace events, create work on the same connection, and require an
 `events.event` notification containing `work.created` for that workspace.
+Round-trip `review:collaborate` and `review:respond` through WebSocket
+`session.initialize`, then bind each returned token to a connection or REST
+request and require the preserved permission to authorize only its matching REST
+surface. Reject a WebSocket initialization carrying both scopes with the exact
+mutual-exclusion issue and no session id. No WebSocket comment/grill command is
+introduced.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -36,6 +42,9 @@ Subscribe to workspace events, create work on the same connection, and require a
 - ❌ Do NOT close silently on malformed JSON; return the protocol parse error.
 - ❌ Do NOT encode subscribed events as correlated responses rather than
   notifications.
+- ❌ Do NOT claim WebSocket collaboration commands that are absent from the
+  JSON-RPC command map; test session propagation only.
+- ❌ Do NOT accept both review role scopes in one WebSocket session.
 
 ## Grill Log
 

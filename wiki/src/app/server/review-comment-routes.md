@@ -4,9 +4,9 @@ path: '@root/src/app/server/review-comment-routes.ts'
 fidelity: Active
 grammar: '[[grammar/typescript]]'
 seam: '[[Transport]]'
-depth_score: 0.6
+depth_score: 0.64
 depth_status: MEDIUM
-tags: [module, seam, review-gate, review-comment]
+tags: [module, seam, review-gate, review-comment, auth]
 aliases: [review-comment-routes]
 ---
 
@@ -14,13 +14,11 @@ aliases: [review-comment-routes]
 
 ## Purpose
 
-The HTTP handlers for diff-anchored [[review-comment-service|review comments]]:
-`POST /v1/reviews/:review_id/comments`, `POST /v1/review-comments/:comment_id/resolve`,
-`POST /v1/review-comments/:comment_id/reopen`, `GET /v1/reviews/:review_id/comments`,
-and `GET /v1/work/:work_id/review-comments`. Split out of the near-limit
-[[router]] central file, each handler is the canonical decode →
-[[review-comment-service]] → encode transport boundary behind the
-`workspace:write` / `workspace:read` scopes.
+Own the HTTP boundary for diff-anchored [[review-comment-service|review
+comments]]: add, resolve, reopen, set an external GitHub id, and list by review
+or work. All four mutations require `review:collaborate`; reads retain
+`workspace:read`. Opaque target authorization is scope-first, target-derived,
+and non-enumerating per [[ADR-0013-review-collaboration-permission]].
 
 ## Interface
 
@@ -28,57 +26,61 @@ and `GET /v1/work/:work_id/review-comments`. Split out of the near-limit
 export const addReviewComment // POST /v1/reviews/:review_id/comments
 export const resolveReviewComment // POST /v1/review-comments/:comment_id/resolve
 export const reopenReviewComment // POST /v1/review-comments/:comment_id/reopen
+export const setReviewCommentExternalId // POST /v1/review-comments/:comment_id/external-id
 export const listReviewComments // GET  /v1/reviews/:review_id/comments
 export const listWorkReviewComments // GET  /v1/work/:work_id/review-comments
 ```
 
 ## Algorithm
 
-`addReviewComment` decodes `AddReviewCommentPayload` (which already carries
-`review_id`/`work_id`/`workspace_id`/`target`/`body`), mints a `reviewcomment`
-id and `now` from [[id-clock]], authorizes `workspace:write` on the body's
-`workspace_id` (the returned worker is the comment `author`), then calls
-`ReviewCommentService.add` and encodes the new [[ReviewComment]] at `201`.
-`resolveReviewComment` / `reopenReviewComment` resolve the comment's workspace
-via [[resource-workspace-auth]] `reviewComment` (comment → `workspace_id`), then
-call `resolve` / `reopen` and encode at `200`. The two `GET` lists authorize the
-parent scope — `listReviewComments` via `resource-workspace-auth` `review`
-(review → work → workspace), `listWorkReviewComments` via `work` — then encode
-the oldest-first array at `200`.
+Every mutation requires `review:collaborate` before opaque target lookup.
+`addReviewComment` decodes the payload, resolves the path `review_id` through
+[[review-collaboration-auth]] `reviewTarget`, and obtains the persisted review,
+work, authorized actor, and bound workspace. A missing or foreign review returns
+the same 404 `NotFoundError` envelope.
+
+After target authorization, collect body identity mismatches in this order:
+`review_id must match the target review`, `work_id must match the target review
+work`, `workspace_id must match the target review workspace`. Any issues produce
+the existing 400 `ValidationError` envelope before id/time minting or service
+mutation. A valid request mints through [[id-clock]], calls
+`ReviewCommentService.add`, and returns the new [[ReviewComment]] at `201`.
+
+Resolve, reopen, and external-id use `reviewCommentTarget`, which scope-checks
+first, loads the persisted comment, hides foreign existence as 404, then calls
+the matching service mutation and returns `200`. The external-id route remains
+the GitHub bridge's internal REST command. The two `GET` routes retain existing
+`workspace:read` behavior.
 
 ## Negative Logic (Prohibited Paths)
 
-- ❌ Do NOT re-derive `review_id` from the path onto the payload — the body is
-  the authoritative `AddReviewCommentPayload`; the path segment only routes.
-- ❌ Do NOT embed comment state rules (open→resolved→reopened) here — they live
-  in [[review-comment-service]].
-- ❌ Do NOT authorize comment/work reads against a body `workspace_id` that is
-  absent on `GET`/id-keyed routes — resolve tenant scope from the resource.
-- ❌ Do NOT mint ids or read the clock outside [[id-clock]].
+- ❌ Do NOT load a collaboration target before checking the action scope.
+- ❌ Do NOT authorize add against the body `workspace_id` or silently rewrite
+  identity mismatches.
+- ❌ Do NOT return 403 for a foreign opaque review/comment; missing and foreign
+  use the identical 404 envelope.
+- ❌ Do NOT accept `workspace:write` or `review:respond` as aliases for comment
+  mutation.
+- ❌ Do NOT mint ids or read the clock before authorization and validation.
 
 ## Depth
 
-MEDIUM (0.6). Thin transport handlers carrying the scope gate and the
-resource→workspace authorization hop for id-keyed mutations.
+MEDIUM (0.64). The handlers hide scope ordering, target derivation,
+non-enumeration, validation, and service encoding behind one REST surface.
 
 ## Grill Log
 
-- **Q:** The path carries `:review_id` and the body carries `review_id` too —
-  which wins, and why keep both?
-  **A:** The body's `AddReviewCommentPayload` is authoritative (the service reads
-  `payload.review_id`); the path segment only routes and namespaces the
-  collection under the review. They are expected to agree, but the handler never
-  copies the path onto the payload — doing so would mask a client mismatch and
-  duplicate the single source of truth. _Rejected:_ overwriting
-  `body.review_id` with the path param.
-
-- **Q:** Why authorize resolve/reopen through `resource-workspace-auth`
-  `reviewComment` instead of a body `workspace_id` like add does?
-  **A:** Those routes are keyed only by `comment_id` with no body — the tenant
-  scope must be derived from the loaded comment, and 404 (not 403) is returned
-  for a missing comment before authorization can even name a workspace.
+- **Q:** Which identity is authoritative? **A:** The path review and its loaded
+  work/workspace; body disagreement is a deterministic 400. _Rejected:_ trusting
+  or silently overwriting tenant fields.
+- **Q:** Why scope-check before lookup? **A:** A caller without the action must
+  receive the same 403 for every supplied id. _Rejected:_ load-first behavior
+  that reveals existence through 404/403 differences.
+- **Q:** Why map a foreign existing comment to 404? **A:** Its existence is
+  tenant data. _Rejected:_ a redacted 403 whose status remains an oracle.
 
 ## Referenced by
 
 [[review-comment-routes.test]] · [[router]] · [[review-comment-service]] ·
-[[resource-workspace-auth]] · [[server/_MOC]]
+[[review-collaboration-auth]] · [[ADR-0013-review-collaboration-permission]] ·
+[[server/_MOC]] · [[2026-07-13-review-collaboration-security-design]]

@@ -93,10 +93,12 @@ now registered, leaving 16 RPC/protocol tests. The first bounded RPC handler
 batch now registers artifact, checkpoint, memory/event, review, and aggregate
 session/workspace/work/lease behavior. Generated-client ergonomics, exact
 contract metadata, and direct/derived workspace isolation suites complete
-infrastructure parity. The final protocol suites and protocol folder MOCs close
-the audit at 253 source files, 253 exact non-MOC pages, zero missing mirrors, and
-zero orphans. The live-agent Docker dogfood runner is the next
-documentation-first feature.
+infrastructure parity. The final protocol suites and protocol folder MOCs first
+closed the audit at 253 exact pairs. The review-collaboration authorization
+boundary then added one production module and one focused test with their pages;
+the current audit is 255 source files, 255 exact non-MOC pages, zero missing
+mirrors, and zero orphans. The active production audit uses the existing
+Dockerized ACP host directly; no separate provider runner is added.
 
 ## ADRs
 
@@ -107,8 +109,19 @@ documentation-first feature.
 - [[ADR-0008-deployment-storage-topology]] — ACCEPTED; Postgres/pg-notify,
   workspace-scoped auth, replicated sweeps, retention, Compose, and edge are
   landed; managed hosting and external identity remain deferred.
-- [[ADR-0011-live-agent-docker-dogfood-runner]] — ACCEPTED; supervised model
-  processes run outside the provider-neutral ACP image.
+- [[ADR-0011-live-agent-docker-dogfood-runner]] — SUPERSEDED.
+- [[ADR-0012-acp-self-agent-audit]] — ACCEPTED; real agents use the
+  provider-neutral production ACP image directly as their coordination plane.
+- [[ADR-0013-review-collaboration-permission]] — ACCEPTED; eight reviewer
+  mutations use `review:collaborate`, worker answer alone uses `review:respond`,
+  both scopes are rejected in one session, and a focused authorization module
+  makes opaque targets scope-first/non-enumerating with fail-closed rotation and
+  no invented RPC commands.
+- [[ADR-0014-workspace-administration-authority]] — PROPOSED/BACKLOG; isolate
+  host provisioning and workspace lifecycle authority as a separate slice.
+- [[ADR-0015-trusted-session-issuance]] — PROPOSED/BACKLOG; replace the trusted-
+  client hosted bootstrap assumption with verified identity and server-policy-
+  derived sessions before public multi-tenant hosting.
 
 ## Build Order (vertical slices)
 

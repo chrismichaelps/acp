@@ -169,6 +169,7 @@ const initializeSession = respond('POST /v1/session/initialize')(
     })
     return yield* ok(200)(InitializeSessionResponse, {
       session_id: sessionId,
+      permissions: payload.permissions,
       protocol_version: ACP_PROTOCOL_VERSION,
       host,
       capabilities: hostCapabilities,

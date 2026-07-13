@@ -1,4 +1,3 @@
-import { Buffer } from 'node:buffer'
 import { spawn } from 'node:child_process'
 import { setTimeout as delay } from 'node:timers/promises'
 import {
@@ -6,7 +5,7 @@ import {
   containerFetch,
   dockerOk,
   expectOk,
-  runProcess,
+  stdioRpc,
 } from './acp-docker-self-support.mjs'
 
 const waitForText = async (read, expected, timeoutMs = 10_000) => {
@@ -74,32 +73,16 @@ const proveJsonRpcHttp = async ({ container, scenario }) => {
 }
 
 const proveStdio = async ({ container, scenario }) => {
-  const request = JSON.stringify({
-    jsonrpc: '2.0',
-    id: 'docker-stdio',
-    method: 'work.get',
-    params: { work_id: scenario.work.id },
-  })
-  const frame = `Content-Length: ${String(Buffer.byteLength(request))}\r\n\r\n${request}`
-  const result = await runProcess(
-    'docker',
-    [
-      'exec',
-      '-i',
-      '-e',
-      'ACP_BASE_URL=http://127.0.0.1:4317',
-      '-e',
-      `ACP_RPC_TOKEN=${scenario.owner.token}`,
-      container,
-      'node',
-      'dist/app/stdio/main.js',
-    ],
-    { input: frame },
+  const payload = await stdioRpc(
+    container,
+    {
+      jsonrpc: '2.0',
+      id: 'docker-stdio',
+      method: 'work.get',
+      params: { work_id: scenario.work.id },
+    },
+    scenario.owner.token,
   )
-  assert(result.ok, `stdio bridge failed: ${result.stderr}`)
-  const separator = result.stdout.indexOf('\r\n\r\n')
-  assert(separator >= 0, `stdio response had no frame: ${result.stdout}`)
-  const payload = JSON.parse(result.stdout.slice(separator + 4))
   assert(payload.result.id === scenario.work.id, 'stdio work mismatch')
 }
 

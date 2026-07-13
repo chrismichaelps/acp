@@ -56,8 +56,14 @@ describe('rpc websocket', () => {
         jsonrpc: '2.0',
         id: 1,
         method: 'session.initialize',
-        params: { worker, permissions: ['work:create', 'workspace:read'] },
-      })) as { id: number; result: { session_id: string } }
+        params: {
+          worker,
+          permissions: ['work:create', 'workspace:read', 'review:respond'],
+        },
+      })) as {
+        id: number
+        result: { session_id: string; permissions: readonly string[] }
+      }
 
       const sessionId = init.result.session_id
 
@@ -84,10 +90,44 @@ describe('rpc websocket', () => {
 
     expect(result.init.id).toBe(1)
     expect(result.init.result.session_id).toMatch(/^session_[0-9a-f]{64}$/)
+    expect(result.init.result.permissions).toEqual([
+      'work:create',
+      'workspace:read',
+      'review:respond',
+    ])
     expect(result.created.id).toBe(2)
     expect(result.created.result.state).toBe('open')
     expect(result.restStatus).toBe(200)
     expect(result.restWork.state).toBe('open')
+  })
+
+  it('rejects dual review roles over WebSocket session initialization', async () => {
+    const result = await onLiveServer(async (_httpBase, wsBase) => {
+      const accepted = await rpcOverSocket(`${wsBase}/rpc`, {
+        jsonrpc: '2.0',
+        id: 'collaborator',
+        method: 'session.initialize',
+        params: { worker, permissions: ['review:collaborate'] },
+      })
+      const denied = await rpcOverSocket(`${wsBase}/rpc`, {
+        jsonrpc: '2.0',
+        id: 'dual-review-role',
+        method: 'session.initialize',
+        params: {
+          worker,
+          permissions: ['review:respond', 'review:collaborate'],
+        },
+      })
+      return { accepted, denied }
+    })
+
+    expect(result.accepted).toMatchObject({
+      result: { permissions: ['review:collaborate'] },
+    })
+    expect(result.denied).not.toHaveProperty('result')
+    expect(JSON.stringify(result.denied)).toContain(
+      'review:respond and review:collaborate are mutually exclusive',
+    )
   })
 
   it('echoes a -32700 parse error for a non-JSON frame', async () => {

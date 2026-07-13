@@ -2,6 +2,61 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-13 · review-collaboration security boundary · implemented
+  [[ADR-0013-review-collaboration-permission]] with additive but non-aliased
+  `review:collaborate` authority for eight reviewer mutations and separate
+  `review:respond` authority for worker answer, scope-first non-enumerating
+  target-derived workspace binding in a focused
+  [[review-collaboration-auth]] module, exact 403/404/400 wire errors,
+  fail-closed session rotation, and per-session mutual exclusion; specified
+  native handler permission projection and a real Content-Length
+  [[stdio-main|stdio]] proof, then projected the final worker/reviewer bootstrap into
+  [[agent-integration]] and `@root/ACP-SKILL.md`; implemented the refined session
+  codec, focused authorization module, target-derived REST handlers, fixture
+  role rotation, and explicit success/denial regressions; separated workspace provisioning into
+  [[ADR-0014-workspace-administration-authority]] plus trusted hosted issuance
+  into [[ADR-0015-trusted-session-issuance]] without claiming hostile-client
+  identity separation · validation: four-round ACP design review and passed
+  grill, independent implementation review, focused transport/route/auth tests,
+  static/full repository gates, and production Docker self-dogfood · risk MEDIUM
+
+- 2026-07-12 · ACP-self agent audit decision · superseded the proposed bespoke
+  provider runner before implementation; real agents now use the existing
+  production Docker ACP host directly to inspect isolated ACP worktrees, with
+  durable ACP work/checkpoint/memory/review/event evidence and no new
+  orchestration MJS or package command · validation: wiki synchronization + live
+  `acp-self` audit · risk LOW · [[ADR-0012-acp-self-agent-audit]]
+
+- 2026-07-12 · Compose project isolation · defined Compose project names as the
+  container/network/volume namespace, prohibited daemon-global fixed container
+  names, and retained `bin/acp` discovery through stable service names; the
+  existing Docker self-dogfood gate renders every profile, creates two project
+  namespaces, inspects disjoint daemon-assigned container names, and guarantees
+  teardown while focused tests cover success and failure cleanup ·
+  validation: full repository gates + two-project Docker create proof · risk LOW ·
+  [[ADR-0008-deployment-storage-topology]] · [[deployment]]
+
+- 2026-07-12 · auth-on reviewer bootstrap parity · defined the canonical
+  [[agent-integration]] reviewer session as the workspace-bound nine-scope
+  minimum expressible under v0.1 (not capability-isolated least privilege),
+  disclosed coarse `workspace:write` administration authority, and recorded
+  [[ADR-0013-review-collaboration-permission]] hardening backlog; projected the
+  role to `ACP-SKILL.md` and pinned the current union in the documentation guard;
+  expanded hardened Docker dogfood to prove reviewer
+  comment/resolve, durable observation create/read, event replay, and approval
+  while verdict-only tokens remain forbidden from comments and memory ·
+  validation: focused tests/lint plus live `acp:latest` reviewer lifecycle ·
+  risk LOW
+
+- 2026-07-12 · auth-on agent bootstrap parity · made the canonical
+  [[agent-integration]] and root `ACP-SKILL.md` worker bootstrap workspace-bound
+  and least-privilege complete; strengthened the documentation guard to pin the
+  exact lifecycle scopes; extended Docker self-dogfood to provision under the
+  bootstrap profile, restart with auth plus mandatory workspace bindings, and
+  execute create/claim/lease/checkpoint/memory/artifact/review/complete/release
+  with a separate reviewer token · validation: focused tests/lint plus live
+  `acp:latest` hardened lifecycle · risk LOW · [[session-commands]]
+
 - 2026-07-12 · live-agent verifier hardening · replaced the permissive manual
   verifier with pure invariant evaluation and strict API/SQLite/role/file
   evidence; empty handoff, unfinished work, missing contention, event drift,

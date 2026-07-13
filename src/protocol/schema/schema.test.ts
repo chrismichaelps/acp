@@ -59,6 +59,28 @@ describe('Worker schema', () => {
 })
 
 describe('Session schema', () => {
+  it('accepts either review role and rejects both in one session', () => {
+    const base = {
+      id: 'session_review_role',
+      worker_id: 'agent_codex',
+      created_at: '2026-07-04T00:00:00Z',
+    }
+
+    expect(
+      decodeSession({ ...base, permissions: ['review:collaborate'] })
+        .permissions,
+    ).toEqual(['review:collaborate'])
+    expect(
+      decodeSession({ ...base, permissions: ['review:respond'] }).permissions,
+    ).toEqual(['review:respond'])
+    expect(() =>
+      decodeSession({
+        ...base,
+        permissions: ['review:respond', 'review:collaborate'],
+      }),
+    ).toThrow(/review:respond and review:collaborate are mutually exclusive/)
+  })
+
   it('defaults workspace binding to Option.none for existing sessions', () => {
     const session = decodeSession({
       id: 'session_abc',

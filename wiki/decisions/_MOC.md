@@ -33,9 +33,21 @@ tags: [moc, adr]
   queryable Storage port (kill full-collection scans), version-column CAS,
   content-addressed blob dedup, immutable delta-based handoff, runtime grill
   protocol, reusable context blocks, opt-in semantic recall. Scale tier first.
-- [[ADR-0011-live-agent-docker-dogfood-runner]] — ACCEPTED — keep model
-  providers outside ACP and add an opt-in supervised Docker/real-agent runner
-  with structured production evidence.
+- [[ADR-0011-live-agent-docker-dogfood-runner]] — SUPERSEDED — retained as the
+  rejected provider-runner design history.
+- [[ADR-0012-acp-self-agent-audit]] — ACCEPTED — use the existing production ACP
+  Docker host directly as the control plane for real-agent repository audits.
+- [[ADR-0013-review-collaboration-permission]] — ACCEPTED — add the target-bound
+  `review:collaborate` reviewer permission plus separate `review:respond` worker
+  answer permission, reject both in one session, use focused non-enumerating
+  opaque-target authorization, rotate sessions fail closed, and propagate the
+  accepted scope through every existing session transport.
+- [[ADR-0014-workspace-administration-authority]] — PROPOSED/BACKLOG — define
+  host provisioning and target-bound workspace administration independently of
+  agent review collaboration.
+- [[ADR-0015-trusted-session-issuance]] — PROPOSED/BACKLOG — replace open
+  caller-authorized hosted bootstrap with authenticated, policy-derived identity,
+  permissions, bindings, revocation, audit, and hostile-client evidence.
 
 ## Referenced by
 

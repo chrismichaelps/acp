@@ -41,7 +41,7 @@ export const Permission: Schema.Literal<[ // session auth scopes (spec §8)
   "event:read","lease:create","work:update","work:publish_event","lease:renew","lease:release",
   "lease:revoke","artifact:create",
   "artifact:update","artifact:delete","checkpoint:create","memory:create","memory:read","review:create",
-  "review:approve","review:reject","review:request_changes","review:cancel"]>
+  "review:collaborate","review:respond","review:approve","review:reject","review:request_changes","review:cancel"]>
 ```
 
 ## Algorithm
@@ -67,10 +67,22 @@ a reviewer outcome. Memory actions are split into create/read because recall
 data can expose cross-agent context without granting the ability to publish new
 handoff records.
 
+Per [[ADR-0013-review-collaboration-permission]], `review:collaborate` isolates
+the eight reviewer-evidence mutations from `workspace:write`, while
+`review:respond` authorizes only the worker's `grill answer`. Both are additive
+to the wire vocabulary but neither is an alias: an older session remains
+decodable and is denied the separated action until reinitialized. The literal
+vocabulary admits each value independently; [[session.schema]] owns the
+permission-array refinement that rejects both in one session.
+
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT redeclare any of these literal unions in a service or transport file.
 - ❌ Do NOT widen a literal union to `string`.
+- ❌ Do NOT translate `workspace:write`, `review:collaborate`, or
+  `review:respond` into one another while decoding a session.
+- ❌ Do NOT put combination policy into the individual permission literal; the
+  shared [[session.schema]] array owns session-level mutual exclusion.
 
 ## Depth
 
@@ -81,4 +93,5 @@ duplicated literal lists that would drift out of sync.
 
 [[work-unit.schema]] · [[work-unit-service]] · [[worker.schema]] ·
 [[workspace-routes]] · [[event-routes]] · [[lease.schema]] · [[memory.schema]] ·
-[[src/_MOC]]
+[[ADR-0013-review-collaboration-permission]] · [[src/_MOC]] ·
+[[2026-07-13-review-collaboration-security-design]]

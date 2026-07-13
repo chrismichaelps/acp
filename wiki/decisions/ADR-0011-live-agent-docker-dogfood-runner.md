@@ -1,12 +1,17 @@
 ---
 type: decision
-status: ACCEPTED
+status: SUPERSEDED
 date: 2026-07-12
 tags: [adr, dogfood, agents, docker, testing]
 aliases: [ADR-0011, live-agent-docker-dogfood-runner]
 ---
 
 # ADR-0011 — External Live-Agent Docker Dogfood Runner
+
+> Superseded on 2026-07-12 by [[ADR-0012-acp-self-agent-audit]]. The fixture and
+> verifier remain useful evidence contracts, but ACP self-audits use the existing
+> production Docker host and real agents directly. No bespoke provider runner or
+> package command is added.
 
 ## Context
 
@@ -70,8 +75,11 @@ and structured results beneath the isolated run directory.
   `ACP_REQUIRE_AUTH=true`, and `ACP_REQUIRE_WORKSPACE_BINDINGS=true` for agent
   execution.
 - A bootstrap phase creates the fixture workspace before binding enforcement is
-  enabled; the same durable volume is then restarted hardened and every agent
-  session binds to that workspace.
+  enabled; the same run-scoped, host-visible SQLite directory is bind-mounted
+  into the restarted hardened container and every agent session binds to that
+  workspace. Host visibility lets the verifier compare API events with the
+  SQLite source of truth without granting the container access to the developer
+  worktree.
 - Provider credentials remain on the host and are never mounted or forwarded to
   ACP.
 - Codex roles use workspace-write sandboxing rooted at the throwaway fixture.
@@ -101,10 +109,12 @@ The verifier requires all of the following:
 
 ## Failure and Cleanup
 
-Every child process has a deadline. On timeout or failure, the runner terminates
-the child tree, stops/removes the ACP container and volume, and retains the run
-directory by default. Successful runs remove container/volume and retain or
-delete fixture evidence according to `ACP_LIVE_AGENT_KEEP_RUN`.
+Every child process has a deadline. Concurrent roles are joined with settled
+results so cleanup cannot orphan a provider process. On timeout or failure, the
+runner terminates the affected child tree, removes the ACP container, and
+retains the run directory by default. Successful runs remove the container and
+retain or delete fixture and SQLite evidence according to
+`ACP_LIVE_AGENT_KEEP_RUN`.
 
 No retry may silently replace a failed role. A retry is a new correlated run so
 model instability and ACP defects remain observable.

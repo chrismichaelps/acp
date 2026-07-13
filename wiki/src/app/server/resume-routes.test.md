@@ -27,7 +27,8 @@ workspace-bound sessions.
 Create work, two checkpoints, external and stored artifacts, and a review. Pin
 work readback, newest-first checkpoint listing/latest, artifact URI discovery,
 review requirements, stored content, and the combined resume packet. Create a
-second review gate with an open comment and grill, then require both in resume.
+second review gate using the explicit `review:collaborate` scope, add an open
+comment and grill, then require both in resume.
 Reject authenticated reads without `workspace:read` and outside a session's
 workspace binding. Return 404 when latest checkpoint is absent or content is
 requested for an external artifact.

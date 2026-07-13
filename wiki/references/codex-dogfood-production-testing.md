@@ -15,9 +15,9 @@ request/approval, terminal work completion, event publication, and event replay
 all cross the same boundary an adapter would use.
 
 These existing `dogfood:codex*` commands are deterministic Codex-shaped scripts;
-they do not launch a model process. The distinct model-backed production lane is
-specified by [[live-agent-docker-dogfood]] and
-[[ADR-0011-live-agent-docker-dogfood-runner]].
+they do not launch a model process. Real model-backed production audits use the
+existing Dockerized ACP host directly under [[live-agent-docker-dogfood]] and
+[[ADR-0012-acp-self-agent-audit]].
 
 The repeatable smoke command is:
 

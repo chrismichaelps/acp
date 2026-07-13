@@ -123,6 +123,13 @@ docker compose down -v    # stop and wipe all state
 > refuses to run with a clear hint if none is up, and forwards `ACP_RPC_TOKEN`
 > if you turn auth on.
 
+Compose project names namespace containers, networks, and volumes; ACP does not
+set daemon-global container names. Concurrent checkouts can therefore use
+different `--project-name` / `COMPOSE_PROJECT_NAME` values. Give each stack a
+different published host port as well when running them simultaneously. The
+`bin/acp` wrapper discovers the stable Compose service name, not a container
+name; use the same `COMPOSE_PROJECT_NAME` when invoking it for a named project.
+
 ## Your first coordinated task
 
 This is the exact sequence a real worker follows — claim work, protect the file
@@ -601,7 +608,8 @@ Beyond unit tests, several lanes exercise ACP against a _live_ host:
   both the SQLite and two-replica HA profiles with Traefik, then verifies
   HTTP/HTTPS routing, security headers, dashboard health, and exact backend
   discovery.
-- **`scripts/live-test/`** — the real-agent harness: genuinely autonomous agents
+- **`scripts/live-test/`** — evidence contracts for operator-driven real-agent
+  audits: genuinely autonomous agents
   (planner / two workers / reviewer), each given only a role and the `acp` CLI,
   coordinate through a live SQLite-backed, auth-on host. A verifier then asserts
   six invariants — monotonic event seq, real lease contention, a

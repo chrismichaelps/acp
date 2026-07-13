@@ -25,7 +25,39 @@ const seed = {
   comments: [],
 }
 
-const ghPerms = [...plannerPerms, 'artifact:create']
+const ghPerms = [
+  ...plannerPerms,
+  'artifact:create',
+  'work:claim',
+  'work:update',
+  'review:create',
+  'review:collaborate',
+]
+
+const requestReview = async (
+  baseUrl: string,
+  planner: { readonly token: string; readonly workerId: string },
+  workId: string,
+) => {
+  await expectOk(
+    baseUrl,
+    'claim review target',
+    ['work', 'claim', workId, '--worker', planner.workerId],
+    planner.token,
+  )
+  await expectOk(
+    baseUrl,
+    'start review target',
+    ['work', 'update', workId, '--state', 'running'],
+    planner.token,
+  )
+  return expectOk(
+    baseUrl,
+    'request review target',
+    ['review', 'request', '--work', workId, '--by', planner.workerId],
+    planner.token,
+  )
+}
 
 describe('acp gh import', () => {
   it('imports the PR diff as diff + pull_request artifacts', async () => {
@@ -113,8 +145,9 @@ describe('acp gh sync (one-way)', () => {
         ['work', 'create', 'Sync target', '--workspace', ws.id as string],
         planner.token,
       )
+      const review = await requestReview(baseUrl, planner, work.id as string)
 
-      const reviewId = 'review_sync_1'
+      const reviewId = review.id as string
       await expectOk(
         baseUrl,
         'comment 1',
@@ -241,7 +274,8 @@ describe('acp gh sync (bidirectional reconcile)', () => {
       ['work', 'create', 'Reconcile target', '--workspace', ws.id as string],
       planner.token,
     )
-    return { planner, ws, work }
+    const review = await requestReview(baseUrl, planner, work.id as string)
+    return { planner, review, ws, work }
   }
 
   const syncArgv = (prWorkId: string, reviewId: string): readonly string[] => [
@@ -258,13 +292,16 @@ describe('acp gh sync (bidirectional reconcile)', () => {
 
   it('imports unseen GitHub comments into ACP with provenance', async () => {
     await onLiveServer(async (baseUrl) => {
-      const { planner, work } = await setUpSyncFixture(baseUrl, 'ghrecon1')
+      const { planner, review, work } = await setUpSyncFixture(
+        baseUrl,
+        'ghrecon1',
+      )
       const fake = makeGitHubGatewayFake(seedWithGhComment)
       process.env.ACP_BASE_URL = baseUrl
       process.env.ACP_RPC_TOKEN = planner.token
 
       await Effect.runPromise(
-        runGhBridge(syncArgv(work.id as string, 'review_recon_1')).pipe(
+        runGhBridge(syncArgv(work.id as string, review.id as string)).pipe(
           Effect.provide(Layer.mergeAll(fake.layer, NodeHttpClient.layer)),
         ),
       )
@@ -284,14 +321,17 @@ describe('acp gh sync (bidirectional reconcile)', () => {
 
   it('is idempotent across repeated syncs', async () => {
     await onLiveServer(async (baseUrl) => {
-      const { planner, work } = await setUpSyncFixture(baseUrl, 'ghrecon2')
+      const { planner, review, work } = await setUpSyncFixture(
+        baseUrl,
+        'ghrecon2',
+      )
       const fake = makeGitHubGatewayFake(seedWithGhComment)
       process.env.ACP_BASE_URL = baseUrl
       process.env.ACP_RPC_TOKEN = planner.token
 
       const runSync = () =>
         Effect.runPromise(
-          runGhBridge(syncArgv(work.id as string, 'review_recon_2')).pipe(
+          runGhBridge(syncArgv(work.id as string, review.id as string)).pipe(
             Effect.provide(Layer.mergeAll(fake.layer, NodeHttpClient.layer)),
           ),
         )
@@ -319,7 +359,10 @@ describe('acp gh sync (bidirectional reconcile)', () => {
 
   it('never re-posts a stamped ACP comment or re-imports a mirrored GitHub comment', async () => {
     await onLiveServer(async (baseUrl) => {
-      const { planner, ws, work } = await setUpSyncFixture(baseUrl, 'ghrecon3')
+      const { planner, review, ws, work } = await setUpSyncFixture(
+        baseUrl,
+        'ghrecon3',
+      )
 
       await expectOk(
         baseUrl,
@@ -328,7 +371,7 @@ describe('acp gh sync (bidirectional reconcile)', () => {
           'review',
           'comment',
           '--review',
-          'review_recon_3',
+          review.id as string,
           '--work',
           work.id as string,
           '--workspace',
@@ -351,7 +394,7 @@ describe('acp gh sync (bidirectional reconcile)', () => {
 
       const runSync = () =>
         Effect.runPromise(
-          runGhBridge(syncArgv(work.id as string, 'review_recon_3')).pipe(
+          runGhBridge(syncArgv(work.id as string, review.id as string)).pipe(
             Effect.provide(Layer.mergeAll(fake.layer, NodeHttpClient.layer)),
           ),
         )
@@ -378,7 +421,10 @@ describe('acp gh sync (bidirectional reconcile)', () => {
 
   it('propagates resolved ACP comments to GitHub thread resolution', async () => {
     await onLiveServer(async (baseUrl) => {
-      const { planner, ws, work } = await setUpSyncFixture(baseUrl, 'ghrecon4')
+      const { planner, review, ws, work } = await setUpSyncFixture(
+        baseUrl,
+        'ghrecon4',
+      )
 
       const created = await expectOk(
         baseUrl,
@@ -387,7 +433,7 @@ describe('acp gh sync (bidirectional reconcile)', () => {
           'review',
           'comment',
           '--review',
-          'review_recon_4',
+          review.id as string,
           '--work',
           work.id as string,
           '--workspace',
@@ -409,7 +455,7 @@ describe('acp gh sync (bidirectional reconcile)', () => {
       process.env.ACP_RPC_TOKEN = planner.token
 
       await Effect.runPromise(
-        runGhBridge(syncArgv(work.id as string, 'review_recon_4')).pipe(
+        runGhBridge(syncArgv(work.id as string, review.id as string)).pipe(
           Effect.provide(Layer.mergeAll(fake.layer, NodeHttpClient.layer)),
         ),
       )
@@ -422,7 +468,7 @@ describe('acp gh sync (bidirectional reconcile)', () => {
       )
 
       await Effect.runPromise(
-        runGhBridge(syncArgv(work.id as string, 'review_recon_4')).pipe(
+        runGhBridge(syncArgv(work.id as string, review.id as string)).pipe(
           Effect.provide(Layer.mergeAll(fake.layer, NodeHttpClient.layer)),
         ),
       )

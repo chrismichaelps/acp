@@ -44,11 +44,13 @@ export const ClientCapabilities: Schema.Struct<{ // spec §9 worker flags }>
 export const InitializeSessionWorker: Schema.Struct<{ // Worker descriptor, status/capabilities defaulted }>
 export const InitializeSessionPayload: Schema.Struct<{ // §8 scopes default to []
   protocol_version: string; worker: InitializeSessionWorker
-  capabilities: ClientCapabilities; permissions: Schema.Array<Permission> }>
+  capabilities: ClientCapabilities; permissions: SessionPermissions }>
 export const InitializeSessionResponse: Schema.Struct<{ // spec §9 host handshake
   session_id: SessionId; protocol_version: "0.1"
   host: { name: string; kind: "local" }
-  capabilities: { supports_events; supports_reviews; supports_signed_review_approvals; supports_artifacts; supports_sse: boolean } }>
+  capabilities: { supports_events; supports_reviews; supports_signed_review_approvals; supports_artifacts; supports_sse: boolean }
+  permissions: SessionPermissions
+  workspace_ids: Option.Option<readonly WorkspaceId[]> }>
 
 export const WorkGroup: HttpApiGroup.HttpApiGroup<'work', ...>
 export const WorkerGroup: HttpApiGroup.HttpApiGroup<'workers', ...>
@@ -100,6 +102,7 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 ### Linkage
 
 - **Requires:** [[work-unit.schema]], [[worker.schema]], [[workspace.schema]],
+  [[session.schema]],
   [[acp-http-api-resume]],
   [[lease.schema]], [[artifact.schema]], [[checkpoint.schema]], [[review.schema]],
   [[event.schema]], [[error.schema]]
@@ -120,6 +123,21 @@ descriptor back into a canonical [[Worker]] for storage. The request schema keep
 the client version as a string; [[protocol-version]] owns the supported-version
 predicate so the router can reject incompatible versions as explicit handshake
 validation rather than generic decode failure.
+
+The permission field reuses [[session.schema]] `SessionPermissions`. Either
+ADR-0013 scope is valid alone; a payload containing both is rejected before a
+session id is minted with the issue `review:respond and review:collaborate are
+mutually exclusive`. This is a per-session least-privilege rule, not a trusted
+issuer or cross-token identity guarantee.
+
+The successful response applies the same [[session.schema]]
+`SessionPermissions` refinement and echoes the exact decoded `permissions`
+beside `workspace_ids`. Response decoding therefore rejects the dual-scope pair
+instead of treating the success side as an unrefined `Permission[]`. This
+additive field lets REST, native RPC, JSON-RPC HTTP/WebSocket, and [[stdio-main]]
+prove that a valid closed-vocabulary permission array was accepted and preserved
+instead of inferring codec success from a minted id. It is a truthful handshake
+echo of the stored session, not an additional grant.
 
 Artifact update/delete are declared as backed extensions because the domain
 [[artifact-service]] owns mutation/removal and emits `artifact.updated` and
@@ -178,6 +196,9 @@ support without inferring it from broad review support.
 - ❌ Do NOT implement business logic here.
 - ❌ Do NOT use Express/Fastify/raw Node `http`; this module is Effect Platform only.
 - ❌ Do NOT duplicate domain state machines; import schemas from protocol modules.
+- ❌ Do NOT omit or reorder effective permission literals in the session
+  response; propagation tests compare the exact array.
+- ❌ Do NOT accept both ADR-0013 role scopes in one initialization payload.
 
 ## Depth
 
@@ -188,3 +209,4 @@ route drift between server handlers, generated clients, and tests.
 
 [[http-index]] · [[acp-http-api-events]] · [[acp-http-api.test]] · [[Transport]]
 · [[workspace-routes]] · [[event-routes]] · [[protocol-version]] · [[src/_MOC]]
+· [[ADR-0013-review-collaboration-permission]]

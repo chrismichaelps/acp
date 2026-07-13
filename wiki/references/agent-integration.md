@@ -12,10 +12,13 @@ CI, or human) follows to coordinate through an ACP host without a shared
 conversation. The skill file at the root is a faithful projection of this page —
 edit here first, then re-project.
 
-Every claim on this page was validated live against the Dockerized host
-(`docker compose --profile sqlite up`, driven through [`bin/acp`](@root/bin/acp)):
-the full lifecycle replays as the event sequence recorded in the
-[Grill Log](#grill-log) below.
+The established lifecycle commands on this page were validated live against the
+Dockerized host (`docker compose --profile sqlite up`, driven through
+[`bin/acp`](@root/bin/acp)). The `review:collaborate` / `review:respond`
+commands are the accepted release target of
+[[ADR-0013-review-collaboration-permission]] and intentionally precede
+implementation under the FMCF wiki-first lock; the implementation pass must
+replace this note with Docker evidence before release.
 
 ## Mental model
 
@@ -69,8 +72,10 @@ The canonical sequence a worker follows. Each step is a real command, verified
 against the live host.
 
 1. **Register** (auth-on hosts only). `session init` mints a `session_id` used as
-   the bearer token, scoped to explicit permissions. Requesting a review uses
-   `review:create`; review creation is the request authorization boundary.
+   the bearer token, bound to the workspace and scoped to every action in this
+   loop. Requesting a review uses `review:create`; review creation is the
+   request authorization boundary. Approval belongs to a separate reviewer
+   session and is intentionally absent from the worker token.
 2. **Find or open work.** `work list --workspace <id>` to discover open work, or
    `work create` to open your own.
 3. **Claim it.** `work claim <work_id> --worker <you>` — moves `open → claimed`.
@@ -127,12 +132,92 @@ Happy path: `open → claimed → running → needs_review → approved → comp
 running` covers external stalls. `completed`, `rejected`, and `cancelled` are
 terminal, and `cancelled` is reachable from any pre-review state.
 
+### Auth-on bootstrap for the complete worker loop
+
+The workspace must already exist. On a host with both `ACP_REQUIRE_AUTH=true`
+and `ACP_REQUIRE_WORKSPACE_BINDINGS=true`, initialize the worker with the exact
+workspace and action scopes used by the lifecycle above:
+
+```bash
+acp session init --worker agent_codex --name Codex --kind agent \
+  --permissions workspace:read,event:read,work:create,work:claim,work:update,\
+lease:create,lease:release,artifact:create,checkpoint:create,memory:create,\
+review:create,review:respond \
+  --workspace workspace_xxx
+```
+
+Export the returned id before continuing:
+
+```bash
+export ACP_RPC_TOKEN=<session_id>
+```
+
+This token can discover/create/claim/transition work, acquire and release file
+leases, checkpoint, leave handoff memory, attach an artifact, request review,
+answer a grill question, resume work, and replay/stream events inside
+`workspace_xxx`. `review:respond` authorizes only `grill answer`; the worker
+cannot open/ask/verdict/evaluate a grill or mutate comments. It cannot approve
+its own review, administer a workspace, or act in another workspace.
+
+The complete Docker self-dogfood gate runs this sequence with both security
+flags enabled after provisioning the workspace under the bootstrap profile. It
+uses a separate workspace-bound reviewer token for approval and asserts the
+durable lifecycle events through completion and lease release.
+
 ## The review gate
 
 A review is more than approve/reject. A reviewer can anchor **diff-anchored
 comments** to a file and line on an artifact and open a **grill** — a set of
 forced senior-level questions the worker must answer. The gate passes only when
 every blocker question is `accepted` and every review comment is `resolved`:
+
+### Auth-on bootstrap for the complete reviewer loop
+
+On a host with auth and workspace bindings enabled, initialize a distinct
+reviewer identity against the existing workspace. These nine scopes are the
+complete reviewer-role union under [[ADR-0013-review-collaboration-permission]]:
+
+```bash
+acp session init --worker agent_reviewer --name Reviewer --kind human \
+  --permissions workspace:read,review:collaborate,event:read,memory:create,\
+memory:read,review:approve,review:reject,review:request_changes,review:cancel \
+  --workspace workspace_xxx
+```
+
+Export the returned `session_id` as `ACP_RPC_TOKEN`. This reviewer can inspect
+workspace work/reviews/artifacts/checkpoints, read and create durable memory,
+replay/stream events, create/resolve/reopen/stamp inline comments, operate the
+grill, and issue approve/reject/request-changes/cancel verdicts. It cannot create,
+claim, transition, or publish worker progress; acquire leases; checkpoint;
+attach artifacts; request its own review; or administer workspaces.
+
+The authorization map is intentional: read routes use `workspace:read`, eight
+comment/grill construction and adjudication mutations use
+`review:collaborate`, worker answer uses `review:respond`, durable findings use
+`memory:create`, memory lookup uses `memory:read`, replay/stream uses
+`event:read`, and each terminal/intermediate review outcome has its own
+`review:*` scope. The reviewer lacks `review:respond`; the worker lacks
+`review:collaborate`. Session initialization rejects a token request containing
+both scopes, so one canonical token cannot perform both sides of the grill.
+
+This is not hostile-client identity separation. The open v0.1 bootstrap trusts
+the local operator/client that selects worker ids, scopes, and bindings; a
+malicious client can mint separate identities or tokens. Do not expose this
+bootstrap as a public hosted issuer. Server-policy-derived hosted sessions and
+stable external identity are the [[ADR-0015-trusted-session-issuance]] backlog.
+
+Collaboration targets are non-enumerating. A correctly scoped session receives
+the same `404 not_found` envelope for a missing target and an existing target in
+another workspace; do not interpret 404 as proof that no record exists globally.
+A session missing the action scope receives `403 forbidden` before target
+lookup. Add-comment/open-grill path/body identity mismatch on an in-scope review
+returns `400 invalid_request` with the deterministic ADR-0013 mismatch issues.
+
+> **Upgrade action:** sessions minted with `workspace:write` but without
+> either new action permission remain valid and lose comment/grill mutation
+> authority on the upgraded host. Reinitialize the worker with `review:respond`
+> and reviewer with `review:collaborate`. The host intentionally does not alias
+> the old scope.
 
 1. **Comment.** Reviewer: `review comment --review <id> --work <id> --workspace
 <id> --artifact <id> --file <f> --side new --body "…"`. The worker addresses it
@@ -183,7 +268,7 @@ stores, or forwards a token); the protocol host has no GitHub dependency.
 Authoritative surface (from the container's own usage text):
 
 ```
-session    init      --worker <id> --name <n> [--kind <k>] [--vendor <v>] [--capabilities <csv>] [--permissions <csv>]
+session    init      --worker <id> --name <n> [--kind <k>] [--vendor <v>] [--capabilities <csv>] [--permissions <csv>] [--workspace <id[,id...]> ...]
 worker     list | get <worker_id>
 workspace  create --name <n> --kind <k> --uri <u> [--default-branch <b>] | update <id> | archive <id> | list
 work       create <title> --workspace <id> [--priority <p>] [--description <d>]
@@ -218,13 +303,13 @@ cloud_sandbox | ci_job`.
 
 Every command prints JSON; failures are `{"error":{"code":...,"message":...}}`.
 
-| Code                       | HTTP | When                         | Correct response                                    |
-| -------------------------- | ---- | ---------------------------- | --------------------------------------------------- |
-| `lease_conflict`           | 409  | Resource already leased.     | Back off, wait/retry, or coordinate — do not force. |
-| `invalid_state_transition` | 409  | Illegal work-state jump.     | Re-read `work get`; only take legal transitions.    |
-| `unauthorized`             | 401  | Missing/invalid credentials. | Bootstrap or refresh the session token.             |
-| `forbidden`                | 403  | Valid token lacks the scope. | Request a session with the needed permission.       |
-| `not_found`                | 404  | Unknown id.                  | Re-list to resolve a current id.                    |
+| Code                       | HTTP | When                          | Correct response                                    |
+| -------------------------- | ---- | ----------------------------- | --------------------------------------------------- |
+| `lease_conflict`           | 409  | Resource already leased.      | Back off, wait/retry, or coordinate — do not force. |
+| `invalid_state_transition` | 409  | Illegal work-state jump.      | Re-read `work get`; only take legal transitions.    |
+| `unauthorized`             | 401  | Missing/invalid credentials.  | Bootstrap or refresh the session token.             |
+| `forbidden`                | 403  | Valid token lacks the scope.  | Request a session with the needed permission.       |
+| `not_found`                | 404  | Missing or foreign hidden id. | Re-list in your bound workspace; do not probe.      |
 
 `conflict` and `rate_limited` are reserved codes with no current producer — do
 not depend on them.
@@ -245,9 +330,14 @@ not depend on them.
 Local mode allows unauthenticated requests. On `ACP_REQUIRE_AUTH=true` hosts:
 
 - `session init` is the open bootstrap route; it returns the `session_id` used as
-  the bearer token on later calls.
+  the bearer token on later calls plus the exact effective `permissions` and
+  `workspace_ids`; verify both echoes before using a hardened token.
+- When `ACP_REQUIRE_WORKSPACE_BINDINGS=true`, pass at least one existing
+  workspace with `--workspace`; repeat the flag or use comma-separated ids for
+  a multi-workspace session.
 - Permissions are explicit strings — `work:create`, `lease:create`,
-  `review:approve`, `event:read`, and so on.
+  `review:respond`, `review:collaborate`, `review:approve`, `event:read`, and so
+  on.
 - The CLI and stdio bridge forward `ACP_RPC_TOKEN`, so an integration can
   `export ACP_RPC_TOKEN=$(...)` once and reuse the scoped session.
 
@@ -259,6 +349,14 @@ calls and `events.subscribe` streaming over one path; **JSON-RPC** (`POST /rpc`,
 WS `GET /rpc`) is the compatibility surface; the `acp-jsonrpc-stdio` binary
 bridges Content-Length framed JSON-RPC for stdio integrations. See
 [[deployment]] for hosting and [[acp-http-api]] for the wire contract.
+
+Comment and grill mutation commands are REST-owned (directly or through the
+CLI/GitHub bridge). Native RPC and JSON-RPC HTTP/WebSocket currently have no
+comment/grill command methods; they accept and preserve either new literal and
+reject the pair through `session.initialize` only. The stdio bridge's release
+proof exchanges real Content-Length session frames, asserts the returned
+permissions/binding, rejects the dual-scope frame, and uses a valid session on
+REST. Do not infer unimplemented command parity from permission propagation.
 
 ## Grill Log
 
@@ -273,9 +371,29 @@ the shipped `local` compose profile) and treat auth as an explicit opt-in
 section. Rejected making session bootstrap mandatory in the happy path — it would
 misrepresent the out-of-the-box container.
 
+**Q: Which scopes belong in the auth-on worker bootstrap?**
+Decision: request the exact union exercised by the documented worker loop and
+bind it to the target workspace. Rejected the previous partial list (it failed
+at claim/checkpoint/artifact and other later steps), omitting `review:respond`
+(the worker could not answer its grill), substituting `review:collaborate` (the
+worker could self-verdict/evaluate), `workspace:write` (the loop does not mutate
+workspace metadata), and reviewer decision scopes.
+
+**Q: Which scopes belong in the auth-on reviewer bootstrap?**
+Decision: document the nine-scope reviewer union: workspace/memory/event reads,
+`review:collaborate` for eight comment/grill construction/adjudication actions,
+memory create for durable independent findings, and all four review outcome
+scopes. Rejected `review:respond` (the reviewer cannot answer for the worker),
+retaining `workspace:write`, worker mutation/lease/checkpoint/artifact/
+`review:create` scopes, and verdict-only guidance. Workspace provisioning
+remains the independent [[ADR-0014-workspace-administration-authority]] backlog.
+
 **Q: How is accuracy guaranteed?**
-Decision: every command was executed against the live container before writing.
-The validated replay was:
+Decision: retain the previously validated lifecycle replay below, then require
+the implementation pass to run the new collaboration scope, session rotation,
+and both denial boundaries against the Dockerized host before release. Rejected
+presenting the accepted wiki-first design as already-live evidence. The
+established replay was:
 
 ```
 workspace.created → work.created → work.claimed → lease.requested →
@@ -285,5 +403,15 @@ review.requested → work.needs_review → review.approved → work.completed �
 lease.released
 ```
 
-Rejected documenting from the source/spec alone — the point of this slice was to
-prove the container-driven workflow an agent will actually run.
+The pending ADR-0013 Docker replay must add comment, grill answer, collaboration
+denial, workspace-administration denial, and session reinitialization evidence.
+
+## Referenced by
+
+[[references/_MOC]] · [[ADR-0012-acp-self-agent-audit]] ·
+[[ADR-0013-review-collaboration-permission]] ·
+[[ADR-0014-workspace-administration-authority]] ·
+[[ADR-0015-trusted-session-issuance]] ·
+[[2026-07-12-acp-skill-auth-bootstrap]] ·
+[[2026-07-12-acp-skill-reviewer-bootstrap]] ·
+[[2026-07-13-review-collaboration-security-design]] · [[CHANGELOG]]
