@@ -27,15 +27,19 @@ export const sessionCommandHandlers: Readonly<
 ```
 
 The module registers `session init --worker <id> --name <n> [--kind <k>]
-[--vendor <v>] [--capabilities <csv>] [--permissions <csv>]`.
+[--vendor <v>] [--capabilities <csv>] [--permissions <csv>] [--workspace
+<id[,id...]> ...]`.
 
 ## Algorithm
 
 The handler validates required worker id and name flags, defaults kind to
 `agent`, forwards optional vendor, parses capability and permission CSV flags
 into arrays, and returns a `POST /v1/session/initialize` [[cli-commands]]
-request. The server schema keeps protocol version, worker status, and host
-capability negotiation defaults at the HTTP boundary.
+request. Repeated and comma-separated `--workspace` values are trimmed,
+deduplicated, validated as ACP workspace identifiers, and forwarded as
+`workspace_ids`; omitting the flag leaves the session unbound. The server schema
+keeps protocol version, worker status, and host capability negotiation defaults
+at the HTTP boundary.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -44,6 +48,7 @@ capability negotiation defaults at the HTTP boundary.
 - ❌ Do NOT grant shell, filesystem, GitHub, or cloud powers here; permissions are
   ACP scopes only.
 - ❌ Do NOT perform HTTP I/O; [[cli-client]] sends the request.
+- ❌ Do NOT silently accept malformed or empty workspace identifiers.
 
 ## Depth
 

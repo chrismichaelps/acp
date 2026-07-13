@@ -58,7 +58,10 @@ This is the exact sequence you follow. Every command is real and verified.
 ```bash
 # (auth-on hosts only) register yourself and capture the bearer token.
 acp session init --worker agent_codex --name Codex --kind agent \
-  --permissions workspace:read,workspace:write,work:create,lease:create,review:create
+  --permissions workspace:read,event:read,work:create,work:claim,work:update,\
+lease:create,lease:release,artifact:create,checkpoint:create,memory:create,\
+review:create \
+  --workspace workspace_xxx
 
 # Discover open work — or open your own.
 acp work list --workspace workspace_xxx
@@ -137,6 +140,29 @@ comments** to a file and line on an artifact and open a **grill** — a set of
 forced senior-level questions the worker must answer. The gate passes only when
 every blocker question is `accepted` and every review comment is `resolved`:
 
+On auth-on hosts, initialize a separate reviewer session bound to the existing
+workspace. This is the minimum expressible scope set for the complete reviewer
+loop under ACP v0.1, not capability-isolated least privilege:
+
+```bash
+acp session init --worker agent_reviewer --name Reviewer --kind human \
+  --permissions workspace:read,workspace:write,event:read,memory:create,\
+memory:read,review:approve,review:reject,review:request_changes,review:cancel \
+  --workspace workspace_xxx
+export ACP_RPC_TOKEN=<session_id>
+```
+
+This role can inspect workspace evidence, read/create durable findings,
+replay/stream events, operate comments and grills, and issue every review
+verdict. It intentionally has no worker mutation, lease, checkpoint, artifact,
+or review-request scope.
+
+Security caveat: required `workspace:write` also authorizes workspace create,
+update, and archive. Update is target-binding checked, but create and archive
+currently are not target-scoped; a bound reviewer therefore has broader
+workspace-administration authority than review collaboration requires. Use a
+trusted reviewer identity until a narrower collaboration scope lands.
+
 1. **Comment.** Reviewer: `review comment --review <id> --work <id> --workspace
 <id> --artifact <id> --file <f> --side new --body "…"`. The worker addresses it
    and the reviewer runs `review comment resolve <comment_id>`.
@@ -184,7 +210,7 @@ stores, or forwards a token); the protocol host has no GitHub dependency.
 ## 6. Full command surface
 
 ```
-session    init      --worker <id> --name <n> [--kind <k>] [--vendor <v>] [--capabilities <csv>] [--permissions <csv>]
+session    init      --worker <id> --name <n> [--kind <k>] [--vendor <v>] [--capabilities <csv>] [--permissions <csv>] [--workspace <id[,id...]> ...]
 worker     list | get <worker_id>
 workspace  create --name <n> --kind <k> --uri <u> [--default-branch <b>] | update <id> | archive <id> | list
 work       create <title> --workspace <id> [--priority <p>] [--description <d>]
@@ -249,6 +275,9 @@ Local mode allows unauthenticated requests. On `ACP_REQUIRE_AUTH=true` hosts:
 
 - `session init` is the open bootstrap route; it returns the `session_id` used as
   the bearer token on later calls.
+- When `ACP_REQUIRE_WORKSPACE_BINDINGS=true`, pass at least one existing
+  workspace with `--workspace`; repeat the flag or use comma-separated ids for
+  a multi-workspace session.
 - Permissions are explicit strings — `work:create`, `lease:create`,
   `review:approve`, `event:read`, …
 - The CLI and stdio bridge forward `ACP_RPC_TOKEN`, so you can

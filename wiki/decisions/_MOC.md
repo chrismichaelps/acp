@@ -37,6 +37,9 @@ tags: [moc, adr]
   rejected provider-runner design history.
 - [[ADR-0012-acp-self-agent-audit]] — ACCEPTED — use the existing production ACP
   Docker host directly as the control plane for real-agent repository audits.
+- [[ADR-0013-review-collaboration-permission]] — PROPOSED/BACKLOG — replace the
+  coarse `workspace:write` reviewer dependency with a target-bound review
+  collaboration permission and separately harden workspace administration.
 
 ## Referenced by
 
