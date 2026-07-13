@@ -1,6 +1,6 @@
 ---
 type: reference
-status: ACTIVE
+status: PROVEN
 date: 2026-07-12
 tags: [reference, dogfood, agents, docker, production]
 aliases: [live-agent-docker-dogfood]
@@ -42,15 +42,15 @@ There is no model-provider runner in the repository.
 
 ## Role Contracts
 
-- **Planner:** create exactly two work items against the pre-provisioned
-  workspace; no implementation or review actions.
-- **Workers:** attempt the shared contention probe, claim open work, lease before
-  editing, make real fixture changes, run tests, checkpoint, write nonempty
-  handoff memory, request review, react to requested changes, complete approved
-  work, and release leases.
-- **Reviewer:** inspect memory before each decision, request changes on at least
-  one initial review, approve a follow-up and other valid work, and report the
-  exact memory ids inspected.
+- **Planner:** inspect read-only, create bounded evidence-backed repository work,
+  and avoid implementation or review actions.
+- **Workers:** claim before inspection, lease before editing, update the wiki
+  before implementation, validate, checkpoint, write nonempty handoff memory,
+  request review, react to requested changes, complete approved work, and
+  release every lease.
+- **Reviewer:** inspect ACP memory plus exact worktree diffs, record concrete
+  comments and durable findings, request changes when claims exceed evidence,
+  resolve addressed comments, and approve only independently revalidated work.
 
 The first implementation slice landed the two-task executable fixture,
 rerun-safe setup, explicit contention-probe role instructions, workspace-bound
@@ -66,6 +66,14 @@ These fixture contracts remain reusable acceptance oracles, but they are not a
 new package command. The active lane uses the Dockerized ACP product directly to
 coordinate repository audit work.
 
+The first production `acp-self` audit completed three work units and 190 durable
+events. It found a Compose name collision, incomplete worker bootstrap scopes,
+and incomplete reviewer guidance; the independent reviewer rejected two initial
+submissions for false-positive daemon evidence and undisclosed coarse authority,
+then rejected an ADR number collision during integration. All findings were
+corrected, approved, completed, and exercised through the integrated production
+Docker self-dogfood gate.
+
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT add a provider-runner script and call the wrapper the product proof.
@@ -80,15 +88,15 @@ coordinate repository audit work.
 ## Grill Log
 
 - **Q:** Does the ACP container launch agents? **A:** No. ACP is the coordination
-  control plane; an external supervised runner launches provider processes.
-  _Rejected:_ model-host responsibilities in the server image.
+  control plane; the operator launches real agents and ACP records their durable
+  work. _Rejected:_ model-host responsibilities in the server image and a new
+  provider-runner script.
 - **Q:** Should model dogfood block every PR? **A:** No. Keep deterministic Docker
   self-dogfood mandatory and run this lane manually/scheduled with credentials.
   _Rejected:_ flaky/costly merge requirements.
-- **Q:** Why start with a fixture instead of ACP's own repository? **A:** The
-  runner must first prove deterministic supervision, contention, review, handoff,
-  and file correctness in an isolated known problem. The next slice can target an
-  isolated ACP clone. _Rejected:_ debugging runner and product simultaneously.
+- **Q:** Why audit isolated ACP worktrees? **A:** They exercise the real
+  repository without allowing concurrent agents to mutate the user's active
+  checkout. _Rejected:_ fixture-only evidence and shared active-worktree writes.
 
 ## Referenced by
 
