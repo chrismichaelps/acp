@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-12 · live-agent fixture hardening · reduced the manual prototype to a
+  feasible two-task/two-worker oracle, made setup rerun-safe, added executable
+  add/capitalize assertions, required workspace-bound role sessions and an
+  explicit shared contention probe, and added strict structured role results ·
+  validation: focused setup/schema tests + formatting · risk LOW ·
+  [[live-agent-docker-dogfood]]
+
 - 2026-07-12 · live-agent Docker dogfood design · audited scripted versus
   model-backed coverage, accepted an external provider-neutral runner boundary,
   specified hardened Docker bootstrap, supervised Codex roles, deterministic

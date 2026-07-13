@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "reviewed",
+    "approved",
+    "changes_requested",
+    "inspected_memory_ids"
+  ],
+  "properties": {
+    "reviewed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["work", "first", "final"],
+        "properties": {
+          "work": { "type": "string", "pattern": "^work_" },
+          "first": { "enum": ["approved", "changes_requested"] },
+          "final": { "enum": ["approved", "stalled"] }
+        }
+      }
+    },
+    "approved": { "type": "integer", "minimum": 1 },
+    "changes_requested": { "type": "integer", "minimum": 1 },
+    "inspected_memory_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "pattern": "^memory_" }
+    }
+  }
+}
