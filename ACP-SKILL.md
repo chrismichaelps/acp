@@ -12,7 +12,11 @@ and catch up before acting. This file tells you exactly how to interact with an
 ACP host.
 
 > Canonical source: [`wiki/references/agent-integration.md`](./wiki/references/agent-integration.md).
-> Every command below was validated live against the Dockerized host.
+> Established commands below were validated live against the Dockerized host.
+> The `review:collaborate` / `review:respond` bootstrap is the accepted ADR-0013
+> release target; use it only with a host version that accepts those
+> permissions. The implementation pass must attach fresh Docker evidence before
+> release.
 
 ## Mental model
 
@@ -60,7 +64,7 @@ This is the exact sequence you follow. Every command is real and verified.
 acp session init --worker agent_codex --name Codex --kind agent \
   --permissions workspace:read,event:read,work:create,work:claim,work:update,\
 lease:create,lease:release,artifact:create,checkpoint:create,memory:create,\
-review:create \
+review:create,review:respond \
   --workspace workspace_xxx
 
 # Discover open work — or open your own.
@@ -141,12 +145,12 @@ forced senior-level questions the worker must answer. The gate passes only when
 every blocker question is `accepted` and every review comment is `resolved`:
 
 On auth-on hosts, initialize a separate reviewer session bound to the existing
-workspace. This is the minimum expressible scope set for the complete reviewer
-loop under ACP v0.1, not capability-isolated least privilege:
+workspace. These nine scopes are the complete reviewer-role union under the
+target-bound collaboration design:
 
 ```bash
 acp session init --worker agent_reviewer --name Reviewer --kind human \
-  --permissions workspace:read,workspace:write,event:read,memory:create,\
+  --permissions workspace:read,review:collaborate,event:read,memory:create,\
 memory:read,review:approve,review:reject,review:request_changes,review:cancel \
   --workspace workspace_xxx
 export ACP_RPC_TOKEN=<session_id>
@@ -155,13 +159,27 @@ export ACP_RPC_TOKEN=<session_id>
 This role can inspect workspace evidence, read/create durable findings,
 replay/stream events, operate comments and grills, and issue every review
 verdict. It intentionally has no worker mutation, lease, checkpoint, artifact,
-or review-request scope.
+review-request, or workspace-administration scope.
 
-Security caveat: required `workspace:write` also authorizes workspace create,
-update, and archive. Update is target-binding checked, but create and archive
-currently are not target-scoped; a bound reviewer therefore has broader
-workspace-administration authority than review collaboration requires. Use a
-trusted reviewer identity until a narrower collaboration scope lands.
+Eight comment/grill construction and adjudication mutations require
+`review:collaborate`; `grill answer` alone requires `review:respond`. Both derive
+workspace from the target review/comment/grill/question. The worker carries only
+`review:respond`; the reviewer carries only `review:collaborate`. ACP rejects a
+single session initialization containing both scopes, so one canonical token
+cannot answer and adjudicate. This is a per-session least-privilege rule: the
+open v0.1 bootstrap trusts the local issuer and does not stop a malicious client
+from minting multiple identities/tokens. Hosted trusted issuance is the
+ADR-0015 backlog.
+
+Opaque review targets are non-enumerating: a correctly scoped session gets the
+same `404 not_found` for missing and foreign ids. Missing action scope is 403
+before lookup. In-scope add/open path-body identity mismatch is 400
+`invalid_request`. Never use response differences to probe another workspace.
+
+Upgrade action: a pre-upgrade session carrying only `workspace:write` remains
+valid but is denied comment/grill mutations. Reinitialize the worker with
+`review:respond` and reviewer with `review:collaborate`; ACP does not alias the
+old scope.
 
 1. **Comment.** Reviewer: `review comment --review <id> --work <id> --workspace
 <id> --artifact <id> --file <f> --side new --body "…"`. The worker addresses it
@@ -245,13 +263,13 @@ cloud_sandbox | ci_job`. Every command prints JSON on stdout.
 
 Failures are `{"error":{"code":...,"message":...}}`.
 
-| Code                       | HTTP | When                         | What you do                                        |
-| -------------------------- | ---- | ---------------------------- | -------------------------------------------------- |
-| `lease_conflict`           | 409  | Resource already leased.     | Back off, wait/retry, or coordinate — never force. |
-| `invalid_state_transition` | 409  | Illegal work-state jump.     | Re-read `work get`; take only legal transitions.   |
-| `unauthorized`             | 401  | Missing/invalid credentials. | Bootstrap or refresh your session token.           |
-| `forbidden`                | 403  | Token lacks the scope.       | Get a session with the needed permission.          |
-| `not_found`                | 404  | Unknown id.                  | Re-list to resolve a current id.                   |
+| Code                       | HTTP | When                          | What you do                                        |
+| -------------------------- | ---- | ----------------------------- | -------------------------------------------------- |
+| `lease_conflict`           | 409  | Resource already leased.      | Back off, wait/retry, or coordinate — never force. |
+| `invalid_state_transition` | 409  | Illegal work-state jump.      | Re-read `work get`; take only legal transitions.   |
+| `unauthorized`             | 401  | Missing/invalid credentials.  | Bootstrap or refresh your session token.           |
+| `forbidden`                | 403  | Token lacks the scope.        | Get a session with the needed permission.          |
+| `not_found`                | 404  | Missing or foreign hidden id. | Re-list inside your binding; do not probe.         |
 
 `conflict` and `rate_limited` are reserved with no current producer — don't
 depend on them.
@@ -274,12 +292,13 @@ depend on them.
 Local mode allows unauthenticated requests. On `ACP_REQUIRE_AUTH=true` hosts:
 
 - `session init` is the open bootstrap route; it returns the `session_id` used as
-  the bearer token on later calls.
+  the bearer token on later calls plus the exact effective `permissions` and
+  `workspace_ids`; verify both echoes on hardened hosts.
 - When `ACP_REQUIRE_WORKSPACE_BINDINGS=true`, pass at least one existing
   workspace with `--workspace`; repeat the flag or use comma-separated ids for
   a multi-workspace session.
 - Permissions are explicit strings — `work:create`, `lease:create`,
-  `review:approve`, `event:read`, …
+  `review:respond`, `review:collaborate`, `review:approve`, `event:read`, …
 - The CLI and stdio bridge forward `ACP_RPC_TOKEN`, so you can
   `export ACP_RPC_TOKEN=$(...)` once and reuse the scoped session.
 
@@ -293,3 +312,10 @@ Content-Length framed JSON-RPC for stdio integrations. See
 [`README.md`](./README.md) for deployment and storage, and
 [`wiki/references/agent-integration.md`](./wiki/references/agent-integration.md)
 for the canonical version of this skill.
+
+Comment/grill mutations are REST-owned (directly or through CLI/GitHub bridge).
+Native RPC and JSON-RPC HTTP/WebSocket do not expose those commands today; they
+accept and preserve either permission through session initialization and reject
+the pair in one session. The stdio release proof exchanges a real Content-Length
+session frame, asserts returned scope/binding, rejects the dual-scope frame, then
+uses the valid session on the REST collaboration surface.

@@ -32,11 +32,18 @@ and decodes JSON. `onLiveServer` scopes [[http-app]] to an ephemeral port.
 optionally resolves the comment, then evaluates. Race helpers classify expected
 claim/lease conflict codes and reject every unexpected outcome.
 
+The canonical permission fixtures preserve the review-role split from
+[[ADR-0013-review-collaboration-permission]]: workers carry `review:respond` for
+grill answers, while reviewers carry `review:collaborate` for comment and grill
+construction/adjudication without inheriting `workspace:write`.
+
 ## Negative Logic
 
 - ❌ Do NOT bypass the real parser/client path with synthetic HTTP calls.
 - ❌ Do NOT treat malformed test argv or unexpected race results as protocol data.
 - ❌ Do NOT expose bearer tokens in logs.
+- ❌ Do NOT collapse worker response and reviewer collaboration into one test
+  session.
 
 ## Depth
 

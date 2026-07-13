@@ -60,6 +60,12 @@ omitting the field yields a host-wide session. For hosted profiles, omitting the
 field is rejected unless a future token resolver supplies workspace bindings
 before the session is stored.
 
+This binding check does not make the open bootstrap a trusted issuer. The v0.1
+client still selects its worker id, permission literals, and workspace ids; a
+binding limits where the resulting session acts but does not prove entitlement
+to that workspace. Public hosted issuance remains
+[[ADR-0015-trusted-session-issuance]].
+
 The first implementation may require explicit `workspace_ids` in the initialize
 payload for `hosted` and `self-host-ha`; a later managed-service resolver can map
 an external credential to workspace ids before calling the same session service.
@@ -93,9 +99,17 @@ workspace before returning or mutating it.
 Credential failures remain `401 unauthorized`: missing bearer token when auth is
 required, invalid token, expired session.
 
-Authorization failures remain `403 forbidden`: valid token with missing
-permission or valid token bound to a different workspace. Error bodies must not
-disclose whether the forbidden workspace exists.
+Authorization failures on explicit workspace targets remain `403 forbidden`:
+valid token with missing permission or valid token bound to a different
+workspace. Error bodies must not disclose whether the forbidden workspace
+exists.
+
+Opaque resource-id targets need the stronger non-enumeration rule established
+by [[ADR-0013-review-collaboration-permission]]: check the action scope before
+lookup, then return the same `404 not_found` envelope for a missing resource and
+an existing resource outside the session binding. Keep `403` for an in-binding
+target when the session lacks the action scope. This specialization prevents a
+404/403 status difference from disclosing resource existence across tenants.
 
 ### Profile behavior
 
@@ -170,4 +184,5 @@ that local/single-node host-wide sessions remain compatible.
 ## Referenced by
 
 [[ADR-0008-deployment-storage-topology]] · [[route-support]] · [[rpc-auth]]
-· [[session-service]] · [[session.schema]] · [[decisions/_MOC]]
+· [[session-service]] · [[session.schema]] · [[decisions/_MOC]] ·
+[[ADR-0013-review-collaboration-permission]]

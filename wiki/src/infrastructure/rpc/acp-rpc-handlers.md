@@ -90,7 +90,12 @@ export const AcpRpcSessionWorkerWorkspaceHandlersLive: Layer<
 handshake booleans when the worker did not send an explicit capability list,
 mint a high-entropy session bearer credential through [[id-clock]]
 `secureToken`, read the timestamp through [[id-clock]], persist the session, and
-return the host descriptor and capability flags.
+return the host descriptor, capability flags, exact `permissions`, and
+`workspace_ids`. This handler builds its own success object; it must project
+`permissions: payload.permissions` explicitly rather than assuming the shared
+success schema adds the field. The shared [[session.schema]] permission-array
+refinement rejects a payload carrying both `review:respond` and
+`review:collaborate` before the handler mints a token.
 
 All authorizing handlers check scopes through [[rpc-auth]] `rpcActor` or
 `rpcWorkspaceActor`. The former handles host-wide operations and routes whose
@@ -147,6 +152,8 @@ handlers dispatches through [[acp-router]], JSON-RPC command maps, or REST paths
 - ❌ Do NOT bypass [[rpc-auth]] for scoped read handlers.
 - ❌ Do NOT route native RPC calls through HTTP or JSON-RPC adapters.
 - ❌ Do NOT delete existing JSON-RPC transports from this slice.
+- ❌ Do NOT omit accepted permissions from the native initialization response.
+- ❌ Do NOT mint a native session carrying both ADR-0013 role scopes.
 
 ## Depth
 
@@ -156,4 +163,5 @@ transport rewrite.
 
 ## Referenced by
 
-[[rpc-index]] · [[acp-rpc-contract]] · [[acp-rpc-handlers.test]] · [[rpc/_MOC]]
+[[rpc-index]] · [[acp-rpc-contract]] · [[acp-rpc-handlers.test]] · [[rpc/_MOC]] ·
+[[ADR-0013-review-collaboration-permission]]

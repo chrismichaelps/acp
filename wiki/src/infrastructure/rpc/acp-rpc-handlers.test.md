@@ -24,7 +24,10 @@ native RPC runtimes.
 ## Algorithm
 
 Initialize sessions and perform scoped worker/workspace reads; reject missing
-read scope. Persist declared workspace bindings and, when configured, reject
+read scope. Require native initialization to echo exact permissions, including
+each ADR-0013 literal in a separate session. Reject the two-literal pair with
+the exact mutual-exclusion issue and prove no session was persisted. Persist
+declared workspace bindings and, when configured, reject
 missing/empty bindings. Deny direct workspace/work/lease calls outside a session
 binding. Exercise workspace create/update/archive and work create/list/get/
 claim/run/progress. Exercise lease request/list/renew/release/revoke and conflict.
@@ -38,6 +41,8 @@ invalid bearer token.
 - ❌ Do NOT collapse typed forbidden/conflict errors into defects.
 - ❌ Do NOT duplicate workspace, work, or lease lifecycle rules in RPC.
 - ❌ Do NOT override middleware actor identity with bearer fallback.
+- ❌ Do NOT infer native response projection from the shared success schema.
+- ❌ Do NOT allow one native session to carry both ADR-0013 role scopes.
 
 ## Grill Log
 

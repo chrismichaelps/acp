@@ -105,7 +105,11 @@ them.
    `ACP_REQUIRE_WORKSPACE_BINDINGS` requires a non-empty binding and enforces it
    across HTTP and native RPC. The runtime does not issue external developer
    tokens or integrate OIDC; an identity provider must initialize the scoped ACP
-   session through a trusted boundary.
+   session through a trusted boundary. The current open `session.initialize`
+   accepts caller-selected identities, permissions, and bindings, so auth-on is
+   not sufficient for an untrusted public bootstrap. Local/self-dogfood assumes
+   a trusted issuer; production hosted issuance is the explicit
+   [[ADR-0015-trusted-session-issuance]] backlog.
 
 ### Deployment profiles (presets over the seams)
 
@@ -271,4 +275,4 @@ Current implementation evidence:
 
 [[ADR-0001-architecture-foundation]] · [[ADR-0007-effect-rpc-adoption]] ·
 [[Storage]] · [[EventStream]] · [[Transport]] · [[event-store]] ·
-[[sweeper]] · [[decisions/_MOC]]
+[[sweeper]] · [[decisions/_MOC]] · [[ADR-0015-trusted-session-issuance]]

@@ -29,6 +29,13 @@ events and match a published progress event. Round-trip worker, workspace,
 work, and complete lease lifecycle/readback; artifact update/content/list and
 checkpoint latest; and review approval, memory create/list, event publication,
 and unary event list through the mounted HTTP transport.
+Initialize typed sessions carrying `review:collaborate` and `review:respond`,
+require each returned session to preserve its literal, and use their bearer
+identities against the matching REST-owned collaboration/answer surface. Native
+RPC does not add comment/grill methods in this slice; its obligation is shared
+permission codec/session propagation. Attempt a typed initialization carrying
+both literals and require the exact mutual-exclusion failure with no minted
+session.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -38,6 +45,9 @@ and unary event list through the mounted HTTP transport.
 - ❌ Do NOT claim parity from workspace CRUD alone; every split vertical must
   cross the live route.
 - ❌ Do NOT replace streaming with polling or unary list assertions.
+- ❌ Do NOT add dead native RPC collaboration handlers merely to claim transport
+  parity.
+- ❌ Do NOT accept both review role scopes in one typed session.
 
 ## Grill Log
 

@@ -24,9 +24,14 @@ Vitest contract suite over Effect Schema decoding and `HttpApi.reflect`.
 
 Decode the spec-shaped initialization payload and require default worker status
 and capabilities. Decode optional workspace bindings. Preserve a future protocol
-version for runtime compatibility checks. Accept only `work.progressed` through
-the public work-event payload. Reflect `AcpHttpApi` and compare every endpoint's
-group, name, method, and path against the ordered v0.1 route contract.
+version for runtime compatibility checks. Decode `InitializeSessionResponse`
+with exact `permissions` and workspace bindings, including each additive
+ADR-0013 review literal in a separate fixture; reject a response that drops the
+permission echo. Reject initialization payloads and response records containing
+both scopes with the exact mutual-exclusion issue.
+Accept only `work.progressed` through the public work-event payload. Reflect
+`AcpHttpApi` and compare every endpoint's group, name, method, and path against
+the ordered v0.1 route contract.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -34,6 +39,9 @@ group, name, method, and path against the ordered v0.1 route contract.
 - ❌ Do NOT admit lifecycle or review events through the progress-event route.
 - ❌ Do NOT add, remove, rename, reorder, or remap a REST endpoint invisibly.
 - ❌ Do NOT discard optional hosted workspace bindings.
+- ❌ Do NOT accept a session response that cannot echo the exact effective
+  permission array.
+- ❌ Do NOT combine `review:respond` and `review:collaborate` in one session.
 
 ## Grill Log
 

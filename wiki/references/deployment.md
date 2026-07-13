@@ -66,6 +66,15 @@ The repository's Compose services are intentionally developer-oriented: the
 workspace bindings off. Set both security flags to `true` before treating either
 service as shared infrastructure. There is no managed-hosting or OIDC manifest.
 
+> **Identity boundary:** even with both flags enabled, v0.1
+> `session.initialize` is an open self-scoped bootstrap. A caller can select its
+> worker id, allowed permission literals, and workspace bindings. Keep that
+> endpoint behind a trusted operator/network boundary; do not expose the current
+> host as a public multi-tenant credential issuer. The production hosted issuer,
+> server-side scope policy, stable external identity, revocation, and hostile-
+> client evidence are specified—but not implemented—in
+> [[ADR-0015-trusted-session-issuance]].
+
 Compose owns resource naming. No service fixes `container_name`, so each checkout
 or self-audit can select a distinct project namespace without colliding with
 another ACP stack on the same Docker daemon:
@@ -103,4 +112,5 @@ Both are unauthenticated by design so probes work before any session exists.
 
 ## Referenced by
 
-[[ADR-0008-deployment-storage-topology]] · [[Storage]] · [[EventStream]]
+[[ADR-0008-deployment-storage-topology]] ·
+[[ADR-0015-trusted-session-issuance]] · [[Storage]] · [[EventStream]]

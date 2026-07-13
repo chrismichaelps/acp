@@ -46,7 +46,9 @@ export const acpRouter: HttpRouter.HttpRouter<
   session with a high-entropy `session_id` bearer credential + host capabilities
   (spec §9); accepts both full internal [[Worker]] records and draft §9
   `protocol_version` + client capability handshakes, rejecting unsupported
-  versions through [[protocol-version]]
+  versions through [[protocol-version]]; successful handshakes echo exact
+  effective permissions and workspace bindings; a permission array containing
+  both ADR-0013 role scopes is rejected before credential minting
 - `GET /v1/workers` · `GET /v1/workers/:worker_id` → read host-scoped
   [[Worker]] registry state through [[worker-routes]]
 - `GET  /v1/workspaces` → list [[Workspace]]s
@@ -123,6 +125,12 @@ from those booleans when the worker record did not already carry capabilities,
 defaults missing worker status to `online`, mints the session id through
 [[id-clock]] `secureToken` rather than the timestamp/counter id path, and
 preserves `permissions` as the host's bearer-scope extension.
+The success response echoes those exact permissions and `workspace_ids` from the
+stored session. It never reconstructs scopes from worker kind or capabilities.
+The shared [[session.schema]] permission-array refinement rejects
+`review:respond` plus `review:collaborate` before registration or token minting.
+This constrains one session only; open bootstrap remains a trusted-client
+assumption documented by [[ADR-0015-trusted-session-issuance]].
 
 `createArtifact` and `createCheckpoint` authorize both the action scope and the
 payload `workspace_id` before delegating, so a workspace-bound bearer session
@@ -158,6 +166,10 @@ URLs or identifiers.
 - ❌ Do NOT leak internal error causes — `errorToResponse` collapses unknowns to
   `internal_error`.
 - ❌ Do NOT import Node built-ins here — the runtime lives in [[server-main]].
+- ❌ Do NOT omit, infer, or widen permissions in the successful session
+  handshake; echo the exact stored array.
+- ❌ Do NOT mint a session carrying both ADR-0013 role scopes.
+- ❌ Do NOT claim open bootstrap proves identity or cross-session role separation.
 
 ## Depth
 
@@ -196,8 +208,10 @@ composition behind a single router value. Deleting it scatters HTTP ceremony and
   **A:** No — `initializeSession` never calls `authorize`; it is the one open route
   that _mints_ the first session, so a client can always bootstrap a credential.
   Only mutations gated by `authorize` reject the empty token. _Rationale:_ a closed
-  `initialize` would be unbootstrappable. _Rejected:_ a separate bootstrap secret at
-  v0.1 (no credential store yet).
+  `initialize` would be unbootstrappable. This is a trusted issuer assumption for
+  local/self-dogfood use, not protection from a malicious public client; hosted
+  issuance is [[ADR-0015-trusted-session-issuance]]. _Rejected:_ claiming bearer
+  auth on later routes secures caller-selected bootstrap permissions.
 - **Q:** Identity + clock — a formal seam now?
   **A:** A small [[id-clock]] service (counter + `Clock`), not yet a swappable
   production seam. _Rationale:_ services intentionally do not mint ids/timestamps;
@@ -212,4 +226,6 @@ composition behind a single router value. Deleting it scatters HTTP ceremony and
 [[session-workspace-binding.test]] · [[workspace-scope-routes.test]] ·
 [[mutation-workspace-scope-routes.test]] · [[server-index]] · [[server-main]] ·
 [[Transport]] · [[route-support]] · [[workspace-routes]] · [[event-routes]] ·
-[[protocol-version]] · [[src/_MOC]]
+[[protocol-version]] · [[src/_MOC]] ·
+[[ADR-0013-review-collaboration-permission]] ·
+[[ADR-0015-trusted-session-issuance]]

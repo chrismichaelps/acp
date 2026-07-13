@@ -4,9 +4,9 @@ path: '@root/src/app/server/grill-routes.ts'
 fidelity: Active
 grammar: '[[grammar/typescript]]'
 seam: '[[Transport]]'
-depth_score: 0.64
+depth_score: 0.68
 depth_status: MEDIUM
-tags: [module, seam, review-gate, grill]
+tags: [module, seam, review-gate, grill, auth]
 aliases: [grill-routes]
 ---
 
@@ -14,71 +14,70 @@ aliases: [grill-routes]
 
 ## Purpose
 
-The HTTP handlers for the forced senior-question review gate
-([[grill-service]]): open a grill, ask/answer/decide questions, evaluate the
-gate, and read grill state. Split out of the near-limit [[router]] central file,
-each handler is the canonical decode → [[grill-service]] → encode transport
-boundary behind the `workspace:write` / `workspace:read` scopes.
+Own the HTTP boundary for the forced senior-question review gate
+([[grill-service]]). Reviewer construction/adjudication uses
+`review:collaborate`; worker answer uses the separate `review:respond` scope.
+Reads retain `workspace:read`. Opaque targets are scope-first, target-derived,
+and non-enumerating per [[ADR-0013-review-collaboration-permission]].
 
 ## Interface
 
 ```typescript
-export const openGrill // POST /v1/reviews/:review_id/grill
-export const addGrillQuestion // POST /v1/grills/:grill_id/questions
-export const answerGrillQuestion // POST /v1/grill-questions/:question_id/answer
-export const setGrillVerdict // POST /v1/grill-questions/:question_id/verdict
-export const evaluateGrill // POST /v1/grills/:grill_id/evaluate
-export const getGrill // GET  /v1/grills/:grill_id
-export const listReviewGrills // GET  /v1/reviews/:review_id/grills
+export const openGrill // review:collaborate
+export const addGrillQuestion // review:collaborate
+export const answerGrillQuestion // review:respond
+export const setGrillVerdict // review:collaborate
+export const evaluateGrill // review:collaborate
+export const getGrill // workspace:read
+export const listReviewGrills // workspace:read
 ```
 
 ## Algorithm
 
-`openGrill` decodes `OpenGrillPayload`, mints a `grill` id + `now`, authorizes
-`workspace:write` on the body `workspace_id` (returned worker is `opened_by`),
-and encodes the new [[Grill]] at `201`. `addGrillQuestion` resolves the grill's
-workspace via [[resource-workspace-auth]] `grill`, mints a `grillquestion` id,
-and encodes the [[GrillQuestion]] at `201`. `answerGrillQuestion` /
-`setGrillVerdict` resolve workspace via `resource-workspace-auth` `grillQuestion`
-(question → parent grill → `workspace_id`), decode `AnswerGrillQuestionPayload` /
-`SetGrillVerdictPayload`, and encode the mutated question at `200`.
-`evaluateGrill` authorizes `workspace:write` on the grill and returns the
-`GrillEvaluation` gate verdict at `200`. `getGrill` authorizes `workspace:read`
-and encodes the `{ grill, questions }` [[GrillDetail]] composite at `200`;
-`listReviewGrills` authorizes via `review` and encodes the `Grill[]` at `200`.
+`openGrill` requires `review:collaborate` before resolving the path review
+through [[review-collaboration-auth]] `reviewTarget`. Missing and foreign reviews
+return the same 404 envelope. After authorization, it collects body
+`review_id`/`work_id`/`workspace_id` mismatches in the same deterministic order
+and issue vocabulary as [[review-comment-routes]], returning the existing 400
+`ValidationError` envelope before persistence.
+
+`addGrillQuestion`, `setGrillVerdict`, and `evaluateGrill` require
+`review:collaborate` and use [[review-collaboration-auth]] `grillTarget` /
+`grillQuestionTarget`. `answerGrillQuestion` alone requires `review:respond` and
+uses `grillQuestionTarget`. All target helpers check scope before lookup and collapse
+missing/foreign ids into the same 404. A respond-only worker cannot verdict or
+evaluate; a collaborate-only reviewer cannot answer. `getGrill` and
+`listReviewGrills` retain `workspace:read` and existing read contracts.
 
 ## Negative Logic (Prohibited Paths)
 
-- ❌ Do NOT embed the gate rule (blockers accepted + comments resolved) here —
-  it lives in [[grill-service]] `evaluate`.
-- ❌ Do NOT authorize question mutations against a body `workspace_id` — a
-  [[GrillQuestion]] carries none; walk question → grill → workspace.
-- ❌ Do NOT return the bare `Grill` from `getGrill` — the composite `GrillDetail`
-  (grill + its questions) is the read contract.
-- ❌ Do NOT mint ids or read the clock outside [[id-clock]].
+- ❌ Do NOT authorize worker answer with `review:collaborate`.
+- ❌ Do NOT allow `review:respond` to open, ask, verdict, evaluate, or mutate
+  comments.
+- ❌ Do NOT load an opaque collaboration target before scope authorization.
+- ❌ Do NOT return 403 for a foreign review/grill/question; missing and foreign
+  use the identical 404 envelope.
+- ❌ Do NOT trust or rewrite open-grill body identity.
+- ❌ Do NOT accept `workspace:write` as a compatibility alias.
 
 ## Depth
 
-MEDIUM (0.64). Thin transport handlers carrying scope gates plus the
-question→grill→workspace authorization walk for id-keyed question mutations.
+MEDIUM (0.68). The handlers enforce per-session response/adjudication scope
+separation and hide the question→grill→workspace non-enumerating authorization
+walk. Cross-session identity trust remains outside this route boundary.
 
 ## Grill Log
 
-- **Q:** Why do the `answer`/`verdict` routes resolve workspace through
-  `grillQuestion` (question → grill → workspace) instead of reading it off the
-  question?
-  **A:** A [[GrillQuestion]] deliberately stores only `grill_id`, not a
-  duplicated `workspace_id`; the parent [[Grill]] is the single owner of tenant
-  scope. The helper walks one hop up so the question record stays minimal and the
-  authorization decision has one source. _Rejected:_ denormalizing
-  `workspace_id` onto every question.
-
-- **Q:** Why does `getGrill` return `GrillDetail` rather than the bare `Grill`?
-  **A:** A resuming reviewer needs the grill and its questions together to see
-  outstanding obligations; splitting them into two reads would re-introduce the
-  N+1 the resume packet exists to avoid.
+- **Q:** What prevents worker self-adjudication? **A:** `grill answer` requires
+  `review:respond`; verdict/evaluate require `review:collaborate`, and canonical
+  roles never share them. _Rejected:_ one shared scope or relying on convention.
+- **Q:** Why derive question scope through its grill? **A:** The parent grill is
+  the single tenant owner. _Rejected:_ duplicated question workspace state.
+- **Q:** Why does `getGrill` return `GrillDetail`? **A:** A resuming actor needs
+  gate and questions together. _Rejected:_ an extra N+1 read.
 
 ## Referenced by
 
 [[grill-routes.test]] · [[router]] · [[grill-service]] ·
-[[resource-workspace-auth]] · [[server/_MOC]]
+[[review-collaboration-auth]] · [[ADR-0013-review-collaboration-permission]] ·
+[[server/_MOC]] · [[2026-07-13-review-collaboration-security-design]]

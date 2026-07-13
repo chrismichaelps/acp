@@ -37,9 +37,17 @@ tags: [moc, adr]
   rejected provider-runner design history.
 - [[ADR-0012-acp-self-agent-audit]] — ACCEPTED — use the existing production ACP
   Docker host directly as the control plane for real-agent repository audits.
-- [[ADR-0013-review-collaboration-permission]] — PROPOSED/BACKLOG — replace the
-  coarse `workspace:write` reviewer dependency with a target-bound review
-  collaboration permission and separately harden workspace administration.
+- [[ADR-0013-review-collaboration-permission]] — ACCEPTED — add the target-bound
+  `review:collaborate` reviewer permission plus separate `review:respond` worker
+  answer permission, reject both in one session, use focused non-enumerating
+  opaque-target authorization, rotate sessions fail closed, and propagate the
+  accepted scope through every existing session transport.
+- [[ADR-0014-workspace-administration-authority]] — PROPOSED/BACKLOG — define
+  host provisioning and target-bound workspace administration independently of
+  agent review collaboration.
+- [[ADR-0015-trusted-session-issuance]] — PROPOSED/BACKLOG — replace open
+  caller-authorized hosted bootstrap with authenticated, policy-derived identity,
+  permissions, bindings, revocation, audit, and hostile-client evidence.
 
 ## Referenced by
 

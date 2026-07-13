@@ -2,6 +2,24 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-13 · review-collaboration security boundary · implemented
+  [[ADR-0013-review-collaboration-permission]] with additive but non-aliased
+  `review:collaborate` authority for eight reviewer mutations and separate
+  `review:respond` authority for worker answer, scope-first non-enumerating
+  target-derived workspace binding in a focused
+  [[review-collaboration-auth]] module, exact 403/404/400 wire errors,
+  fail-closed session rotation, and per-session mutual exclusion; specified
+  native handler permission projection and a real Content-Length
+  [[stdio-main|stdio]] proof, then projected the final worker/reviewer bootstrap into
+  [[agent-integration]] and `@root/ACP-SKILL.md`; implemented the refined session
+  codec, focused authorization module, target-derived REST handlers, fixture
+  role rotation, and explicit success/denial regressions; separated workspace provisioning into
+  [[ADR-0014-workspace-administration-authority]] plus trusted hosted issuance
+  into [[ADR-0015-trusted-session-issuance]] without claiming hostile-client
+  identity separation · validation: four-round ACP design review and passed
+  grill, independent implementation review, focused transport/route/auth tests,
+  static/full repository gates, and production Docker self-dogfood · risk MEDIUM
+
 - 2026-07-12 · ACP-self agent audit decision · superseded the proposed bespoke
   provider runner before implementation; real agents now use the existing
   production Docker ACP host directly to inspect isolated ACP worktrees, with

@@ -15,8 +15,8 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
 - [[id-clock]] — id/timestamp minting primitive for the composition root.
 - [[identity.test]] — ordinary id, ISO timestamp, and secure-token guarantees.
 - [[acp-router]] — `HttpRouter` wiring all v0.1 routes to services + SSE + `/rpc`.
-- [[router.test]] — aggregate bootstrap, auth, workspace/work, and review HTTP
-  contract.
+- [[router.test]] — aggregate bootstrap with exact permission/binding echo, auth,
+  workspace/work, and review HTTP contract.
 - [[artifact-routes.test]] — artifact evidence validation, update identity, and
   delete behavior on inline router handlers.
 - [[lease-routes.test]] — lease read/mutation lifecycle and scope boundaries on
@@ -25,8 +25,12 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
   capability flags.
 - [[route-support]] — shared authorization, response encoding, route error
   folding, and request lifecycle logging.
-- [[resource-workspace-auth]] — derived workspace authorization for by-id HTTP
-  mutation routes.
+- [[resource-workspace-auth]] — established generic derived-workspace
+  authorization for opaque resource ids.
+- [[review-collaboration-auth]] — focused scope-first, non-enumerating opaque
+  review/comment/grill/question target authorization.
+- [[review-collaboration-auth.test]] — helper-level scope ordering, target
+  derivation, and missing/foreign equivalence contract.
 - [[mutation-workspace-scope-routes.test]] — cross-tenant denial across every
   by-id mutation family.
 - [[workspace-scope-routes.test]] — direct work/artifact/checkpoint workspace
@@ -47,12 +51,14 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
   non-empty workspace binding.
 - [[review-routes]] — review lifecycle mutation handlers (request/approve/reject
   /request-changes/cancel).
-- [[review-comment-routes]] — diff-anchored review comment add/resolve/reopen
-  /list handlers.
-- [[review-comment-routes.test]] — anchored add, dual listing, resolve, and reopen.
-- [[grill-routes]] — forced senior-question grill gate handlers (open/ask/answer
-  /verdict/evaluate/get/list).
-- [[grill-routes.test]] — complete blocker-question route flow to a passing gate.
+- [[review-comment-routes]] — target-bound `review:collaborate` handlers for
+  comment add/resolve/reopen/external-id plus read lists.
+- [[review-comment-routes.test]] — all four mutation scopes, identity mismatch,
+  missing/foreign 404 equivalence, responder denial, and read/list behavior.
+- [[grill-routes]] — `review:collaborate` reviewer handlers plus isolated
+  `review:respond` worker answer with non-enumerating opaque targets.
+- [[grill-routes.test]] — five mutation scopes, per-session responder/
+  adjudicator separation, exact errors, and a passing gate.
 - [[memory-routes]] — workspace memory create/list HTTP handlers.
 - [[event-routes]] — workspace event replay and SSE stream handlers.
 - [[event-routes.test]] — cursor/type/limit replay and read/binding authorization.
