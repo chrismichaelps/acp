@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { Buffer } from 'node:buffer'
 import { clearTimeout, setTimeout } from 'node:timers'
 import { setTimeout as delay } from 'node:timers/promises'
 
@@ -26,6 +27,7 @@ export const allPermissions = [
   'review:reject',
   'review:request_changes',
   'review:cancel',
+  'review:collaborate',
 ]
 
 export const assert = (condition, message) => {
@@ -70,6 +72,38 @@ export const dockerOk = async (args, options) => {
     `docker ${args.join(' ')} exited ${String(result.code)}: ${result.stderr || result.stdout}`,
   )
   return result.stdout.trim()
+}
+
+export const stdioRpc = async (container, request, token = '') => {
+  const body = JSON.stringify(request)
+  const frame = `Content-Length: ${String(Buffer.byteLength(body, 'utf8'))}\r\n\r\n${body}`
+  const result = await runProcess(
+    'docker',
+    [
+      'exec',
+      '-i',
+      '-e',
+      'ACP_BASE_URL=http://127.0.0.1:4317',
+      ...(token === '' ? [] : ['-e', `ACP_RPC_TOKEN=${token}`]),
+      container,
+      'node',
+      'dist/app/stdio/main.js',
+    ],
+    { input: frame },
+  )
+  assert(result.ok, `stdio bridge failed: ${result.stderr}`)
+  const separator = result.stdout.indexOf('\r\n\r\n')
+  assert(separator >= 0, `stdio response had no frame: ${result.stdout}`)
+  const header = result.stdout.slice(0, separator)
+  const contentLength = Number(
+    header.match(/Content-Length:\s*(\d+)/i)?.[1] ?? Number.NaN,
+  )
+  const payload = result.stdout.slice(separator + 4)
+  assert(
+    Buffer.byteLength(payload, 'utf8') === contentLength,
+    'stdio response Content-Length did not match its UTF-8 payload',
+  )
+  return JSON.parse(payload)
 }
 
 export const containerFetch = async (
@@ -217,5 +251,9 @@ export const initAgent = async (
     '--permissions',
     permissions.join(','),
   ])
+  assert(
+    JSON.stringify(session.permissions) === JSON.stringify(permissions),
+    `session init (${role}) did not echo requested permissions`,
+  )
   return { worker, token: session.session_id, session }
 }

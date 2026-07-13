@@ -61,6 +61,7 @@ describe('resume routes', () => {
       'checkpoint:create',
       'artifact:create',
       'review:create',
+      'review:collaborate',
     ])
 
     const createdWork = await handler(
@@ -234,6 +235,7 @@ describe('resume routes', () => {
       'work:claim',
       'work:update',
       'review:create',
+      'review:collaborate',
     ])
 
     const work = (await (

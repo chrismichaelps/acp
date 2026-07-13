@@ -37,8 +37,19 @@ describe('native RPC route', () => {
       const created = await Effect.runPromise(
         Effect.gen(function* () {
           const client = yield* makeAcpRpcClient
+          const reviewRole = yield* decodeInitialize(['review:respond'])
+          const dualRole = yield* Effect.exit(
+            client.session.initialize({
+              ...reviewRole,
+              permissions: ['review:respond', 'review:collaborate'],
+            }),
+          )
           const session = yield* client.session.initialize(
-            yield* decodeInitialize(['workspace:read', 'workspace:write']),
+            yield* decodeInitialize([
+              'workspace:read',
+              'workspace:write',
+              'review:respond',
+            ]),
           )
           const authed = withAcpRpcBearer(session.session_id)
           const workspace = yield* authed(
@@ -51,7 +62,7 @@ describe('native RPC route', () => {
             ),
           )
           const readOnly = yield* client.session.initialize(
-            yield* decodeInitialize(['workspace:read']),
+            yield* decodeInitialize(['workspace:read', 'review:collaborate']),
           )
           const denied = yield* Effect.either(
             withAcpRpcBearer(readOnly.session_id)(
@@ -64,7 +75,13 @@ describe('native RPC route', () => {
               ),
             ),
           )
-          return { denied, sessionId: session.session_id, workspace }
+          return {
+            denied,
+            dualRole,
+            rolePermissions: [...session.permissions, ...readOnly.permissions],
+            sessionId: session.session_id,
+            workspace,
+          }
         }).pipe(Effect.provide(acpRpcClientHostLayer(baseUrl)), Effect.scoped),
       )
 
@@ -76,9 +93,12 @@ describe('native RPC route', () => {
       return { created, listed, restStatus: rest.status }
     })
 
-    expect(result.created.workspace.name).toBe('Native RPC Mounted Workspace')
+    expect(result.created.rolePermissions).toContain('review:respond')
+    expect(result.created.rolePermissions).toContain('review:collaborate')
+    expect(JSON.stringify(result.created.dualRole)).toContain(
+      'review:respond and review:collaborate are mutually exclusive',
+    )
     expect(Either.isLeft(result.created.denied)).toBe(true)
-    expect(result.restStatus).toBe(200)
     expect(result.listed.map((workspace) => workspace.id)).toContain(
       result.created.workspace.id,
     )

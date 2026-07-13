@@ -18,21 +18,17 @@ const worker = {
   capabilities: ['can_review'],
 }
 
-const initSession = async (handler: (req: Request) => Promise<Response>) => {
+const initSession = async (
+  handler: (req: Request) => Promise<Response>,
+  permissions: readonly string[],
+) => {
   const res = await handler(
     new Request('http://acp.test/v1/session/initialize', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         worker,
-        permissions: [
-          'workspace:read',
-          'workspace:write',
-          'work:create',
-          'work:claim',
-          'work:update',
-          'review:create',
-        ],
+        permissions,
       }),
     }),
   )
@@ -74,7 +70,15 @@ const requestReviewOn = async (
 describe('grill routes', () => {
   it('runs an open→ask→answer→verdict→evaluate gate to a pass', async () => {
     const handler = makeHandler()
-    const token = await initSession(handler)
+    const token = await initSession(handler, [
+      'workspace:read',
+      'work:create',
+      'work:claim',
+      'work:update',
+      'review:create',
+      'review:collaborate',
+    ])
+    const respondent = await initSession(handler, ['review:respond'])
 
     const work = await jsonOf<{ id: string; workspace_id: string }>(
       await handler(
@@ -116,11 +120,25 @@ describe('grill routes', () => {
     expect(question.verdict).toBe('pending')
 
     const answered = await handler(
-      authed(token, `/v1/grill-questions/${question.id}/answer`, {
+      authed(respondent, `/v1/grill-questions/${question.id}/answer`, {
         answer: 'The CAS version column rejects stale writes.',
       }),
     )
     expect(answered.status).toBe(200)
+
+    const collaborateAnswer = await handler(
+      authed(token, `/v1/grill-questions/${question.id}/answer`, {
+        answer: 'A collaborator cannot answer.',
+      }),
+    )
+    expect(collaborateAnswer.status).toBe(403)
+
+    const respondVerdict = await handler(
+      authed(respondent, `/v1/grill-questions/${question.id}/verdict`, {
+        verdict: 'accepted',
+      }),
+    )
+    expect(respondVerdict.status).toBe(403)
 
     const decided = await handler(
       authed(token, `/v1/grill-questions/${question.id}/verdict`, {
@@ -155,5 +173,122 @@ describe('grill routes', () => {
     expect(evaluation.outcome).toBe('pass')
     expect(evaluation.grill.state).toBe('passed')
     expect(evaluation.blocking).toHaveLength(0)
+
+    const respondEvaluate = await handler(
+      authed(respondent, `/v1/grills/${grill.id}/evaluate`),
+    )
+    expect(respondEvaluate.status).toBe(403)
+  })
+
+  it('rejects body identity mismatch before opening a grill', async () => {
+    const handler = makeHandler()
+    const token = await initSession(handler, [
+      'workspace:read',
+      'work:create',
+      'work:claim',
+      'work:update',
+      'review:create',
+      'review:collaborate',
+    ])
+    const work = await jsonOf<{ id: string }>(
+      await handler(
+        authed(token, '/v1/work', {
+          workspace_id: 'workspace_grill_mismatch',
+          title: 'Grill mismatch target',
+        }),
+      ),
+    )
+    const review = await jsonOf<{ id: string }>(
+      await requestReviewOn(handler, token, work.id),
+    )
+
+    const response = await handler(
+      authed(token, `/v1/reviews/${review.id}/grill`, {
+        review_id: 'review_wrong',
+        work_id: 'work_wrong',
+        workspace_id: 'workspace_wrong',
+      }),
+    )
+    const body = await jsonOf<{
+      error: { details: { value: { issues: readonly string[] } } }
+    }>(response)
+    expect(response.status).toBe(400)
+    expect(body.error.details.value.issues).toEqual([
+      'review_id must match the target review',
+      'work_id must match the target review work',
+      'workspace_id must match the target review workspace',
+    ])
+
+    const listed = await handler(
+      authed(token, `/v1/reviews/${review.id}/grills`, undefined, 'GET'),
+    )
+    expect(await jsonOf<unknown[]>(listed)).toEqual([])
+  })
+
+  it('denies legacy workspace writers on all grill mutations', async () => {
+    const handler = makeHandler()
+    const collaborator = await initSession(handler, [
+      'workspace:read',
+      'work:create',
+      'work:claim',
+      'work:update',
+      'review:create',
+      'review:collaborate',
+    ])
+    const legacy = await initSession(handler, ['workspace:write'])
+    const work = await jsonOf<{ id: string; workspace_id: string }>(
+      await handler(
+        authed(collaborator, '/v1/work', {
+          workspace_id: 'workspace_legacy_grill',
+          title: 'Legacy grill denial target',
+        }),
+      ),
+    )
+    const review = await jsonOf<{ id: string }>(
+      await requestReviewOn(handler, collaborator, work.id),
+    )
+    const openPayload = {
+      review_id: review.id,
+      work_id: work.id,
+      workspace_id: work.workspace_id,
+    }
+    const grill = await jsonOf<{ id: string }>(
+      await handler(
+        authed(collaborator, `/v1/reviews/${review.id}/grill`, openPayload),
+      ),
+    )
+    const question = await jsonOf<{ id: string }>(
+      await handler(
+        authed(collaborator, `/v1/grills/${grill.id}/questions`, {
+          prompt: 'Can a legacy writer pass?',
+          severity: 'major',
+        }),
+      ),
+    )
+
+    const responses = await Promise.all([
+      handler(authed(legacy, `/v1/reviews/${review.id}/grill`, openPayload)),
+      handler(
+        authed(legacy, `/v1/grills/${grill.id}/questions`, {
+          prompt: 'Denied',
+          severity: 'minor',
+        }),
+      ),
+      handler(
+        authed(legacy, `/v1/grill-questions/${question.id}/answer`, {
+          answer: 'Denied',
+        }),
+      ),
+      handler(
+        authed(legacy, `/v1/grill-questions/${question.id}/verdict`, {
+          verdict: 'accepted',
+        }),
+      ),
+      handler(authed(legacy, `/v1/grills/${grill.id}/evaluate`)),
+    ])
+
+    expect(responses.map((response) => response.status)).toEqual([
+      403, 403, 403, 403, 403,
+    ])
   })
 })

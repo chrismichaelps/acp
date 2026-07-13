@@ -18,11 +18,11 @@ export const workerLoopPermissions = [
   'checkpoint:create',
   'memory:create',
   'review:create',
+  'review:respond',
 ].sort()
 
 export const reviewerMinimumV01Permissions = [
   'workspace:read',
-  'workspace:write',
   'event:read',
   'memory:create',
   'memory:read',
@@ -30,6 +30,7 @@ export const reviewerMinimumV01Permissions = [
   'review:reject',
   'review:request_changes',
   'review:cancel',
+  'review:collaborate',
 ].sort()
 
 export const extractPermissionVocabulary = (schemaSource) => {
@@ -99,7 +100,7 @@ export const validateReviewerBootstrap = (name, document) =>
     'agent_reviewer',
     reviewerMinimumV01Permissions,
     'reviewer',
-    'the minimum reviewer permission union expressible in v0.1',
+    'the exact reviewer-loop permissions',
   )
 
 export const validateAgentDocuments = (schemaSource, documents) => {

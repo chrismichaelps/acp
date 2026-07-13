@@ -7,6 +7,7 @@ export const runFeatureScenario = async (cli, runId) => {
   const {
     owner,
     reader,
+    respondent,
     workers,
     workspace,
     workspaceList,
@@ -151,7 +152,20 @@ export const runFeatureScenario = async (cli, runId) => {
     incomplete.outcome === 'incomplete',
     'pending grill should be incomplete',
   )
-  await expectOk(cli, 'grill answer', owner.token, [
+  await expectError(
+    cli,
+    'collaborator cannot answer grill',
+    owner.token,
+    [
+      'grill',
+      'answer',
+      question.id,
+      '--answer',
+      'A collaborator cannot answer.',
+    ],
+    'forbidden',
+  )
+  await expectOk(cli, 'grill answer', respondent.token, [
     'grill',
     'answer',
     question.id,

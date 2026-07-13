@@ -15,6 +15,9 @@ export const runDomainScenario = async (cli, runId) => {
     'event:read',
     'memory:read',
   ])
+  const respondent = await initAgent(cli, 'respondent', runId, [
+    'review:respond',
+  ])
 
   assert(
     owner.session.capabilities.supports_signed_review_approvals === true,
@@ -332,6 +335,7 @@ export const runDomainScenario = async (cli, runId) => {
   return {
     owner,
     reader,
+    respondent,
     workers,
     workspace,
     workspaceList,

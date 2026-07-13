@@ -96,13 +96,14 @@ export const workerPerms = [
   'memory:read',
   'artifact:create',
   'review:create',
+  'review:respond',
 ]
 export const reviewerPerms = [
   ...shared,
-  'workspace:write',
   'memory:read',
   'review:request_changes',
   'review:approve',
+  'review:collaborate',
 ]
 
 export const requiredEvents = [

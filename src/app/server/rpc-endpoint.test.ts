@@ -37,17 +37,25 @@ describe('POST /rpc', () => {
         jsonrpc: '2.0',
         id: 1,
         method: 'session.initialize',
-        params: { worker, permissions: ['work:create'] },
+        params: {
+          worker,
+          permissions: ['work:create', 'review:respond'],
+        },
       }),
     )
     expect(initRes.status).toBe(200)
     const init = (await initRes.json()) as {
       id: number
-      result: { session_id: string; protocol_version: string }
+      result: {
+        session_id: string
+        protocol_version: string
+        permissions: readonly string[]
+      }
     }
     expect(init.id).toBe(1)
     expect(init.result.session_id).toMatch(/^session_[0-9a-f]{64}$/)
     expect(init.result.protocol_version).toBe('0.1')
+    expect(init.result.permissions).toEqual(['work:create', 'review:respond'])
 
     const workRes = await handler(
       rpc(
@@ -66,6 +74,40 @@ describe('POST /rpc', () => {
     }
     expect(work.result.state).toBe('open')
     expect(work.result.created_by).toBe('agent_claude_code')
+  })
+
+  it('rejects dual review roles at the JSON-RPC session boundary', async () => {
+    const handler = makeHandler()
+    const accepted = await handler(
+      rpc({
+        jsonrpc: '2.0',
+        id: 'collaborator',
+        method: 'session.initialize',
+        params: { worker, permissions: ['review:collaborate'] },
+      }),
+    )
+    expect(
+      ((await accepted.json()) as { result: { permissions: string[] } }).result
+        .permissions,
+    ).toEqual(['review:collaborate'])
+    const response = await handler(
+      rpc({
+        jsonrpc: '2.0',
+        id: 'dual-review-role',
+        method: 'session.initialize',
+        params: {
+          worker,
+          permissions: ['review:respond', 'review:collaborate'],
+        },
+      }),
+    )
+
+    const body = (await response.json()) as { error: unknown; result?: unknown }
+    expect(response.status).toBe(200)
+    expect(body.result).toBeUndefined()
+    expect(JSON.stringify(body.error)).toContain(
+      'review:respond and review:collaborate are mutually exclusive',
+    )
   })
 
   it('shares one store with the REST surface (a /rpc session authorizes a /v1 call)', async () => {

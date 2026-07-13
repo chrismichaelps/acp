@@ -5,6 +5,7 @@ import { Option, Schema } from 'effect'
 import {
   AcpHttpApi,
   InitializeSessionPayload,
+  InitializeSessionResponse,
   PublishWorkEventPayload,
 } from './index.js'
 
@@ -32,6 +33,38 @@ const reflectEndpoints = (): readonly ReflectedEndpoint[] => {
 }
 
 describe('AcpHttpApi', () => {
+  it('shares review role validation across session request and response', () => {
+    const worker = {
+      id: 'agent_reviewer',
+      name: 'Reviewer',
+      kind: 'agent',
+    }
+    const dual = ['review:respond', 'review:collaborate']
+
+    expect(() =>
+      Schema.decodeUnknownSync(InitializeSessionPayload)({
+        worker,
+        permissions: dual,
+      }),
+    ).toThrow(/review:respond and review:collaborate are mutually exclusive/)
+    expect(() =>
+      Schema.decodeUnknownSync(InitializeSessionResponse)({
+        session_id: 'session_dual',
+        permissions: dual,
+        protocol_version: '0.1',
+        host: { name: 'ACP Local', kind: 'local' },
+        capabilities: {
+          supports_events: true,
+          supports_reviews: true,
+          supports_signed_review_approvals: true,
+          supports_artifacts: true,
+          supports_memory: true,
+          supports_sse: true,
+        },
+      }),
+    ).toThrow(/review:respond and review:collaborate are mutually exclusive/)
+  })
+
   it('accepts the spec capability-negotiation request body', () => {
     const payload = Schema.decodeUnknownSync(InitializeSessionPayload)({
       protocol_version: '0.1',

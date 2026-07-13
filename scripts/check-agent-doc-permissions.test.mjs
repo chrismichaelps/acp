@@ -79,7 +79,7 @@ describe('agent permission documentation guard', () => {
     ).toThrow(/exact worker-loop permissions/)
   })
 
-  it('pins the minimum reviewer permission union expressible in v0.1', () => {
+  it('pins the exact reviewer-loop permissions', () => {
     const permissions = reviewerMinimumV01Permissions.join(',')
     expect(
       validateReviewerBootstrap(
@@ -104,6 +104,6 @@ describe('agent permission documentation guard', () => {
         'skill.md',
         'acp session init --worker agent_reviewer --name Reviewer --permissions review:approve,review:reject,review:request_changes,review:cancel --workspace workspace_primary',
       ),
-    ).toThrow(/minimum reviewer permission union expressible in v0\.1/)
+    ).toThrow(/exact reviewer-loop permissions/)
   })
 })

@@ -68,6 +68,10 @@ describe('AcpRpcSessionWorkerWorkspaceHandlersLive', () => {
 
     const result = await Effect.runPromise(Effect.provide(program, Runtime))
     expect(result.session.host).toEqual({ name: 'ACP Local', kind: 'local' })
+    expect(result.session.permissions).toEqual([
+      'worker:read',
+      'workspace:read',
+    ])
     expect(result.worker.id).toBe('agent_rpc')
     expect(result.worker.capabilities).toEqual(['can_edit_files'])
     expect(result.workers.map((worker) => worker.id)).toContain('agent_rpc')

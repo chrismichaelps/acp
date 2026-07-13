@@ -1,12 +1,14 @@
 import { setTimeout as delay } from 'node:timers/promises'
 import {
   assert,
+  containerFetch,
   dockerOk,
   expectError,
   expectOk,
   expectSuccess,
   initAgent,
   makeCli,
+  stdioRpc,
   waitForReady,
 } from './acp-docker-self-support.mjs'
 import {
@@ -126,6 +128,75 @@ export const proveAuth = async ({
   await waitForReady(authContainer)
   const strictCli = makeCli(authContainer)
 
+  const stdioReviewer = await stdioRpc(authContainer, {
+    jsonrpc: '2.0',
+    id: 'docker-stdio-reviewer',
+    method: 'session.initialize',
+    params: {
+      worker: {
+        id: `agent_reviewer_${runId}`,
+        name: 'Docker stdio reviewer',
+        kind: 'agent',
+      },
+      permissions: reviewerMinimumV01Permissions,
+      workspace_ids: [allowed.id],
+    },
+  })
+  const reviewer = stdioReviewer.result
+  assert(
+    stdioReviewer.id === 'docker-stdio-reviewer' &&
+      reviewer?.session_id?.startsWith('session_') &&
+      JSON.stringify(reviewer?.permissions) ===
+        JSON.stringify(reviewerMinimumV01Permissions) &&
+      JSON.stringify(reviewer?.workspace_ids) === JSON.stringify([allowed.id]),
+    'stdio reviewer did not echo its role permission and workspace binding',
+  )
+  const stdioRespondent = await stdioRpc(authContainer, {
+    jsonrpc: '2.0',
+    id: 'docker-stdio-respondent',
+    method: 'session.initialize',
+    params: {
+      worker: {
+        id: `agent_stdio_respondent_${runId}`,
+        name: 'Docker stdio respondent',
+        kind: 'agent',
+      },
+      permissions: ['review:respond'],
+      workspace_ids: [allowed.id],
+    },
+  })
+  assert(
+    stdioRespondent.id === 'docker-stdio-respondent' &&
+      stdioRespondent.result?.session_id?.startsWith('session_') &&
+      JSON.stringify(stdioRespondent.result?.permissions) ===
+        JSON.stringify(['review:respond']) &&
+      JSON.stringify(stdioRespondent.result?.workspace_ids) ===
+        JSON.stringify([allowed.id]),
+    'stdio respondent did not echo its role permission and workspace binding',
+  )
+  const dualScope = await stdioRpc(authContainer, {
+    jsonrpc: '2.0',
+    id: 'docker-stdio-dual-scope',
+    method: 'session.initialize',
+    params: {
+      worker: {
+        id: `agent_stdio_dual_${runId}`,
+        name: 'Docker stdio dual role',
+        kind: 'agent',
+      },
+      permissions: ['review:respond', 'review:collaborate'],
+      workspace_ids: [allowed.id],
+    },
+  })
+  assert(
+    dualScope.id === 'docker-stdio-dual-scope' &&
+      dualScope.result === undefined &&
+      JSON.stringify(dualScope.error).includes(
+        'review:respond and review:collaborate are mutually exclusive',
+      ),
+    'stdio session initialization accepted mutually exclusive review roles',
+  )
+
   const session = await expectOk(
     strictCli,
     'workspace-bound session init',
@@ -147,19 +218,24 @@ export const proveAuth = async ({
     JSON.stringify(session.workspace_ids) === JSON.stringify([allowed.id]),
     'workspace-bound session did not report its binding',
   )
-  const reviewer = await expectOk(
+  assert(
+    JSON.stringify(session.permissions) ===
+      JSON.stringify(workerLoopPermissions),
+    'workspace-bound session did not echo worker permissions',
+  )
+  const legacyWriter = await expectOk(
     strictCli,
-    'bound reviewer session init',
+    'legacy workspace writer session init',
     '',
     [
       'session',
       'init',
       '--worker',
-      `agent_reviewer_${runId}`,
+      `agent_legacy_writer_${runId}`,
       '--name',
-      'Bound reviewer',
+      'Legacy workspace writer',
       '--permissions',
-      reviewerMinimumV01Permissions.join(','),
+      'workspace:write',
       '--workspace',
       allowed.id,
     ],
@@ -348,6 +424,203 @@ export const proveAuth = async ({
     reviewer.session_id,
     ['review', 'comment', 'resolve', comment.id],
   )
+  const mismatch = await containerFetch(
+    authContainer,
+    `/v1/reviews/${review.id}/comments`,
+    {
+      method: 'POST',
+      token: reviewer.session_id,
+      body: {
+        review_id: 'review_wrong',
+        work_id: 'work_wrong',
+        workspace_id: 'workspace_wrong',
+        target: {
+          artifact_id: artifact.id,
+          file: 'src/auth.ts',
+          side: 'new',
+        },
+        body: 'must not persist',
+      },
+    },
+  )
+  assert(mismatch.status === 400, 'review identity mismatch was not rejected')
+  assert(
+    JSON.stringify(mismatch.body?.error?.details?.value?.issues) ===
+      JSON.stringify([
+        'review_id must match the target review',
+        'work_id must match the target review work',
+        'workspace_id must match the target review workspace',
+      ]),
+    'review identity mismatch issues were not deterministic',
+  )
+  const grill = await expectOk(
+    strictCli,
+    'bound reviewer opens grill',
+    reviewer.session_id,
+    [
+      'grill',
+      'open',
+      '--review',
+      review.id,
+      '--work',
+      work.id,
+      '--workspace',
+      allowed.id,
+    ],
+  )
+  const question = await expectOk(
+    strictCli,
+    'bound reviewer asks grill question',
+    reviewer.session_id,
+    [
+      'grill',
+      'ask',
+      grill.id,
+      '--severity',
+      'blocker',
+      '--prompt',
+      'Why does the role split hold?',
+    ],
+  )
+  await expectError(
+    strictCli,
+    'collaborator cannot answer',
+    reviewer.session_id,
+    ['grill', 'answer', question.id, '--answer', 'This answer must be denied.'],
+    'forbidden',
+  )
+  await expectOk(strictCli, 'bound worker answers', session.session_id, [
+    'grill',
+    'answer',
+    question.id,
+    '--answer',
+    'The worker and reviewer use mutually exclusive role tokens.',
+  ])
+  await expectError(
+    strictCli,
+    'respondent cannot set verdict',
+    session.session_id,
+    ['grill', 'verdict', question.id, '--accept'],
+    'forbidden',
+  )
+  await expectError(
+    strictCli,
+    'respondent cannot evaluate',
+    session.session_id,
+    ['grill', 'evaluate', grill.id],
+    'forbidden',
+  )
+  await expectOk(
+    strictCli,
+    'bound reviewer accepts answer',
+    reviewer.session_id,
+    ['grill', 'verdict', question.id, '--accept'],
+  )
+  const evaluation = await expectOk(
+    strictCli,
+    'bound reviewer evaluates grill',
+    reviewer.session_id,
+    ['grill', 'evaluate', grill.id],
+  )
+  assert(evaluation.outcome === 'pass', 'role-separated grill did not pass')
+
+  const legacyMutations = [
+    {
+      path: `/v1/reviews/${review.id}/comments`,
+      body: {
+        review_id: review.id,
+        work_id: work.id,
+        workspace_id: allowed.id,
+        target: {
+          artifact_id: artifact.id,
+          file: 'src/auth.ts',
+          side: 'new',
+        },
+        body: 'legacy add denied',
+      },
+    },
+    { path: `/v1/review-comments/${comment.id}/resolve` },
+    { path: `/v1/review-comments/${comment.id}/reopen` },
+    {
+      path: `/v1/review-comments/${comment.id}/external-id`,
+      body: { external_id: 'legacy-denied' },
+    },
+    {
+      path: `/v1/reviews/${review.id}/grill`,
+      body: {
+        review_id: review.id,
+        work_id: work.id,
+        workspace_id: allowed.id,
+      },
+    },
+    {
+      path: `/v1/grills/${grill.id}/questions`,
+      body: { prompt: 'legacy ask denied', severity: 'minor' },
+    },
+    {
+      path: `/v1/grill-questions/${question.id}/answer`,
+      body: { answer: 'legacy answer denied' },
+    },
+    {
+      path: `/v1/grill-questions/${question.id}/verdict`,
+      body: { verdict: 'accepted' },
+    },
+    { path: `/v1/grills/${grill.id}/evaluate` },
+  ]
+  for (const mutation of legacyMutations) {
+    const deniedMutation = await containerFetch(authContainer, mutation.path, {
+      method: 'POST',
+      token: legacyWriter.session_id,
+      ...(mutation.body === undefined ? {} : { body: mutation.body }),
+    })
+    assert(
+      deniedMutation.status === 403,
+      `legacy workspace writer reached ${mutation.path}`,
+    )
+  }
+  for (const mutation of legacyMutations.filter(
+    ({ path }) => !path.endsWith('/answer'),
+  )) {
+    const deniedMutation = await containerFetch(authContainer, mutation.path, {
+      method: 'POST',
+      token: session.session_id,
+      ...(mutation.body === undefined ? {} : { body: mutation.body }),
+    })
+    assert(
+      deniedMutation.status === 403,
+      `review respondent reached collaboration route ${mutation.path}`,
+    )
+  }
+
+  const reviewerAdminMutations = [
+    await containerFetch(authContainer, '/v1/workspaces', {
+      method: 'POST',
+      token: reviewer.session_id,
+      body: {
+        name: 'Denied reviewer workspace',
+        kind: 'container',
+        uri: `docker://reviewer-denied/${runId}`,
+      },
+    }),
+    await containerFetch(authContainer, `/v1/workspaces/${allowed.id}`, {
+      method: 'PATCH',
+      token: reviewer.session_id,
+      body: {
+        name: 'Denied reviewer update',
+        kind: 'container',
+        uri: `docker://allowed/${runId}`,
+      },
+    }),
+    await containerFetch(
+      authContainer,
+      `/v1/workspaces/${allowed.id}/archive`,
+      { method: 'POST', token: reviewer.session_id },
+    ),
+  ]
+  assert(
+    reviewerAdminMutations.every((response) => response.status === 403),
+    'review collaborator gained workspace administration authority',
+  )
   await expectOk(
     strictCli,
     'bound reviewer persists finding',
@@ -422,6 +695,141 @@ export const proveAuth = async ({
     ['work', 'create', 'Denied bound work', '--workspace', denied.id],
     'forbidden',
   )
+  const foreignWork = await expectOk(
+    strictCli,
+    'unbound owner creates foreign work',
+    owner.token,
+    ['work', 'create', 'Foreign review target', '--workspace', denied.id],
+  )
+  await expectOk(strictCli, 'unbound owner claims foreign work', owner.token, [
+    'work',
+    'claim',
+    foreignWork.id,
+    '--worker',
+    owner.worker,
+  ])
+  await expectOk(strictCli, 'unbound owner starts foreign work', owner.token, [
+    'work',
+    'update',
+    foreignWork.id,
+    '--state',
+    'running',
+  ])
+  const foreignReview = await expectOk(
+    strictCli,
+    'unbound owner requests foreign review',
+    owner.token,
+    ['review', 'request', '--work', foreignWork.id, '--by', owner.worker],
+  )
+  const foreignComment = await expectOk(
+    strictCli,
+    'unbound owner creates foreign comment',
+    owner.token,
+    [
+      'review',
+      'comment',
+      '--review',
+      foreignReview.id,
+      '--work',
+      foreignWork.id,
+      '--workspace',
+      denied.id,
+      '--artifact',
+      artifact.id,
+      '--file',
+      'src/foreign.ts',
+      '--side',
+      'new',
+      '--body',
+      'foreign collaboration target',
+    ],
+  )
+  const foreignGrill = await expectOk(
+    strictCli,
+    'unbound owner opens foreign grill',
+    owner.token,
+    [
+      'grill',
+      'open',
+      '--review',
+      foreignReview.id,
+      '--work',
+      foreignWork.id,
+      '--workspace',
+      denied.id,
+    ],
+  )
+  const foreignQuestion = await expectOk(
+    strictCli,
+    'unbound owner asks foreign question',
+    owner.token,
+    [
+      'grill',
+      'ask',
+      foreignGrill.id,
+      '--severity',
+      'major',
+      '--prompt',
+      'Should this target be visible?',
+    ],
+  )
+  const opaqueTargets = [
+    {
+      entity: 'review',
+      id: foreignReview.id,
+      missing: 'review_missing',
+      call: (id) => ({
+        path: `/v1/reviews/${id}/grill`,
+        body: {
+          review_id: id,
+          work_id: foreignWork.id,
+          workspace_id: denied.id,
+        },
+      }),
+    },
+    {
+      entity: 'review_comment',
+      id: foreignComment.id,
+      missing: 'comment_missing',
+      call: (id) => ({
+        path: `/v1/review-comments/${id}/resolve`,
+      }),
+    },
+    {
+      entity: 'grill',
+      id: foreignGrill.id,
+      missing: 'grill_missing',
+      call: (id) => ({
+        path: `/v1/grills/${id}/questions`,
+        body: { prompt: 'opaque target', severity: 'minor' },
+      }),
+    },
+    {
+      entity: 'grill_question',
+      id: foreignQuestion.id,
+      missing: 'question_missing',
+      call: (id) => ({
+        path: `/v1/grill-questions/${id}/verdict`,
+        body: { verdict: 'accepted' },
+      }),
+    },
+  ]
+  for (const target of opaqueTargets) {
+    for (const id of [target.id, target.missing]) {
+      const mutation = target.call(id)
+      const response = await containerFetch(authContainer, mutation.path, {
+        method: 'POST',
+        token: reviewer.session_id,
+        ...(mutation.body === undefined ? {} : { body: mutation.body }),
+      })
+      assert(
+        response.status === 404 &&
+          response.body?.error?.details?.value?.entity === target.entity &&
+          response.body?.error?.details?.value?.id === id,
+        `${target.entity} leaked a missing-versus-foreign distinction`,
+      )
+    }
+  }
   const narrow = await expectOk(strictCli, 'narrow bound session init', '', [
     'session',
     'init',
