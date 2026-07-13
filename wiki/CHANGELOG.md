@@ -2,6 +2,13 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-12 · live-agent verifier hardening · replaced the permissive manual
+  verifier with pure invariant evaluation and strict API/SQLite/role/file
+  evidence; empty handoff, unfinished work, missing contention, event drift,
+  active leases, actor gaps, or failing fixture behavior now reject the run ·
+  validation: focused success/failure regressions + formatting · risk MEDIUM ·
+  [[live-agent-docker-dogfood]]
+
 - 2026-07-12 · live-agent fixture hardening · reduced the manual prototype to a
   feasible two-task/two-worker oracle, made setup rerun-safe, added executable
   add/capitalize assertions, required workspace-bound role sessions and an

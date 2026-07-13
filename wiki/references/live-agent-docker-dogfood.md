@@ -59,7 +59,13 @@ Gates or required pull-request CI.
 The first implementation slice has landed the two-task executable fixture,
 rerun-safe setup, explicit contention-probe role instructions, workspace-bound
 session commands, and strict planner/worker/reviewer result schemas. Verifier and
-Docker/provider supervision remain the next projection steps.
+Docker/provider supervision were the next projection steps.
+
+The second implementation slice replaces the permissive prototype verifier with
+a pure, unit-tested invariant engine and a strict adapter. Empty memory, unfinished
+work, missing contention, event-store drift, or failed fixture behavior now fail
+the report; the adapter also requires exact reviewer-inspected memory ids and
+distinct durable role actors. Docker/provider supervision remains.
 
 ## Negative Logic (Prohibited Paths)
 
