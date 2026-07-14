@@ -3,3 +3,7 @@ pnpm-lock.yaml
 
 # Build output.
 dist
+
+# Generated API artifact — owned by scripts/generate-openapi.mjs and guarded by
+# the openapi.test.ts drift gate, not Prettier.
+openapi.json

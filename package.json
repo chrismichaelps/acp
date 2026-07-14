@@ -17,6 +17,8 @@
     "check:env": "node scripts/check-env-example.mjs",
     "check:edge-runtime-pins": "node scripts/check-edge-runtime-pins.mjs",
     "check:file-size": "node scripts/check-file-size.mjs",
+    "check:openapi": "vitest run src/infrastructure/http/openapi.test.ts",
+    "openapi:generate": "pnpm build && node scripts/generate-openapi.mjs",
     "dogfood:codex": "node scripts/acp-codex-dogfood-smoke.mjs",
     "dogfood:codex:multi": "node scripts/acp-codex-dogfood-multi-agent.mjs",
     "dogfood:cli": "node scripts/acp-cli-dogfood-multi-agent.mjs",
