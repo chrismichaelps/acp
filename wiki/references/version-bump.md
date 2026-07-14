@@ -50,7 +50,7 @@ anchor drift exit non-zero.
 
 Ordinary bump execution never tags the repository because its file edits are not
 yet committed. After a release change, commit the reviewed diff and then run the
-printed `git tag v<version>` command or use the release workflow.
+printed annotated `git tag -a v<version>` command or use the release workflow.
 
 ## Module layout
 
@@ -73,6 +73,12 @@ All transforms validate before any write. The transaction captures original
 bytes, replaces files through same-directory temporary files, and restores
 earlier replacements if a later rename fails. A rollback failure is a distinct
 fatal outcome and lists affected paths without claiming success.
+
+Package rewriting requires exactly one textual `version` anchor matching the
+parsed top-level package version; unrelated nested tooling versions remain
+untouched. Immediately before creating temporary files, the transaction compares
+every target with the source snapshot used to build the plan. Concurrent source
+drift fails closed instead of overwriting newer work.
 
 ## Production gate
 

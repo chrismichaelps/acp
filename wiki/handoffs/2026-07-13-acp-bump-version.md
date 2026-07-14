@@ -3,8 +3,8 @@ date: 2026-07-13
 topic: acp-bump-version
 from_role: DNA Engineer
 to_role: Shadow
-status: READY_FOR_IMPLEMENTATION
-maturity: EXPLORING
+status: IMPLEMENTED_AWAITING_GATES
+maturity: MEDIUM
 tags: [handoff, versioning, tooling, release]
 ---
 
@@ -20,6 +20,15 @@ tags: [handoff, versioning, tooling, release]
   interactive confirmation, protocol explicitness, dirty-tree, transactional
   rollback, and release-tag timing.
 - Created GitHub issue #321 as the feature contract.
+- Implemented strict arguments, semver arithmetic, independent policy, full
+  commit-body parsing, resolved-SHA evidence collection, anchor-validated
+  rewrites, source-drift detection, rollback-capable transactions, and the
+  repository-local CLI.
+- Added 92 focused tests, including temporary-repository baseline, dry-run,
+  confirmation, dirty-tree, protocol independence, and no-premature-tag proofs.
+- Ran the tool against this branch with `--since origin/main --dry-run`. The
+  first run exposed a nested `devEngines.packageManager.version` anchor gap; the
+  matching-anchor rule was corrected and regressed before the successful run.
 
 ## Decided (do not re-litigate)
 
@@ -34,19 +43,16 @@ tags: [handoff, versioning, tooling, release]
 
 ## Open / Remaining
 
-- Implement strict args, semver, policy, full commit parsing, git collection,
-  pure rewrites, transaction, and orchestration with focused tests.
-- Add `pnpm bump` and README usage.
-- Reconcile the implementation details into [[version-bump]] and this handoff.
 - Run the complete repository and Docker self-dogfood gates.
-- Record independent ACP review evidence, then commit/push/PR/merge issue #321.
+- Record independent ACP review evidence, push the branch, open and merge the
+  issue-closing PR, and verify issue #321 is closed.
 
 ## Exact next action
 
-Shadow: read [[ADR-0016-version-bump-policy]], [[version-bump]],
-[[protocol-version]], and [[grammar/typescript]] completely. Implement the pure
-argument and semver modules with their failure regressions first. Do not write
-files or create tags until the transaction and confirmation tests exist.
+Shadow: run focused and repository-wide gates, then review the final diff against
+[[ADR-0016-version-bump-policy]]. Record ACP review evidence only after the
+Docker self-dogfood gate passes. Do not run an apply or create a release tag in
+this repository while validating the feature.
 
 ## Links
 
