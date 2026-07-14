@@ -1,9 +1,9 @@
 ---
 date: 2026-07-13
 topic: acp-release-1.1.0
-from_role: Forensic Guardian
-to_role: Release Steward
-status: READY_TO_MERGE
+from_role: Release Steward
+to_role: Forensic Guardian
+status: RELEASED
 maturity: EXPLORING
 tags: [handoff, versioning, release]
 ---
@@ -38,6 +38,12 @@ tags: [handoff, versioning, release]
   check remains the merge gate on clean CI infrastructure.
 - Opened ready release PR #323 from `codex/release-1.1.0` to `main`. Required CI
   passed: Local Gates in 1m32s and Complete Docker self-dogfood in 4m48s.
+- Reconciled final evidence and re-passed required CI: Local Gates in 1m22s and
+  Complete Docker self-dogfood in 4m57s.
+- Squash-merged PR #323 to `main` at
+  `3fe6a370e9346578551ab593337d60331442134c`.
+- Created and pushed annotated tag `v1.1.0` at that exact merge commit and
+  published GitHub release `ACP v1.1.0`.
 
 ## Decided (do not re-litigate)
 
@@ -65,16 +71,13 @@ tags: [handoff, versioning, release]
 
 ## Open / Remaining
 
-- Merge PR #323 after this final handoff reconciliation retains green required
-  checks.
-- Create the annotated `v1.1.0` tag from merged `main` and publish the GitHub
-  release.
+None for release `v1.1.0`.
 
 ## Exact next action
 
-Release Steward: push this final evidence reconciliation, verify required checks
-remain green, squash-merge PR #323, then tag the exact merge commit and publish
-the GitHub release.
+Forensic Guardian: retain this page as the immutable release evidence handoff.
+Future version changes begin from annotated baseline `v1.1.0` through
+[[version-bump]].
 
 ## Links
 

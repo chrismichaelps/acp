@@ -2,6 +2,12 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-14 · ACP v1.1.0 · squash-merged release PR #323 at
+  `3fe6a370e9346578551ab593337d60331442134c`, pushed annotated tag `v1.1.0`, and
+  published the GitHub release after final Local Gates and Complete Docker
+  self-dogfood passed · protocol remains `0.1` · risk LOW ·
+  [[2026-07-13-acp-release-1.1.0]] · [[version-bump]]
+
 - 2026-07-14 · version bump · release 1.0.0 → 1.1.0
 
 - 2026-07-13 · v1.1.0 release contract · required the canonical README status
