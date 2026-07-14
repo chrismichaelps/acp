@@ -1,9 +1,9 @@
 ---
 date: 2026-07-13
 topic: acp-release-1.1.0
-from_role: DNA Engineer
-to_role: Shadow
-status: IN_PROGRESS
+from_role: Forensic Guardian
+to_role: Release Steward
+status: READY_FOR_BUMP
 maturity: EXPLORING
 tags: [handoff, versioning, release]
 ---
@@ -19,6 +19,13 @@ tags: [handoff, versioning, release]
   is part of this release.
 - Defined the public README status as one strict line containing both independent
   versions so future bumps cannot recreate the observed ambiguity.
+- Implemented README parsing and rewriting as the fourth validated transaction
+  target, including stale/duplicate anchor refusal and CRLF preservation.
+- Passed 102 focused tests, targeted lint/typecheck/format checks, and an
+  independent review with no actionable findings.
+- Ran the real dirty-tree-safe preview from `b8d21b0`; it proposes release
+  `1.0.0 → 1.1.0`, protocol `0.1 → 0.1`, README synchronization, and the release
+  ledger entry without editing files.
 
 ## Decided (do not re-litigate)
 
@@ -46,16 +53,15 @@ tags: [handoff, versioning, release]
 
 ## Open / Remaining
 
-- Implement strict README parsing/rewriting and integration regressions.
 - Apply `pnpm bump --since b8d21b0 --protocol none --yes` from a clean tree.
 - Run focused and full gates, Docker ACP dogfood, merge the release PR, create the
   annotated tag, and publish the GitHub release.
 
 ## Exact next action
 
-Shadow: read [[version-bump]] and `@root/wiki/grammar/typescript.md`, then add the
-README transform and wire it into the existing transaction without changing the
-release/protocol policy.
+Release Steward: commit the reviewed implementation, apply the exact explicit-
+baseline bump from a clean tree, then verify all four generated file changes
+before running the production release gates.
 
 ## Links
 

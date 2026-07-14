@@ -48,7 +48,11 @@ function createRepository({ baseline = false } = {}) {
     'wiki/CHANGELOG.md',
     '# Changelog\n\nTemporal ledger.\n\n- 2026-07-12 · initial\n',
   )
-  write(cwd, 'README.md', '# Fixture\n')
+  write(
+    cwd,
+    'README.md',
+    '# Fixture\n\n> **Status:** release v1.0.0 · protocol v0.1 · active development.\n',
+  )
   git(cwd, 'add', '.')
   git(cwd, 'commit', '--quiet', '-m', 'chore: initial')
   if (baseline) git(cwd, 'tag', '-a', 'v1.0.0', '-m', 'baseline')
@@ -184,6 +188,9 @@ describe('bump planning and apply', () => {
     expect(readFileSync(join(cwd, 'wiki/CHANGELOG.md'), 'utf8')).toMatch(
       /release 1\.0\.0 → 1\.1\.0/,
     )
+    expect(readFileSync(join(cwd, 'README.md'), 'utf8')).toContain(
+      '**Status:** release v1.1.0 · protocol v0.1',
+    )
     expect(git(cwd, 'tag', '--list', 'v1.1.0')).toBe('')
     expect(result.stdout).toMatch(/git tag -a v1\.1\.0/)
   })
@@ -200,7 +207,45 @@ describe('bump planning and apply', () => {
     expect(
       readFileSync(join(cwd, 'src/protocol/version.ts'), 'utf8'),
     ).toContain("ACP_PROTOCOL_VERSION = '0.2'")
+    expect(readFileSync(join(cwd, 'README.md'), 'utf8')).toContain(
+      '**Status:** release v1.0.0 · protocol v0.2',
+    )
     expect(result.stdout).not.toMatch(/git tag -a/)
+  })
+
+  it('rejects a stale README status before mutating any target', () => {
+    const cwd = createRepository({ baseline: true })
+    commitChange(cwd, 'feat: add a production capability')
+    const readmePath = join(cwd, 'README.md')
+    writeFileSync(
+      readmePath,
+      readFileSync(readmePath, 'utf8').replace(
+        'release v1.0.0',
+        'release v0.9.0',
+      ),
+    )
+    git(cwd, 'add', 'README.md')
+    git(cwd, 'commit', '--quiet', '-m', 'docs: introduce stale status fixture')
+
+    const beforePackage = readFileSync(join(cwd, 'package.json'), 'utf8')
+    const beforeProtocol = readFileSync(
+      join(cwd, 'src/protocol/version.ts'),
+      'utf8',
+    )
+    const beforeChangelog = readFileSync(join(cwd, 'wiki/CHANGELOG.md'), 'utf8')
+    const result = run(cwd, ['--yes'])
+
+    expect(result.status).toBe(1)
+    expect(result.stderr).toMatch(
+      /expected README release 1\.0\.0, found 0\.9\.0/,
+    )
+    expect(readFileSync(join(cwd, 'package.json'), 'utf8')).toBe(beforePackage)
+    expect(readFileSync(join(cwd, 'src/protocol/version.ts'), 'utf8')).toBe(
+      beforeProtocol,
+    )
+    expect(readFileSync(join(cwd, 'wiki/CHANGELOG.md'), 'utf8')).toBe(
+      beforeChangelog,
+    )
   })
 
   it('refuses dirty apply but permits a non-mutating dirty preview', () => {

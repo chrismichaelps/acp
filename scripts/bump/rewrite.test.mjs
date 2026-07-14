@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest'
 import {
   changelogEntry,
   prependChangelogEntry,
+  readReadmeVersions,
   rewritePackageVersion,
   rewriteProtocolVersion,
+  rewriteReadmeVersions,
 } from './rewrite.mjs'
 
 describe('rewritePackageVersion', () => {
@@ -58,6 +60,60 @@ describe('rewriteProtocolVersion', () => {
     ],
   ])('rejects an unsafe protocol source %#', (text, error) => {
     expect(() => rewriteProtocolVersion(text, '0.1', '0.2')).toThrow(error)
+  })
+})
+
+describe('README status transforms', () => {
+  const readme =
+    '# ACP\n\n> **Status:** release v1.0.0 · protocol v0.1 · active development.\n'
+
+  it('reads and rewrites both independent version labels', () => {
+    expect(readReadmeVersions(readme)).toEqual({
+      release: '1.0.0',
+      protocol: '0.1',
+    })
+    expect(
+      rewriteReadmeVersions(readme, {
+        expectedRelease: '1.0.0',
+        nextRelease: '1.1.0',
+        expectedProtocol: '0.1',
+        nextProtocol: '0.2',
+      }),
+    ).toBe(
+      '# ACP\n\n> **Status:** release v1.1.0 · protocol v0.2 · active development.\n',
+    )
+  })
+
+  it('preserves CRLF status line endings', () => {
+    const source = readme.replaceAll('\n', '\r\n')
+    expect(
+      rewriteReadmeVersions(source, {
+        expectedRelease: '1.0.0',
+        nextRelease: '1.1.0',
+        expectedProtocol: '0.1',
+        nextProtocol: '0.1',
+      }),
+    ).toContain(
+      '> **Status:** release v1.1.0 · protocol v0.1 · active development.\r\n',
+    )
+  })
+
+  it.each([
+    ['# ACP\n', /exactly one canonical status anchor/],
+    [`${readme}${readme}`, /exactly one canonical status anchor/],
+  ])('rejects an unsafe README source %#', (source, error) => {
+    expect(() => readReadmeVersions(source)).toThrow(error)
+  })
+
+  it('rejects stale README versions before rewriting', () => {
+    expect(() =>
+      rewriteReadmeVersions(readme, {
+        expectedRelease: '1.1.0',
+        nextRelease: '1.2.0',
+        expectedProtocol: '0.1',
+        nextProtocol: '0.1',
+      }),
+    ).toThrow(/expected README release 1\.1\.0, found 1\.0\.0/)
   })
 })
 

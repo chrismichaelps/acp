@@ -16,6 +16,7 @@ import {
   prependChangelogEntry,
   readPackageVersion,
   readProtocolVersion,
+  rewriteReadmeVersions,
   rewritePackageVersion,
   rewriteProtocolVersion,
 } from './bump/rewrite.mjs'
@@ -24,6 +25,7 @@ import { applyTransaction } from './bump/transaction.mjs'
 const FILES = Object.freeze({
   package: 'package.json',
   protocol: 'src/protocol/version.ts',
+  readme: 'README.md',
   changelog: 'wiki/CHANGELOG.md',
 })
 
@@ -143,6 +145,18 @@ function prepareChanges({ cwd, sources, plan, date }) {
     })
   }
   if (changes.length > 0) {
+    changes.push({
+      path: join(cwd, FILES.readme),
+      label: FILES.readme,
+      before: sources.readme,
+      expected: sources.readme,
+      content: rewriteReadmeVersions(sources.readme, {
+        expectedRelease: plan.release.current,
+        nextRelease: plan.release.next,
+        expectedProtocol: plan.protocol.current,
+        nextProtocol: plan.protocol.next,
+      }),
+    })
     changes.push({
       path: join(cwd, FILES.changelog),
       label: FILES.changelog,
