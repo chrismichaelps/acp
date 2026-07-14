@@ -3,7 +3,7 @@ date: 2026-07-13
 topic: acp-release-1.1.0
 from_role: Forensic Guardian
 to_role: Release Steward
-status: READY_FOR_BUMP
+status: READY_TO_MERGE
 maturity: EXPLORING
 tags: [handoff, versioning, release]
 ---
@@ -36,6 +36,8 @@ tags: [handoff, versioning, release]
   Desktop failed its overlay metadata write because the host data volume reached
   100% capacity. No ACP assertion failed. The required remote Docker self-dogfood
   check remains the merge gate on clean CI infrastructure.
+- Opened ready release PR #323 from `codex/release-1.1.0` to `main`. Required CI
+  passed: Local Gates in 1m32s and Complete Docker self-dogfood in 4m48s.
 
 ## Decided (do not re-litigate)
 
@@ -63,17 +65,16 @@ tags: [handoff, versioning, release]
 
 ## Open / Remaining
 
-- Commit the generated release metadata and this reconciled handoff.
-- Open the release PR and require both local gates and remote Docker ACP
-  self-dogfood to pass before merge.
+- Merge PR #323 after this final handoff reconciliation retains green required
+  checks.
 - Create the annotated `v1.1.0` tag from merged `main` and publish the GitHub
   release.
 
 ## Exact next action
 
-Release Steward: commit the reviewed release metadata, push the release branch,
-open the PR, and wait for every required check. Merge only after remote Docker
-self-dogfood passes, then tag the exact merge commit and publish the release.
+Release Steward: push this final evidence reconciliation, verify required checks
+remain green, squash-merge PR #323, then tag the exact merge commit and publish
+the GitHub release.
 
 ## Links
 
