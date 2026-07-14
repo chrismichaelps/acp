@@ -166,12 +166,14 @@ The entrypoint:
 4. prints current/next versions, reasons, warnings, and dirtiness;
 5. exits on violations or an all-`none` plan;
 6. returns immediately for dry-run;
-7. requires clean state and confirmation;
+7. requires clean state and confirmation, then revalidates clean state before
+   mutation;
 8. precomputes all transforms and commits the transaction;
 9. prints the reviewed diff instruction and post-commit release tag command.
 
-Baseline mode previews or creates annotated `v<package-version>` at `HEAD`.
-Collisions, dirty state, and missing confirmation fail before `git tag`.
+Baseline mode previews or creates annotated `v<package-version>` at the captured
+commit SHA. Collisions, dirty state, missing confirmation, post-prompt dirtiness,
+and a changed `HEAD` fail before `git tag`.
 
 Integration tests spawn the real script in temporary initialized git repos and
 prove:
@@ -182,6 +184,7 @@ prove:
 - dry-run leaves bytes and refs unchanged;
 - non-TTY apply without `--yes` refuses;
 - dirty apply refuses;
+- post-confirmation dirty/changed-HEAD races refuse;
 - feat/fix/breaking-body proposals;
 - release override violation and forced override;
 - protocol evidence warning and explicit protocol application;

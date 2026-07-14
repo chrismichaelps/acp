@@ -94,12 +94,17 @@ derive from it. The changelog insertion targets the ledger heading.
 Changed files are written to same-directory temporary files, flushed, and
 renamed over their destinations. If a later replacement fails, the transaction
 restores every already-replaced file from captured original bytes. Incomplete
-rollback is reported distinctly. Temporary files are cleaned on success and
-failure. No partial success is presented as an applied bump.
+rollback is reported distinctly with every affected target path. Temporary files
+are cleaned on success and failure. No partial success is presented as an
+applied bump.
 
 The apply path refuses a dirty worktree. This prevents the tool from mixing a
 version transaction with unrelated user edits and makes rollback evidence
-unambiguous.
+unambiguous. Interactive confirmation is a concurrency boundary: immediately
+after a positive answer, apply revalidates a clean worktree before mutation.
+Baseline mode also captures the displayed `HEAD`, revalidates clean state and an
+unchanged `HEAD` after confirmation, and tags that captured commit rather than a
+mutable symbolic ref.
 
 ## Module boundary
 

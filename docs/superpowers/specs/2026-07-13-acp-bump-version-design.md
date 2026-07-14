@@ -137,6 +137,9 @@ must be reproducible in CI/local shell). Flow:
 3. Print the proposal with justification and the resulting version strings.
 4. Confirm: interactive prompt on a TTY, or `--yes` for non-interactive apply.
    Non-interactive apply without `--yes` fails closed. `--dry-run` never prompts.
+   A positive interactive answer triggers a second clean-state check immediately
+   before mutation. Baseline mode also verifies the displayed `HEAD` is unchanged
+   and tags the captured commit SHA.
 5. Apply the accepted bumps:
    - Release: rewrite `version` in `package.json`.
    - Protocol: rewrite the single `ACP_PROTOCOL_VERSION` literal in
@@ -185,7 +188,8 @@ git history ─▶ collect.mjs ─▶ ChangeSignals ─▶ policy(classify*) ─
 - Before writing, validate every source anchor and precompute every output.
   Apply through same-directory temporary files and atomic renames. If a later
   rename fails, restore every already-replaced file from captured originals and
-  report rollback failure explicitly if restoration is incomplete.
+  report rollback failure explicitly with affected target paths if restoration
+  is incomplete.
 - Unknown flags, missing flag values, invalid levels, contradictory modes,
   dirty apply worktrees, and non-TTY apply without `--yes` fail before mutation.
 

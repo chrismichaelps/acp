@@ -46,7 +46,9 @@ pnpm bump --since origin/main --dry-run
 Without `--yes`, apply prompts only on an interactive TTY. Non-interactive
 execution fails closed. `--dry-run` never writes or prompts. Invalid flags,
 missing values, dirty apply trees, missing baselines, policy undercuts, and
-anchor drift exit non-zero.
+anchor drift exit non-zero. After an interactive confirmation, the tool checks
+clean state again before mutation; baseline mode also verifies that `HEAD` still
+matches the commit shown in the proposal and tags that captured commit.
 
 Ordinary bump execution never tags the repository because its file edits are not
 yet committed. After a release change, commit the reviewed diff and then run the
@@ -72,7 +74,8 @@ runs only when invoked as the main module.
 All transforms validate before any write. The transaction captures original
 bytes, replaces files through same-directory temporary files, and restores
 earlier replacements if a later rename fails. A rollback failure is a distinct
-fatal outcome and lists affected paths without claiming success.
+fatal outcome with structured affected paths; the CLI prints those paths without
+claiming success.
 
 Package rewriting requires exactly one textual `version` anchor matching the
 parsed top-level package version; unrelated nested tooling versions remain
