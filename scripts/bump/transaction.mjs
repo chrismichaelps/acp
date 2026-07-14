@@ -93,11 +93,22 @@ export function applyTransaction(
   { operations = defaultFileOperations } = {},
 ) {
   assertChanges(changes)
-  const originals = changes.map((change) => ({
-    ...change,
-    original: operations.readFileSync(change.path),
-    mode: operations.statSync(change.path).mode & 0o777,
-  }))
+  const originals = changes.map((change) => {
+    const original = operations.readFileSync(change.path)
+    if (
+      change.expected !== undefined &&
+      !original.equals(Buffer.from(change.expected))
+    ) {
+      throw new TransactionError(
+        `transaction target changed after planning: ${change.path}`,
+      )
+    }
+    return {
+      ...change,
+      original,
+      mode: operations.statSync(change.path).mode & 0o777,
+    }
+  })
   const temporaryPaths = new Set()
   const prepared = []
   const replaced = []

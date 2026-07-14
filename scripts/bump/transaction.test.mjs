@@ -110,4 +110,21 @@ describe('applyTransaction', () => {
     ).toThrow(/duplicate transaction target/)
     expect(readFileSync(first, 'utf8')).toBe('first-original\n')
   })
+
+  it('refuses source drift before creating temporary files', () => {
+    const { directory, first } = fixture()
+    expect(() =>
+      applyTransaction([
+        {
+          path: first,
+          expected: 'stale-planning-snapshot\n',
+          content: 'first-next\n',
+        },
+      ]),
+    ).toThrow(/changed after planning/)
+    expect(readFileSync(first, 'utf8')).toBe('first-original\n')
+    expect(
+      readdirSync(directory).filter((name) => name.includes('.tmp')),
+    ).toEqual([])
+  })
 })

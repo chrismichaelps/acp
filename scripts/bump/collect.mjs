@@ -21,7 +21,12 @@ export function createGitRunner({ cwd = process.cwd() } = {}) {
 
 function resolveCommit(ref, git) {
   try {
-    return git(['rev-parse', '--verify', `${ref}^{commit}`]).trim()
+    return git([
+      'rev-parse',
+      '--verify',
+      '--end-of-options',
+      `${ref}^{commit}`,
+    ]).trim()
   } catch (error) {
     throw new Error(`invalid --since ref ${JSON.stringify(ref)}`, {
       cause: error,
@@ -53,7 +58,12 @@ export function resolveBaseline({ since = null, git }) {
 
   return Object.freeze({
     ref: tag,
-    commit: git(['rev-parse', '--verify', `${tag}^{commit}`]).trim(),
+    commit: git([
+      'rev-parse',
+      '--verify',
+      '--end-of-options',
+      `${tag}^{commit}`,
+    ]).trim(),
     source: 'tag',
   })
 }
@@ -63,7 +73,7 @@ export function collectSignals({ baseline, git }) {
     throw new TypeError('collectSignals requires a baseline ref and git runner')
   }
 
-  const range = `${baseline.ref}..HEAD`
+  const range = `${baseline.commit ?? baseline.ref}..HEAD`
   const commits = parseCommitLog(git(['log', range, '--format=%x1e%s%x1f%b']))
   const changedFiles = git(['diff', '--name-only', '-z', range])
     .split('\u0000')

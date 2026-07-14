@@ -65,6 +65,9 @@ export function parseArgs(argv) {
       throw new Error(`invalid ${key} level: ${level}`)
     }
   }
+  if (values.since !== null && values.since.startsWith('-')) {
+    throw new Error(`invalid since ref: ${values.since}`)
+  }
 
   if (values.baseline) {
     const incompatible =

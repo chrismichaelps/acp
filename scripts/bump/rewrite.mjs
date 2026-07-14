@@ -17,10 +17,7 @@ function matches(text, pattern) {
   return [...text.matchAll(pattern)]
 }
 
-export function rewritePackageVersion(text, expected, next) {
-  assertVersion(expected, RELEASE_PATTERN, 'expected release')
-  assertVersion(next, RELEASE_PATTERN, 'next release')
-
+export function readPackageVersion(text) {
   let parsed
   try {
     parsed = JSON.parse(text)
@@ -35,43 +32,54 @@ export function rewritePackageVersion(text, expected, next) {
   ) {
     throw new Error('package source must contain a top-level version string')
   }
-  if (parsed.version !== expected) {
-    throw new Error(
-      `expected package version ${expected}, found ${parsed.version}`,
-    )
-  }
+  assertVersion(parsed.version, RELEASE_PATTERN, 'package release')
 
-  const anchors = matches(text, PACKAGE_ANCHOR)
+  const anchors = matches(text, PACKAGE_ANCHOR).filter(
+    (anchor) => anchor[1] === parsed.version,
+  )
   if (anchors.length !== 1) {
     throw new Error(
       'package source must contain exactly one textual package version anchor',
     )
   }
-  if (anchors[0][1] !== expected) {
-    throw new Error(
-      `textual package version does not match expected ${expected}`,
-    )
+  return parsed.version
+}
+
+export function rewritePackageVersion(text, expected, next) {
+  assertVersion(expected, RELEASE_PATTERN, 'expected release')
+  assertVersion(next, RELEASE_PATTERN, 'next release')
+  const current = readPackageVersion(text)
+  if (current !== expected) {
+    throw new Error(`expected package version ${expected}, found ${current}`)
   }
 
+  const anchors = matches(text, PACKAGE_ANCHOR).filter(
+    (anchor) => anchor[1] === expected,
+  )
   const anchor = anchors[0]
   const valueOffset = anchor[0].indexOf(anchor[1])
   const start = anchor.index + valueOffset
   return `${text.slice(0, start)}${next}${text.slice(start + expected.length)}`
 }
 
-export function rewriteProtocolVersion(text, expected, next) {
-  assertVersion(expected, PROTOCOL_PATTERN, 'expected protocol')
-  assertVersion(next, PROTOCOL_PATTERN, 'next protocol')
+export function readProtocolVersion(text) {
   const anchors = matches(text, PROTOCOL_ANCHOR)
   if (anchors.length !== 1) {
     throw new Error('source must contain exactly one protocol version anchor')
   }
-  if (anchors[0][2] !== expected) {
-    throw new Error(
-      `expected protocol version ${expected}, found ${anchors[0][2]}`,
-    )
+  assertVersion(anchors[0][2], PROTOCOL_PATTERN, 'protocol')
+  return anchors[0][2]
+}
+
+export function rewriteProtocolVersion(text, expected, next) {
+  assertVersion(expected, PROTOCOL_PATTERN, 'expected protocol')
+  assertVersion(next, PROTOCOL_PATTERN, 'next protocol')
+  const current = readProtocolVersion(text)
+  if (current !== expected) {
+    throw new Error(`expected protocol version ${expected}, found ${current}`)
   }
 
+  const anchors = matches(text, PROTOCOL_ANCHOR)
   const anchor = anchors[0]
   const valueOffset = anchor[0].indexOf(anchor[2])
   const start = anchor.index + valueOffset

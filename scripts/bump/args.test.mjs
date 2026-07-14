@@ -42,6 +42,7 @@ describe('parseArgs', () => {
     [['--wat'], /unknown flag/],
     [['--release'], /requires a value/],
     [['--release', 'banana'], /invalid release level/],
+    [['--since', '-h'], /invalid since ref/],
     [['--protocol', 'minor', '--protocol', 'major'], /repeated flag/],
     [['--baseline', '--release', 'minor'], /baseline mode/],
     [['--baseline', '--since', 'HEAD~1'], /baseline mode/],

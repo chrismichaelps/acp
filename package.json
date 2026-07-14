@@ -8,6 +8,7 @@
     "acp-jsonrpc-stdio": "./dist/app/stdio/main.js"
   },
   "scripts": {
+    "bump": "node scripts/acp-bump.mjs",
     "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.build.json && node scripts/check-dist-runtime.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",

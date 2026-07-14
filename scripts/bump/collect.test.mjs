@@ -26,7 +26,9 @@ describe('resolveBaseline', () => {
       commit: 'abc123',
       source: 'explicit',
     })
-    expect(calls).toEqual([['rev-parse', '--verify', 'origin/main^{commit}']])
+    expect(calls).toEqual([
+      ['rev-parse', '--verify', '--end-of-options', 'origin/main^{commit}'],
+    ])
   })
 
   it('selects the newest reachable release tag', () => {
@@ -58,13 +60,17 @@ describe('resolveBaseline', () => {
 
 describe('collectSignals', () => {
   it('collects full commit evidence and NUL-delimited paths', () => {
+    const calls = []
     const git = (args) => {
+      calls.push(args)
       if (args[0] === 'log') {
         return '\u001efeat(api): add method\u001fDetails\n\nBREAKING CHANGE: old method removed'
       }
       return 'src/protocol/schema/common file.ts\u0000README.md\u0000'
     }
-    expect(collectSignals({ baseline: { ref: 'v1.0.0' }, git })).toEqual({
+    expect(
+      collectSignals({ baseline: { ref: 'v1.0.0', commit: 'abc123' }, git }),
+    ).toEqual({
       commits: [
         expect.objectContaining({
           type: 'feat',
@@ -76,6 +82,7 @@ describe('collectSignals', () => {
       protocolSurfaceChanged: true,
       protocolFiles: ['src/protocol/schema/common file.ts'],
     })
+    expect(calls[0][1]).toBe('abc123..HEAD')
   })
 
   it('handles empty history and no protocol changes', () => {

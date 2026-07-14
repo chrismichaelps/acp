@@ -16,6 +16,14 @@ describe('rewritePackageVersion', () => {
     )
   })
 
+  it('ignores a different nested tooling version', () => {
+    const text =
+      '{\n  "version": "1.0.0",\n  "tool": { "version": "11.7.0" }\n}\n'
+    expect(rewritePackageVersion(text, '1.0.0', '1.1.0')).toBe(
+      '{\n  "version": "1.1.0",\n  "tool": { "version": "11.7.0" }\n}\n',
+    )
+  })
+
   it.each([
     ['not json', /valid JSON/],
     ['{"version":"2.0.0"}', /expected package version/],
