@@ -2,6 +2,8 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-14 · version bump · release 1.0.0 → 1.1.0
+
 - 2026-07-13 · v1.1.0 release contract · required the canonical README status
   to expose independent release and protocol versions and join the existing
   rollback-safe bump transaction; selected release `1.1.0` from the merged

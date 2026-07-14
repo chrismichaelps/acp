@@ -26,6 +26,16 @@ tags: [handoff, versioning, release]
 - Ran the real dirty-tree-safe preview from `b8d21b0`; it proposes release
   `1.0.0 → 1.1.0`, protocol `0.1 → 0.1`, README synchronization, and the release
   ledger entry without editing files.
+- Applied the reviewed plan from a clean tree. `package.json` and README now
+  report release `1.1.0`, the protocol constant and README protocol label remain
+  `0.1`, and the generated ledger entry records only the release change.
+- Passed typecheck, lint, formatting, repository policy checks, production build,
+  102 focused tests, the controlled full suite (637 passed, 13 skipped), and
+  exact 255/255 source/wiki parity.
+- The local Docker gate compiled ACP inside the release image, then Docker
+  Desktop failed its overlay metadata write because the host data volume reached
+  100% capacity. No ACP assertion failed. The required remote Docker self-dogfood
+  check remains the merge gate on clean CI infrastructure.
 
 ## Decided (do not re-litigate)
 
@@ -53,15 +63,17 @@ tags: [handoff, versioning, release]
 
 ## Open / Remaining
 
-- Apply `pnpm bump --since b8d21b0 --protocol none --yes` from a clean tree.
-- Run focused and full gates, Docker ACP dogfood, merge the release PR, create the
-  annotated tag, and publish the GitHub release.
+- Commit the generated release metadata and this reconciled handoff.
+- Open the release PR and require both local gates and remote Docker ACP
+  self-dogfood to pass before merge.
+- Create the annotated `v1.1.0` tag from merged `main` and publish the GitHub
+  release.
 
 ## Exact next action
 
-Release Steward: commit the reviewed implementation, apply the exact explicit-
-baseline bump from a clean tree, then verify all four generated file changes
-before running the production release gates.
+Release Steward: commit the reviewed release metadata, push the release branch,
+open the PR, and wait for every required check. Merge only after remote Docker
+self-dogfood passes, then tag the exact merge commit and publish the release.
 
 ## Links
 
