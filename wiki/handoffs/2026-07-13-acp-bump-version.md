@@ -3,7 +3,7 @@ date: 2026-07-13
 topic: acp-bump-version
 from_role: DNA Engineer
 to_role: Shadow
-status: REVIEW_CHANGES_REQUESTED
+status: READY_FOR_REREVIEW
 maturity: MEDIUM
 tags: [handoff, versioning, tooling, release]
 ---
@@ -24,13 +24,16 @@ tags: [handoff, versioning, tooling, release]
   commit-body parsing, resolved-SHA evidence collection, anchor-validated
   rewrites, source-drift detection, rollback-capable transactions, and the
   repository-local CLI.
-- Added 92 focused tests, including temporary-repository baseline, dry-run,
+- Added 96 focused tests, including temporary-repository baseline, dry-run,
   confirmation, dirty-tree, protocol independence, and no-premature-tag proofs.
 - Ran the tool against this branch with `--since origin/main --dry-run`. The
   first run exposed a nested `devEngines.packageManager.version` anchor gap; the
   matching-anchor rule was corrected and regressed before the successful run.
 - Passed typecheck, lint, repository policies, 627 full-suite tests, production
   build, exact 255/255 source mirror parity, and complete Docker self-dogfood.
+- Closed independent-review findings with post-confirmation clean/HEAD checks,
+  captured-SHA baseline tags, structured rollback target failures, and implicit
+  baseline/package mismatch refusal.
 
 ## Decided (do not re-litigate)
 
@@ -45,21 +48,15 @@ tags: [handoff, versioning, tooling, release]
 
 ## Open / Remaining
 
-- Close independent-review blockers: revalidate clean state and captured `HEAD`
-  after interactive confirmation, and expose structured affected paths when
-  rollback is incomplete. Also reject an implicit canonical baseline whose tag
-  version differs from the package version, preventing interrupted-flow double
-  bumps.
 - Re-run focused and impacted production gates, then obtain reviewer approval.
 - Record independent ACP review evidence, push the branch, open and merge the
   issue-closing PR, and verify issue #321 is closed.
 
 ## Exact next action
 
-DNA Engineer: add prompt-race integration regressions plus structured rollback
-path assertions, then implement the two review fixes exactly as specified in
-[[ADR-0016-version-bump-policy]]. Re-run focused/static gates and return the diff
-to Shadow. Do not run an apply or create a release tag in this repository.
+Shadow: verify the four review regressions and inspect the fix diff against
+[[ADR-0016-version-bump-policy]]. Approve only after focused/static gates pass.
+Do not run an apply or create a release tag in this repository.
 
 ## Links
 
