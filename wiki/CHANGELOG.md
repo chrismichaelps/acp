@@ -2,6 +2,19 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-14 · version bump · release 1.0.0 → 1.1.0
+
+- 2026-07-13 · v1.1.0 release contract · required the canonical README status
+  to expose independent release and protocol versions and join the existing
+  rollback-safe bump transaction; selected release `1.1.0` from the merged
+  versioning feature while holding protocol compatibility at `0.1` · validation:
+  documentation-first grill, 102 focused tests, static checks, exact real dry
+  run, independent approval before apply, 637-test full suite, production build,
+  exact wiki parity, and required PR #323 CI including complete Docker
+  self-dogfood · risk LOW ·
+  [[ADR-0016-version-bump-policy]] · [[version-bump]] ·
+  [[2026-07-13-acp-release-1.1.0]]
+
 - 2026-07-13 · version bump policy · accepted
   [[ADR-0016-version-bump-policy]] for independent release/protocol lines,
   reachable baseline evidence, full commit-body parsing, explicit protocol

@@ -9,10 +9,12 @@ shared _state_ instead of a shared conversation.
 ACP says nothing about _how_ an agent thinks, edits files, or calls a model. It
 only owns the workspace state that keeps parallel work from colliding.
 
-> **Status:** v0.1, in active development. The full protocol surface is
-> implemented and spec-conformant across every transport. This is the TypeScript
-> reference implementation — a real, runnable coordination host you can drive
-> today, with distribution and operational hardening still in progress.
+> **Status:** release v1.1.0 · protocol v0.1 · active development.
+>
+> The full protocol surface is implemented and spec-conformant across every
+> transport. This is the TypeScript reference implementation — a real, runnable
+> coordination host you can drive today, with distribution and operational
+> hardening still in progress.
 
 > **Quick start for agents:** See [`ACP-SKILL.md`](./ACP-SKILL.md) — the exact
 > CLI commands and workflow for autonomous agents integrating with ACP.
