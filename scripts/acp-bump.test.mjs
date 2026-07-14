@@ -12,6 +12,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 import { afterEach, describe, expect, it } from 'vitest'
+import { runVersionBump } from './acp-bump.mjs'
 
 const script = fileURLToPath(new URL('./acp-bump.mjs', import.meta.url))
 const temporaryDirectories = []
@@ -70,6 +71,10 @@ function run(cwd, args) {
   })
 }
 
+function silentOutput() {
+  return { isTTY: false, write: () => true }
+}
+
 afterEach(() => {
   for (const directory of temporaryDirectories.splice(0)) {
     rmSync(directory, { force: true, recursive: true })
@@ -99,6 +104,24 @@ describe('baseline mode', () => {
     expect(result.status).toBe(1)
     expect(result.stderr).toMatch(/already exists/)
   })
+
+  it('refuses when HEAD changes during confirmation', async () => {
+    const cwd = createRepository()
+    const initialHead = git(cwd, 'rev-parse', 'HEAD')
+
+    await expect(
+      runVersionBump(['--baseline', '--yes'], {
+        cwd,
+        output: silentOutput(),
+        confirm: async () => {
+          commitChange(cwd, 'chore: concurrent baseline change')
+          return true
+        },
+      }),
+    ).rejects.toThrow(/HEAD changed during confirmation/)
+    expect(git(cwd, 'tag', '--list')).toBe('')
+    expect(git(cwd, 'rev-parse', 'HEAD')).not.toBe(initialHead)
+  })
 })
 
 describe('bump planning and apply', () => {
@@ -124,6 +147,26 @@ describe('bump planning and apply', () => {
     expect(result.stdout).toMatch(/--- package\.json/)
     expect(readFileSync(join(cwd, 'package.json'), 'utf8')).toBe(before)
     expect(git(cwd, 'status', '--porcelain')).toBe('')
+  })
+
+  it('refuses an interrupted implicit tag flow that would double-bump', () => {
+    const cwd = createRepository({ baseline: true })
+    const packagePath = join(cwd, 'package.json')
+    writeFileSync(
+      packagePath,
+      readFileSync(packagePath, 'utf8').replace('1.0.0', '1.1.0'),
+    )
+    git(cwd, 'add', 'package.json')
+    git(cwd, 'commit', '--quiet', '-m', 'chore: record release version')
+
+    const result = run(cwd, ['--dry-run'])
+    expect(result.status).toBe(1)
+    expect(result.stderr).toMatch(
+      /package version 1\.1\.0 does not match implicit baseline v1\.0\.0/,
+    )
+
+    const explicit = run(cwd, ['--since', 'v1.0.0', '--dry-run'])
+    expect(explicit.status).toBe(0)
   })
 
   it('applies a release bump without tagging the pre-bump commit', () => {
@@ -183,5 +226,43 @@ describe('bump planning and apply', () => {
     const result = run(cwd, [])
     expect(result.status).toBe(1)
     expect(result.stderr).toMatch(/non-interactive apply requires --yes/)
+  })
+
+  it('refuses dirtiness introduced during confirmation', async () => {
+    const cwd = createRepository({ baseline: true })
+    commitChange(cwd, 'fix: repair behavior')
+
+    await expect(
+      runVersionBump(['--yes'], {
+        cwd,
+        output: silentOutput(),
+        confirm: async () => {
+          write(cwd, 'concurrent.txt', 'operator work\n')
+          return true
+        },
+      }),
+    ).rejects.toThrow(/working tree changed during confirmation/)
+    expect(
+      JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf8')).version,
+    ).toBe('1.0.0')
+  })
+
+  it('refuses a clean HEAD change introduced during confirmation', async () => {
+    const cwd = createRepository({ baseline: true })
+    commitChange(cwd, 'fix: repair behavior')
+
+    await expect(
+      runVersionBump(['--yes'], {
+        cwd,
+        output: silentOutput(),
+        confirm: async () => {
+          commitChange(cwd, 'chore: concurrent history change')
+          return true
+        },
+      }),
+    ).rejects.toThrow(/HEAD changed during confirmation/)
+    expect(
+      JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf8')).version,
+    ).toBe('1.0.0')
   })
 })

@@ -42,6 +42,35 @@ function isDirty(git) {
   )
 }
 
+function currentHead(git) {
+  return git(['rev-parse', 'HEAD']).trim()
+}
+
+function assertPostConfirmationState(git, expectedHead, operation) {
+  if (isDirty(git)) {
+    throw new Error(
+      `working tree changed during confirmation; ${operation} refused`,
+    )
+  }
+  if (currentHead(git) !== expectedHead) {
+    throw new Error(`HEAD changed during confirmation; ${operation} refused`)
+  }
+}
+
+function validateImplicitBaseline(baseline, release) {
+  if (
+    baseline.source === 'tag' &&
+    /^v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)$/.test(
+      baseline.ref,
+    ) &&
+    baseline.ref.slice(1) !== release
+  ) {
+    throw new Error(
+      `package version ${release} does not match implicit baseline ${baseline.ref}; recover the missing release tag or use --since <ref>`,
+    )
+  }
+}
+
 function writeLine(output, line = '') {
   output.write(`${line}\n`)
 }
@@ -149,9 +178,10 @@ async function confirmApply({ yes, input, output }) {
   }
 }
 
-async function runBaseline({ args, git, input, output, sources }) {
+async function runBaseline({ args, git, input, output, sources, confirm }) {
   const release = readPackageVersion(sources.package)
   const tag = `v${release}`
+  const head = currentHead(git)
   const collision = git(
     ['show-ref', '--verify', '--quiet', `refs/tags/${tag}`],
     { allowFailure: true },
@@ -160,27 +190,41 @@ async function runBaseline({ args, git, input, output, sources }) {
 
   const dirty = isDirty(git)
   writeLine(output, `ACP baseline ${tag}`)
-  writeLine(output, `target: ${git(['rev-parse', 'HEAD']).trim()}`)
+  writeLine(output, `target: ${head}`)
   writeLine(output, `working tree: ${dirty ? 'dirty' : 'clean'}`)
   if (args.dryRun) return
   if (dirty) throw new Error('working tree is dirty; baseline creation refused')
-  if (!(await confirmApply({ yes: args.yes, input, output }))) {
+  if (!(await confirm({ yes: args.yes, input, output }))) {
     writeLine(output, 'Cancelled; no tag created.')
     return
   }
 
-  git(['tag', '-a', tag, '-m', `ACP release ${release}`, 'HEAD'])
+  assertPostConfirmationState(git, head, 'baseline creation')
+  git(['tag', '-a', tag, '-m', `ACP release ${release}`, head])
   writeLine(output, `Created annotated baseline ${tag}.`)
 }
 
-async function runBump({ args, cwd, git, input, output, sources, now }) {
+async function runBump({
+  args,
+  cwd,
+  git,
+  input,
+  output,
+  sources,
+  now,
+  confirm,
+}) {
+  const head = currentHead(git)
+  const release = readPackageVersion(sources.package)
+  const protocol = readProtocolVersion(sources.protocol)
   const baseline = resolveBaseline({ since: args.since, git })
+  validateImplicitBaseline(baseline, release)
   const signals = collectSignals({ baseline, git })
   const plan = planBump({
     signals,
     current: {
-      release: readPackageVersion(sources.package),
-      protocol: readProtocolVersion(sources.protocol),
+      release,
+      protocol,
     },
     overrides: { release: args.release, protocol: args.protocol },
     force: args.force,
@@ -221,11 +265,12 @@ async function runBump({ args, cwd, git, input, output, sources, now }) {
   }
   if (args.dryRun) return
   if (dirty) throw new Error('working tree is dirty; apply refused')
-  if (!(await confirmApply({ yes: args.yes, input, output }))) {
+  if (!(await confirm({ yes: args.yes, input, output }))) {
     writeLine(output, 'Cancelled; no files changed.')
     return
   }
 
+  assertPostConfirmationState(git, head, 'apply')
   applyTransaction(changes)
   writeLine(
     output,
@@ -247,15 +292,16 @@ export async function runVersionBump(
     input = process.stdin,
     output = process.stdout,
     now = () => new Date(),
+    confirm = confirmApply,
   } = {},
 ) {
   const args = parseArgs(argv)
   const git = createGitRunner({ cwd })
   const sources = readSources(cwd)
   if (args.mode === 'baseline') {
-    return runBaseline({ args, git, input, output, sources })
+    return runBaseline({ args, git, input, output, sources, confirm })
   }
-  return runBump({ args, cwd, git, input, output, sources, now })
+  return runBump({ args, cwd, git, input, output, sources, now, confirm })
 }
 
 const isEntrypoint =

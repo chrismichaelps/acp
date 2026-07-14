@@ -35,10 +35,16 @@ export class TransactionError extends Error {
 }
 
 export class TransactionRollbackError extends TransactionError {
-  constructor(message, { cause, rollbackErrors }) {
-    super(message, { cause })
+  constructor(message, { cause, rollbackFailures }) {
+    const affectedPaths = [...new Set(rollbackFailures.map(({ path }) => path))]
+    super(`${message}; affected targets: ${affectedPaths.join(', ')}`, {
+      cause,
+    })
     this.name = 'TransactionRollbackError'
-    this.rollbackErrors = Object.freeze(rollbackErrors)
+    this.affectedPaths = Object.freeze(affectedPaths)
+    this.rollbackFailures = Object.freeze(
+      rollbackFailures.map((failure) => Object.freeze(failure)),
+    )
   }
 }
 
@@ -75,7 +81,7 @@ function writeTemporary({ path, content, mode }, operations, temporaryPaths) {
     dirname(path),
     `.${basename(path)}.acp-bump-${process.pid}-${randomUUID()}.tmp`,
   )
-  temporaryPaths.add(temporaryPath)
+  temporaryPaths.set(temporaryPath, path)
   let descriptor
   try {
     descriptor = operations.openSync(temporaryPath, 'wx', mode)
@@ -109,7 +115,7 @@ export function applyTransaction(
       mode: operations.statSync(change.path).mode & 0o777,
     }
   })
-  const temporaryPaths = new Set()
+  const temporaryPaths = new Map()
   const prepared = []
   const replaced = []
 
@@ -127,7 +133,7 @@ export function applyTransaction(
       replaced.push(change)
     }
   } catch (cause) {
-    const rollbackErrors = []
+    const rollbackFailures = []
     for (const change of replaced.reverse()) {
       try {
         const rollbackPath = writeTemporary(
@@ -138,21 +144,21 @@ export function applyTransaction(
         operations.renameSync(rollbackPath, change.path)
         temporaryPaths.delete(rollbackPath)
       } catch (error) {
-        rollbackErrors.push(error)
+        rollbackFailures.push({ path: change.path, error })
       }
     }
-    for (const temporaryPath of temporaryPaths) {
+    for (const [temporaryPath, targetPath] of temporaryPaths) {
       try {
         safeUnlink(temporaryPath, operations)
       } catch (error) {
-        rollbackErrors.push(error)
+        rollbackFailures.push({ path: targetPath, error })
       }
     }
 
-    if (rollbackErrors.length > 0) {
+    if (rollbackFailures.length > 0) {
       throw new TransactionRollbackError(
         'version bump transaction failed and rollback was incomplete',
-        { cause, rollbackErrors },
+        { cause, rollbackFailures },
       )
     }
     throw new TransactionError(

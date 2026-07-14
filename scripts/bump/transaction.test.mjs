@@ -89,15 +89,23 @@ describe('applyTransaction', () => {
       },
     }
 
-    expect(() =>
+    let failure
+    try {
       applyTransaction(
         [
           { path: first, content: 'first-next\n' },
           { path: second, content: 'second-next\n' },
         ],
         { operations },
-      ),
-    ).toThrow(TransactionRollbackError)
+      )
+    } catch (error) {
+      failure = error
+    }
+    expect(failure).toBeInstanceOf(TransactionRollbackError)
+    expect(failure.rollbackFailures).toEqual([
+      { path: first, error: expect.any(Error) },
+    ])
+    expect(failure.message).toContain(first)
   })
 
   it('rejects duplicate targets before mutation', () => {
