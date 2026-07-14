@@ -17,6 +17,8 @@ the coordination plane under [[ADR-0012-acp-self-agent-audit]].
   conventional-commit records.
 - Protocol version: two-part value from [[protocol-version]], changed only by an
   explicit `--protocol` decision.
+- Public status: one canonical `README.md` line that displays both values and is
+  rewritten from the same validated plan.
 
 The lines are independent. A release feature does not imply a protocol change;
 a protocol change does not imply a release level.
@@ -85,7 +87,9 @@ claiming success.
 
 Package rewriting requires exactly one textual `version` anchor matching the
 parsed top-level package version; unrelated nested tooling versions remain
-untouched. Immediately before creating temporary files, the transaction compares
+untouched. README rewriting requires exactly one status anchor matching both
+current versions, preventing stale public status from being accepted or carried
+forward. Immediately before creating temporary files, the transaction compares
 every target with the source snapshot used to build the plan. Concurrent source
 drift fails closed instead of overwriting newer work.
 
@@ -98,4 +102,4 @@ Issue #321 owns the initial implementation and publication lifecycle.
 ## Referenced by
 
 [[ADR-0016-version-bump-policy]] · [[references/_MOC]] · [[README]] ·
-[[2026-07-13-acp-bump-version]]
+[[2026-07-13-acp-bump-version]] · [[2026-07-13-acp-release-1.1.0]]

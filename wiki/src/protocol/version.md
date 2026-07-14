@@ -68,3 +68,4 @@ change.
 [[ADR-0004-protocol-version-codecs-generated-client]] ·
 [[ADR-0016-version-bump-policy]] · [[version-bump]] ·
 [[protocol-version.test]] · [[protocol/_MOC]] · [[src/_MOC]]
+· [[2026-07-13-acp-release-1.1.0]]

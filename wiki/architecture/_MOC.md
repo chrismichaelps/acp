@@ -203,8 +203,10 @@ Dockerized ACP host directly; no separate provider runner is added.
 72. ✅ Lease readback parity across REST, CLI, JSON-RPC, native RPC, and dogfood
 73. ✅ GitHub bridge live sandbox dogfood — guarded real import/sync/thread
     resolution/denied-before-allowed merge with repeatable cleanup
-74. ▶ Production-safe version bump tooling — ADR-0016 accepted; issue #321
-    implementation and Docker ACP review evidence in progress
+74. ✅ Production-safe version bump tooling — ADR-0016 accepted; issue #321 and
+    PR #322 merged after focused tests, independent review, and Docker ACP proof
+75. ▶ ACP v1.1.0 release — synchronize public release/protocol status, apply the
+    first explicit release bump, validate, merge, tag, and publish
 
 ## Referenced by
 

@@ -90,12 +90,14 @@ tag command for the operator or release workflow.
 
 ### Transactional mutation
 
-The apply path reads `package.json`, `src/protocol/version.ts`, and
+The apply path reads `package.json`, `src/protocol/version.ts`, `README.md`, and
 `wiki/CHANGELOG.md` once, validates all required anchors, and precomputes every
 output before writing. Package rewriting validates the parsed top-level version
 and exactly one matching textual field. Protocol rewriting validates exactly one
 matching `ACP_PROTOCOL_VERSION` literal; the supported tuple and schema already
-derive from it. The changelog insertion targets the ledger heading.
+derive from it. README rewriting requires one canonical status line containing
+both current versions and advances the release and protocol labels from the same
+plan. The changelog insertion targets the ledger heading.
 
 Changed files are written to same-directory temporary files, flushed, and
 renamed over their destinations. If a later replacement fails, the transaction
@@ -126,6 +128,7 @@ remain at this tooling boundary and do not enter domain/protocol modules.
 - The first release baseline is an intentional, auditable action.
 - Release tagging remains a post-commit release-flow responsibility.
 - File-shape drift fails closed instead of producing a partially rewritten tree.
+- README status cannot silently diverge from package or protocol metadata.
 - Publishing, release commits, changelog generation beyond the one-line ledger,
   and CI enforcement remain out of scope.
 
@@ -151,9 +154,9 @@ Acceptance requires strict semver/argv unit tests, subject-and-body commit
 fixtures, baseline reachability and collision tests, no-baseline and dirty-tree
 failures, dry-run immutability, confirmation refusal, explicit protocol and
 forced release overrides, successful isolated-repository apply, injected
-transaction failure with rollback, repository static/full gates, and production
-Docker ACP self-dogfood. The wiki/code mirror audit remains 255/255 because no
-new `src/` file is introduced.
+transaction failure with rollback, synchronized README release/protocol labels,
+repository static/full gates, and production Docker ACP self-dogfood. The
+wiki/code mirror audit remains 255/255 because no new `src/` file is introduced.
 
 ## Grill Log
 
@@ -166,7 +169,10 @@ new `src/` file is introduced.
   write; the output must disclose dirtiness. Apply and baseline creation refuse
   it. _Rejected:_ blocking read-only planning.
 - **Q:** Is per-file atomic replacement sufficient? **A:** No; capture originals
-  and roll back the logical three-file transaction. _Rejected:_ partial success.
+  and roll back the logical four-file transaction. _Rejected:_ partial success.
+- **Q:** May README name only one version line? **A:** No; expose release and
+  protocol independently and rewrite both labels in the same transaction.
+  _Rejected:_ a manually maintained status label that drifts after a bump.
 - **Q:** Should unknown commits force a conservative major bump? **A:** No; warn
   and require an explicit override when the operator believes they are
   releasable. _Rejected:_ turning malformed metadata into automatic churn.
@@ -175,4 +181,4 @@ new `src/` file is introduced.
 
 [[ADR-0004-protocol-version-codecs-generated-client]] · [[protocol-version]] ·
 [[version-bump]] · [[decisions/_MOC]] · [[architecture/_MOC]] · [[CHANGELOG]] ·
-[[2026-07-13-acp-bump-version]]
+[[2026-07-13-acp-bump-version]] · [[2026-07-13-acp-release-1.1.0]]

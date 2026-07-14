@@ -182,4 +182,4 @@ export class AcpApi extends HttpApi.make('acp').add(workGroup) {}
 ## Referenced by
 
 [[2026-07-13-review-collaboration-security-design]] · (broader list maintained
-by Forensic Guardian)
+by Forensic Guardian) · [[2026-07-13-acp-release-1.1.0]]
