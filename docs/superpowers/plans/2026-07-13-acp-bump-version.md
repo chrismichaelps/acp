@@ -1,977 +1,230 @@
-# `acp bump` — Senior Semver Implementation Plan
+# `acp bump` — Production Semver Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+**Issue:** #321
 
-**Goal:** Ship `acp bump`, a version-bump tool that reasons about semver and advances the ACP protocol version and/or the release version only when a change actually warrants it.
+**Branch:** `feat/acp-bump-version` from `main`
 
-**Architecture:** The entire tool is self-contained plain-ESM under `scripts/bump/` so both the Node CLI and vitest import it with **zero build step**. Pure modules (`semver.mjs`, `policy.mjs`) own the semver rules; impure adapters (`parse-commits.mjs`, `collect.mjs`, `rewrite.mjs`) touch git and produce/transform text; a thin orchestrator `scripts/acp-bump.mjs` (exposed as `npm run bump`) wires evidence → policy → confirm → apply. Types are expressed via JSDoc `@typedef`. Documentation (ADR-0014 + wiki reference) is authored first per FMCF.
+**Goal:** Ship a fail-closed repository-local tool that plans and applies only
+justified release/protocol version changes.
 
-**Tech Stack:** Node ESM `.mjs` scripts (JSDoc-typed), vitest (matches `**/*.test.mjs`), git plumbing via `child_process`.
+## Governing truth
 
-> **Design note (resolved pre-flight):** an earlier draft placed the policy in `src/domain/versioning/*.ts` and had the orchestrator import compiled `dist/…`. That makes the standalone `pnpm test` gate fail (it never builds `dist`). Keeping the whole tool in `scripts/bump/*.mjs` removes the build dependency entirely — the tool is dev tooling, not protocol runtime, so it does not belong in the `src/` wiki-mirrored surface.
+Read these completely before implementation:
 
-## Global Constraints
+- `SKILL.md`
+- `wiki/decisions/ADR-0016-version-bump-policy.md`
+- `wiki/references/version-bump.md`
+- `wiki/src/protocol/version.md`
+- `wiki/grammar/typescript.md`
+- `wiki/handoffs/2026-07-13-acp-bump-version.md`
 
-- Package manager: pnpm 11.7.0 (`devEngines`). Run tooling via `node_modules/.bin` — do not invoke `npm install` (blocked in sandbox).
-- Module doc header required on every module: `// @Acp.<Area> — <one-line>` (JS) or `/** @Acp.<Area> — <one-line> */`.
-- The file-size gate (`scripts/check-file-size.mjs`) only inspects `.ts`/`.tsx`; the `.mjs` tool files are not bound by it, but keep each under ~200 lines for focus.
-- Conventional-commit messages; **no Claude attribution** in commits or PRs.
-- FMCF: wiki is truth. This tool lives in `scripts/` (dev tooling, not `src/` runtime), so it needs an ADR + a `wiki/references/` page, not a `wiki/src/` mirror. Author docs before code.
-- Protocol version string is 2-part `MAJOR.MINOR` (`'0.1'`); release version is 3-part `MAJOR.MINOR.PATCH` (`'1.0.0'`).
-- Gates that must stay green: `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test`. Invoke as `node_modules/.bin/tsc --noEmit`, `node_modules/.bin/eslint .`, `node_modules/.bin/prettier --check .`, `node_modules/.bin/vitest run`.
+The wiki controls if this plan or the older design narrative conflicts with it.
+The capability is plain Node ESM under `scripts/bump/`; it does not enter ACP's
+runtime `src/` tree and does not need a TypeScript build before tests.
 
----
+## Production constraints
 
-### Task 1: ADR-0014 + wiki policy doc (FMCF docs-first)
+- Node 24, pnpm 11.7.0, Vitest 4.
+- One focused module per responsibility; target about 200 lines per `.mjs` file.
+- Every module has an ACP structural header.
+- No shell interpolation for git evidence; use `execFileSync` with argument
+  arrays and an injectable runner.
+- Parse full commit subject/body records with control-character separators.
+- Unknown commits warn and contribute `none` unless their body has a breaking
+  trailer.
+- Protocol level is never inferred.
+- `--dry-run` is read-only and prompt-free.
+- Apply/baseline require clean state and interactive confirmation or `--yes`.
+- Ordinary apply never creates a release tag; baseline is the only tag mutation.
+- Validate every transform before writing; replace through temp files and roll
+  back earlier replacements if a later rename fails.
+- Do not modify the repository's actual version or create its baseline tag while
+  implementing/testing this feature. Integration tests use temporary repos.
+- Every commit ends `refs #321`.
 
-**Files:**
-- Create: `wiki/decisions/ADR-0014-version-bump-policy.md`
-- Modify: `wiki/decisions/_MOC.md` (add the ADR-0014 link)
-- Modify: `wiki/CHANGELOG.md` (prepend one delta line)
+## Slice 1 — Documentation-first contract
 
-**Interfaces:**
-- Produces: the canonical policy text later code projects — the two-line semver rules, the decoupling rule, and the 0.x handling.
+Files:
 
-- [ ] **Step 1: Write ADR-0014** with sections Status (ACCEPTED — 2026-07-13), Context, Decision, Rationale, Consequences. Copy the policy tables and the Decoupling/0.x rules verbatim from `docs/superpowers/specs/2026-07-13-acp-bump-version-design.md`. Front-matter:
+- `docs/superpowers/specs/2026-07-13-acp-bump-version-design.md`
+- `wiki/decisions/ADR-0016-version-bump-policy.md`
+- `wiki/references/version-bump.md`
+- `wiki/src/protocol/version.md`
+- `wiki/handoffs/2026-07-13-acp-bump-version.md`
+- affected MOCs, README, and `wiki/CHANGELOG.md`
 
-```markdown
----
-type: adr
-status: ACCEPTED
-date: 2026-07-13
-tags: [adr, versioning, tooling]
-aliases: [ADR-0014, ADR-0014-version-bump-policy]
----
+Acceptance:
 
-# ADR-0014 — Version Bump Policy
+- ADR number does not collide with ADR-0014/0015.
+- Grill resolves commit bodies, tag timing, confirmation, dirty state, and
+  multi-file rollback.
+- `pnpm exec prettier --check` passes for every changed document.
+- Commit documentation before any implementation module.
+
+## Slice 2 — Strict inputs and pure policy
+
+Create:
+
+- `scripts/bump/args.mjs` + `args.test.mjs`
+- `scripts/bump/semver.mjs` + `semver.test.mjs`
+- `scripts/bump/policy.mjs` + `policy.test.mjs`
+
+Required interfaces:
+
+```text
+parseArgs(argv) ->
+  { mode, release?, protocol?, since?, force, yes, dryRun }
+
+bumpRelease(version, level) -> three-part version
+bumpProtocol(version, level) -> two-part protocol version
+
+classifyRelease(signals) -> { level, reasons, warnings }
+classifyProtocol(signals) -> { level: none, reasons, warnings }
+validateReleaseOverride(proposed, override, force) -> accepted level or violation
+planBump({ signals, current, overrides, force }) -> immutable plan
 ```
 
-- [ ] **Step 2: Link it** — add `- [[ADR-0014-version-bump-policy|ADR-0014]] — version bump policy (protocol + release semver).` to `wiki/decisions/_MOC.md` in the ADR list.
+Tests must cover:
 
-- [ ] **Step 3: Changelog** — prepend to `wiki/CHANGELOG.md`:
+- all valid levels and reset behavior;
+- leading zero, negative, non-numeric, overflow, wrong-part, and invalid-level
+  rejection;
+- unknown flag, missing/repeated value, invalid level, and incompatible baseline
+  mode rejection;
+- release success/failure/regression matrix;
+- protocol surface warning without an inferred bump;
+- lower release override refusal and `--force` acceptance;
+- explicit protocol major/minor/patch/none behavior.
 
-```markdown
-- 2026-07-13 · Version bump policy · defined the two-line semver policy
-  (protocol vs release), the decoupling rule, and 0.x handling; introduced the
-  `acp bump` dev tool proposed from git evidence with human-confirmed writes ·
-  validation: policy unit tests + dry-run integration · risk LOW ·
-  [[ADR-0014-version-bump-policy]]
+Commit pure policy separately from I/O.
+
+## Slice 3 — Full git evidence and baseline
+
+Create:
+
+- `scripts/bump/parse-commits.mjs` + tests
+- `scripts/bump/collect.mjs` + tests
+
+Commit records use `%x1e%s%x1f%b`. The parser accepts `{ subject, body }`,
+preserves type/scope, recognizes `!`, `BREAKING CHANGE:`, and
+`BREAKING-CHANGE:`, and marks malformed subjects `unknown` without discarding a
+breaking body.
+
+`resolveBaseline` uses the newest reachable `v*` tag from `HEAD`; `--since`
+resolution verifies `<ref>^{commit}`. `collectSignals` reads commits and changed
+paths for `<baseline>..HEAD`, then isolates `src/protocol/` paths.
+
+Tests must cover reachable vs unrelated tags, no baseline, invalid `--since`,
+empty history, filenames with spaces, full breaking trailers, malformed commits,
+and protocol/non-protocol paths. Git is injected for unit tests; temporary repos
+provide one end-to-end collector regression.
+
+## Slice 4 — Validated transforms and transaction
+
+Create:
+
+- `scripts/bump/rewrite.mjs` + tests
+- `scripts/bump/transaction.mjs` + tests
+
+Pure transforms:
+
+```text
+rewritePackageVersion(text, expected, next)
+rewriteProtocolVersion(text, expected, next)
+prependChangelogEntry(text, entry)
+changelogEntry({ date, release?, protocol? })
 ```
 
-- [ ] **Step 4: Verify docs gate**
+They parse/validate the package top-level version, require exactly one textual
+anchor, require exactly one protocol constant matching `expected`, and require
+the changelog heading. Unchanged lines preserve repository formatting.
 
-Run: `node_modules/.bin/prettier --check "wiki/**/*.md"`
-Expected: PASS (no formatting diffs).
+The transaction accepts path/content pairs, captures originals, creates
+same-directory temp files with the target mode, flushes, renames, and cleans up.
+An injected filesystem operation must force failure on a later rename and prove
+that earlier files are byte-identical after rollback. Cover rollback failure as
+a distinct error.
 
-- [ ] **Step 5: Commit**
+## Slice 5 — Orchestrator and isolated repository integration
+
+Create:
+
+- `scripts/acp-bump.mjs`
+- `scripts/acp-bump.test.mjs`
+
+Modify `package.json` with:
+
+```json
+"bump": "node scripts/acp-bump.mjs"
+```
+
+The entrypoint:
+
+1. parses argv before I/O;
+2. resolves/validates the baseline;
+3. collects evidence and builds the immutable plan;
+4. prints current/next versions, reasons, warnings, and dirtiness;
+5. exits on violations or an all-`none` plan;
+6. returns immediately for dry-run;
+7. requires clean state and confirmation;
+8. precomputes all transforms and commits the transaction;
+9. prints the reviewed diff instruction and post-commit release tag command.
+
+Baseline mode previews or creates annotated `v<package-version>` at `HEAD`.
+Collisions, dirty state, and missing confirmation fail before `git tag`.
+
+Integration tests spawn the real script in temporary initialized git repos and
+prove:
+
+- no-baseline refusal;
+- baseline dry-run immutability and successful `--yes` annotated tag;
+- tag collision refusal;
+- dry-run leaves bytes and refs unchanged;
+- non-TTY apply without `--yes` refuses;
+- dirty apply refuses;
+- feat/fix/breaking-body proposals;
+- release override violation and forced override;
+- protocol evidence warning and explicit protocol application;
+- successful release/protocol/changelog apply;
+- no immediate release tag is created.
+
+## Slice 6 — Reconcile, review, and production gates
+
+Update [[version-bump]], the handoff, changelog, architecture build order, and
+README to match the exact implementation. Run an exact source/wiki audit; the
+expected result remains 255/255 with zero missing or orphan pages.
+
+Run, in order:
 
 ```bash
-git add wiki/decisions/ADR-0014-version-bump-policy.md wiki/decisions/_MOC.md wiki/CHANGELOG.md
-git commit -m "docs(versioning): adopt ADR-0014 version bump policy"
+pnpm exec vitest run scripts/bump/*.test.mjs scripts/acp-bump.test.mjs
+pnpm typecheck
+pnpm lint
+pnpm format:check
+pnpm check:agent-permissions
+pnpm check:env
+pnpm check:edge-runtime-pins
+pnpm check:file-size
+pnpm test
+pnpm build
+pnpm dogfood:docker-self
 ```
 
----
-
-### Task 2: Semver arithmetic (`bumpRelease` / `bumpProtocol`)
-
-**Files:**
-- Create: `scripts/bump/semver.mjs`
-- Test: `scripts/bump/semver.test.mjs`
-
-**Interfaces:**
-- Produces:
-  - `@typedef {'major'|'minor'|'patch'|'none'} SemverLevel`
-  - `bumpRelease(version, level): string` — 3-part standard semver.
-  - `bumpProtocol(version, level): string` — 2-part `0.x` rule: while MAJOR is `0`, both `major` and `minor` advance the MINOR slot; `patch` is a no-op; `none` unchanged.
-
-- [ ] **Step 1: Write the failing test**
-
-```javascript
-import { describe, expect, it } from 'vitest'
-import { bumpProtocol, bumpRelease } from './semver.mjs'
-
-describe('bumpRelease (3-part standard semver)', () => {
-  it('bumps major and resets minor/patch', () => {
-    expect(bumpRelease('1.4.2', 'major')).toBe('2.0.0')
-  })
-  it('bumps minor and resets patch', () => {
-    expect(bumpRelease('1.4.2', 'minor')).toBe('1.5.0')
-  })
-  it('bumps patch', () => {
-    expect(bumpRelease('1.4.2', 'patch')).toBe('1.4.3')
-  })
-  it('leaves version unchanged for none', () => {
-    expect(bumpRelease('1.4.2', 'none')).toBe('1.4.2')
-  })
-  it('rejects a non 3-part version', () => {
-    expect(() => bumpRelease('0.1', 'patch')).toThrow(/3-part/)
-  })
-})
-
-describe('bumpProtocol (2-part 0.x rule)', () => {
-  it('advances the minor slot for a breaking (major) change while in 0.x', () => {
-    expect(bumpProtocol('0.1', 'major')).toBe('0.2')
-  })
-  it('advances the minor slot for an additive (minor) change while in 0.x', () => {
-    expect(bumpProtocol('0.1', 'minor')).toBe('0.2')
-  })
-  it('is a no-op for patch (no patch slot in 0.x)', () => {
-    expect(bumpProtocol('0.1', 'patch')).toBe('0.1')
-  })
-  it('leaves version unchanged for none', () => {
-    expect(bumpProtocol('0.1', 'none')).toBe('0.1')
-  })
-})
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `node_modules/.bin/vitest run scripts/bump/semver.test.mjs`
-Expected: FAIL — cannot resolve `./semver.mjs`.
-
-- [ ] **Step 3: Write minimal implementation**
-
-```javascript
-// @Acp.Scripts.Bump.Semver — pure semver arithmetic for release + protocol lines
-/** @typedef {'major'|'minor'|'patch'|'none'} SemverLevel */
-
-const parse = (version, parts) => {
-  const segments = version.split('.')
-  if (segments.length !== parts) {
-    throw new Error(`expected a ${parts}-part version, received "${version}"`)
-  }
-  return segments.map((segment) => {
-    const value = Number(segment)
-    if (!Number.isInteger(value) || value < 0) {
-      throw new Error(`invalid version segment "${segment}" in "${version}"`)
-    }
-    return value
-  })
-}
-
-export const bumpRelease = (version, level) => {
-  const [major, minor, patch] = parse(version, 3)
-  switch (level) {
-    case 'major':
-      return `${major + 1}.0.0`
-    case 'minor':
-      return `${major}.${minor + 1}.0`
-    case 'patch':
-      return `${major}.${minor}.${patch + 1}`
-    default:
-      return version
-  }
-}
-
-export const bumpProtocol = (version, level) => {
-  const [major, minor] = parse(version, 2)
-  if (major !== 0) {
-    // Once the protocol graduates out of 0.x, treat it as standard 2-part semver.
-    if (level === 'major') return `${major + 1}.0`
-    if (level === 'minor') return `${major}.${minor + 1}`
-    return version
-  }
-  // 0.x: no compatibility guarantee, so breaking and additive both advance MINOR;
-  // there is no patch slot.
-  if (level === 'major' || level === 'minor') return `0.${minor + 1}`
-  return version
-}
-```
-
-- [ ] **Step 4: Run test to verify it passes**
-
-Run: `node_modules/.bin/vitest run scripts/bump/semver.test.mjs`
-Expected: PASS (all cases).
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add scripts/bump/semver.mjs scripts/bump/semver.test.mjs
-git commit -m "feat(versioning): add pure semver arithmetic"
-```
-
----
-
-### Task 3: Classification policy (`classifyRelease`, `classifyProtocol`, `validateOverride`)
-
-**Files:**
-- Create: `scripts/bump/policy.mjs`
-- Test: `scripts/bump/policy.test.mjs`
-
-**Interfaces:**
-- Consumes: the `SemverLevel` concept from `./semver.mjs` (no runtime import needed).
-- Produces (JSDoc-typed):
-  - `@typedef {{ type: string, scope?: string, breaking: boolean }} ConventionalCommit`
-  - `@typedef {{ commits: ConventionalCommit[], protocolSurfaceChanged: boolean, protocolFiles: string[] }} ChangeSignals`
-  - `@typedef {{ level: SemverLevel, reasons: string[] }} Proposal`
-  - `classifyRelease(signals): Proposal`
-  - `classifyProtocol(signals): Proposal`
-  - `validateOverride(proposed, override, opts): { ok: true, level } | { ok: false, violation }`
-  - `RELEASE_RANK` (`{ none:0, patch:1, minor:2, major:3 }`)
-
-- [ ] **Step 1: Write the failing test**
-
-```javascript
-import { describe, expect, it } from 'vitest'
-import {
-  classifyProtocol,
-  classifyRelease,
-  validateOverride,
-} from './policy.mjs'
-
-const base = {
-  commits: [],
-  protocolSurfaceChanged: false,
-  protocolFiles: [],
-}
-
-describe('classifyRelease', () => {
-  it('proposes minor for a feat', () => {
-    const p = classifyRelease({ ...base, commits: [{ type: 'feat', breaking: false }] })
-    expect(p.level).toBe('minor')
-  })
-  it('proposes patch for a fix', () => {
-    const p = classifyRelease({ ...base, commits: [{ type: 'fix', breaking: false }] })
-    expect(p.level).toBe('patch')
-  })
-  it('proposes major when any commit is breaking', () => {
-    const p = classifyRelease({
-      ...base,
-      commits: [{ type: 'feat', breaking: false }, { type: 'fix', breaking: true }],
-    })
-    expect(p.level).toBe('major')
-  })
-  it('proposes none for docs/test/chore only', () => {
-    const p = classifyRelease({
-      ...base,
-      commits: [{ type: 'docs', breaking: false }, { type: 'test', breaking: false }],
-    })
-    expect(p.level).toBe('none')
-  })
-  it('takes the highest level across mixed commits', () => {
-    const p = classifyRelease({
-      ...base,
-      commits: [{ type: 'docs', breaking: false }, { type: 'feat', breaking: false }],
-    })
-    expect(p.level).toBe('minor')
-  })
-  it('warns on unknown commit types but does not bump on them', () => {
-    const p = classifyRelease({ ...base, commits: [{ type: 'wip', breaking: false }] })
-    expect(p.level).toBe('none')
-    expect(p.reasons.join(' ')).toMatch(/unknown/)
-  })
-})
-
-describe('classifyProtocol', () => {
-  it('always proposes none, even when the surface changed', () => {
-    const p = classifyProtocol({ ...base, protocolSurfaceChanged: true, protocolFiles: ['src/protocol/schema/common.ts'] })
-    expect(p.level).toBe('none')
-    expect(p.reasons.join(' ')).toMatch(/protocol surface changed/i)
-  })
-  it('is silent when the surface is untouched', () => {
-    const p = classifyProtocol(base)
-    expect(p.level).toBe('none')
-    expect(p.reasons.join(' ')).toMatch(/no protocol surface change/i)
-  })
-})
-
-describe('validateOverride', () => {
-  it('accepts an override that is >= the proposed level', () => {
-    expect(validateOverride('patch', 'minor', { force: false })).toEqual({ ok: true, level: 'minor' })
-  })
-  it('refuses a lower override that contradicts the evidence', () => {
-    const r = validateOverride('major', 'patch', { force: false })
-    expect(r.ok).toBe(false)
-  })
-  it('permits a contradictory override under force', () => {
-    expect(validateOverride('major', 'patch', { force: true })).toEqual({ ok: true, level: 'patch' })
-  })
-})
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `node_modules/.bin/vitest run scripts/bump/policy.test.mjs`
-Expected: FAIL — cannot resolve `./policy.mjs`.
-
-- [ ] **Step 3: Write minimal implementation**
-
-```javascript
-// @Acp.Scripts.Bump.Policy — semver classification: when do we really need to bump
-/** @typedef {import('./semver.mjs').SemverLevel} SemverLevel */
-/** @typedef {{ type: string, scope?: string, breaking: boolean }} ConventionalCommit */
-/** @typedef {{ commits: ConventionalCommit[], protocolSurfaceChanged: boolean, protocolFiles: string[] }} ChangeSignals */
-/** @typedef {{ level: SemverLevel, reasons: string[] }} Proposal */
-
-export const RELEASE_RANK = {
-  none: 0,
-  patch: 1,
-  minor: 2,
-  major: 3,
-}
-
-const RELEASE_TYPE_LEVEL = {
-  feat: 'minor',
-  fix: 'patch',
-  perf: 'patch',
-}
-const NO_BUMP_TYPES = new Set(['docs', 'test', 'chore', 'refactor', 'style', 'ci', 'build'])
-
-const higher = (a, b) => (RELEASE_RANK[a] >= RELEASE_RANK[b] ? a : b)
-
-export const classifyRelease = (signals) => {
-  const reasons = []
-  let level = 'none'
-  for (const commit of signals.commits) {
-    if (commit.breaking) {
-      level = higher(level, 'major')
-      reasons.push(`breaking change (${commit.type}) -> major`)
-      continue
-    }
-    const mapped = RELEASE_TYPE_LEVEL[commit.type]
-    if (mapped) {
-      level = higher(level, mapped)
-      reasons.push(`${commit.type} -> ${mapped}`)
-    } else if (NO_BUMP_TYPES.has(commit.type)) {
-      reasons.push(`${commit.type} -> none`)
-    } else {
-      reasons.push(`unknown commit type "${commit.type}" -> none (ignored)`)
-    }
-  }
-  if (reasons.length === 0) reasons.push('no commits since baseline -> none')
-  return { level, reasons }
-}
-
-export const classifyProtocol = (signals) => {
-  if (!signals.protocolSurfaceChanged) {
-    return { level: 'none', reasons: ['no protocol surface change -> none'] }
-  }
-  return {
-    level: 'none',
-    reasons: [
-      `protocol surface changed (${signals.protocolFiles.length} file(s)) -> decide explicitly with --protocol`,
-      ...signals.protocolFiles.map((file) => `  touched: ${file}`),
-    ],
-  }
-}
-
-export const validateOverride = (proposed, override, opts) => {
-  if (opts.force || RELEASE_RANK[override] >= RELEASE_RANK[proposed]) {
-    return { ok: true, level: override }
-  }
-  return {
-    ok: false,
-    violation: `requested "${override}" is below the evidence-proposed "${proposed}"; re-run with --force to override`,
-  }
-}
-```
-
-- [ ] **Step 4: Run test to verify it passes**
-
-Run: `node_modules/.bin/vitest run scripts/bump/policy.test.mjs`
-Expected: PASS.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add scripts/bump/policy.mjs scripts/bump/policy.test.mjs
-git commit -m "feat(versioning): add semver classification policy"
-```
-
----
-
-### Task 4: Wiki reference page for the tool
-
-**Files:**
-- Create: `wiki/references/version-bump.md`
-- Modify: `wiki/references/_MOC.md` (add a link to the new page)
-
-**Interfaces:** none (documentation).
-
-- [ ] **Step 1: Write the reference page** — ~40 lines matching the style of existing `wiki/references/**` pages. Document: the two-line policy summary and decoupling rule (cross-linking `[[ADR-0014-version-bump-policy]]`), the module layout (`scripts/bump/semver.mjs`, `policy.mjs`, `parse-commits.mjs`, `collect.mjs`, `rewrite.mjs`, `scripts/acp-bump.mjs`), and the CLI surface (`--baseline`, `--dry-run`, `--release`, `--protocol`, `--force`, `--since`, `--tag`). Front-matter:
-
-```markdown
----
-type: reference
-tags: [reference, versioning, tooling]
-aliases: [version-bump, acp-bump]
----
-
-# Version Bump (`acp bump`)
-```
-
-- [ ] **Step 2: Link it** — add `- [[version-bump]] — the `acp bump` tool and semver policy.` to the reference list in `wiki/references/_MOC.md`.
-
-- [ ] **Step 3: Verify docs gate**
-
-Run: `node_modules/.bin/prettier --check "wiki/references/**/*.md"`
-Expected: PASS.
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add wiki/references/version-bump.md wiki/references/_MOC.md
-git commit -m "docs(versioning): reference page for acp bump"
-```
-
----
-
-### Task 5: Commit collector (git → ChangeSignals.commits)
-
-**Files:**
-- Create: `scripts/bump/parse-commits.mjs` (pure parser)
-- Create: `scripts/bump/parse-commits.test.mjs`
-
-**Interfaces:**
-- Produces: `parseConventionalCommits(subjects: string[]): { type: string, scope?: string, breaking: boolean }[]` — parses the subject line grammar `type(scope)!: description` and detects `BREAKING CHANGE` markers passed inline.
-
-- [ ] **Step 1: Write the failing test**
-
-```javascript
-import { describe, expect, it } from 'vitest'
-import { parseConventionalCommits } from './parse-commits.mjs'
-
-describe('parseConventionalCommits', () => {
-  it('parses type and scope', () => {
-    expect(parseConventionalCommits(['feat(events): add filter'])).toEqual([
-      { type: 'feat', scope: 'events', breaking: false },
-    ])
-  })
-  it('parses a bang breaking marker', () => {
-    expect(parseConventionalCommits(['feat(api)!: drop field'])).toEqual([
-      { type: 'feat', scope: 'api', breaking: true },
-    ])
-  })
-  it('parses a bare type without scope', () => {
-    expect(parseConventionalCommits(['fix: correct bug'])).toEqual([
-      { type: 'fix', breaking: false },
-    ])
-  })
-  it('marks non-conforming subjects as unknown', () => {
-    expect(parseConventionalCommits(['just some text'])).toEqual([
-      { type: 'unknown', breaking: false },
-    ])
-  })
-})
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `node_modules/.bin/vitest run scripts/bump/parse-commits.test.mjs`
-Expected: FAIL — cannot resolve module.
-
-- [ ] **Step 3: Write minimal implementation**
-
-```javascript
-// @Acp.Scripts.Bump.ParseCommits — parse conventional-commit subject lines
-const SUBJECT = /^(?<type>[a-z]+)(?:\((?<scope>[^)]+)\))?(?<bang>!)?:\s.+/
-
-export const parseConventionalCommits = (subjects) =>
-  subjects.map((subject) => {
-    const match = SUBJECT.exec(subject.trim())
-    if (!match || !match.groups) {
-      return { type: 'unknown', breaking: false }
-    }
-    const { type, scope, bang } = match.groups
-    const breaking = bang === '!' || /BREAKING CHANGE/.test(subject)
-    return scope ? { type, scope, breaking } : { type, breaking }
-  })
-```
-
-- [ ] **Step 4: Run test to verify it passes**
-
-Run: `node_modules/.bin/vitest run scripts/bump/parse-commits.test.mjs`
-Expected: PASS.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add scripts/bump/parse-commits.mjs scripts/bump/parse-commits.test.mjs
-git commit -m "feat(versioning): parse conventional commit subjects"
-```
-
----
-
-### Task 6: Evidence collection from git (impure adapter)
-
-**Files:**
-- Create: `scripts/bump/collect.mjs`
-- Test: `scripts/bump/collect.test.mjs`
-
-**Interfaces:**
-- Consumes: `parseConventionalCommits` from `./parse-commits.mjs`.
-- Produces:
-  - `resolveBaseline(runGit): string | null` — returns the newest `v*` tag or `null`.
-  - `collectSignals({ since, runGit }): ChangeSignals` — builds `{ commits, protocolSurfaceChanged, protocolFiles }`. `runGit(args: string[]) => string` is injected so tests avoid a real repo.
-
-- [ ] **Step 1: Write the failing test**
-
-```javascript
-import { describe, expect, it } from 'vitest'
-import { collectSignals, resolveBaseline } from './collect.mjs'
-
-const fakeGit = (responses) => (args) => {
-  const key = args.join(' ')
-  if (!(key in responses)) throw new Error(`unexpected git ${key}`)
-  return responses[key]
-}
-
-describe('resolveBaseline', () => {
-  it('returns the newest version tag', () => {
-    const git = fakeGit({ 'tag --list v* --sort=-v:refname': 'v1.2.0\nv1.1.0\n' })
-    expect(resolveBaseline(git)).toBe('v1.2.0')
-  })
-  it('returns null when there are no tags', () => {
-    const git = fakeGit({ 'tag --list v* --sort=-v:refname': '\n' })
-    expect(resolveBaseline(git)).toBe(null)
-  })
-})
-
-describe('collectSignals', () => {
-  it('collects commits and flags a touched protocol surface', () => {
-    const git = fakeGit({
-      'log v1.0.0..HEAD --pretty=%s': 'feat(events): add filter\ndocs(wiki): note',
-      'diff --name-only v1.0.0..HEAD': 'src/protocol/schema/common.ts\nsrc/app/cli/main.ts',
-    })
-    const signals = collectSignals({ since: 'v1.0.0', runGit: git })
-    expect(signals.commits).toEqual([
-      { type: 'feat', scope: 'events', breaking: false },
-      { type: 'docs', scope: 'wiki', breaking: false },
-    ])
-    expect(signals.protocolSurfaceChanged).toBe(true)
-    expect(signals.protocolFiles).toEqual(['src/protocol/schema/common.ts'])
-  })
-  it('reports an untouched protocol surface', () => {
-    const git = fakeGit({
-      'log v1.0.0..HEAD --pretty=%s': 'fix(docker): tweak',
-      'diff --name-only v1.0.0..HEAD': 'Dockerfile',
-    })
-    const signals = collectSignals({ since: 'v1.0.0', runGit: git })
-    expect(signals.protocolSurfaceChanged).toBe(false)
-    expect(signals.protocolFiles).toEqual([])
-  })
-})
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `node_modules/.bin/vitest run scripts/bump/collect.test.mjs`
-Expected: FAIL — cannot resolve module.
-
-- [ ] **Step 3: Write minimal implementation**
-
-```javascript
-// @Acp.Scripts.Bump.Collect — build ChangeSignals from git history
-import { execFileSync } from 'node:child_process'
-import { parseConventionalCommits } from './parse-commits.mjs'
-
-export const defaultRunGit = (args) =>
-  execFileSync('git', args, { encoding: 'utf8' })
-
-export const resolveBaseline = (runGit = defaultRunGit) => {
-  const out = runGit(['tag', '--list', 'v*', '--sort=-v:refname']).trim()
-  if (out === '') return null
-  return out.split('\n')[0].trim()
-}
-
-const nonEmptyLines = (text) =>
-  text
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line !== '')
-
-export const collectSignals = ({ since, runGit = defaultRunGit }) => {
-  const range = since ? `${since}..HEAD` : 'HEAD'
-  const subjects = nonEmptyLines(runGit(['log', range, '--pretty=%s']))
-  const files = nonEmptyLines(runGit(['diff', '--name-only', range]))
-  const protocolFiles = files.filter((file) => file.startsWith('src/protocol/'))
-  return {
-    commits: parseConventionalCommits(subjects),
-    protocolSurfaceChanged: protocolFiles.length > 0,
-    protocolFiles,
-  }
-}
-```
-
-Note: the `since ? ... : 'HEAD'` branch means the no-baseline path is exercised by the orchestrator's baseline guard (Task 8), not here.
-
-- [ ] **Step 4: Run test to verify it passes**
-
-Run: `node_modules/.bin/vitest run scripts/bump/collect.test.mjs`
-Expected: PASS.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add scripts/bump/collect.mjs scripts/bump/collect.test.mjs
-git commit -m "feat(versioning): collect bump signals from git"
-```
-
----
-
-### Task 7: Version-file writers (pure transforms + thin writes)
-
-**Files:**
-- Create: `scripts/bump/rewrite.mjs`
-- Test: `scripts/bump/rewrite.test.mjs`
-
-**Interfaces:**
-- Produces (pure string transforms, so they are testable without touching disk):
-  - `rewritePackageVersion(json: string, next: string): string` — replaces the top-level `"version"` value in `package.json` text, preserving formatting.
-  - `rewriteProtocolVersion(source: string, next: string): string` — replaces the `ACP_PROTOCOL_VERSION = '<old>'` literal in `src/protocol/version.ts`. Throws if the literal is not found.
-  - `changelogEntry({ date, release, protocol }): string` — one-line ledger entry.
-
-- [ ] **Step 1: Write the failing test**
-
-```javascript
-import { describe, expect, it } from 'vitest'
-import {
-  changelogEntry,
-  rewritePackageVersion,
-  rewriteProtocolVersion,
-} from './rewrite.mjs'
-
-describe('rewritePackageVersion', () => {
-  it('replaces only the top-level version', () => {
-    const json = '{\n  "name": "acp",\n  "version": "1.0.0",\n  "bin": {}\n}\n'
-    expect(rewritePackageVersion(json, '1.1.0')).toContain('"version": "1.1.0"')
-  })
-})
-
-describe('rewriteProtocolVersion', () => {
-  it('replaces the protocol constant literal', () => {
-    const src = "export const ACP_PROTOCOL_VERSION = '0.1' as const\n"
-    expect(rewriteProtocolVersion(src, '0.2')).toBe(
-      "export const ACP_PROTOCOL_VERSION = '0.2' as const\n",
-    )
-  })
-  it('throws when the literal is absent', () => {
-    expect(() => rewriteProtocolVersion('nothing here', '0.2')).toThrow(/ACP_PROTOCOL_VERSION/)
-  })
-})
-
-describe('changelogEntry', () => {
-  it('renders a one-line ledger entry', () => {
-    const line = changelogEntry({ date: '2026-07-13', release: '1.1.0', protocol: null })
-    expect(line).toMatch(/2026-07-13/)
-    expect(line).toMatch(/release 1\.1\.0/)
-  })
-})
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `node_modules/.bin/vitest run scripts/bump/rewrite.test.mjs`
-Expected: FAIL — cannot resolve module.
-
-- [ ] **Step 3: Write minimal implementation**
-
-```javascript
-// @Acp.Scripts.Bump.Rewrite — pure version-file transforms + one-line ledger entry
-export const rewritePackageVersion = (json, next) => {
-  const pattern = /("version"\s*:\s*")([^"]+)(")/
-  if (!pattern.test(json)) throw new Error('package.json has no "version" field')
-  return json.replace(pattern, `$1${next}$3`)
-}
-
-export const rewriteProtocolVersion = (source, next) => {
-  const pattern = /(ACP_PROTOCOL_VERSION\s*=\s*')([^']+)(')/
-  if (!pattern.test(source)) {
-    throw new Error('source has no ACP_PROTOCOL_VERSION literal')
-  }
-  return source.replace(pattern, `$1${next}$3`)
-}
-
-export const changelogEntry = ({ date, release, protocol }) => {
-  const parts = []
-  if (release) parts.push(`release ${release}`)
-  if (protocol) parts.push(`protocol ${protocol}`)
-  return `- ${date} · Version bump · ${parts.join(', ')} · via acp bump · risk LOW`
-}
-```
-
-- [ ] **Step 4: Run test to verify it passes**
-
-Run: `node_modules/.bin/vitest run scripts/bump/rewrite.test.mjs`
-Expected: PASS.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add scripts/bump/rewrite.mjs scripts/bump/rewrite.test.mjs
-git commit -m "feat(versioning): add version-file rewrite transforms"
-```
-
----
-
-### Task 8: Orchestrator `acp bump` + `--dry-run` integration + npm script
-
-**Files:**
-- Create: `scripts/acp-bump.mjs`
-- Test: `scripts/acp-bump.test.mjs`
-- Modify: `package.json` (add `"bump": "node scripts/acp-bump.mjs"` to `scripts`)
-
-**Interfaces:**
-- Consumes: `collectSignals`, `resolveBaseline` (`./bump/collect.mjs`); `classifyRelease`, `classifyProtocol`, `validateOverride` (`./bump/policy.mjs`); `bumpRelease`, `bumpProtocol` (`./bump/semver.mjs`); `changelogEntry`, `rewritePackageVersion`, `rewriteProtocolVersion` (`./bump/rewrite.mjs`).
-- Produces: `planBump({ signals, current, overrides, force }): { release: {level,next,reasons}, protocol: {level,next,reasons}, violations: string[] }` — the pure decision core, exported for the integration test. The `main()` entry wires argv → collect → planBump → print → (unless `--dry-run`) write, and requires `--protocol <level>` before any protocol write. Baseline guard: if `resolveBaseline` is `null` and neither `--since` nor `--baseline` given, print a warning and exit non-zero.
-
-- [ ] **Step 1: Write the failing test** (drives the pure `planBump` core over fixtures — no disk, no git)
-
-```javascript
-import { describe, expect, it } from 'vitest'
-import { planBump } from './acp-bump.mjs'
-
-const current = { release: '1.0.0', protocol: '0.1' }
-
-describe('planBump', () => {
-  it('proposes a minor release for a feat and no protocol bump', () => {
-    const plan = planBump({
-      signals: { commits: [{ type: 'feat', breaking: false }], protocolSurfaceChanged: false, protocolFiles: [] },
-      current,
-      overrides: {},
-      force: false,
-    })
-    expect(plan.release.level).toBe('minor')
-    expect(plan.release.next).toBe('1.1.0')
-    expect(plan.protocol.level).toBe('none')
-    expect(plan.protocol.next).toBe('0.1')
-    expect(plan.violations).toEqual([])
-  })
-
-  it('never bumps protocol from evidence alone even when the surface changed', () => {
-    const plan = planBump({
-      signals: { commits: [{ type: 'feat', breaking: false }], protocolSurfaceChanged: true, protocolFiles: ['src/protocol/schema/common.ts'] },
-      current,
-      overrides: {},
-      force: false,
-    })
-    expect(plan.protocol.level).toBe('none')
-    expect(plan.protocol.reasons.join(' ')).toMatch(/decide explicitly/)
-  })
-
-  it('advances protocol only under an explicit override', () => {
-    const plan = planBump({
-      signals: { commits: [], protocolSurfaceChanged: true, protocolFiles: ['src/protocol/schema/common.ts'] },
-      current,
-      overrides: { protocol: 'major' },
-      force: false,
-    })
-    expect(plan.protocol.level).toBe('major')
-    expect(plan.protocol.next).toBe('0.2')
-  })
-
-  it('records a violation for a release override below the evidence', () => {
-    const plan = planBump({
-      signals: { commits: [{ type: 'feat', breaking: true }], protocolSurfaceChanged: false, protocolFiles: [] },
-      current,
-      overrides: { release: 'patch' },
-      force: false,
-    })
-    expect(plan.violations.length).toBe(1)
-  })
-})
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `node_modules/.bin/vitest run scripts/acp-bump.test.mjs`
-Expected: FAIL — cannot resolve module / `planBump` undefined.
-
-- [ ] **Step 3: Write minimal implementation** (only the `planBump` core + a thin `main`; import policy from `dist`)
-
-```javascript
-// @Acp.Scripts.AcpBump — orchestrate evidence -> policy -> confirm -> apply
-import { readFileSync, writeFileSync } from 'node:fs'
-import {
-  classifyProtocol,
-  classifyRelease,
-  validateOverride,
-} from './bump/policy.mjs'
-import { bumpProtocol, bumpRelease } from './bump/semver.mjs'
-import { collectSignals, resolveBaseline } from './bump/collect.mjs'
-import {
-  changelogEntry,
-  rewritePackageVersion,
-  rewriteProtocolVersion,
-} from './bump/rewrite.mjs'
-
-export const planBump = ({ signals, current, overrides, force }) => {
-  const violations = []
-
-  const relProposal = classifyRelease(signals)
-  let relLevel = relProposal.level
-  if (overrides.release) {
-    const v = validateOverride(relProposal.level, overrides.release, { force })
-    if (v.ok) relLevel = v.level
-    else violations.push(v.violation)
-  }
-
-  const protoProposal = classifyProtocol(signals)
-  let protoLevel = protoProposal.level
-  if (overrides.protocol) {
-    // An explicit protocol level is always honored (there is no evidence level to contradict).
-    protoLevel = overrides.protocol
-  }
-
-  return {
-    release: {
-      level: relLevel,
-      next: bumpRelease(current.release, relLevel),
-      reasons: relProposal.reasons,
-    },
-    protocol: {
-      level: protoLevel,
-      next: bumpProtocol(current.protocol, protoLevel),
-      reasons: protoProposal.reasons,
-    },
-    violations,
-  }
-}
-
-const parseArgs = (argv) => {
-  const flags = { overrides: {}, force: false, dryRun: false, tag: false, baseline: false, since: null }
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i]
-    if (arg === '--release') flags.overrides.release = argv[++i]
-    else if (arg === '--protocol') flags.overrides.protocol = argv[++i]
-    else if (arg === '--since') flags.since = argv[++i]
-    else if (arg === '--force') flags.force = true
-    else if (arg === '--dry-run') flags.dryRun = true
-    else if (arg === '--tag') flags.tag = true
-    else if (arg === '--baseline') flags.baseline = true
-  }
-  return flags
-}
-
-const main = () => {
-  const flags = parseArgs(process.argv.slice(2))
-  const baseline = flags.since ?? resolveBaseline()
-
-  if (flags.baseline) {
-    const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
-    console.log(`Establish baseline: tag v${pkg.version} at HEAD, then re-run acp bump.`)
-    console.log(`  git tag v${pkg.version}`)
-    return
-  }
-  if (!baseline) {
-    console.error('acp bump: no v* tag found. Run `acp bump --baseline` first, or pass --since <ref>.')
-    process.exitCode = 1
-    return
-  }
-
-  const signals = collectSignals({ since: baseline })
-  const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
-  const versionSource = readFileSync('src/protocol/version.ts', 'utf8')
-  const currentProtocol = /ACP_PROTOCOL_VERSION\s*=\s*'([^']+)'/.exec(versionSource)?.[1] ?? '0.0'
-
-  const plan = planBump({
-    signals,
-    current: { release: pkg.version, protocol: currentProtocol },
-    overrides: flags.overrides,
-    force: flags.force,
-  })
-
-  console.log(`Baseline: ${baseline}`)
-  console.log(`Release:  ${pkg.version} -> ${plan.release.next} (${plan.release.level})`)
-  plan.release.reasons.forEach((r) => console.log(`  · ${r}`))
-  console.log(`Protocol: ${currentProtocol} -> ${plan.protocol.next} (${plan.protocol.level})`)
-  plan.protocol.reasons.forEach((r) => console.log(`  · ${r}`))
-
-  if (plan.violations.length > 0) {
-    plan.violations.forEach((v) => console.error(`VIOLATION: ${v}`))
-    process.exitCode = 1
-    return
-  }
-  if (flags.dryRun) {
-    console.log('(dry run — no files written)')
-    return
-  }
-
-  if (plan.release.level !== 'none') {
-    writeFileSync('package.json', rewritePackageVersion(readFileSync('package.json', 'utf8'), plan.release.next))
-  }
-  if (plan.protocol.level !== 'none') {
-    writeFileSync('src/protocol/version.ts', rewriteProtocolVersion(versionSource, plan.protocol.next))
-  }
-  if (plan.release.level !== 'none' || plan.protocol.level !== 'none') {
-    const entry = changelogEntry({
-      date: new Date().toISOString().slice(0, 10),
-      release: plan.release.level !== 'none' ? plan.release.next : null,
-      protocol: plan.protocol.level !== 'none' ? plan.protocol.next : null,
-    })
-    const changelog = readFileSync('wiki/CHANGELOG.md', 'utf8')
-    writeFileSync('wiki/CHANGELOG.md', changelog.replace(/\n/, `\n\n${entry}\n`))
-  }
-  console.log('acp bump: applied. Review the diff, then commit.')
-}
-
-// Run main() only as a CLI, never on import (keeps the test importing planBump clean).
-if (import.meta.url === `file://${process.argv[1]}`) main()
-```
-
-- [ ] **Step 4: Run test to verify it passes**
-
-Run: `node_modules/.bin/vitest run scripts/acp-bump.test.mjs`
-Expected: PASS.
-
-- [ ] **Step 5: Add the npm script** — insert into `package.json` `scripts` after `"test"`: `"bump": "node scripts/acp-bump.mjs"`.
-
-- [ ] **Step 6: Smoke the dry run against the real repo** (no build needed — the tool is pure `.mjs`)
-
-Run: `node scripts/acp-bump.mjs --baseline`
-Expected: prints the `git tag v1.0.0` baseline instruction (no writes). Then verify the no-baseline guard and dry-run without mutating the repo:
-
-Run: `git tag v1.0.0 && node scripts/acp-bump.mjs --dry-run; git tag -d v1.0.0`
-Expected: prints a proposal (baseline `v1.0.0`, release level from commits since the plan/spec commits, protocol `none`) and `(dry run — no files written)`; `git status` shows no changes.
-
-- [ ] **Step 7: Commit**
-
-```bash
-git add scripts/acp-bump.mjs scripts/acp-bump.test.mjs package.json
-git commit -m "feat(versioning): add acp bump orchestrator and npm script"
-```
-
----
-
-### Task 9: README usage + final gate sweep
-
-**Files:**
-- Modify: `README.md` (add an "`acp bump` — versioning" subsection under the existing tooling/scripts docs)
-
-**Interfaces:** none (documentation + verification).
-
-- [ ] **Step 1: Document usage** — a short subsection: the two-line policy summary, `acp bump --baseline`, `acp bump --dry-run`, `acp bump --release <level>`, `acp bump --protocol <level> --force`, and the decoupling rule. Link `[[ADR-0014-version-bump-policy]]`.
-
-- [ ] **Step 2: Full gate sweep**
-
-Run: `node_modules/.bin/tsc --noEmit && node_modules/.bin/eslint . && node_modules/.bin/prettier --check . && node_modules/.bin/vitest run`
-Expected: all PASS.
-
-- [ ] **Step 3: Commit**
-
-```bash
-git add README.md
-git commit -m "docs(versioning): document acp bump usage"
-```
-
----
-
-## Self-Review
-
-**Spec coverage:**
-- Two-line policy + decoupling + 0.x → Task 1 (ADR), Task 2 (`bumpProtocol` 0.x), Task 3 (classify).
-- Evidence-driven proposal + justification → Task 3 `reasons`, Task 6 collectors.
-- Human confirm + guardrails + refuse contradictory override → Task 3 `validateOverride`, Task 8 `planBump.violations` + `--dry-run`/apply gate.
-- Protocol never auto-bumps from a diff (Grill G3) → Task 3 `classifyProtocol` always `none`; Task 8 requires explicit `--protocol`.
-- Baseline story (Grill G5) → Task 8 `--baseline` + no-tag guard.
-- version.ts brittleness (Grill G6) → Task 7 `rewriteProtocolVersion` throws when literal absent + unit test; Task 8 Step 6 real-file dry-run smoke.
-- FMCF docs-first → Task 1 ADR, Task 4 wiki reference page.
-- Writes to package.json / version.ts / CHANGELOG → Task 7 + Task 8.
-
-**Placeholder scan:** none — every code step carries full code.
-
-**Type consistency:** `SemverLevel`, `ChangeSignals` (`commits`/`protocolSurfaceChanged`/`protocolFiles`), `Proposal` (`level`/`reasons`), `RELEASE_RANK`, `validateOverride` result shape, and the `parseConventionalCommits` object shape are used identically across Tasks 2, 3, 5, 6, 8. All modules are `scripts/bump/*.mjs`, imported with relative `.mjs` paths — no build step, no `dist` dependency.
-
-**Deviations from spec (resolved pre-flight):**
-1. The spec placed the pure policy in `src/domain/versioning/*.ts`; the plan keeps it in `scripts/bump/*.mjs` so the Node CLI and vitest share it with zero build (the `dist` import would break the standalone `pnpm test` gate). Consequently Task 4 is a `wiki/references/` page rather than a `wiki/src/` mirror.
-2. The spec named one `collect.mjs`; the plan splits the pure parser (`parse-commits.mjs`, Task 5) from the impure git adapter (`collect.mjs`, Task 6) so the parser is testable without git — strengthening the ports/adapters boundary the spec called for.
+Coordinate the work/checkpoint/handoff/review lifecycle through the production
+Dockerized ACP host. An independent reviewer must inspect the final diff and
+approve only after the complete gate. Release all ACP leases and complete its
+work item before publication.
+
+Then push `feat/acp-bump-version`, open a ready PR to `main` with `Closes #321`,
+wait for every required check, squash-merge, comment on/close issue #321, and
+delete the remote feature branch. Preserve the user-owned untracked
+`@root/install.sh` throughout.
+
+## Explicit deferrals
+
+- npm/registry publication;
+- automatic release commits;
+- immediate tag creation for uncommitted bump edits;
+- automatic protocol compatibility classification;
+- CI enforcement that a release bump exists;
+- multi-version protocol compatibility changes beyond the existing constant.

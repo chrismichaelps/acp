@@ -12,6 +12,7 @@ tags: [moc, references]
 - [[external-protocols]] — relation to adjacent agent protocols.
 - [[spec-canonicalization]] — canonical naming and spec interpretation.
 - [[workspace-memory-records]] — durable handoff and recall records.
+- [[version-bump]] — production-safe release/protocol version planning and apply.
 
 ## Referenced by
 

@@ -48,6 +48,9 @@ tags: [moc, adr]
 - [[ADR-0015-trusted-session-issuance]] — PROPOSED/BACKLOG — replace open
   caller-authorized hosted bootstrap with authenticated, policy-derived identity,
   permissions, bindings, revocation, audit, and hostile-client evidence.
+- [[ADR-0016-version-bump-policy]] — ACCEPTED — infer release semver from full
+  commit evidence, keep protocol changes explicit, and apply version edits as a
+  rollback-capable repository transaction.
 
 ## Referenced by
 
