@@ -137,9 +137,9 @@ must be reproducible in CI/local shell). Flow:
 3. Print the proposal with justification and the resulting version strings.
 4. Confirm: interactive prompt on a TTY, or `--yes` for non-interactive apply.
    Non-interactive apply without `--yes` fails closed. `--dry-run` never prompts.
-   A positive interactive answer triggers a second clean-state check immediately
-   before mutation. Baseline mode also verifies the displayed `HEAD` is unchanged
-   and tags the captured commit SHA.
+   A positive interactive answer triggers a second clean-state and captured-HEAD
+   check immediately before mutation. Baseline mode tags that captured commit
+   SHA.
 5. Apply the accepted bumps:
    - Release: rewrite `version` in `package.json`.
    - Protocol: rewrite the single `ACP_PROTOCOL_VERSION` literal in

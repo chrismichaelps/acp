@@ -47,8 +47,8 @@ Without `--yes`, apply prompts only on an interactive TTY. Non-interactive
 execution fails closed. `--dry-run` never writes or prompts. Invalid flags,
 missing values, dirty apply trees, missing baselines, policy undercuts, and
 anchor drift exit non-zero. After an interactive confirmation, the tool checks
-clean state again before mutation; baseline mode also verifies that `HEAD` still
-matches the commit shown in the proposal and tags that captured commit.
+clean state and the captured `HEAD` again before mutation; baseline mode tags
+that captured commit.
 
 Ordinary bump execution never tags the repository because its file edits are not
 yet committed. After a release change, commit the reviewed diff and then run the
@@ -66,8 +66,9 @@ printed annotated `git tag -a v<version>` command or use the release workflow.
 - `scripts/acp-bump.mjs` — plan, confirmation, baseline, and apply orchestration.
 
 Each module is directly importable by Vitest and Node without a TypeScript build.
-The entrypoint exports its pure planning/application seams for focused tests and
-runs only when invoked as the main module.
+The entrypoint exports its orchestration seam for direct tests, is exercised as a
+real CLI in temporary repositories, and runs automatically only when invoked as
+the main module.
 
 ## Failure recovery
 

@@ -101,10 +101,9 @@ applied bump.
 The apply path refuses a dirty worktree. This prevents the tool from mixing a
 version transaction with unrelated user edits and makes rollback evidence
 unambiguous. Interactive confirmation is a concurrency boundary: immediately
-after a positive answer, apply revalidates a clean worktree before mutation.
-Baseline mode also captures the displayed `HEAD`, revalidates clean state and an
-unchanged `HEAD` after confirmation, and tags that captured commit rather than a
-mutable symbolic ref.
+after a positive answer, apply revalidates a clean worktree and unchanged
+captured `HEAD` before mutation. Baseline mode tags that captured commit rather
+than a mutable symbolic ref.
 
 ## Module boundary
 

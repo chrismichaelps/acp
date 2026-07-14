@@ -166,8 +166,8 @@ The entrypoint:
 4. prints current/next versions, reasons, warnings, and dirtiness;
 5. exits on violations or an all-`none` plan;
 6. returns immediately for dry-run;
-7. requires clean state and confirmation, then revalidates clean state before
-   mutation;
+7. requires clean state and confirmation, then revalidates clean state and the
+   captured `HEAD` before mutation;
 8. precomputes all transforms and commits the transaction;
 9. prints the reviewed diff instruction and post-commit release tag command.
 
