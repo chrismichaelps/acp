@@ -383,6 +383,20 @@ every operation carries structured Effect telemetry (operation, outcome,
 duration, client id, ACP error code). **JSON-RPC** is the compatibility surface —
 every REST mutation has a paired method — not the focus of new client work.
 
+### API description (OpenAPI)
+
+The REST surface is published as a machine-readable
+[`openapi.json`](./openapi.json) at the repo root, generated from the same typed
+route definitions the host serves. The running host also serves it live and
+unauthenticated at `GET /openapi.json`, so a client can fetch the contract before
+any session exists. Point an OpenAPI generator at either to produce a client in
+any language, or load it into Swagger UI / Postman to browse every endpoint
+before adopting ACP. `info.version` tracks the protocol version, so the document
+moves only when the wire contract does. It is regenerated with
+`pnpm openapi:generate` and gated byte-for-byte against the contract by
+`pnpm check:openapi`, so the committed file can never drift from the code. See
+[`wiki/references/openapi.md`](./wiki/references/openapi.md).
+
 ---
 
 ## Deploying for real

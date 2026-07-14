@@ -13,6 +13,7 @@ tags: [moc, references]
 - [[spec-canonicalization]] — canonical naming and spec interpretation.
 - [[workspace-memory-records]] — durable handoff and recall records.
 - [[version-bump]] — production-safe release/protocol version planning and apply.
+- [[openapi]] — machine-readable REST contract artifact and its drift gate.
 
 ## Referenced by
 
