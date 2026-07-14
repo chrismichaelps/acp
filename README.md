@@ -572,6 +572,29 @@ pnpm lint
 pnpm test
 ```
 
+### `acp bump` version planning
+
+`pnpm bump` manages two independent lines: release semver in `package.json` is
+inferred from full conventional-commit evidence, while the two-part ACP protocol
+version changes only through an explicit `--protocol` decision. The policy and
+failure contract are defined by
+[ADR-0016](wiki/decisions/ADR-0016-version-bump-policy.md).
+
+```bash
+pnpm bump --baseline --dry-run # preview the first annotated release baseline
+pnpm bump --baseline --yes     # create it after explicit confirmation
+pnpm bump --dry-run            # inspect the proposal without writes
+pnpm bump --yes                # apply the inferred release proposal
+pnpm bump --protocol major --yes
+pnpm bump --release patch --force --yes
+```
+
+Apply refuses dirty trees, invalid or contradictory flags, missing baselines,
+and non-interactive execution without `--yes`. It validates every target before
+a rollback-capable multi-file transaction. The tool never tags uncommitted bump
+edits; after the resulting diff is reviewed and committed, run the post-commit
+tag command printed in its output.
+
 `tsconfig.json` owns full-source typechecking and test discovery.
 `tsconfig.build.json` is the production-emission boundary: `pnpm build` cleans
 `dist`, excludes test-only TypeScript, and fails if a test or fixture module is

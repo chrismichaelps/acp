@@ -122,6 +122,9 @@ Dockerized ACP host directly; no separate provider runner is added.
 - [[ADR-0015-trusted-session-issuance]] — PROPOSED/BACKLOG; replace the trusted-
   client hosted bootstrap assumption with verified identity and server-policy-
   derived sessions before public multi-tenant hosting.
+- [[ADR-0016-version-bump-policy]] — ACCEPTED; infer release semver from full
+  conventional commits, require explicit protocol intent, and apply validated
+  version edits transactionally without tagging an uncommitted tree.
 
 ## Build Order (vertical slices)
 
@@ -200,6 +203,8 @@ Dockerized ACP host directly; no separate provider runner is added.
 72. ✅ Lease readback parity across REST, CLI, JSON-RPC, native RPC, and dogfood
 73. ✅ GitHub bridge live sandbox dogfood — guarded real import/sync/thread
     resolution/denied-before-allowed merge with repeatable cleanup
+74. ▶ Production-safe version bump tooling — ADR-0016 accepted; issue #321
+    implementation and Docker ACP review evidence in progress
 
 ## Referenced by
 

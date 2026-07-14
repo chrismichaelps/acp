@@ -2,6 +2,17 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-13 · version bump policy · accepted
+  [[ADR-0016-version-bump-policy]] for independent release/protocol lines,
+  reachable baseline evidence, full commit-body parsing, explicit protocol
+  intent, strict confirmation with post-prompt state revalidation, dirty-tree
+  refusal, interrupted tag-flow double-bump prevention, affected-path rollback
+  reporting, rollback-capable multi-file writes, and post-commit-only release
+  tagging; specified the operator surface
+  in [[version-bump]] and implementation handoff in
+  [[2026-07-13-acp-bump-version]] · validation: autonomous senior grill and wiki
+  formatting/integrity before source · risk MEDIUM · issue #321
+
 - 2026-07-13 · review-collaboration security boundary · implemented
   [[ADR-0013-review-collaboration-permission]] with additive but non-aliased
   `review:collaborate` authority for eight reviewer mutations and separate

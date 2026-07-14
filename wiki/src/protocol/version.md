@@ -45,10 +45,16 @@ The [[acp-http-api]] request schema accepts a string so the router can perform a
 named handshake decision. Successful responses encode the literal
 `ProtocolVersion` schema.
 
+[[ADR-0016-version-bump-policy]] permits the repository-local [[version-bump]]
+tool to replace exactly the current constant literal after an explicit protocol
+level is selected. The supported tuple, type, schema, and predicate continue to
+derive from that one constant; the tool must not rewrite them independently.
+
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT duplicate `'0.1'` in transport responses or payload defaults.
 - ❌ Do NOT add future versions without a compatibility decision and test.
+- ❌ Do NOT infer a protocol level from a source diff.
 - ❌ Do NOT create generated clients or generic codecs from this module.
 
 ## Depth
@@ -60,4 +66,5 @@ change.
 ## Referenced by
 
 [[ADR-0004-protocol-version-codecs-generated-client]] ·
+[[ADR-0016-version-bump-policy]] · [[version-bump]] ·
 [[protocol-version.test]] · [[protocol/_MOC]] · [[src/_MOC]]
