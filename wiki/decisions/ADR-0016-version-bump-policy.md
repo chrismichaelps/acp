@@ -64,6 +64,12 @@ Without a reachable tag or `--since`, ordinary planning fails. The explicit
 invalid package versions, and non-interactive execution without `--yes` fail
 before tag creation. `--baseline --dry-run` is non-mutating.
 
+An automatically discovered canonical `vX.Y.Z` baseline must equal the current
+top-level package version. A mismatch indicates an interrupted commit/tag flow
+and fails closed before inference, preventing the same commit evidence from
+advancing the release twice. Recovery creates the missing tag at the reviewed
+release commit or uses explicit `--since <ref>` intent.
+
 ### CLI contract
 
 ```text

@@ -180,6 +180,9 @@ git history ─▶ collect.mjs ─▶ ChangeSignals ─▶ policy(classify*) ─
 
 - No reachable release tag → refuse to infer across full history. Require
   `--since <ref>` or `--baseline`.
+- Automatically discovered canonical tag differs from `package.json` → refuse
+  the interrupted commit/tag state and require tag recovery or explicit
+  `--since <ref>` intent.
 - Contradictory `--force`-less override → exit non-zero with the specific policy
   violation and the evidence that contradicts it.
 - Protocol-surface change detected but kind ambiguous → refuse to auto-bump the

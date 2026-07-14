@@ -50,6 +50,11 @@ anchor drift exit non-zero. After an interactive confirmation, the tool checks
 clean state and the captured `HEAD` again before mutation; baseline mode tags
 that captured commit.
 
+When automatic discovery selects a canonical `vX.Y.Z` tag, that version must
+match `package.json`. A mismatch is treated as an interrupted post-commit tag
+step and refuses to infer another bump. Create the missing reviewed release tag
+or select an intentional recovery boundary with `--since <ref>`.
+
 Ordinary bump execution never tags the repository because its file edits are not
 yet committed. After a release change, commit the reviewed diff and then run the
 printed annotated `git tag -a v<version>` command or use the release workflow.

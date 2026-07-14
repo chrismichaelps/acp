@@ -162,6 +162,7 @@ The entrypoint:
 
 1. parses argv before I/O;
 2. resolves/validates the baseline;
+   an implicit canonical tag must match the package version;
 3. collects evidence and builds the immutable plan;
 4. prints current/next versions, reasons, warnings, and dirtiness;
 5. exits on violations or an all-`none` plan;
@@ -181,6 +182,7 @@ prove:
 - no-baseline refusal;
 - baseline dry-run immutability and successful `--yes` annotated tag;
 - tag collision refusal;
+- implicit baseline/package mismatch double-bump refusal;
 - dry-run leaves bytes and refs unchanged;
 - non-TTY apply without `--yes` refuses;
 - dirty apply refuses;

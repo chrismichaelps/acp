@@ -47,7 +47,9 @@ tags: [handoff, versioning, tooling, release]
 
 - Close independent-review blockers: revalidate clean state and captured `HEAD`
   after interactive confirmation, and expose structured affected paths when
-  rollback is incomplete.
+  rollback is incomplete. Also reject an implicit canonical baseline whose tag
+  version differs from the package version, preventing interrupted-flow double
+  bumps.
 - Re-run focused and impacted production gates, then obtain reviewer approval.
 - Record independent ACP review evidence, push the branch, open and merge the
   issue-closing PR, and verify issue #321 is closed.
