@@ -3,8 +3,8 @@ date: 2026-07-13
 topic: acp-bump-version
 from_role: DNA Engineer
 to_role: Shadow
-status: READY_FOR_REREVIEW
-maturity: MEDIUM
+status: APPROVED_FOR_PUBLICATION
+maturity: DEEP
 tags: [handoff, versioning, tooling, release]
 ---
 
@@ -34,6 +34,9 @@ tags: [handoff, versioning, tooling, release]
 - Closed independent-review findings with post-confirmation clean/HEAD checks,
   captured-SHA baseline tags, structured rollback target failures, and implicit
   baseline/package mismatch refusal.
+- Passed independent re-review with no remaining actionable findings, then
+  re-passed 631 full-suite tests, static policies, build, self dry-run, and exact
+  255/255 mirror parity.
 
 ## Decided (do not re-litigate)
 
@@ -48,15 +51,15 @@ tags: [handoff, versioning, tooling, release]
 
 ## Open / Remaining
 
-- Re-run focused and impacted production gates, then obtain reviewer approval.
 - Record independent ACP review evidence, push the branch, open and merge the
   issue-closing PR, and verify issue #321 is closed.
 
 ## Exact next action
 
-Shadow: verify the four review regressions and inspect the fix diff against
-[[ADR-0016-version-bump-policy]]. Approve only after focused/static gates pass.
-Do not run an apply or create a release tag in this repository.
+Release Steward: record the approval in Docker ACP, release every implementation
+lease, and publish a ready PR to `main` with `Closes #321`. Wait for every check,
+squash-merge, verify issue closure, and delete the remote feature branch. Do not
+run an apply or create a release tag in this repository.
 
 ## Links
 
