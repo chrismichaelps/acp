@@ -16,7 +16,8 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   released lease, completed work, and verified cleanup · risk MEDIUM · issue
   #328; first Linux aggregate CI exposed a case-sensitive Docker
   `No such volume` pre-clean matcher, with the case-insensitive fail-closed
-  repair documented before code ·
+  repair documented before code and covered for upper/lower missing-resource
+  text plus a real removal error ·
   [[ADR-0018-recovery-review-quickstart]] · [[recovery-review-quickstart]]
 
 - 2026-07-14 · OpenAPI contract artifact · generated `openapi.json` from the

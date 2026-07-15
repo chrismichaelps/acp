@@ -236,7 +236,8 @@ separate provider runner is added.
     Linux lint, typecheck, the 153-file production build, and all 649 repository
     tests pass. The first aggregate CI run exposed case-varying Docker
     missing-volume text in strict pre-clean; the documentation-first
-    case-insensitive repair is in progress before ACP review
+    case-insensitive matcher and focused cross-daemon regression now pass before
+    ACP re-review
 
 ## Referenced by
 

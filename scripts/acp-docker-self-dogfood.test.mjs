@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   classifyQuickstartLeaseRace,
+  isMissingDockerResource,
   main,
   proveComposeProjectIsolation,
   runRepositoryPreflights,
@@ -217,5 +218,23 @@ describe('complete Docker self-dogfood orchestration', () => {
         { seq: 8, type: 'memory.created' },
       ]),
     ).toThrow('strictly monotonic')
+  })
+
+  it('accepts only case-varying Docker missing-resource cleanup errors', () => {
+    expect(
+      isMissingDockerResource(
+        'Error response from daemon: No such container: quickstart',
+      ),
+    ).toBe(true)
+    expect(
+      isMissingDockerResource(
+        'Error response from daemon: get quickstart-data: no such volume',
+      ),
+    ).toBe(true)
+    expect(
+      isMissingDockerResource(
+        'Error response from daemon: volume is in use by container',
+      ),
+    ).toBe(false)
   })
 })

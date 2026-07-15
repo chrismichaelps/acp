@@ -51,9 +51,12 @@ const runVisible = (command, args, env = {}) =>
     })
   })
 
+export const isMissingDockerResource = (stderr) =>
+  /no such (?:container|volume)/iu.test(stderr)
+
 const removeDockerResource = async (args) => {
   const result = await docker(args)
-  if (result.ok || /No such (?:container|volume)/u.test(result.stderr)) return
+  if (result.ok || isMissingDockerResource(result.stderr)) return
   throw new Error(
     `docker ${args.join(' ')} exited ${String(result.code)}: ${result.stderr || result.stdout}`,
   )

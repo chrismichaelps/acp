@@ -79,6 +79,8 @@ the GitHub Linux daemon emitted lowercase `no such volume`. The cleanup helper
 matched only the uppercase form and incorrectly treated an already-absent
 volume as fatal. The accepted repair is a case-insensitive match restricted to
 `no such container|volume`; unrelated removal failures must still fail closed.
+The exported matcher and its focused upper/lower/fail-closed regression now pass
+12/12 clean-Linux tests.
 
 ## Referenced by
 
