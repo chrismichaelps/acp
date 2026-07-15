@@ -124,9 +124,9 @@ separate provider runner is added.
   no invented RPC commands.
 - [[ADR-0014-workspace-administration-authority]] — PROPOSED/BACKLOG; isolate
   host provisioning and workspace lifecycle authority as a separate slice.
-- [[ADR-0015-trusted-session-issuance]] — PROPOSED/BACKLOG; replace the trusted-
-  client hosted bootstrap assumption with verified identity and server-policy-
-  derived sessions before public multi-tenant hosting.
+- [[ADR-0015-trusted-session-issuance]] — ACCEPTED; add trusted/static
+  [[SessionIssuance]], make hosted startup fail closed, derive immutable grants
+  from digest-verified service identities, and revoke by principal revision.
 - [[ADR-0016-version-bump-policy]] — ACCEPTED; infer release semver from full
   conventional commits, require explicit protocol intent, and apply validated
   version edits transactionally without tagging an uncommitted tree.
@@ -229,7 +229,7 @@ separate provider runner is added.
     repair passed 261/261 parity and the 647-test clean Linux suite; final ACP
     re-review returned GO, all checks passed, PR #332 merged, and issue #327
     closed
-77. ▶ [[recovery-review-quickstart]] — issue #328; the existing Docker
+77. ✅ [[recovery-review-quickstart]] — issue #328 / PR #333 merged; the existing Docker
     self-dogfood entry point now exposes the documented SQLite mode and runs it
     in aggregate CI. Focused clean-Linux invariants and two production-image
     runs passed with either worker winning, HTTP `409`, cursor `8`, replay
@@ -245,7 +245,12 @@ separate provider runner is added.
     container/volume deletion race now captured by the cleanup contract. The
     ordered repair passes 19 focused Linux tests plus standalone and
     aggregate-reuse production runs; owned resources are absent and the shared
-    aggregate image is preserved
+    aggregate image is preserved and the issue is closed
+78. ▶ [[trusted-session-issuance]] — issue #329; documentation-first hosted
+    identity slice is registered in Docker ACP. Accepted design adds a static
+    digest-verified service-principal adapter, fixed server grants, provenance
+    validation/revision revocation, credential-safe audit, optional OpenAPI
+    issuance auth, hostile-client tests, and exact cross-transport Docker proof
 
 ## Referenced by
 

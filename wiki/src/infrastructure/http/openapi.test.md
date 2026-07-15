@@ -20,9 +20,10 @@ executable drift gate between [[acp-http-api]], security repair, and the committ
 
 - emits OpenAPI 3.x identity with the current [[protocol-version]];
 - includes representative collection, item, and path-parameter routes;
-- defines `AcpSession` as HTTP bearer security;
-- leaves only `session.initializeSession` public and requires the bearer scheme
-  for every other operation;
+- defines `AcpSession` and `AcpIssuance` as distinct HTTP bearer schemes;
+- gives `session.initializeSession` the optional issuance alternatives
+  `AcpIssuance` or public compatibility and requires `AcpSession` everywhere
+  else;
 - requires 401 and 403 ProtocolError responses on every protected operation;
 - compares all 53 OpenAPI method/path pairs with the production `/v1` router
   through [[production-route-inventory-test-support]] across every supported HTTP

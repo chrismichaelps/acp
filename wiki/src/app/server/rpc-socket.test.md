@@ -22,11 +22,16 @@ Vitest integration suite booting `HttpAppLive` on an OS-assigned TCP port via
 
 ## Algorithm
 
-Initialize a session on one socket, then open a second socket carrying its token
-in the query and create work. Fetch that work through REST to prove socket and
+Initialize a trusted-client session on one socket, then open a second socket
+carrying its minted token in the query and create work. In static mode, require
+the issuance credential in the handshake header and reject the same credential
+in `?token=`. Fetch created work through REST to prove socket and
 HTTP share one store. Send a non-JSON frame and require a `-32700` JSON-RPC error.
 Subscribe to workspace events, create work on the same connection, and require an
-`events.event` notification containing `work.created` for that workspace.
+`events.event` notification containing `work.created` for that workspace. Reject
+subscription before acknowledgement for a missing token, missing `event:read`,
+foreign workspace binding, and revoked static provenance; allow a properly
+scoped/bound session.
 Round-trip `review:collaborate` and `review:respond` through WebSocket
 `session.initialize`, then bind each returned token to a connection or REST
 request and require the preserved permission to authorize only its matching REST
@@ -45,6 +50,8 @@ introduced.
 - ❌ Do NOT claim WebSocket collaboration commands that are absent from the
   JSON-RPC command map; test session propagation only.
 - ❌ Do NOT accept both review role scopes in one WebSocket session.
+- ❌ Do NOT use an issuance credential in a query string.
+- ❌ Do NOT treat subscription as public EventStore access.
 
 ## Grill Log
 

@@ -12,8 +12,8 @@ first-party Effect RPC contract selected by [[ADR-0007-effect-rpc-adoption]].
 - [[acp-rpc-contract]] — native first-party `RpcGroup` contract over ACP schemas.
 - [[acp-rpc-contract.test]] — exact operation, scope, auth, and telemetry registry contract.
 - [[acp-rpc-client.test]] — mounted URL and generated-client bearer ergonomics.
-- [[acp-rpc-handlers]] — native handler verticals for session permission/binding
-  projection, worker, workspace, work, and lease operations.
+- [[acp-rpc-handlers]] — native handler verticals delegating session bootstrap to
+  [[session-initializer]], plus worker, workspace, work, and lease operations.
 - [[acp-rpc-handlers.test]] — aggregate session projection/mutual-exclusion,
   binding, workspace, work, and lease executable contract.
 - [[acp-rpc-artifact-handlers]] — native artifact evidence handlers split from
@@ -26,7 +26,8 @@ first-party Effect RPC contract selected by [[ADR-0007-effect-rpc-adoption]].
   aggregate handler layer.
 - [[acp-rpc-review-handlers.test]] — distinct review outcomes, indexes, transition, and actor contract.
 - [[acp-rpc-memory-event-handlers.test]] — recall/replay, scope, sequence, and actor contract.
-- [[rpc-auth]] — bearer-session authorization helper for native RPC handlers.
+- [[rpc-auth]] — bearer-session and current-issuer authorization helper for
+  native RPC handlers.
 - [[acp-rpc-direct-workspace-scope.test]] — explicit-workspace read/write tenancy denial contract.
 - [[rpc-resource-workspace-auth]] — derived workspace authorization for native
   RPC work and lease resource ids.

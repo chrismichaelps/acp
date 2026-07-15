@@ -53,20 +53,24 @@ export const makeRpcSocketHandler: <E, R>(
 
 ## Algorithm
 
-1. Resolve the connection bearer token: the handshake `Authorization: Bearer`
-   header, or a `?token=` query parameter when no header is present (a browser
-   cannot set headers on the WebSocket handshake). Header wins.
+1. Resolve the connection bearer and retain its source. The handshake
+   `Authorization: Bearer` header wins; `?token=` remains a compatibility
+   fallback only for already-minted ACP session ids.
 2. `HttpServerRequest.upgrade` → a `Socket`. Acquire its `writer` in a `Scope`.
 3. Build a serialized JSON writer so normal command responses and event
    notifications cannot interleave on the socket.
 4. `socket.runRaw` per inbound frame: decode to text; a non-JSON frame writes back
-   the `-32700` `parseErrorEnvelope`. A single `events.subscribe` frame decodes
-   `workspace_id`, acknowledges with a normal JSON-RPC result when the request has
-   an `id`, then forks a scoped [[event-store]] subscription that writes
-   `events.event` notifications with schema-encoded [[Event]] payloads. Other
-   payloads use `executeJsonRpc(dispatchVia(routerApp), payload, token)` and write
-   the `Some(response)` back as one text frame (`None` — all notifications —
-   writes nothing).
+   the `-32700` `parseErrorEnvelope`. For `session.initialize`, forward an
+   issuance credential only when it came from the header; a query credential is
+   deliberately discarded so URL/log leakage cannot bootstrap identity. A
+   single `events.subscribe` frame decodes `workspace_id`, calls
+   [[route-support]] `authorizeTokenWorkspace` with `event:read`, and acknowledges
+   only after issuer/scope/binding authorization succeeds. It then forks a scoped
+   [[event-store]] subscription that writes `events.event` notifications with
+   schema-encoded [[Event]] payloads. Other payloads use
+   `executeJsonRpc(dispatchVia(routerApp), payload, token)` and write the
+   `Some(response)` back as one text frame (`None` — all notifications — writes
+   nothing).
 5. The handler effect blocks in `runRaw` for the socket's lifetime and returns an
    empty response once the connection closes.
 
@@ -76,8 +80,10 @@ export const makeRpcSocketHandler: <E, R>(
   both transports replay against the same `v1Router` (one store, one auth path).
 - ❌ Do NOT add a `ws` dependency or hand-roll the WebSocket handshake — the
   platform `HttpServerRequest.upgrade` owns the protocol.
-- ❌ Do NOT re-authenticate per frame — the token is fixed at handshake; a client
-  that needs a different identity opens a new connection.
+- ❌ Do NOT accept issuance credentials from query strings; secrets in URLs leak
+  through access logs, browser history, and intermediaries.
+- ❌ Do NOT acknowledge `events.subscribe` before `event:read`, workspace
+  binding, and static issuer validation succeed.
 - ❌ Do NOT translate domain errors here — [[json-rpc-runtime]] owns status→code
   mapping; this module only frames bytes.
 - ❌ Do NOT stream from `POST /rpc`; only the upgraded WebSocket can hold a live
@@ -85,14 +91,17 @@ export const makeRpcSocketHandler: <E, R>(
   [[json-rpc-runtime]].
 - ❌ Do NOT invent host-presence notifications here; this stream carries persisted
   workspace [[Event]]s only.
+- ❌ Do NOT claim live policy hot reload or continuous subscription revocation;
+  the startup-loaded policy is revalidated when the subscription starts, and a
+  coordinated policy restart closes existing sockets.
 
 ## Depth
 
 DEEP (0.72). Bridges WebSocket text frames ↔ JSON-RPC while reusing the entire
 router (routing, bearer auth, §8 scopes, encoding, error mapping) through the
 shared `dispatchVia`, while hiding the event-subscription lifetime and
-notification framing. Tested over a real ephemeral socket: a `session.initialize`
-round-trip, a second connection whose `?token=` query authorizes a scoped
+notification framing. Tested over a real ephemeral socket: a header-authenticated
+`session.initialize` round-trip, a second connection whose minted `?token=` query authorizes a scoped
 `work.create`, a REST `GET` proving WebSocket and REST share one store, a
 non-JSON frame echoing `-32700`, and `events.subscribe` receiving a later
 workspace event as an `events.event` notification.
@@ -109,11 +118,10 @@ workspace event as an `events.event` notification.
   (adds a `ws` dependency and a hop for no isolation gain).
 - **Q:** How does a browser authenticate when it cannot set the handshake
   `Authorization` header?
-  **A:** A `?token=` query parameter on the upgrade URL is the documented fallback;
-  the header still wins when present (non-browser clients). _Rationale:_ keeps the
-  reference host usable from both a Node client and a browser without a
-  cookie/session dance. _Rejected:_ a first-frame `session.authenticate` message
-  (stateful per-connection handshake the runtime would have to special-case).
+  **A:** A `?token=` query parameter remains available for a minted ACP session,
+  never for an issuance credential. Static browser clients obtain a session over
+  an HTTPS initialization request before opening the socket. _Rejected:_ putting
+  the long-lived issuance secret in a URL, and a private first-frame auth method.
 - **Q:** Why does the token bind to the connection, not the frame?
   **A:** `dispatchVia` forwards one bearer per command; a WebSocket multiplexes
   many commands over one authenticated connection, matching how `/rpc` over HTTP

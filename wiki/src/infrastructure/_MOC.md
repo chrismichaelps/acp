@@ -12,6 +12,10 @@ construction and hides it behind narrow service tags.
 
 - [[events/_MOC|Events MOC]] — concrete EventBroker adapters.
 
+## auth/
+
+- [[auth/_MOC|Auth MOC]] — trusted/static session issuance adapters.
+
 ## storage/
 
 - [[storage/_MOC|Storage MOC]] — persistence seam interface and

@@ -22,10 +22,13 @@ Effect `ConfigProvider` map.
 ## Algorithm
 
 Assert the empty environment's port, log level, adapters, SQLite path, lease TTL,
-retention, artifact limit, and auth defaults. Verify `local`, `single-node`,
-`hosted`, and `self-host-ha` profile presets. Prove explicit variables override
-profile values, reject unsupported `ACP_PROFILE=staging`, and check environment
-overrides including duration and megabyte-to-byte conversion.
+retention, artifact limit, auth defaults, and trusted-client issuer. Verify
+`local`, `single-node`, `hosted`, and `self-host-ha` profile presets. Hosted must
+resolve to static issuance, required auth, and required workspace bindings even
+when weaker overrides are supplied. Prove ordinary explicit variables override
+profile values, reject unsupported `ACP_PROFILE=staging`, reject static issuance
+without auth/bindings, preserve the opaque optional policy string, and check
+environment overrides including duration and megabyte-to-byte conversion.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -34,6 +37,8 @@ overrides including duration and megabyte-to-byte conversion.
 - ❌ Do NOT compare duration or artifact-size source strings; assert normalized
   milliseconds and bytes.
 - ❌ Do NOT mutate `process.env`; configuration isolation is part of the test.
+- ❌ Do NOT treat a parseable policy as sufficient when the surrounding auth
+  boundary is unsafe; configuration must fail before the server becomes ready.
 
 ## Grill Log
 

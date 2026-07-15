@@ -18,8 +18,11 @@ aliases: [Worker, worker]
 - **Presence scope:** status is host-scoped registry state in v0.1, not
   workspace event history; see [[ADR-0005-worker-presence-scope]].
 - **Trust:** the [[Host]] treats every worker as **untrusted** (spec §19).
+- **Hosted identity:** [[Principal]] is the verified external identity;
+  [[ADR-0015-trusted-session-issuance]] immutably binds it to one worker id.
 - **Example:** `agent_claude_code` (kind agent, vendor anthropic), status online.
 
 ## Referenced by
 
-[[worker-service]] · [[worker.schema]] · [[ADR-0005-worker-presence-scope]]
+[[worker-service]] · [[worker.schema]] · [[ADR-0005-worker-presence-scope]] ·
+[[Principal]] · [[ADR-0015-trusted-session-issuance]]

@@ -17,11 +17,12 @@ aliases: [session-service, SessionService]
 
 Own the v0.1 session registry: a session is minted at
 `POST /v1/session/initialize` (spec §9) and binds an opaque `SessionId` to the
-[[Worker]] that opened it. Subsequent authenticated requests carry that id as a
+[[Worker]] represented by its effective grant. Subsequent authenticated requests carry that id as a
 `Authorization: Bearer <session_id>` token (spec §8). The session also stores the
 `permissions` (spec §8 scopes) granted at initialize; `resolveActor` turns a token
 back into the acting `WorkerId`, while [[acp-router]]`.authorize` reads the stored
-session (via `get`) to both attribute the mutation and enforce its required scope.
+session (via `get`) before [[session-issuer]] revalidates provenance and the
+transport enforces its required scope.
 Persists through [[Storage]] with schema-encode on write and schema-decode on read.
 
 ## Interface
@@ -51,9 +52,10 @@ export const SessionServiceLive: Layer.Layer<SessionService, never, Storage>
 
 ### Governance
 
-- The caller owns identity: `create` stores the `Session` value (id minted by
+- The initializer owns the effective grant: `create` stores the `Session` value (id minted by
   [[id-clock]] as a high-entropy bearer credential, `created_at` from the same
-  clock service); this service mints nothing.
+  clock service); this service mints nothing and preserves non-secret issuance
+  provenance unchanged.
 - Session records are schema-encoded before storage and schema-decoded after
   reads for drift protection.
 - `resolveActor` is total — an unknown or malformed token yields `Option.none`,
@@ -67,7 +69,7 @@ export const SessionServiceLive: Layer.Layer<SessionService, never, Storage>
 ### Linkage
 
 - **Requires:** [[storage]], [[session.schema]], [[protocol-error]]
-- **Consumed by:** [[acp-router]] (`initializeSession`, actor resolution) and the
+- **Consumed by:** [[session-initializer]], [[route-support]], [[rpc-auth]], and the
   [[sweeper]] (`list`, `evictExpired`).
 
 ## Algorithm
@@ -85,6 +87,8 @@ export const SessionServiceLive: Layer.Layer<SessionService, never, Storage>
 - ❌ Do NOT throw on an unknown token — `resolveActor` returns `Option.none`.
 - ❌ Do NOT write raw undecoded objects into the `session` collection.
 - ❌ Do NOT enforce token-format auth policy (scopes, expiry) in this slice.
+- ❌ Do NOT validate static policy here; [[session-issuer]] owns current-policy
+  checks after lookup.
 
 ## Depth
 

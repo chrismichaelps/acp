@@ -14,6 +14,7 @@ Registry of architectural boundaries with swappable adapters. Classification rul
 | [[Transport]]   | CRITICAL (5)    | EXPLORATORY | 0 HEALTHY | HTTP+SSE+JSON-RPC            |
 | [[EventStream]] | CRITICAL (6)    | CRITICAL    | 0 HEALTHY | SSE + WS notifications       |
 | [[GitHub]]      | EXPLORATORY (2) | EXPLORATORY | 0 HEALTHY | gh CLI                       |
+| [[SessionIssuance]] | CRITICAL (5) | CRITICAL | 0 HEALTHY | Trusted client + Static identity |
 
 ## Referenced by
 

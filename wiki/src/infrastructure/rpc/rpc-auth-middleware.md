@@ -34,8 +34,8 @@ export const AcpRpcAuthMiddlewareLive: Layer<...>
 `AcpRpcRequiredScope` is an annotation tag attached to secured
 [[acp-rpc-contract]] procedures. `AcpRpcAuthMiddleware` is an `@effect/rpc`
 middleware tag that provides [[rpc-auth]] `AcpRpcActor` and fails with ACP
-`ProtocolError`. Its live layer captures [[app-config]] and [[session-service]]
-once when the server layer is built; each request then reads the annotated scope
+`ProtocolError`. Its live layer captures [[app-config]], [[session-service]], and
+[[session-issuer]] once when the server layer is built; each request then reads the annotated scope
 from `options.rpc.annotations` and delegates to [[rpc-auth]] with the request
 headers.
 
@@ -48,6 +48,8 @@ headers.
   fully to mounted-client coverage.
 - ❌ Do NOT invent per-RPC scope names. Use the closed [[common]] permission
   vocabulary.
+- ❌ Do NOT capture a transport-local issuer; middleware and direct-handler
+  fallback must share the application issuer instance.
 
 ## Depth
 

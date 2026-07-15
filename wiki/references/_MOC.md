@@ -16,6 +16,8 @@ tags: [moc, references]
 - [[openapi]] — machine-readable REST contract artifact and its drift gate.
 - [[recovery-review-quickstart]] — one-command lease collision, restart replay,
   and review-gated completion proof.
+- [[trusted-session-issuance]] — hosted static service identity, policy,
+  rotation, revocation, audit, and bootstrap operations.
 
 ## Referenced by
 

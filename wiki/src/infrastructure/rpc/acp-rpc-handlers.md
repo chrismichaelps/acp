@@ -70,6 +70,7 @@ export const AcpRpcSessionWorkerWorkspaceHandlersLive: Layer<
   | Rpc.Handler<'events.list'>,
   never,
   | AppConfigTag
+  | SessionIssuer
   | SessionService
   | WorkerService
   | WorkspaceService
@@ -85,17 +86,11 @@ export const AcpRpcSessionWorkerWorkspaceHandlersLive: Layer<
 
 ## Algorithm
 
-`session.initialize` mirrors [[acp-router]] bootstrap behavior: validate
-`protocol_version`, register the worker, derive capabilities from the draft
-handshake booleans when the worker did not send an explicit capability list,
-mint a high-entropy session bearer credential through [[id-clock]]
-`secureToken`, read the timestamp through [[id-clock]], persist the session, and
-return the host descriptor, capability flags, exact `permissions`, and
-`workspace_ids`. This handler builds its own success object; it must project
-`permissions: payload.permissions` explicitly rather than assuming the shared
-success schema adds the field. The shared [[session.schema]] permission-array
-refinement rejects a payload carrying both `review:respond` and
-`review:collaborate` before the handler mints a token.
+`session.initialize` extracts the phase-specific bearer from RPC option headers
+and delegates the complete transaction to [[session-initializer]]. It therefore
+shares protocol validation, compatibility normalization, trusted/static
+issuance, worker registration ordering, secure minting, exact grant projection,
+and provenance persistence with REST, JSON-RPC, WebSocket, and stdio.
 
 All authorizing handlers check scopes through [[rpc-auth]] `rpcActor` or
 `rpcWorkspaceActor`. The former handles host-wide operations and routes whose
@@ -154,6 +149,8 @@ handlers dispatches through [[acp-router]], JSON-RPC command maps, or REST paths
 - ❌ Do NOT delete existing JSON-RPC transports from this slice.
 - ❌ Do NOT omit accepted permissions from the native initialization response.
 - ❌ Do NOT mint a native session carrying both ADR-0013 role scopes.
+- ❌ Do NOT duplicate initialization policy or register a caller worker before
+  [[session-issuer]] succeeds.
 
 ## Depth
 
@@ -164,4 +161,5 @@ transport rewrite.
 ## Referenced by
 
 [[rpc-index]] · [[acp-rpc-contract]] · [[acp-rpc-handlers.test]] · [[rpc/_MOC]] ·
-[[ADR-0013-review-collaboration-permission]]
+[[ADR-0013-review-collaboration-permission]] · [[session-initializer]] ·
+[[session-issuer]]

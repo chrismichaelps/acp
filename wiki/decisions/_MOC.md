@@ -45,9 +45,9 @@ tags: [moc, adr]
 - [[ADR-0014-workspace-administration-authority]] — PROPOSED/BACKLOG — define
   host provisioning and target-bound workspace administration independently of
   agent review collaboration.
-- [[ADR-0015-trusted-session-issuance]] — PROPOSED/BACKLOG — replace open
-  caller-authorized hosted bootstrap with authenticated, policy-derived identity,
-  permissions, bindings, revocation, audit, and hostile-client evidence.
+- [[ADR-0015-trusted-session-issuance]] — ACCEPTED — add a trusted/static
+  issuance seam; hosted mode fails closed, static service credentials map to
+  fixed server grants, and policy revisions revoke sessions across transports.
 - [[ADR-0016-version-bump-policy]] — ACCEPTED — infer release semver from full
   commit evidence, keep protocol changes explicit, and apply version edits as a
   rollback-capable repository transaction.

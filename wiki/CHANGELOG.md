@@ -2,6 +2,15 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-15 · trusted hosted session issuance design · accepted
+  [[ADR-0015-trusted-session-issuance]] and [[SessionIssuance]] before code:
+  local trusted-client compatibility plus static digest-verified service
+  principals, immutable server grants, hosted fail-closed configuration,
+  per-session issuer/principal/revision provenance, authorization-time
+  revocation, credential-safe audit logs, optional OpenAPI issuance auth, and
+  hostile-client cross-transport Docker evidence · issue #329 · risk HIGH ·
+  [[trusted-session-issuance]]
+
 - 2026-07-15 · recovery/review quickstart · accepted and implemented a one-command
   production-image scenario using isolated SQLite rather than process-local
   memory, with exact HTTP `201`/`409` lease contention, a nonzero saved cursor,

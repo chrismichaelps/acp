@@ -33,8 +33,19 @@ export const authorize: (
 ) => Effect<
   WorkerId,
   UnauthorizedError | StorageError,
-  AppConfigTag | SessionService | HttpServerRequest
+  AppConfigTag | SessionIssuer | SessionService | HttpServerRequest
 >
+export const authorizeTokenActor: (
+  token: string,
+  scope?: Permission,
+) => Effect<AuthorizedActor, UnauthorizedError | ForbiddenError | StorageError,
+  SessionIssuer | SessionService>
+export const authorizeTokenWorkspace: (
+  token: string,
+  scope: Permission,
+  workspaceId: WorkspaceId,
+) => Effect<WorkerId, UnauthorizedError | ForbiddenError | StorageError,
+  SessionIssuer | SessionService>
 export const respond: (
   route: string,
 ) => <E, R>(
@@ -50,19 +61,25 @@ export const pathParam: (
 
 ### Linkage
 
-- **Requires:** [[app-config]], [[session-service]], [[http-error-mapper]],
+- **Requires:** [[app-config]], [[session-service]], [[session-issuer]], [[http-error-mapper]],
   [[protocol-error]], [[common]]
 - **Consumed by:** [[acp-router]], [[workspace-routes]]
 
 ## Algorithm
 
 `authorizeActor` reads the bearer token from `Authorization`, validates it
-through [[session-service]], and returns the worker id, granted permissions, and
+through [[session-service]], revalidates policy provenance through
+[[session-issuer]], and returns the worker id, granted permissions, and
 ADR-0009 workspace binding. `authorize` preserves the older convenience shape by
 returning only the worker id after the permission check. `authorizeWorkspace`
 checks both the action permission and a concrete `workspace_id`; host-wide
 sessions (`workspace_ids = Option.none`) pass, while a valid token bound to a
 different workspace fails `ForbiddenError` without disclosing target existence.
+
+`authorizeTokenActor` and `authorizeTokenWorkspace` expose the same policy for
+transports that already extracted a connection-bound token, including
+[[rpc-socket]]. Static issuer validation always precedes scope/workspace checks so
+a revoked principal receives the same opaque 401 as an unknown session.
 
 Missing tokens fall back to `worker_system` only when `ACP_REQUIRE_AUTH` is
 false. Credential failures (missing token in required-auth mode, unknown token)
@@ -90,6 +107,8 @@ named segment from the current `HttpRouter` route context.
 - ❌ Do NOT log raw URLs, bearer tokens, request bodies, resource ids, or storage
   paths from the route boundary.
 - ❌ Do NOT import domain services here beyond session authorization.
+- ❌ Do NOT accept a static session based only on its persisted scopes; validate
+  issuer/principal/revision before authorization.
 
 ## Depth
 
@@ -98,4 +117,4 @@ semantics that every transport route must share.
 
 ## Referenced by
 
-[[acp-router]] · [[workspace-routes]] · [[server/_MOC]]
+[[acp-router]] · [[workspace-routes]] · [[rpc-socket]] · [[server/_MOC]]

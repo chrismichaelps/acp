@@ -35,29 +35,29 @@ export interface AuthorizedRpcActor {
 export const authorizeRpcActor: (
   headers: Headers,
   scope?: Permission,
-) => Effect<AuthorizedRpcActor, ProtocolError, AppConfigTag | SessionService>
+) => Effect<AuthorizedRpcActor, ProtocolError, AppConfigTag | SessionIssuer | SessionService>
 
 export const authorizeRpc: (
   headers: Headers,
   scope?: Permission,
-) => Effect<WorkerId, ProtocolError, AppConfigTag | SessionService>
+) => Effect<WorkerId, ProtocolError, AppConfigTag | SessionIssuer | SessionService>
 
 export const authorizeRpcWorkspace: (
   headers: Headers,
   scope: Permission,
   workspaceId: WorkspaceId,
-) => Effect<WorkerId, ProtocolError, AppConfigTag | SessionService>
+) => Effect<WorkerId, ProtocolError, AppConfigTag | SessionIssuer | SessionService>
 
 export const rpcActor: (
   headers: Headers,
   scope?: Permission,
-) => Effect<WorkerId, ProtocolError, AppConfigTag | SessionService>
+) => Effect<WorkerId, ProtocolError, AppConfigTag | SessionIssuer | SessionService>
 
 export const rpcWorkspaceActor: (
   headers: Headers,
   scope: Permission,
   workspaceId: WorkspaceId,
-) => Effect<WorkerId, ProtocolError, AppConfigTag | SessionService>
+) => Effect<WorkerId, ProtocolError, AppConfigTag | SessionIssuer | SessionService>
 
 export const AcpRpcActor: Context.Tag<WorkerId>
 ```
@@ -68,7 +68,8 @@ Read `Authorization: Bearer <session_id>` from the RPC handler options headers.
 When no token is present, read [[app-config]] and either fail with
 `unauthorized` in required-auth mode or return `worker_system` in local mode.
 When a token is present, load the session, fail `unauthorized` if it is missing,
-and enforce the requested scope against the session permission list.
+revalidate its provenance through [[session-issuer]], and only then enforce the
+requested scope against the session permission list.
 `authorizeRpcActor` preserves the resolved worker id, permission list, and
 ADR-0009 workspace binding so `authorizeRpcWorkspace` can reject a valid session
 whose `workspace_ids` do not contain the requested workspace. A valid session
@@ -94,6 +95,8 @@ both the action scope and concrete workspace binding from the bearer session.
 - ❌ Do NOT invent RPC-specific permission names; use [[common]] scopes.
 - ❌ Do NOT duplicate token/session logic inside individual RPC handlers or
   middleware wrappers; both should delegate here.
+- ❌ Do NOT authorize a persisted static grant whose principal is disabled,
+  missing, or at a different revision.
 
 ## Depth
 
@@ -104,4 +107,4 @@ handler must share.
 
 [[acp-rpc-handlers]] · [[rpc-auth-middleware]] ·
 [[acp-rpc-direct-workspace-scope.test]] · [[acp-rpc-review-scope.test]] ·
-[[acp-rpc-work-lease-scope.test]] · [[rpc-index]] · [[rpc/_MOC]]
+[[acp-rpc-work-lease-scope.test]] · [[session-issuer]] · [[rpc-index]] · [[rpc/_MOC]]
