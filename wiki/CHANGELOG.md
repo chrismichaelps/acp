@@ -3,10 +3,13 @@
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
 - 2026-07-14 · OpenAPI contract artifact · generated `openapi.json` from the
-  typed `AcpHttpApi` surface, pinned `info.version` to the protocol version, and
-  gated it byte-for-byte against source via `openapi.test.ts` so the published
-  REST contract cannot drift · validation: openapi structure + drift tests, full
-  gate suite · risk LOW · [[ADR-0017-openapi-contract-artifact]] · [[openapi]]
+  typed `AcpHttpApi` surface, pinned `info.version` to the protocol version,
+  repaired router-level auth metadata with the `AcpSession` bearer scheme while
+  keeping only session initialization public, served the in-memory projection at
+  `GET /openapi.json`, and gated it byte-for-byte against source · validation:
+  259/259 source mirrors, focused semantic/live route tests, 644-test clean Linux
+  suite, policy checks, and production build; Docker self-dogfood and ACP review
+  pending · risk MEDIUM · [[ADR-0017-openapi-contract-artifact]] · [[openapi]]
 
 - 2026-07-14 · ACP v1.1.0 · squash-merged release PR #323 at
   `3fe6a370e9346578551ab593337d60331442134c`, pushed annotated tag `v1.1.0`, and

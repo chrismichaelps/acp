@@ -4,6 +4,17 @@ import { describe, expect, it } from 'vitest'
 import { ACP_PROTOCOL_VERSION } from '../../protocol/schema/index.js'
 import { buildAcpOpenApi, serializeOpenApi } from './openapi.js'
 
+const HTTP_METHODS = [
+  'get',
+  'put',
+  'post',
+  'delete',
+  'options',
+  'head',
+  'patch',
+  'trace',
+] as const
+
 describe('buildAcpOpenApi', () => {
   it('emits an OpenAPI 3.x document with pinned identity', () => {
     const spec = buildAcpOpenApi()
@@ -19,6 +30,34 @@ describe('buildAcpOpenApi', () => {
     expect(Object.keys(spec.paths)).toContain('/v1/work')
     // path params render in OpenAPI brace form, not the Effect `:param` form
     expect(Object.keys(spec.paths)).toContain('/v1/work/{work_id}')
+  })
+
+  it('describes bearer auth on every operation except session bootstrap', () => {
+    const spec = buildAcpOpenApi()
+    expect(spec.components.securitySchemes.AcpSession).toEqual({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'ACP session id',
+      description:
+        'Session credential returned by POST /v1/session/initialize.',
+    })
+    expect(spec.security).toEqual([{ AcpSession: [] }])
+
+    const operations = Object.values(spec.paths).flatMap((pathItem) =>
+      HTTP_METHODS.flatMap((method) => {
+        const operation = pathItem[method]
+        return operation === undefined ? [] : [operation]
+      }),
+    )
+    expect(operations.length).toBeGreaterThan(1)
+
+    for (const operation of operations) {
+      expect(operation.security).toEqual(
+        operation.operationId === 'session.initializeSession'
+          ? []
+          : [{ AcpSession: [] }],
+      )
+    }
   })
 
   it('is deterministic so the committed artifact cannot flap', () => {

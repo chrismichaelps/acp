@@ -431,7 +431,11 @@
         ],
         "operationId": "workers.listWorkers",
         "parameters": [],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -596,7 +600,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -810,7 +818,11 @@
         ],
         "operationId": "workspaces.listWorkspaces",
         "parameters": [],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -959,7 +971,11 @@
         ],
         "operationId": "workspaces.createWorkspace",
         "parameters": [],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -1227,7 +1243,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1556,7 +1576,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -1835,7 +1859,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -2076,7 +2104,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -2292,7 +2324,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -2524,7 +2560,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -2767,7 +2807,11 @@
         ],
         "operationId": "work.createWork",
         "parameters": [],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -3051,7 +3095,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -3287,7 +3335,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -3614,7 +3666,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -3871,7 +3927,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -4155,7 +4215,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -4371,7 +4435,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -4584,7 +4652,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -4816,7 +4888,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -5068,7 +5144,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -5230,7 +5310,11 @@
         ],
         "operationId": "leases.requestLease",
         "parameters": [],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -5528,7 +5612,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -5902,7 +5990,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "204": {
             "description": "Success"
@@ -6058,7 +6150,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -6341,7 +6437,11 @@
         ],
         "operationId": "artifacts.createArtifact",
         "parameters": [],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -6647,7 +6747,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -7004,7 +7108,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -7172,7 +7280,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -7335,7 +7447,11 @@
         ],
         "operationId": "checkpoints.createCheckpoint",
         "parameters": [],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -7584,7 +7700,11 @@
         ],
         "operationId": "memory.createMemory",
         "parameters": [],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -7929,7 +8049,11 @@
             "required": false
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -8158,7 +8282,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -8846,7 +8974,11 @@
         ],
         "operationId": "reviews.requestReview",
         "parameters": [],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "201": {
             "description": "Success",
@@ -9132,7 +9264,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -9491,7 +9627,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -9740,7 +9880,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -9989,7 +10133,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -10267,7 +10415,11 @@
             "required": false
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -10522,7 +10674,11 @@
             "required": true
           }
         ],
-        "security": [],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -10871,9 +11027,20 @@
         "exclusiveMinimum": 0
       }
     },
-    "securitySchemes": {}
+    "securitySchemes": {
+      "AcpSession": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "ACP session id",
+        "description": "Session credential returned by POST /v1/session/initialize."
+      }
+    }
   },
-  "security": [],
+  "security": [
+    {
+      "AcpSession": []
+    }
+  ],
   "tags": [
     {
       "name": "session"

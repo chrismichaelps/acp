@@ -392,7 +392,10 @@ unauthenticated at `GET /openapi.json`, so a client can fetch the contract befor
 any session exists. Point an OpenAPI generator at either to produce a client in
 any language, or load it into Swagger UI / Postman to browse every endpoint
 before adopting ACP. `info.version` tracks the protocol version, so the document
-moves only when the wire contract does. It is regenerated with
+moves only when the wire contract does. Protected operations declare the
+`AcpSession` HTTP bearer scheme; only `session.initializeSession` is public, so
+generated clients expose the credential flow used by the production router. It
+is regenerated with
 `pnpm openapi:generate` and gated byte-for-byte against the contract by
 `pnpm check:openapi`, so the committed file can never drift from the code. See
 [`wiki/references/openapi.md`](./wiki/references/openapi.md).

@@ -18,6 +18,15 @@ describe('openapi route', () => {
       new Request('http://acp.test/openapi.json', { method: 'GET' }),
     )
     expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toMatch(/^application\/json\b/)
     expect(await res.json()).toEqual(buildAcpOpenApi())
+  })
+
+  it('does not route unsupported methods to the discovery handler', async () => {
+    const handler = makeHandler()
+    const res = await handler(
+      new Request('http://acp.test/openapi.json', { method: 'POST' }),
+    )
+    expect(res.status).toBe(404)
   })
 })
