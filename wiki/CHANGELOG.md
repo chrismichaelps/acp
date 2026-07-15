@@ -2,6 +2,16 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-15 · recovery/review quickstart design · accepted a one-command
+  production-image scenario using isolated SQLite rather than process-local
+  memory, with exact HTTP `201`/`409` lease contention, a nonzero saved cursor,
+  checkpoint/handoff tail replay after a real mid-work container restart,
+  durable state reload, approval-before-completion, and deterministic cleanup;
+  selected the existing Docker self-dogfood entry point and prohibited a new
+  provider/orchestration runner · validation: documentation-first senior grill
+  and live Docker ACP work coordination · risk MEDIUM · issue #328 ·
+  [[ADR-0018-recovery-review-quickstart]] · [[recovery-review-quickstart]]
+
 - 2026-07-14 · OpenAPI contract artifact · generated `openapi.json` from the
   typed `AcpHttpApi` surface, pinned `info.version` to the protocol version,
   repaired router-level auth metadata with the `AcpSession` bearer scheme while
@@ -17,7 +27,8 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   public; the second ACP review confirmed runtime correctness and blocked on a
   four-verb parity parser plus incomplete mirror/backlinks, now repaired with one
   full-method TypeScript AST inventory and reciprocal FMCF wiki links; final ACP
-  re-review pending ·
+  re-review returned GO, both required checks passed, PR #332 squash-merged, and
+  issue #327 closed ·
   risk MEDIUM · [[ADR-0017-openapi-contract-artifact]] · [[openapi]]
 
 - 2026-07-14 · ACP v1.1.0 · squash-merged release PR #323 at

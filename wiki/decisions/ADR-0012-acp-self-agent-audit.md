@@ -81,4 +81,5 @@ coordination, documentation, and product gaps that scripted scenarios miss.
 ## Referenced by
 
 [[live-agent-docker-dogfood]] · [[agent-integration]] · [[architecture/_MOC]] ·
-[[decisions/_MOC]]
+[[decisions/_MOC]] · [[ADR-0018-recovery-review-quickstart]] ·
+[[recovery-review-quickstart]]

@@ -134,6 +134,9 @@ separate provider runner is added.
   OpenAPI artifact from typed REST routes, repair router-level bearer metadata,
   publish public discovery, enforce source/artifact and production-route parity,
   and govern same-version compatibility through reviewed diffs.
+- [[ADR-0018-recovery-review-quickstart]] — ACCEPTED; curate the existing
+  production Docker self-dogfood path into a one-command SQLite recovery story
+  with wire-level collision and review evidence.
 
 ## Build Order (vertical slices)
 
@@ -217,13 +220,18 @@ separate provider runner is added.
 75. ✅ ACP v1.1.0 release — synchronized public release/protocol status, passed
     independent and complete Docker ACP gates, merged PR #323, tagged the exact
     merge commit, and published the GitHub release
-76. ▶ OpenAPI contract publication — issue #327 / PR #332; the first independent
+76. ✅ OpenAPI contract publication — issue #327 / PR #332; the first independent
     ACP review found 40 documented operations against 53 live routes. The repair
     now publishes all 53 and documents protected `401`/`403` responses. The
     second review confirmed runtime correctness and identified method-blind test
     parsing plus wiki completeness. The shared AST inventory and reciprocal wiki
-    repair now pass 261/261 parity and the 647-test clean Linux suite; final ACP
-    re-review and merge remain
+    repair passed 261/261 parity and the 647-test clean Linux suite; final ACP
+    re-review returned GO, all checks passed, PR #332 merged, and issue #327
+    closed
+77. ▶ [[recovery-review-quickstart]] — issue #328; documentation accepts durable
+    SQLite, real HTTP `409 lease_conflict`, nonzero cursor-tail replay after an
+    actual mid-work restart, and approval before terminal completion; source
+    implementation pending
 
 ## Referenced by
 

@@ -54,6 +54,9 @@ tags: [moc, adr]
 - [[ADR-0017-openapi-contract-artifact]] — ACCEPTED — publish a deterministic,
   protocol-versioned OpenAPI contract with bearer security metadata, an explicit
   0.x compatibility envelope, live discovery, and byte drift enforcement.
+- [[ADR-0018-recovery-review-quickstart]] — ACCEPTED — expose a deterministic
+  production-image quickstart that proves HTTP lease collision, SQLite-backed
+  mid-work restart recovery, cursor-tail replay, and review-gated completion.
 
 ## Referenced by
 

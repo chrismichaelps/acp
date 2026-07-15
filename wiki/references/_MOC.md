@@ -14,6 +14,8 @@ tags: [moc, references]
 - [[workspace-memory-records]] — durable handoff and recall records.
 - [[version-bump]] — production-safe release/protocol version planning and apply.
 - [[openapi]] — machine-readable REST contract artifact and its drift gate.
+- [[recovery-review-quickstart]] — one-command lease collision, restart replay,
+  and review-gated completion proof.
 
 ## Referenced by
 
