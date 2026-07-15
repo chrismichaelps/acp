@@ -1,5 +1,4 @@
 /** @Acp.Infra.Http.Api.Test — reflected route contract */
-import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { HttpApi } from '@effect/platform'
 import { Option, Schema } from 'effect'
@@ -9,6 +8,11 @@ import {
   InitializeSessionResponse,
   PublishWorkEventPayload,
 } from './index.js'
+import {
+  extractProductionV1RouteKeys,
+  productionV1RouteKeys,
+  routeKey,
+} from './production-route-inventory-test-support.js'
 
 interface ReflectedEndpoint {
   readonly group: string
@@ -31,19 +35,6 @@ const reflectEndpoints = (): readonly ReflectedEndpoint[] => {
     },
   })
   return endpoints
-}
-
-const routeKey = (method: string, path: string): string =>
-  `${method.toUpperCase()} ${path.replace(/:([A-Za-z0-9_]+)/g, '{$1}')}`
-
-const productionV1Routes = (): readonly string[] => {
-  const source = readFileSync('src/app/server/router.ts', 'utf8')
-  return Array.from(
-    source.matchAll(/HttpRouter\.(get|post|patch|del)\(\s*['"]([^'"]+)['"]/g),
-    ([, method, path]) => routeKey(method === 'del' ? 'DELETE' : method, path),
-  )
-    .filter((route) => route.includes(' /v1/'))
-    .sort()
 }
 
 describe('AcpHttpApi', () => {
@@ -465,6 +456,45 @@ describe('AcpHttpApi', () => {
       .sort()
 
     expect(typedRoutes).toHaveLength(53)
-    expect(typedRoutes).toEqual(productionV1Routes())
+    expect(typedRoutes).toEqual(productionV1RouteKeys())
+  })
+
+  it('extracts every supported HTTP method and rejects ambiguous routes', () => {
+    const source = `
+      HttpRouter.get('/v1/get', handler)
+      HttpRouter.get('/v1', handler)
+      HttpRouter.post('/v1/post', handler)
+      HttpRouter.patch('/v1/patch', handler)
+      HttpRouter.put('/v1/put', handler)
+      HttpRouter.del('/v1/delete', handler)
+      HttpRouter.head(router, '/v1/head', handler)
+      HttpRouter.options('/v1/options', handler)
+      HttpRouter.route('TRACE')('/v1/trace', handler)
+    `
+
+    expect(extractProductionV1RouteKeys(source)).toEqual(
+      [
+        'DELETE /v1/delete',
+        'GET /v1/get',
+        'GET /v1',
+        'HEAD /v1/head',
+        'OPTIONS /v1/options',
+        'PATCH /v1/patch',
+        'POST /v1/post',
+        'PUT /v1/put',
+        'TRACE /v1/trace',
+      ].sort(),
+    )
+    expect(() =>
+      extractProductionV1RouteKeys(`HttpRouter.all('/v1/wildcard', handler)`),
+    ).toThrow('HttpRouter.all cannot declare a typed /v1 operation')
+    expect(() =>
+      extractProductionV1RouteKeys(`HttpRouter.put(dynamicPath, handler)`),
+    ).toThrow('HttpRouter.put must declare a literal path')
+    expect(() =>
+      extractProductionV1RouteKeys(
+        `HttpRouter.route(dynamicMethod)('/v1/dynamic', handler)`,
+      ),
+    ).toThrow('HttpRouter.route must declare a literal HTTP method')
   })
 })

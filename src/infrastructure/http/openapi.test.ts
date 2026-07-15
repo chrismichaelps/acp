@@ -3,6 +3,10 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { ACP_PROTOCOL_VERSION } from '../../protocol/schema/index.js'
 import { buildAcpOpenApi, serializeOpenApi } from './openapi.js'
+import {
+  productionV1RouteKeys,
+  routeKey,
+} from './production-route-inventory-test-support.js'
 
 const HTTP_METHODS = [
   'get',
@@ -14,19 +18,6 @@ const HTTP_METHODS = [
   'patch',
   'trace',
 ] as const
-
-const routeKey = (method: string, path: string): string =>
-  `${method.toUpperCase()} ${path.replace(/:([A-Za-z0-9_]+)/g, '{$1}')}`
-
-const productionV1Routes = (): readonly string[] => {
-  const source = readFileSync('src/app/server/router.ts', 'utf8')
-  return Array.from(
-    source.matchAll(/HttpRouter\.(get|post|patch|del)\(\s*['"]([^'"]+)['"]/g),
-    ([, method, path]) => routeKey(method === 'del' ? 'DELETE' : method, path),
-  )
-    .filter((route) => route.includes(' /v1/'))
-    .sort()
-}
 
 const publishedOperations = (spec: ReturnType<typeof buildAcpOpenApi>) =>
   Object.entries(spec.paths).flatMap(([path, pathItem]) =>
@@ -86,7 +77,7 @@ describe('buildAcpOpenApi', () => {
       .sort()
 
     expect(published).toHaveLength(53)
-    expect(published).toEqual(productionV1Routes())
+    expect(published).toEqual(productionV1RouteKeys())
   })
 
   it('is deterministic so the committed artifact cannot flap', () => {
