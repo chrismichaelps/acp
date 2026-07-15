@@ -95,10 +95,15 @@ session/workspace/work/lease behavior. Generated-client ergonomics, exact
 contract metadata, and direct/derived workspace isolation suites complete
 infrastructure parity. The final protocol suites and protocol folder MOCs first
 closed the audit at 253 exact pairs. The review-collaboration authorization
-boundary then added one production module and one focused test with their pages;
-the current audit is 255 source files, 255 exact non-MOC pages, zero missing
-mirrors, and zero orphans. The active production audit uses the existing
-Dockerized ACP host directly; no separate provider runner is added.
+boundary then added one production module and one focused test with their pages.
+Issue #327 adds the OpenAPI projection and its test plus the live discovery route
+and its test, then splits the review HTTP groups into one cohesive production
+module so all 53 live routes participate in the contract. Each addition has an
+exact mirror. The full-method production inventory helper adds one more pair.
+The current audit is therefore 261 source files, 261 exact
+non-MOC pages, zero missing mirrors, and zero orphans.
+The active production audit uses the existing Dockerized ACP host directly; no
+separate provider runner is added.
 
 ## ADRs
 
@@ -125,6 +130,10 @@ Dockerized ACP host directly; no separate provider runner is added.
 - [[ADR-0016-version-bump-policy]] — ACCEPTED; infer release semver from full
   conventional commits, require explicit protocol intent, and apply validated
   version edits transactionally without tagging an uncommitted tree.
+- [[ADR-0017-openapi-contract-artifact]] — ACCEPTED; generate a protocol-versioned
+  OpenAPI artifact from typed REST routes, repair router-level bearer metadata,
+  publish public discovery, enforce source/artifact and production-route parity,
+  and govern same-version compatibility through reviewed diffs.
 
 ## Build Order (vertical slices)
 
@@ -208,6 +217,13 @@ Dockerized ACP host directly; no separate provider runner is added.
 75. ✅ ACP v1.1.0 release — synchronized public release/protocol status, passed
     independent and complete Docker ACP gates, merged PR #323, tagged the exact
     merge commit, and published the GitHub release
+76. ▶ OpenAPI contract publication — issue #327 / PR #332; the first independent
+    ACP review found 40 documented operations against 53 live routes. The repair
+    now publishes all 53 and documents protected `401`/`403` responses. The
+    second review confirmed runtime correctness and identified method-blind test
+    parsing plus wiki completeness. The shared AST inventory and reciprocal wiki
+    repair now pass 261/261 parity and the 647-test clean Linux suite; final ACP
+    re-review and merge remain
 
 ## Referenced by
 

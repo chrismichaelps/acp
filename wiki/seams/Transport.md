@@ -26,6 +26,12 @@ persisted domain state is deferred by
 cross it), so failure = system failure, but variation is still emerging —
 lifecycle EXPLORATORY.
 
+The typed REST surface is also projected as `openapi.json` and served publicly at
+`GET /openapi.json` under [[ADR-0017-openapi-contract-artifact]]. That projection
+declares `AcpSession` bearer security for protected operations while keeping only
+session initialization public; it describes the current transport credential,
+not trusted hosted identity.
+
 ## Interface
 
 Transport adapters translate wire requests into decoded protocol payloads, invoke
@@ -55,11 +61,14 @@ WebSocket `events.subscribe` emits `events.event` notifications from the existin
 
 ADR: [[ADR-0001-architecture-foundation]] and
 [[ADR-0002-json-rpc-transport-framing]] and
-[[ADR-0003-event-vocabulary-domain-boundaries]]. Built on `@effect/platform`
-`HttpApi` declarative API (see [[grammar/typescript]]).
+[[ADR-0003-event-vocabulary-domain-boundaries]] and
+[[ADR-0017-openapi-contract-artifact]]. Built on `@effect/platform` `HttpApi`
+declarative API (see [[grammar/typescript]]).
 
 ## Referenced by
 
 [[Event]] · [[acp-http-api]] · [[http-error-mapper]] · [[json-rpc]] ·
 [[stdio-main]] · [[rpc-socket]] · [[architecture/_MOC]] ·
-[[ADR-0003-event-vocabulary-domain-boundaries]]
+[[ADR-0003-event-vocabulary-domain-boundaries]] ·
+[[ADR-0017-openapi-contract-artifact]] · [[openapi-module]] · [[openapi-route]] ·
+[[acp-http-api-reviews]] · [[production-route-inventory-test-support]]

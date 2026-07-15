@@ -53,9 +53,10 @@ helpers, authenticated writes, persisted content reads, state-machine
 transitions, lease lifecycle and readback transitions, and checkpoint
 latest-selection across the real HTTP client protocol.
 
-`AcpHttpRoutesLive` also mounts [[acp-router]] for `/v1/*` and `/rpc`. The
-explicit paths avoid catch-all route ordering ambiguity and leave `/rpc/native`
-owned by the native RPC transport.
+`AcpHttpRoutesLive` also mounts [[acp-router]] for `/v1/*`, `/rpc`, and the
+explicit public [[openapi-route]] at `/openapi.json`. The explicit paths avoid
+catch-all route ordering ambiguity and leave `/rpc/native` owned by the native
+RPC transport.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -66,6 +67,8 @@ owned by the native RPC transport.
   clients across unary and streaming operations.
 - ❌ Do NOT add domain behavior here. The route owns transport registration; the
   handlers remain in [[acp-rpc-handlers]] and its split verticals.
+- ❌ Do NOT omit `/openapi.json` from the explicit host-layer mount; that would
+  make the documented discovery handler dead in the production composition.
 
 ## Depth
 
@@ -75,4 +78,5 @@ invariant at the point where two router implementations meet.
 ## Referenced by
 
 [[native-rpc-route.test]] · [[http-app]] · [[server-index]] ·
-[[acp-rpc-server]] · [[Transport]]
+[[acp-rpc-server]] · [[openapi-route]] · [[Transport]] ·
+[[ADR-0017-openapi-contract-artifact]]

@@ -56,6 +56,7 @@ export const WorkGroup: HttpApiGroup.HttpApiGroup<'work', ...>
 export const WorkerGroup: HttpApiGroup.HttpApiGroup<'workers', ...>
 export const LeaseGroup: HttpApiGroup.HttpApiGroup<'leases', ...>
 export { EventsGroup } from './acp-http-api-events.js'
+export { ReviewGroup, ReviewCommentGroup, GrillGroup } from './acp-http-api-reviews.js'
 export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 ```
 
@@ -96,6 +97,18 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 - `POST /v1/reviews/{review_id}/reject`
 - `POST /v1/reviews/{review_id}/request_changes`
 - `POST /v1/reviews/{review_id}/cancel`
+- `POST` + `GET /v1/reviews/{review_id}/comments`
+- `POST /v1/review-comments/{comment_id}/resolve`
+- `POST /v1/review-comments/{comment_id}/reopen`
+- `POST /v1/review-comments/{comment_id}/external-id`
+- `GET /v1/work/{work_id}/review-comments`
+- `POST /v1/reviews/{review_id}/grill`
+- `GET /v1/reviews/{review_id}/grills`
+- `POST /v1/grills/{grill_id}/questions`
+- `POST /v1/grills/{grill_id}/evaluate`
+- `GET /v1/grills/{grill_id}`
+- `POST /v1/grill-questions/{question_id}/answer`
+- `POST /v1/grill-questions/{question_id}/verdict`
 - `GET /v1/events?workspace_id=...&after_seq=...&limit=...`
 - `GET /v1/events/stream?workspace_id=...`
 
@@ -104,6 +117,7 @@ export class AcpHttpApi extends HttpApi.make('acp').add(...) {}
 - **Requires:** [[work-unit.schema]], [[worker.schema]], [[workspace.schema]],
   [[session.schema]],
   [[acp-http-api-resume]],
+  [[acp-http-api-reviews]],
   [[lease.schema]], [[artifact.schema]], [[checkpoint.schema]], [[review.schema]],
   [[event.schema]], [[error.schema]]
 - **Consumed by:** future HTTP handler/server layer and generated clients.
@@ -191,6 +205,12 @@ The host capability descriptor advertises this as
 `supports_signed_review_approvals: true` so clients can discover evidence
 support without inferring it from broad review support.
 
+Review, review-comment, and grill declarations are split into
+[[acp-http-api-reviews]] so the typed inventory matches every production `/v1`
+registration without pushing this central declaration beyond the file-size gate.
+Adding the previously omitted 13 declarations is additive documentation of live
+v0.1 behavior, not a new route or protocol-version change.
+
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT implement business logic here.
@@ -199,6 +219,8 @@ support without inferring it from broad review support.
 - ❌ Do NOT omit or reorder effective permission literals in the session
   response; propagation tests compare the exact array.
 - ❌ Do NOT accept both ADR-0013 role scopes in one initialization payload.
+- ❌ Do NOT publish a typed inventory that is smaller than [[acp-router]]'s
+  production `/v1` registrations.
 
 ## Depth
 
@@ -210,3 +232,4 @@ route drift between server handlers, generated clients, and tests.
 [[http-index]] · [[acp-http-api-events]] · [[acp-http-api.test]] · [[Transport]]
 · [[workspace-routes]] · [[event-routes]] · [[protocol-version]] · [[src/_MOC]]
 · [[ADR-0013-review-collaboration-permission]]
+· [[acp-http-api-reviews]] · [[ADR-0017-openapi-contract-artifact]]

@@ -51,6 +51,9 @@ tags: [moc, adr]
 - [[ADR-0016-version-bump-policy]] — ACCEPTED — infer release semver from full
   commit evidence, keep protocol changes explicit, and apply version edits as a
   rollback-capable repository transaction.
+- [[ADR-0017-openapi-contract-artifact]] — ACCEPTED — publish a deterministic,
+  protocol-versioned OpenAPI contract with bearer security metadata, an explicit
+  0.x compatibility envelope, live discovery, and byte drift enforcement.
 
 ## Referenced by
 

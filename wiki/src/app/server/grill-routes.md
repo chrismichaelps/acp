@@ -80,4 +80,5 @@ walk. Cross-session identity trust remains outside this route boundary.
 
 [[grill-routes.test]] · [[router]] · [[grill-service]] ·
 [[review-collaboration-auth]] · [[ADR-0013-review-collaboration-permission]] ·
-[[server/_MOC]] · [[2026-07-13-review-collaboration-security-design]]
+[[server/_MOC]] · [[2026-07-13-review-collaboration-security-design]] ·
+[[acp-http-api-reviews]]

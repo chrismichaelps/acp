@@ -83,4 +83,5 @@ non-enumeration, validation, and service encoding behind one REST surface.
 
 [[review-comment-routes.test]] · [[router]] · [[review-comment-service]] ·
 [[review-collaboration-auth]] · [[ADR-0013-review-collaboration-permission]] ·
-[[server/_MOC]] · [[2026-07-13-review-collaboration-security-design]]
+[[server/_MOC]] · [[2026-07-13-review-collaboration-security-design]] ·
+[[acp-http-api-reviews]]

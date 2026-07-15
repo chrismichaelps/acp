@@ -73,6 +73,14 @@ reference host is still tightening command parity and event vocabulary; generate
 artifacts would amplify every small route or schema decision before the consumer
 exists.
 
+### Update — 2026-07-14
+
+[[ADR-0017-openapi-contract-artifact]] now supplies the concrete REST consumer,
+stable artifact policy, protocol-versioned compatibility envelope, security
+metadata, and drift gate that this decision required. Language-specific generated
+client packages remain downstream; the committed OpenAPI document is the stable
+input to that future work.
+
 ## Consequences
 
 Protocol-version constants are no longer hard-coded into the router response or
@@ -106,4 +114,5 @@ versions as ACP `invalid_request` errors, and the full local gate.
 ## Referenced by
 
 [[architecture/_MOC]] · [[protocol-implementation-2026-06-27]] ·
-[[acp-http-api]] · [[protocol-version]]
+[[acp-http-api]] · [[protocol-version]] ·
+[[ADR-0017-openapi-contract-artifact]]

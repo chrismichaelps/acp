@@ -12,6 +12,10 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
 - [[health-routes]] — unauthenticated Host liveness/readiness probes.
 - [[health-routes.test]] — public liveness/readiness registration and response
   contract.
+- [[openapi-route]] — unauthenticated, in-memory `GET /openapi.json` discovery
+  handler.
+- [[openapi-route.test]] — production-router wiring, JSON response, and method
+  boundary contract.
 - [[id-clock]] — id/timestamp minting primitive for the composition root.
 - [[identity.test]] — ordinary id, ISO timestamp, and secure-token guarantees.
 - [[acp-router]] — `HttpRouter` wiring all v0.1 routes to services + SSE + `/rpc`.

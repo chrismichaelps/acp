@@ -2,6 +2,24 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-14 · OpenAPI contract artifact · generated `openapi.json` from the
+  typed `AcpHttpApi` surface, pinned `info.version` to the protocol version,
+  repaired router-level auth metadata with the `AcpSession` bearer scheme while
+  keeping only session initialization public, served the in-memory projection at
+  `GET /openapi.json`, and gated it byte-for-byte against source; the first ACP
+  review found and blocked a 40/53 production-route gap, missing protected
+  `401`/`403` responses, and overstated compatibility automation, all repaired by
+  the complete review HTTP group and exact production-parity gate · validation:
+  261/261 source mirrors, 18 feature plus 14 final parity Docker tests, 647-test
+  clean Linux suite,
+  policy checks, production build, complete SQLite/auth/transport/HA/edge Docker
+  self-dogfood, and fresh-image proof of 53 operations with 52 protected and one
+  public; the second ACP review confirmed runtime correctness and blocked on a
+  four-verb parity parser plus incomplete mirror/backlinks, now repaired with one
+  full-method TypeScript AST inventory and reciprocal FMCF wiki links; final ACP
+  re-review pending ·
+  risk MEDIUM · [[ADR-0017-openapi-contract-artifact]] · [[openapi]]
+
 - 2026-07-14 · ACP v1.1.0 · squash-merged release PR #323 at
   `3fe6a370e9346578551ab593337d60331442134c`, pushed annotated tag `v1.1.0`, and
   published the GitHub release after final Local Gates and Complete Docker
