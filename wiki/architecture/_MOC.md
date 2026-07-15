@@ -228,10 +228,13 @@ separate provider runner is added.
     repair passed 261/261 parity and the 647-test clean Linux suite; final ACP
     re-review returned GO, all checks passed, PR #332 merged, and issue #327
     closed
-77. ▶ [[recovery-review-quickstart]] — issue #328; documentation accepts durable
-    SQLite, real HTTP `409 lease_conflict`, nonzero cursor-tail replay after an
-    actual mid-work restart, and approval before terminal completion; source
-    implementation pending
+77. ▶ [[recovery-review-quickstart]] — issue #328; the existing Docker
+    self-dogfood entry point now exposes the documented SQLite mode and runs it
+    in aggregate CI. Focused clean-Linux invariants and two production-image
+    runs passed with either worker winning, HTTP `409`, cursor `8`, replay
+    `9,10`, durable resume, approval, release, completion, and cleanup. Clean
+    Linux lint, typecheck, the 153-file production build, and all 649 repository
+    tests pass; aggregate Docker gate and ACP review remain
 
 ## Referenced by
 

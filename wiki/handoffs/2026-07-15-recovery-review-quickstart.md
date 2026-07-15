@@ -53,6 +53,24 @@ image.
 - deterministic cleanup and collision-safe resource names;
 - no provider credential or external service dependency.
 
+## Implementation Evidence
+
+- Documentation-first commit: `3903428`.
+- `package.json` exposes `pnpm quickstart`; the existing
+  `acp-docker-self-dogfood.mjs` entry point owns public and aggregate modes.
+- Pure race/replay contract: 11/11 focused tests passed in clean Linux.
+- Clean Linux lint, typecheck, 153-file production build, and full suite passed:
+  117 files / 649 tests, with 2 files / 13 Postgres tests intentionally skipped.
+- Production image run `issue328-live`: worker A won, worker B received HTTP
+  `409 lease_conflict`, saved cursor `8`, replayed `9,10`, restored the running
+  work/checkpoint/handoff, approved review, released the lease, completed work,
+  and removed its container/volume.
+- Reuse-image run `issue328-resume`: worker B won with the same invariant
+  evidence, proving the scenario does not depend on a fixed race winner.
+
+Full repository gates, aggregate Docker self-dogfood, ACP grill/review, PR, and
+merge remain.
+
 ## Referenced by
 
 [[ADR-0018-recovery-review-quickstart]] · [[recovery-review-quickstart]]

@@ -2,14 +2,19 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
-- 2026-07-15 · recovery/review quickstart design · accepted a one-command
+- 2026-07-15 · recovery/review quickstart · accepted and implemented a one-command
   production-image scenario using isolated SQLite rather than process-local
   memory, with exact HTTP `201`/`409` lease contention, a nonzero saved cursor,
   checkpoint/handoff tail replay after a real mid-work container restart,
   durable state reload, approval-before-completion, and deterministic cleanup;
-  selected the existing Docker self-dogfood entry point and prohibited a new
-  provider/orchestration runner · validation: documentation-first senior grill
-  and live Docker ACP work coordination · risk MEDIUM · issue #328 ·
+  extended the existing Docker self-dogfood entry point instead of adding a
+  provider/orchestration runner, wired the identical scenario into aggregate
+  Docker CI, and added pure race/replay invariants · validation:
+  documentation-first senior grill, 11 focused plus 649 full clean-Linux tests,
+  lint, typecheck, 153-file production build, and two production-image runs with
+  opposite race winners, saved cursor `8`, replay `9,10`, approved review,
+  released lease, completed work, and verified cleanup · risk MEDIUM · issue
+  #328 ·
   [[ADR-0018-recovery-review-quickstart]] · [[recovery-review-quickstart]]
 
 - 2026-07-14 · OpenAPI contract artifact · generated `openapi.json` from the

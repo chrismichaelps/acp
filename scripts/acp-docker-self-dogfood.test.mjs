@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+  classifyQuickstartLeaseRace,
   main,
   proveComposeProjectIsolation,
   runRepositoryPreflights,
+  verifyQuickstartReplayTail,
   verifyComposeProjectIsolation,
   verifyGeneratedContainerNames,
 } from './acp-docker-self-dogfood.mjs'
@@ -159,5 +161,61 @@ describe('complete Docker self-dogfood orchestration', () => {
     expect(() => verifyGeneratedContainerNames([], ['acp-b-acp-1'])).toThrow(
       'first Compose project created no containers',
     )
+  })
+
+  it('requires one HTTP winner and one typed lease conflict', () => {
+    const winner = {
+      agent: { worker: 'agent_a' },
+      response: { status: 201, body: { id: 'lease_1', state: 'active' } },
+    }
+    const conflict = {
+      agent: { worker: 'agent_b' },
+      response: {
+        status: 409,
+        body: { error: { code: 'lease_conflict' } },
+      },
+    }
+
+    expect(classifyQuickstartLeaseRace([conflict, winner])).toEqual({
+      winner,
+      conflict,
+    })
+    expect(() => classifyQuickstartLeaseRace([winner, winner])).toThrow(
+      'exactly one HTTP 201 winner',
+    )
+    expect(() =>
+      classifyQuickstartLeaseRace([
+        winner,
+        { ...conflict, response: { ...conflict.response, status: 400 } },
+      ]),
+    ).toThrow('exactly one HTTP 409 lease_conflict loser')
+  })
+
+  it('accepts only the strict post-cursor checkpoint and handoff tail', () => {
+    expect(
+      verifyQuickstartReplayTail(7, [
+        { seq: 8, type: 'checkpoint.created' },
+        { seq: 9, type: 'memory.created' },
+      ]),
+    ).toEqual([8, 9])
+
+    expect(() =>
+      verifyQuickstartReplayTail(0, [
+        { seq: 1, type: 'checkpoint.created' },
+        { seq: 2, type: 'memory.created' },
+      ]),
+    ).toThrow('positive integer')
+    expect(() =>
+      verifyQuickstartReplayTail(7, [
+        { seq: 8, type: 'memory.created' },
+        { seq: 9, type: 'checkpoint.created' },
+      ]),
+    ).toThrow('expected checkpoint and handoff events')
+    expect(() =>
+      verifyQuickstartReplayTail(7, [
+        { seq: 9, type: 'checkpoint.created' },
+        { seq: 8, type: 'memory.created' },
+      ]),
+    ).toThrow('strictly monotonic')
   })
 })
