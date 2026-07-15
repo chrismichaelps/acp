@@ -10,12 +10,14 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   review found and blocked a 40/53 production-route gap, missing protected
   `401`/`403` responses, and overstated compatibility automation, all repaired by
   the complete review HTTP group and exact production-parity gate · validation:
-  260/260 source mirrors, 18 focused Docker tests, 646-test clean Linux suite,
+  261/261 source mirrors, 18 feature plus 14 final parity Docker tests, 647-test
+  clean Linux suite,
   policy checks, production build, complete SQLite/auth/transport/HA/edge Docker
   self-dogfood, and fresh-image proof of 53 operations with 52 protected and one
   public; the second ACP review confirmed runtime correctness and blocked on a
-  four-verb parity parser plus incomplete mirror/backlinks, now under
-  documentation-first repair ·
+  four-verb parity parser plus incomplete mirror/backlinks, now repaired with one
+  full-method TypeScript AST inventory and reciprocal FMCF wiki links; final ACP
+  re-review pending ·
   risk MEDIUM · [[ADR-0017-openapi-contract-artifact]] · [[openapi]]
 
 - 2026-07-14 · ACP v1.1.0 · squash-merged release PR #323 at

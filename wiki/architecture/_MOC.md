@@ -100,7 +100,7 @@ Issue #327 adds the OpenAPI projection and its test plus the live discovery rout
 and its test, then splits the review HTTP groups into one cohesive production
 module so all 53 live routes participate in the contract. Each addition has an
 exact mirror. The full-method production inventory helper adds one more pair.
-The current target audit is therefore 261 source files, 261 exact
+The current audit is therefore 261 source files, 261 exact
 non-MOC pages, zero missing mirrors, and zero orphans.
 The active production audit uses the existing Dockerized ACP host directly; no
 separate provider runner is added.
@@ -221,8 +221,9 @@ separate provider runner is added.
     ACP review found 40 documented operations against 53 live routes. The repair
     now publishes all 53 and documents protected `401`/`403` responses. The
     second review confirmed runtime correctness and identified method-blind test
-    parsing plus wiki completeness; their documentation-first repair is in
-    progress before final re-review and merge
+    parsing plus wiki completeness. The shared AST inventory and reciprocal wiki
+    repair now pass 261/261 parity and the 647-test clean Linux suite; final ACP
+    re-review and merge remain
 
 ## Referenced by
 

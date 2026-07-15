@@ -33,15 +33,15 @@ aliases: [2026-07-14-openapi-contract]
 
 ## Remaining
 
-1. Replace duplicated four-verb route regexes with the documented shared
-   full-method AST inventory and complete reciprocal wiki backlinks.
-2. Rerun focused/static gates and obtain a green ACP re-review.
-3. Adjudicate the grill, merge PR #332, and close issue #327 only after GitHub
-   checks remain green.
+1. Obtain a green final ACP re-review of the shared full-method AST inventory and
+   reciprocal wiki repair.
+2. Adjudicate the grill, approve the ACP review, merge PR #332, and close issue
+   #327 only after GitHub checks remain green.
 
-Completed evidence: exact mirror audit `260/260`; focused Docker tests `18/18`;
+Completed evidence: exact mirror audit `261/261`; focused Docker tests `18/18`
+for the feature and `14/14` for the final parity repair;
 typecheck, lint, changed-file formatting, file-size, permission, environment,
-edge-pin, and OpenAPI drift policies green; clean Linux suite `646 passed`, `13`
+edge-pin, and OpenAPI drift policies green; clean Linux suite `647 passed`, `13`
 intentional skips; production build `153` runtime files. The repository-wide
 format command also reports ten pre-existing `.superpowers/sdd/*` Markdown files
 outside this feature; every issue #327 path passes Prettier.
@@ -75,12 +75,14 @@ regexes recognize only GET/POST/PATCH/DELETE, and the new review contract mirror
 lacked required Algorithm, Edge Cases, Grill Log, and reciprocal backlinks.
 [[production-route-inventory-test-support]] defines the documentation-first
 repair: one TypeScript AST inventory covering the full HTTP method vocabulary.
+The implementation at `f2f5b74` now passes 14 focused Docker tests, 261/261
+source mirrors, lint, typecheck, a 153-file production build, and the clean Linux
+suite with `647 passed` and `13` intentional skips.
 
 ## Exact Next Action
 
-Implement the documented AST inventory, rerun focused/static validation, then
-ask the same ACP reviewer to reassess both maintainability findings before
-adjudicating the grill or approving the review.
+Ask the same ACP reviewer to reassess both maintainability findings at `f2f5b74`,
+then adjudicate the grill and approve only if that final review returns GO.
 
 ## Referenced by
 
