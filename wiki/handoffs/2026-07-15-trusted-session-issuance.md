@@ -115,12 +115,15 @@ sanitized policy failures, and a durable bidirectional principal/worker registry
   gate.
 - Independent security re-review approved both repairs and found no new
   security or correctness blockers.
+- Docker ACP registered PR artifact `artifact_mrmcmcju1`; role-separated grill
+  `grill_mrmcmzal3` passed three fixed-grant, attribution/workspace, and
+  exact-evidence questions with no blocking items; review
+  `review_mrmcmdvd2` is approved.
 
 ## Remaining
 
-1. Docker ACP grill/review.
-2. Feature commit(s), PR targeting the repository default `main` branch, exact
-   head CI, squash merge, issue comment/closure, and branch cleanup.
+1. Exact-head GitHub CI, squash merge, issue comment/closure, and branch
+   cleanup for PR #334.
 
 ## Referenced by
 

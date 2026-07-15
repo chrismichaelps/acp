@@ -250,7 +250,7 @@ separate provider runner is added.
     aggregate image is preserved and the issue is closed
 78. ▶ [[trusted-session-issuance]] — issue #329; documentation-first hosted
     identity slice is registered in Docker ACP and implementation is complete
-    pending ACP review. The static
+    in PR #334. The static
     digest-verified service-principal adapter, fixed server grants, provenance
     validation/revision revocation, credential-safe audit, optional OpenAPI
     issuance auth, hostile-client tests, and exact cross-transport Docker proof
@@ -264,7 +264,8 @@ separate provider runner is added.
     policy guards, the 157-file production build, recovery quickstart, two-node
     HA, and SQLite/two-node edge smoke; independent re-review approves the
     repairs, exact-head aggregate `issue329exact` passes, and source/wiki parity
-    is 270/270
+    is 270/270. Docker ACP grill `grill_mrmcmzal3` passes without blockers and
+    review `review_mrmcmdvd2` is approved
 
 ## Referenced by
 

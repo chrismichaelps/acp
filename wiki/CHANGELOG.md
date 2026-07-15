@@ -34,7 +34,9 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   remap denial, audit redaction, recovery quickstart, two-replica HA, and both
   edge profiles pass together against exact-head production image run
   `issue329exact`; the Docker ACP control plane retained its pre-run checkpoint
-  and returned healthy · issue #329 · risk HIGH ·
+  and returned healthy; role-separated Docker ACP grill `grill_mrmcmzal3`
+  passed without blockers and review `review_mrmcmdvd2` approved PR #334 · issue
+  #329 · risk HIGH ·
   [[trusted-session-issuance]]
 
 - 2026-07-15 · recovery/review quickstart · accepted and implemented a one-command
