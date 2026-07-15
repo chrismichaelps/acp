@@ -1,8 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+  cleanupQuickstartResources,
+  classifyQuickstartLeaseRace,
+  isMissingDockerResource,
   main,
   proveComposeProjectIsolation,
+  resolveQuickstartImage,
   runRepositoryPreflights,
+  runWithQuickstartCleanup,
+  verifyQuickstartReplayTail,
   verifyComposeProjectIsolation,
   verifyGeneratedContainerNames,
 } from './acp-docker-self-dogfood.mjs'
@@ -159,5 +165,223 @@ describe('complete Docker self-dogfood orchestration', () => {
     expect(() => verifyGeneratedContainerNames([], ['acp-b-acp-1'])).toThrow(
       'first Compose project created no containers',
     )
+  })
+
+  it('requires one HTTP winner and one typed lease conflict', () => {
+    const winner = {
+      agent: { worker: 'agent_a' },
+      response: { status: 201, body: { id: 'lease_1', state: 'active' } },
+    }
+    const conflict = {
+      agent: { worker: 'agent_b' },
+      response: {
+        status: 409,
+        body: { error: { code: 'lease_conflict' } },
+      },
+    }
+
+    expect(classifyQuickstartLeaseRace([conflict, winner])).toEqual({
+      winner,
+      conflict,
+    })
+    expect(() => classifyQuickstartLeaseRace([winner, winner])).toThrow(
+      'exactly one HTTP 201 winner',
+    )
+    expect(() =>
+      classifyQuickstartLeaseRace([
+        winner,
+        { ...conflict, response: { ...conflict.response, status: 400 } },
+      ]),
+    ).toThrow('exactly one HTTP 409 lease_conflict loser')
+  })
+
+  it('accepts only the strict post-cursor checkpoint and handoff tail', () => {
+    expect(
+      verifyQuickstartReplayTail(7, [
+        { seq: 8, type: 'checkpoint.created' },
+        { seq: 9, type: 'memory.created' },
+      ]),
+    ).toEqual([8, 9])
+
+    expect(() =>
+      verifyQuickstartReplayTail(0, [
+        { seq: 1, type: 'checkpoint.created' },
+        { seq: 2, type: 'memory.created' },
+      ]),
+    ).toThrow('positive integer')
+    expect(() =>
+      verifyQuickstartReplayTail(7, [
+        { seq: 8, type: 'memory.created' },
+        { seq: 9, type: 'checkpoint.created' },
+      ]),
+    ).toThrow('expected checkpoint and handoff events')
+    expect(() =>
+      verifyQuickstartReplayTail(7, [
+        { seq: 9, type: 'checkpoint.created' },
+        { seq: 8, type: 'memory.created' },
+      ]),
+    ).toThrow('strictly monotonic')
+  })
+
+  it('accepts only case-varying Docker missing-resource cleanup errors', () => {
+    expect(
+      isMissingDockerResource(
+        'Error response from daemon: No such container: quickstart',
+      ),
+    ).toBe(true)
+    expect(
+      isMissingDockerResource(
+        'Error response from daemon: get quickstart-data: no such volume',
+      ),
+    ).toBe(true)
+    expect(
+      isMissingDockerResource(
+        'Error response from daemon: volume is in use by container',
+      ),
+    ).toBe(false)
+    expect(
+      isMissingDockerResource(
+        'Error response from daemon: No such image: acp:quickstart-run',
+      ),
+    ).toBe(true)
+  })
+
+  it('uses an owned run-scoped image only for standalone quickstarts', () => {
+    expect(
+      resolveQuickstartImage({
+        skipBuild: false,
+        aggregateImage: 'acp:docker-self-dogfood',
+        runId: 'run-123',
+      }),
+    ).toBe('acp:quickstart-run-123')
+    expect(
+      resolveQuickstartImage({
+        skipBuild: true,
+        aggregateImage: 'acp:docker-self-dogfood',
+        runId: 'run-123',
+      }),
+    ).toBe('acp:docker-self-dogfood')
+  })
+
+  it('attempts every owned resource cleanup and reports all failures', async () => {
+    const attempted = []
+    const remove = vi.fn((args) => {
+      attempted.push(args)
+      return Promise.reject(new Error(`cannot remove ${args[0]}`))
+    })
+
+    await expect(
+      cleanupQuickstartResources({
+        containerName: 'quickstart',
+        volumeName: 'quickstart-data',
+        imageName: 'acp:quickstart-run',
+        ownsImage: true,
+        remove,
+      }),
+    ).rejects.toMatchObject({
+      errors: expect.arrayContaining([
+        expect.objectContaining({ message: 'cannot remove rm' }),
+        expect.objectContaining({ message: 'cannot remove volume' }),
+        expect.objectContaining({ message: 'cannot remove image' }),
+      ]),
+    })
+    expect(attempted).toEqual([
+      ['rm', '-f', 'quickstart'],
+      ['volume', 'rm', 'quickstart-data'],
+      ['image', 'rm', 'acp:quickstart-run'],
+    ])
+  })
+
+  it('waits for container teardown before dependent resource cleanup', async () => {
+    const attempted = []
+    let finishContainerRemoval
+    const remove = vi.fn((args) => {
+      attempted.push(args)
+      if (args[0] !== 'rm') return Promise.resolve()
+      return new Promise((resolvePromise) => {
+        finishContainerRemoval = resolvePromise
+      })
+    })
+
+    const cleanup = cleanupQuickstartResources({
+      containerName: 'quickstart',
+      volumeName: 'quickstart-data',
+      imageName: 'acp:quickstart-run',
+      ownsImage: true,
+      remove,
+    })
+    await Promise.resolve()
+    expect(attempted).toEqual([['rm', '-f', 'quickstart']])
+
+    finishContainerRemoval()
+    await cleanup
+    expect(attempted).toEqual([
+      ['rm', '-f', 'quickstart'],
+      ['volume', 'rm', 'quickstart-data'],
+      ['image', 'rm', 'acp:quickstart-run'],
+    ])
+  })
+
+  it('preserves the aggregate image during skip-build cleanup', async () => {
+    const remove = vi.fn(() => Promise.resolve())
+
+    await cleanupQuickstartResources({
+      containerName: 'quickstart',
+      volumeName: 'quickstart-data',
+      imageName: 'acp:docker-self-dogfood',
+      ownsImage: false,
+      remove,
+    })
+
+    expect(remove.mock.calls.map(([args]) => args)).toEqual([
+      ['rm', '-f', 'quickstart'],
+      ['volume', 'rm', 'quickstart-data'],
+    ])
+  })
+
+  it('publishes success only after cleanup succeeds', async () => {
+    const order = []
+    await expect(
+      runWithQuickstartCleanup({
+        operation: () => {
+          order.push('operation')
+          return Promise.resolve({ ok: true })
+        },
+        cleanup: () => {
+          order.push('cleanup')
+          return Promise.resolve()
+        },
+        publish: () => order.push('publish'),
+      }),
+    ).resolves.toEqual({ ok: true })
+    expect(order).toEqual(['operation', 'cleanup', 'publish'])
+  })
+
+  it('does not publish a successful operation when cleanup fails', async () => {
+    const publish = vi.fn()
+
+    await expect(
+      runWithQuickstartCleanup({
+        operation: () => Promise.resolve({ ok: true }),
+        cleanup: () => Promise.reject(new Error('cleanup failed')),
+        publish,
+      }),
+    ).rejects.toThrow('cleanup failed')
+    expect(publish).not.toHaveBeenCalled()
+  })
+
+  it('withholds success and preserves operation plus cleanup failures', async () => {
+    const publish = vi.fn()
+    const operationError = new Error('operation failed')
+    const cleanupError = new Error('cleanup failed')
+
+    await expect(
+      runWithQuickstartCleanup({
+        operation: () => Promise.reject(operationError),
+        cleanup: () => Promise.reject(cleanupError),
+        publish,
+      }),
+    ).rejects.toMatchObject({ errors: [operationError, cleanupError] })
+    expect(publish).not.toHaveBeenCalled()
   })
 })

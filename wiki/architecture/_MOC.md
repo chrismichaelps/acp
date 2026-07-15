@@ -134,6 +134,10 @@ separate provider runner is added.
   OpenAPI artifact from typed REST routes, repair router-level bearer metadata,
   publish public discovery, enforce source/artifact and production-route parity,
   and govern same-version compatibility through reviewed diffs.
+- [[ADR-0018-recovery-review-quickstart]] — ACCEPTED; curate the existing
+  production Docker self-dogfood path into a one-command SQLite recovery story
+  with wire-level collision and review evidence, run-scoped standalone image
+  ownership, exhaustive cleanup, and success publication only after cleanup.
 
 ## Build Order (vertical slices)
 
@@ -217,13 +221,31 @@ separate provider runner is added.
 75. ✅ ACP v1.1.0 release — synchronized public release/protocol status, passed
     independent and complete Docker ACP gates, merged PR #323, tagged the exact
     merge commit, and published the GitHub release
-76. ▶ OpenAPI contract publication — issue #327 / PR #332; the first independent
+76. ✅ OpenAPI contract publication — issue #327 / PR #332; the first independent
     ACP review found 40 documented operations against 53 live routes. The repair
     now publishes all 53 and documents protected `401`/`403` responses. The
     second review confirmed runtime correctness and identified method-blind test
     parsing plus wiki completeness. The shared AST inventory and reciprocal wiki
-    repair now pass 261/261 parity and the 647-test clean Linux suite; final ACP
-    re-review and merge remain
+    repair passed 261/261 parity and the 647-test clean Linux suite; final ACP
+    re-review returned GO, all checks passed, PR #332 merged, and issue #327
+    closed
+77. ▶ [[recovery-review-quickstart]] — issue #328; the existing Docker
+    self-dogfood entry point now exposes the documented SQLite mode and runs it
+    in aggregate CI. Focused clean-Linux invariants and two production-image
+    runs passed with either worker winning, HTTP `409`, cursor `8`, replay
+    `9,10`, durable resume, approval, release, completion, and cleanup. Clean
+    Linux lint, typecheck, the 153-file production build, and all 649 repository
+    tests pass. The first aggregate CI run exposed case-varying Docker
+    missing-volume text in strict pre-clean. Independent review then blocked
+    shared standalone image tags and success publication before incomplete
+    cleanup. The documentation-first repair requires run-scoped owned images,
+    aggregate image preservation, dependency-ordered exhaustive cleanup, and
+    terminal evidence only after verified cleanup before ACP re-review. The
+    first repaired live run correctly withheld success and exposed a real
+    container/volume deletion race now captured by the cleanup contract. The
+    ordered repair passes 19 focused Linux tests plus standalone and
+    aggregate-reuse production runs; owned resources are absent and the shared
+    aggregate image is preserved
 
 ## Referenced by
 

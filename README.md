@@ -19,6 +19,13 @@ only owns the workspace state that keeps parallel work from colliding.
 > **Quick start for agents:** See [`ACP-SKILL.md`](./ACP-SKILL.md) — the exact
 > CLI commands and workflow for autonomous agents integrating with ACP.
 
+> **See ACP recover:** Run `pnpm quickstart` for a deterministic production
+> Docker story: two workers collide on one file, the host restarts mid-work,
+> the winner replays from its saved event cursor, and review gates completion.
+> No model credentials or external services are required. The exact contract is
+> documented in the
+> [recovery and review quickstart](wiki/references/recovery-review-quickstart.md).
+
 ---
 
 ## The problem it solves
@@ -628,6 +635,12 @@ correctness; native Effect RPC remains covered by the Docker self-dogfood gate.
 
 Beyond unit tests, several lanes exercise ACP against a _live_ host:
 
+- **`pnpm quickstart`** — builds the ordinary production image and runs the
+  short developer story: two workers race one file lease, the loser receives
+  HTTP `409 lease_conflict`, the SQLite-backed host restarts after a nonzero
+  cursor and durable handoff, the winner replays only the later event tail, and
+  review approval gates lease release and completion. The aggregate Docker
+  self-dogfood gate runs this same scenario against its reused image.
 - **`pnpm dogfood:docker-self`** — builds the production image once. It
   first validates edge runtime policy and agent-facing permission examples,
   then exercises every local domain and transport through the compiled public

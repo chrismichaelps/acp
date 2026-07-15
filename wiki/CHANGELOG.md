@@ -2,6 +2,34 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-15 · recovery/review quickstart · accepted and implemented a one-command
+  production-image scenario using isolated SQLite rather than process-local
+  memory, with exact HTTP `201`/`409` lease contention, a nonzero saved cursor,
+  checkpoint/handoff tail replay after a real mid-work container restart,
+  durable state reload, approval-before-completion, and deterministic cleanup;
+  extended the existing Docker self-dogfood entry point instead of adding a
+  provider/orchestration runner, wired the identical scenario into aggregate
+  Docker CI, and added pure race/replay invariants · validation:
+  documentation-first senior grill, 11 focused plus 649 full clean-Linux tests,
+  lint, typecheck, 153-file production build, and two production-image runs with
+  opposite race winners, saved cursor `8`, replay `9,10`, approved review,
+  released lease, completed work, and verified cleanup · risk MEDIUM · issue
+  #328; first Linux aggregate CI exposed a case-sensitive Docker
+  `No such volume` pre-clean matcher, with the case-insensitive fail-closed
+  repair documented before code and covered for upper/lower missing-resource
+  text plus a real removal error; independent review additionally blocked the
+  daemon-global standalone image tag, short-circuiting cleanup, and pre-cleanup
+  success record, so the accepted follow-up isolates and removes standalone
+  images, preserves the aggregate image, attempts every cleanup action, and
+  withholds terminal success until cleanup passes while retaining dual failures;
+  its first live run found that parallel container/volume deletion can race the
+  daemon, so the follow-up orders container teardown before volume/image cleanup
+  without sacrificing exhaustive failure collection · final repair validation:
+  19 focused clean-Linux tests, one standalone production run with verified
+  container/volume/image absence before success, and one aggregate-reuse run
+  with verified shared-image preservation and the opposite lease winner ·
+  [[ADR-0018-recovery-review-quickstart]] · [[recovery-review-quickstart]]
+
 - 2026-07-14 · OpenAPI contract artifact · generated `openapi.json` from the
   typed `AcpHttpApi` surface, pinned `info.version` to the protocol version,
   repaired router-level auth metadata with the `AcpSession` bearer scheme while
@@ -17,7 +45,8 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   public; the second ACP review confirmed runtime correctness and blocked on a
   four-verb parity parser plus incomplete mirror/backlinks, now repaired with one
   full-method TypeScript AST inventory and reciprocal FMCF wiki links; final ACP
-  re-review pending ·
+  re-review returned GO, both required checks passed, PR #332 squash-merged, and
+  issue #327 closed ·
   risk MEDIUM · [[ADR-0017-openapi-contract-artifact]] · [[openapi]]
 
 - 2026-07-14 · ACP v1.1.0 · squash-merged release PR #323 at
