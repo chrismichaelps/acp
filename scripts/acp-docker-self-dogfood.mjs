@@ -52,7 +52,7 @@ const runVisible = (command, args, env = {}) =>
   })
 
 export const isMissingDockerResource = (stderr) =>
-  /no such (?:container|volume)/iu.test(stderr)
+  /no such (?:container|volume|image)/iu.test(stderr)
 
 const removeDockerResource = async (args) => {
   const result = await docker(args)
@@ -62,9 +62,68 @@ const removeDockerResource = async (args) => {
   )
 }
 
-const cleanupQuickstart = async () => {
-  await removeDockerResource(['rm', '-f', quickstartContainer])
-  await removeDockerResource(['volume', 'rm', quickstartVolume])
+export const resolveQuickstartImage = ({ skipBuild, aggregateImage, runId }) =>
+  skipBuild ? aggregateImage : `acp:quickstart-${runId}`
+
+export const cleanupQuickstartResources = async ({
+  containerName,
+  volumeName,
+  imageName,
+  ownsImage,
+  remove = removeDockerResource,
+}) => {
+  const [containerOutcome] = await Promise.allSettled([
+    remove(['rm', '-f', containerName]),
+  ])
+  const laterOutcomes = await Promise.allSettled(
+    [
+      ['volume', 'rm', volumeName],
+      ...(ownsImage ? [['image', 'rm', imageName]] : []),
+    ].map((args) => remove(args)),
+  )
+  const outcomes = [containerOutcome, ...laterOutcomes]
+  const failures = outcomes
+    .filter((outcome) => outcome.status === 'rejected')
+    .map((outcome) => outcome.reason)
+  if (failures.length === 1) throw failures[0]
+  if (failures.length > 1)
+    throw new AggregateError(failures, 'quickstart resource cleanup failed')
+}
+
+export const runWithQuickstartCleanup = async ({
+  operation,
+  cleanup,
+  publish,
+}) => {
+  let result
+  let operationError
+  try {
+    result = await operation()
+  } catch (error) {
+    operationError = error
+  }
+
+  let cleanupError
+  try {
+    await cleanup()
+  } catch (error) {
+    cleanupError = error
+  }
+
+  if (operationError !== undefined && cleanupError !== undefined) {
+    const cleanupErrors =
+      cleanupError instanceof AggregateError
+        ? cleanupError.errors
+        : [cleanupError]
+    throw new AggregateError(
+      [operationError, ...cleanupErrors],
+      'quickstart operation and cleanup failed',
+    )
+  }
+  if (operationError !== undefined) throw operationError
+  if (cleanupError !== undefined) throw cleanupError
+  publish(result)
+  return result
 }
 
 export const runRepositoryPreflights = async (runner = runVisible) => {
@@ -233,282 +292,314 @@ export const verifyQuickstartReplayTail = (savedSeq, events) => {
 const narrate = (message) => console.log(`[ACP quickstart] ${message}`)
 
 export const runRecoveryQuickstart = async ({ skipBuild = false } = {}) => {
+  const scenarioImage = resolveQuickstartImage({
+    skipBuild,
+    aggregateImage: image,
+    runId,
+  })
+  const ownsImage = !skipBuild
+  const cleanupQuickstart = () =>
+    cleanupQuickstartResources({
+      containerName: quickstartContainer,
+      volumeName: quickstartVolume,
+      imageName: scenarioImage,
+      ownsImage,
+    })
+
   await cleanupQuickstart()
-  try {
-    if (skipBuild) narrate('Reusing the production ACP image built by CI.')
-    else {
-      narrate('Building the production ACP image.')
-      await runVisible('docker', ['build', '-t', image, '.'])
-    }
-    await dockerOk(['volume', 'create', quickstartVolume])
-    await dockerOk([
-      'run',
-      '-d',
-      '--name',
-      quickstartContainer,
-      '-e',
-      'ACP_STORAGE_ADAPTER=sqlite',
-      '-e',
-      'ACP_SQLITE_PATH=/data/acp.sqlite',
-      '-v',
-      `${quickstartVolume}:/data`,
-      image,
-    ])
-    await waitForReady(quickstartContainer)
-
-    const cli = makeCli(quickstartContainer)
-    const [workerA, workerB, reviewer] = await Promise.all([
-      initAgent(cli, 'quickstart_a', runId),
-      initAgent(cli, 'quickstart_b', runId),
-      initAgent(cli, 'quickstart_reviewer', runId),
-    ])
-    const workspace = await expectOk(
-      cli,
-      'quickstart workspace create',
-      workerA.token,
-      [
-        'workspace',
-        'create',
+  return runWithQuickstartCleanup({
+    operation: async () => {
+      if (skipBuild) narrate('Reusing the production ACP image built by CI.')
+      else {
+        narrate('Building the production ACP image.')
+        await runVisible('docker', ['build', '-t', scenarioImage, '.'])
+      }
+      await dockerOk(['volume', 'create', quickstartVolume])
+      await dockerOk([
+        'run',
+        '-d',
         '--name',
-        `ACP recovery quickstart ${runId}`,
-        '--kind',
-        'git_repository',
-        '--uri',
-        `file:///workspace/acp-quickstart-${runId}`,
-        '--default-branch',
-        'main',
-      ],
-    )
-    const work = await expectOk(cli, 'quickstart work create', workerA.token, [
-      'work',
-      'create',
-      'Recover coordinated work after restart',
-      '--workspace',
-      workspace.id,
-      '--priority',
-      'high',
-    ])
+        quickstartContainer,
+        '-e',
+        'ACP_STORAGE_ADAPTER=sqlite',
+        '-e',
+        'ACP_SQLITE_PATH=/data/acp.sqlite',
+        '-v',
+        `${quickstartVolume}:/data`,
+        scenarioImage,
+      ])
+      await waitForReady(quickstartContainer)
 
-    narrate('Racing two workers for one file lease.')
-    const resource = {
-      kind: 'file',
-      uri: `file:///workspace/acp-quickstart-${runId}/src/recovery.ts`,
-    }
-    const race = await Promise.all(
-      [workerA, workerB].map(async (agent) => ({
-        agent,
-        response: await containerFetch(quickstartContainer, '/v1/leases', {
-          method: 'POST',
-          token: agent.token,
-          body: {
-            workspace_id: workspace.id,
-            work_id: work.id,
-            holder: agent.worker,
-            resource,
-            ttl_seconds: 600,
-          },
-        }),
-      })),
-    )
-    const { winner, conflict } = classifyQuickstartLeaseRace(race)
-    const lease = winner.response.body
-    narrate(
-      `${winner.agent.worker} won; ${conflict.agent.worker} received HTTP 409 lease_conflict.`,
-    )
+      const cli = makeCli(quickstartContainer)
+      const [workerA, workerB, reviewer] = await Promise.all([
+        initAgent(cli, 'quickstart_a', runId),
+        initAgent(cli, 'quickstart_b', runId),
+        initAgent(cli, 'quickstart_reviewer', runId),
+      ])
+      const workspace = await expectOk(
+        cli,
+        'quickstart workspace create',
+        workerA.token,
+        [
+          'workspace',
+          'create',
+          '--name',
+          `ACP recovery quickstart ${runId}`,
+          '--kind',
+          'git_repository',
+          '--uri',
+          `file:///workspace/acp-quickstart-${runId}`,
+          '--default-branch',
+          'main',
+        ],
+      )
+      const work = await expectOk(
+        cli,
+        'quickstart work create',
+        workerA.token,
+        [
+          'work',
+          'create',
+          'Recover coordinated work after restart',
+          '--workspace',
+          workspace.id,
+          '--priority',
+          'high',
+        ],
+      )
 
-    await expectOk(cli, 'quickstart work claim', winner.agent.token, [
-      'work',
-      'claim',
-      work.id,
-      '--worker',
-      winner.agent.worker,
-    ])
-    await expectOk(cli, 'quickstart work running', winner.agent.token, [
-      'work',
-      'update',
-      work.id,
-      '--state',
-      'running',
-    ])
-    const beforeRestart = await expectOk(
-      cli,
-      'quickstart initial event cursor',
-      winner.agent.token,
-      ['events', 'list', '--workspace', workspace.id, '--after', '0'],
-    )
-    const savedSeq = beforeRestart.at(-1)?.seq
-    assert(
-      Number.isInteger(savedSeq) && savedSeq > 0,
-      'quickstart did not capture a nonzero event cursor',
-    )
+      narrate('Racing two workers for one file lease.')
+      const resource = {
+        kind: 'file',
+        uri: `file:///workspace/acp-quickstart-${runId}/src/recovery.ts`,
+      }
+      const race = await Promise.all(
+        [workerA, workerB].map(async (agent) => ({
+          agent,
+          response: await containerFetch(quickstartContainer, '/v1/leases', {
+            method: 'POST',
+            token: agent.token,
+            body: {
+              workspace_id: workspace.id,
+              work_id: work.id,
+              holder: agent.worker,
+              resource,
+              ttl_seconds: 600,
+            },
+          }),
+        })),
+      )
+      const { winner, conflict } = classifyQuickstartLeaseRace(race)
+      const lease = winner.response.body
+      narrate(
+        `${winner.agent.worker} won; ${conflict.agent.worker} received HTTP 409 lease_conflict.`,
+      )
 
-    const checkpoint = await expectOk(
-      cli,
-      'quickstart checkpoint create',
-      winner.agent.token,
-      [
-        'checkpoint',
-        'create',
-        '--workspace',
-        workspace.id,
-        '--work',
+      await expectOk(cli, 'quickstart work claim', winner.agent.token, [
+        'work',
+        'claim',
         work.id,
-        '--summary',
-        'Lease acquired; resume from the saved event cursor after restart.',
-      ],
-    )
-    const handoffKey = `quickstart.${runId}.handoff`
-    const handoff = await expectOk(
-      cli,
-      'quickstart handoff create',
-      winner.agent.token,
-      [
-        'memory',
-        'create',
-        '--workspace',
-        workspace.id,
-        '--work',
-        work.id,
-        '--kind',
-        'handoff',
-        '--key',
-        handoffKey,
-        '--summary',
-        'Recovery quickstart handoff',
-        '--content',
-        'The file lease is active and the work must pass review before completion.',
-        '--labels',
-        'quickstart,recovery,handoff',
-      ],
-    )
-
-    narrate(`Restarting ACP mid-work with saved cursor ${String(savedSeq)}.`)
-    await dockerOk(['restart', quickstartContainer])
-    await waitForReady(quickstartContainer)
-    const replay = await expectOk(
-      cli,
-      'quickstart event replay after restart',
-      winner.agent.token,
-      [
-        'events',
-        'list',
-        '--workspace',
-        workspace.id,
-        '--after',
-        String(savedSeq),
-      ],
-    )
-    const replayedSeqs = verifyQuickstartReplayTail(savedSeq, replay)
-    const recovered = await expectOk(
-      cli,
-      'quickstart work resume after restart',
-      winner.agent.token,
-      ['work', 'resume', work.id],
-    )
-    const recoveredHandoffs = await expectOk(
-      cli,
-      'quickstart handoff read after restart',
-      winner.agent.token,
-      [
-        'memory',
-        'list',
-        '--workspace',
-        workspace.id,
-        '--work',
-        work.id,
-        '--kind',
-        'handoff',
-        '--key',
-        handoffKey,
-      ],
-    )
-    assert(
-      recovered.work.state === 'running',
-      'active work did not survive restart',
-    )
-    assert(
-      recovered.latest_checkpoint.id === checkpoint.id,
-      'checkpoint did not survive restart',
-    )
-    assert(
-      recoveredHandoffs.some((record) => record.id === handoff.id),
-      'handoff did not survive restart',
-    )
-    narrate(
-      `Replayed event tail ${replayedSeqs.join(', ')} and restored handoff.`,
-    )
-
-    const review = await expectOk(
-      cli,
-      'quickstart review request',
-      winner.agent.token,
-      [
-        'review',
-        'request',
-        '--work',
-        work.id,
-        '--by',
+        '--worker',
         winner.agent.worker,
-        '--reviewer',
-        reviewer.worker,
-      ],
-    )
-    const approved = await expectOk(
-      cli,
-      'quickstart review approve',
-      reviewer.token,
-      ['review', 'approve', review.id, '--met', 'lease,restart,replay,handoff'],
-    )
-    assert(approved.state === 'approved', 'quickstart review was not approved')
-    await expectSuccess(cli, 'quickstart lease release', winner.agent.token, [
-      'lease',
-      'release',
-      lease.id,
-    ])
-    const completed = await expectOk(
-      cli,
-      'quickstart work complete',
-      winner.agent.token,
-      ['work', 'update', work.id, '--state', 'completed'],
-    )
-    const leases = await expectOk(
-      cli,
-      'quickstart lease readback',
-      reviewer.token,
-      ['lease', 'list', '--workspace', workspace.id],
-    )
-    assert(completed.state === 'completed', 'quickstart work did not complete')
-    assert(
-      leases.find((item) => item.id === lease.id)?.state === 'released',
-      'quickstart left its file lease active',
-    )
-    narrate('Review approved; lease released; work completed.')
+      ])
+      await expectOk(cli, 'quickstart work running', winner.agent.token, [
+        'work',
+        'update',
+        work.id,
+        '--state',
+        'running',
+      ])
+      const beforeRestart = await expectOk(
+        cli,
+        'quickstart initial event cursor',
+        winner.agent.token,
+        ['events', 'list', '--workspace', workspace.id, '--after', '0'],
+      )
+      const savedSeq = beforeRestart.at(-1)?.seq
+      assert(
+        Number.isInteger(savedSeq) && savedSeq > 0,
+        'quickstart did not capture a nonzero event cursor',
+      )
 
-    const result = {
-      ok: true,
-      run_id: runId,
-      image,
-      workspace_id: workspace.id,
-      work_id: work.id,
-      lease_id: lease.id,
-      lease_winner: winner.agent.worker,
-      conflict_worker: conflict.agent.worker,
-      conflict_status: conflict.response.status,
-      conflict_code: conflict.response.body.error.code,
-      saved_seq: savedSeq,
-      replayed_seqs: replayedSeqs,
-      checkpoint_id: checkpoint.id,
-      handoff_id: handoff.id,
-      review_id: review.id,
-      review_state: approved.state,
-      work_state: completed.state,
-      lease_state: 'released',
-    }
-    console.log(JSON.stringify(result, null, 2))
-    return result
-  } finally {
-    await cleanupQuickstart()
-  }
+      const checkpoint = await expectOk(
+        cli,
+        'quickstart checkpoint create',
+        winner.agent.token,
+        [
+          'checkpoint',
+          'create',
+          '--workspace',
+          workspace.id,
+          '--work',
+          work.id,
+          '--summary',
+          'Lease acquired; resume from the saved event cursor after restart.',
+        ],
+      )
+      const handoffKey = `quickstart.${runId}.handoff`
+      const handoff = await expectOk(
+        cli,
+        'quickstart handoff create',
+        winner.agent.token,
+        [
+          'memory',
+          'create',
+          '--workspace',
+          workspace.id,
+          '--work',
+          work.id,
+          '--kind',
+          'handoff',
+          '--key',
+          handoffKey,
+          '--summary',
+          'Recovery quickstart handoff',
+          '--content',
+          'The file lease is active and the work must pass review before completion.',
+          '--labels',
+          'quickstart,recovery,handoff',
+        ],
+      )
+
+      narrate(`Restarting ACP mid-work with saved cursor ${String(savedSeq)}.`)
+      await dockerOk(['restart', quickstartContainer])
+      await waitForReady(quickstartContainer)
+      const replay = await expectOk(
+        cli,
+        'quickstart event replay after restart',
+        winner.agent.token,
+        [
+          'events',
+          'list',
+          '--workspace',
+          workspace.id,
+          '--after',
+          String(savedSeq),
+        ],
+      )
+      const replayedSeqs = verifyQuickstartReplayTail(savedSeq, replay)
+      const recovered = await expectOk(
+        cli,
+        'quickstart work resume after restart',
+        winner.agent.token,
+        ['work', 'resume', work.id],
+      )
+      const recoveredHandoffs = await expectOk(
+        cli,
+        'quickstart handoff read after restart',
+        winner.agent.token,
+        [
+          'memory',
+          'list',
+          '--workspace',
+          workspace.id,
+          '--work',
+          work.id,
+          '--kind',
+          'handoff',
+          '--key',
+          handoffKey,
+        ],
+      )
+      assert(
+        recovered.work.state === 'running',
+        'active work did not survive restart',
+      )
+      assert(
+        recovered.latest_checkpoint.id === checkpoint.id,
+        'checkpoint did not survive restart',
+      )
+      assert(
+        recoveredHandoffs.some((record) => record.id === handoff.id),
+        'handoff did not survive restart',
+      )
+      narrate(
+        `Replayed event tail ${replayedSeqs.join(', ')} and restored handoff.`,
+      )
+
+      const review = await expectOk(
+        cli,
+        'quickstart review request',
+        winner.agent.token,
+        [
+          'review',
+          'request',
+          '--work',
+          work.id,
+          '--by',
+          winner.agent.worker,
+          '--reviewer',
+          reviewer.worker,
+        ],
+      )
+      const approved = await expectOk(
+        cli,
+        'quickstart review approve',
+        reviewer.token,
+        [
+          'review',
+          'approve',
+          review.id,
+          '--met',
+          'lease,restart,replay,handoff',
+        ],
+      )
+      assert(
+        approved.state === 'approved',
+        'quickstart review was not approved',
+      )
+      await expectSuccess(cli, 'quickstart lease release', winner.agent.token, [
+        'lease',
+        'release',
+        lease.id,
+      ])
+      const completed = await expectOk(
+        cli,
+        'quickstart work complete',
+        winner.agent.token,
+        ['work', 'update', work.id, '--state', 'completed'],
+      )
+      const leases = await expectOk(
+        cli,
+        'quickstart lease readback',
+        reviewer.token,
+        ['lease', 'list', '--workspace', workspace.id],
+      )
+      assert(
+        completed.state === 'completed',
+        'quickstart work did not complete',
+      )
+      assert(
+        leases.find((item) => item.id === lease.id)?.state === 'released',
+        'quickstart left its file lease active',
+      )
+      narrate('Review approved; lease released; work completed.')
+
+      const result = {
+        ok: true,
+        run_id: runId,
+        image: scenarioImage,
+        workspace_id: workspace.id,
+        work_id: work.id,
+        lease_id: lease.id,
+        lease_winner: winner.agent.worker,
+        conflict_worker: conflict.agent.worker,
+        conflict_status: conflict.response.status,
+        conflict_code: conflict.response.body.error.code,
+        saved_seq: savedSeq,
+        replayed_seqs: replayedSeqs,
+        checkpoint_id: checkpoint.id,
+        handoff_id: handoff.id,
+        review_id: review.id,
+        review_state: approved.state,
+        work_state: completed.state,
+        lease_state: 'released',
+      }
+      return result
+    },
+    cleanup: cleanupQuickstart,
+    publish: (result) => console.log(JSON.stringify(result, null, 2)),
+  })
 }
 
 const runDockerSelfScenario = async () => {

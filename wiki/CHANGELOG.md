@@ -24,7 +24,10 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   withholds terminal success until cleanup passes while retaining dual failures;
   its first live run found that parallel container/volume deletion can race the
   daemon, so the follow-up orders container teardown before volume/image cleanup
-  without sacrificing exhaustive failure collection ·
+  without sacrificing exhaustive failure collection · final repair validation:
+  19 focused clean-Linux tests, one standalone production run with verified
+  container/volume/image absence before success, and one aggregate-reuse run
+  with verified shared-image preservation and the opposite lease winner ·
   [[ADR-0018-recovery-review-quickstart]] · [[recovery-review-quickstart]]
 
 - 2026-07-14 · OpenAPI contract artifact · generated `openapi.json` from the

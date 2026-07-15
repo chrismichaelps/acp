@@ -242,7 +242,10 @@ separate provider runner is added.
     aggregate image preservation, dependency-ordered exhaustive cleanup, and
     terminal evidence only after verified cleanup before ACP re-review. The
     first repaired live run correctly withheld success and exposed a real
-    container/volume deletion race now captured by the cleanup contract
+    container/volume deletion race now captured by the cleanup contract. The
+    ordered repair passes 19 focused Linux tests plus standalone and
+    aggregate-reuse production runs; owned resources are absent and the shared
+    aggregate image is preserved
 
 ## Referenced by
 

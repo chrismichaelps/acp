@@ -111,6 +111,22 @@ first, volume and owned-image removal second—while retaining exhaustive attemp
 and aggregated failures. The failed run removed its container and owned image;
 the remaining volume is cleanup evidence, not an accepted result.
 
+## Final Repair Evidence
+
+- Clean Linux focused formatting, lint, and 19/19 orchestration tests pass.
+- Standalone run `issue328-isolated` built
+  `acp:quickstart-issue328-isolated`, proved HTTP `409 lease_conflict`, saved
+  cursor `8`, replayed `9,10`, restored checkpoint/handoff, approved review,
+  released the lease, and completed work. Container, volume, and owned image
+  were absent before `{ "ok": true }` was printed.
+- Aggregate-reuse run `issue328-reuse` exercised the same function against
+  `acp:docker-self-dogfood`, with the opposite worker winning and otherwise
+  identical evidence. Its container and volume were removed while the aggregate
+  image digest `sha256:2d9a5a3173d5...` remained present.
+- The Docker ACP coordination host recovered healthy after restart and retains
+  the work, review, grill, checkpoints, artifact, and three open repair
+  comments. Those comments remain unresolved until independent re-review.
+
 ## Referenced by
 
 [[ADR-0018-recovery-review-quickstart]] · [[recovery-review-quickstart]]
