@@ -25,6 +25,7 @@ const requireWorkspaceBindingsConfig = Layer.succeed(AppConfigTag, {
   requireWorkspaceBindings: true,
   sessionIssuer: 'trusted-client' as const,
   sessionIssuancePolicy: Option.none(),
+  metricsToken: Option.none(),
 })
 
 const handler = () =>

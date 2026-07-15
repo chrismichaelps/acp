@@ -424,6 +424,31 @@ Point your platform's health check at `/ready`. The multi-stage
 [`Dockerfile`](./Dockerfile) builds a non-root image whose `HEALTHCHECK` already
 targets it.
 
+### Metrics (`GET /metrics`)
+
+The structured telemetry every native-RPC and HTTP call already emits (operation,
+outcome, duration, error code) is also exported in **Prometheus text format** at
+`GET /metrics`, alongside counters for what the background retention sweeper
+evicts. Unlike the health probes, this endpoint is **off by default**: set
+`ACP_METRICS_TOKEN` to both enable it and gate it behind a bearer credential —
+unset, it answers `404`; set, a scrape must present
+`Authorization: Bearer <token>` (Prometheus's `authorization` scrape option) or
+it answers `401`. Point Prometheus at it once the token is configured:
+
+```yaml
+scrape_configs:
+  - job_name: acp
+    authorization:
+      credentials: <ACP_METRICS_TOKEN>
+    static_configs:
+      - targets: ['acp-host:4317']
+```
+
+The exposed series are a scrape **contract** — see
+[`wiki/references/metrics.md`](./wiki/references/metrics.md) for the full list and
+what is worth alerting on (RPC error rate, request-duration histograms, and event
+pruning falling to zero).
+
 ### Scale out: the `ha` Compose profile
 
 When one node isn't enough, the **`ha` profile** boots the ADR-0008

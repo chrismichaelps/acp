@@ -4,6 +4,7 @@ import { AppConfigTag } from '../../config/app-config.js'
 import { EventStore } from '../../domain/events/index.js'
 import { LeaseService } from '../../domain/leases/index.js'
 import { SessionService } from '../../domain/sessions/index.js'
+import { recordSweep } from '../../infrastructure/metrics/index.js'
 import type { StorageError } from '../../protocol/errors/protocol-error.js'
 import type { Lease, Session, WorkerId } from '../../protocol/schema/index.js'
 import { IdClock } from './identity.js'
@@ -58,6 +59,12 @@ export const sweepOnce: Effect.Effect<
       prunedEvents,
     }),
   )
+
+  yield* recordSweep({
+    prunedEvents,
+    evictedSessions: evictedSessions.length,
+    expiredLeases: expiredLeases.length,
+  })
 
   return { evictedSessions, expiredLeases, prunedEvents }
 })

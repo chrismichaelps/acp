@@ -41,13 +41,13 @@ const requireWorkspaceBindingsConfig = Layer.succeed(AppConfigTag, {
   requireWorkspaceBindings: true,
   sessionIssuer: 'trusted-client' as const,
   sessionIssuancePolicy: Option.none(),
+  metricsToken: Option.none(),
 })
 
 const RuntimeWithWorkspaceBindings = Layer.provideMerge(
   AcpRpcSessionWorkerWorkspaceHandlersLive,
   Layer.mergeAll(AppLive, IdClockLive, requireWorkspaceBindingsConfig),
 )
-
 describe('AcpRpcSessionWorkerWorkspaceHandlersLive', () => {
   it('initializes a session and serves scoped worker/workspace reads', async () => {
     const program = Effect.gen(function* () {

@@ -20,6 +20,7 @@ import {
 } from '../../infrastructure/http/index.js'
 import { replayEvents, streamEvents } from './event-routes.js'
 import { livenessProbe, readinessProbe } from './health-routes.js'
+import { metricsRoute } from './metrics-routes.js'
 import { openApiDocumentRoute } from './openapi-route.js'
 import {
   getWork,
@@ -404,6 +405,7 @@ export const acpRouter = v1Router.pipe(
   HttpRouter.get('/health', livenessProbe),
   HttpRouter.get('/ready', readinessProbe),
   HttpRouter.get('/openapi.json', openApiDocumentRoute),
+  HttpRouter.get('/metrics', metricsRoute),
   HttpRouter.post('/rpc', makeRpcHandler(v1Router)),
   HttpRouter.get('/rpc', makeRpcSocketHandler(v1Router)),
 )

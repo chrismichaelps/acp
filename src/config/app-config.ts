@@ -23,6 +23,7 @@ export interface AppConfig {
   readonly requireWorkspaceBindings: boolean
   readonly sessionIssuer: SessionIssuerMode
   readonly sessionIssuancePolicy: Option.Option<string>
+  readonly metricsToken: Option.Option<string>
 }
 
 export const appLogLevelConfig: Config.Config<AppLogLevel> = Config.literal(
@@ -135,6 +136,11 @@ const load = Effect.gen(function* () {
   const sessionIssuancePolicy = yield* Config.string(
     'ACP_SESSION_ISSUANCE_POLICY',
   ).pipe(Config.option)
+  // The metrics scrape token both enables and guards GET /metrics: unset means
+  // the endpoint is off (404), set means Prometheus must present it as a bearer.
+  const metricsToken = yield* Config.string('ACP_METRICS_TOKEN').pipe(
+    Config.option,
+  )
   const hosted = profileName === 'hosted'
   const requireAuth = hosted ? true : configuredRequireAuth
   const requireWorkspaceBindings = hosted
@@ -167,6 +173,7 @@ const load = Effect.gen(function* () {
     requireWorkspaceBindings,
     sessionIssuer,
     sessionIssuancePolicy,
+    metricsToken,
   }
 })
 

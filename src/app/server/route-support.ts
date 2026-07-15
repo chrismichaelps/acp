@@ -8,6 +8,7 @@ import {
 import { Clock, Effect, Either, Option, Schema } from 'effect'
 import { AppConfigTag } from '../../config/app-config.js'
 import { SessionIssuer, SessionService } from '../../domain/sessions/index.js'
+import { recordHttpCompletion } from '../../infrastructure/metrics/index.js'
 import { toHttpErrorResponse } from '../../infrastructure/http/index.js'
 import {
   toProtocolError,
@@ -245,6 +246,17 @@ export const respond =
         : result.right
       const code = Either.isLeft(result) ? errorCode(result.left) : undefined
       yield* logHttpRequest(metadata, response, startedAt, code)
+      // The scrape endpoint excludes itself so polling never inflates its own
+      // counters; every other route is recorded for /metrics.
+      if (metadata.route !== '/metrics') {
+        const finishedAt = yield* Clock.currentTimeMillis
+        yield* recordHttpCompletion({
+          method: metadata.method,
+          route: metadata.route,
+          status: response.status,
+          durationMs: finishedAt - startedAt,
+        })
+      }
       return response
     })
 
