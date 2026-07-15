@@ -214,9 +214,9 @@ separate provider runner is added.
 75. ✅ ACP v1.1.0 release — synchronized public release/protocol status, passed
     independent and complete Docker ACP gates, merged PR #323, tagged the exact
     merge commit, and published the GitHub release
-76. ▶ OpenAPI contract publication — issue #327 / PR #332; documentation and
-    exact mirrors aligned before generator security hardening, complete gates,
-    Docker ACP review, and merge
+76. ▶ OpenAPI contract publication — issue #327 / PR #332; documentation, exact
+    mirrors, bearer projection, clean Linux gates, and complete production Docker
+    self-dogfood are green; independent ACP review and merge remain
 
 ## Referenced by
 

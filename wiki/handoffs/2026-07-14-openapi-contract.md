@@ -33,11 +33,9 @@ aliases: [2026-07-14-openapi-contract]
 
 ## Remaining
 
-1. Commit the completed implementation and regenerated artifact.
-2. Run the production Docker self-dogfood and verify the live container's
-   `/openapi.json` contract.
-3. Attach PR evidence, open an ACP grill, obtain independent ACP review, resolve
-   findings, merge PR #332, and close issue #327.
+1. Push the completed commits and attach PR #332 as ACP review evidence.
+2. Open an ACP grill, obtain independent review, and resolve any findings.
+3. Merge PR #332 and close issue #327 when GitHub checks and ACP review are green.
 
 Completed evidence: exact mirror audit `259/259`; focused Docker tests `7/7`;
 typecheck, lint, changed-file formatting, file-size, permission, environment,
@@ -46,11 +44,20 @@ intentional skips; production build `152` runtime files. The repository-wide
 format command also reports ten pre-existing `.superpowers/sdd/*` Markdown files
 outside this feature; every issue #327 path passes Prettier.
 
+Production image evidence: complete SQLite lifecycle and restart persistence;
+hardened auth; REST, SSE, JSON-RPC HTTP/stdio/WebSocket, and native RPC; two-node
+HA/Postgres with claim and lease contention, expiry, changes-requested, signed
+approval, and completion; SQLite and two-node HA edge routing. A fresh
+`acp:latest` container served 35 paths/40 operations with exactly one public
+bootstrap, 39 `AcpSession`-protected operations, JSON content type, and POST
+`/openapi.json` → 404. The Docker coordination container restarted against its
+original named volume and recovered this work and its checkpoints.
+
 ## Exact Next Action
 
-Verifier role: commit the implementation, then run `pnpm dogfood:docker-self`
-against the current tree and attach the live OpenAPI/security evidence to work
-`work_mrlaz41o2` before requesting review.
+Reviewer role: inspect the complete branch diff against `main`, challenge auth
+truthfulness, same-version stability, drift enforcement, and production wiring,
+then accept or reject each ACP grill question before approving review.
 
 ## Referenced by
 
