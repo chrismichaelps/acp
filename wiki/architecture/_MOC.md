@@ -99,7 +99,7 @@ boundary then added one production module and one focused test with their pages.
 Issue #327 adds the OpenAPI projection and its test plus the live discovery route
 and its test, then splits the review HTTP groups into one cohesive production
 module so all 53 live routes participate in the contract. Each addition has an
-exact mirror. The current target audit is therefore 260 source files, 260 exact
+exact mirror. The current audit is therefore 260 source files, 260 exact
 non-MOC pages, zero missing mirrors, and zero orphans.
 The active production audit uses the existing Dockerized ACP host directly; no
 separate provider runner is added.
@@ -217,9 +217,10 @@ separate provider runner is added.
     independent and complete Docker ACP gates, merged PR #323, tagged the exact
     merge commit, and published the GitHub release
 76. ▶ OpenAPI contract publication — issue #327 / PR #332; the first independent
-    ACP review found 40 documented operations against 53 live routes. The
-    documentation-first parity and protected-error repair is in progress before
-    Docker revalidation, ACP re-review, and merge
+    ACP review found 40 documented operations against 53 live routes. The repair
+    now publishes all 53, documents protected `401`/`403` responses, passes exact
+    260/260 mirrors and complete Docker self-dogfood, and awaits ACP re-review
+    before merge
 
 ## Referenced by
 
