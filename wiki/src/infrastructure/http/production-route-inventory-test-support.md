@@ -80,4 +80,5 @@ entire class of method-blind production drift.
 ## Referenced by
 
 [[acp-http-api.test]] · [[openapi-module.test]] · [[http/_MOC]] ·
-[[ADR-0017-openapi-contract-artifact]] · [[2026-07-14-openapi-contract]]
+[[ADR-0017-openapi-contract-artifact]] · [[2026-07-14-openapi-contract]] ·
+[[acp-http-api-reviews]]

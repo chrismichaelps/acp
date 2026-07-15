@@ -88,4 +88,5 @@ then adjudicate the grill and approve only if that final review returns GO.
 
 [[ADR-0017-openapi-contract-artifact]] · [[openapi-module]] ·
 [[openapi-module.test]] · [[openapi-route]] · [[openapi-route.test]] ·
-[[grammar/typescript]] · [[production-route-inventory-test-support]]
+[[grammar/typescript]] · [[production-route-inventory-test-support]] ·
+[[acp-http-api-reviews]]
