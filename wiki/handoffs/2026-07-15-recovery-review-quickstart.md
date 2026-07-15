@@ -102,6 +102,15 @@ Focused regressions must cover image selection, owned-image cleanup, aggregate
 preservation, all-resource cleanup, no publish on cleanup failure, and
 dual-failure preservation before the ACP comments can be resolved.
 
+The first live run of that repair correctly withheld terminal success but
+exposed a Docker dependency race: starting container and volume deletion in one
+`Promise.allSettled` let `volume rm` arrive before `docker rm -f` had completed,
+returning `volume is in use`. Docker ACP records this as a third open blocker.
+The follow-up contract serializes the dependency boundary—container removal
+first, volume and owned-image removal second—while retaining exhaustive attempts
+and aggregated failures. The failed run removed its container and owned image;
+the remaining volume is cleanup evidence, not an accepted result.
+
 ## Referenced by
 
 [[ADR-0018-recovery-review-quickstart]] · [[recovery-review-quickstart]]

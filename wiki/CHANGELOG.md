@@ -21,7 +21,10 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   daemon-global standalone image tag, short-circuiting cleanup, and pre-cleanup
   success record, so the accepted follow-up isolates and removes standalone
   images, preserves the aggregate image, attempts every cleanup action, and
-  withholds terminal success until cleanup passes while retaining dual failures ·
+  withholds terminal success until cleanup passes while retaining dual failures;
+  its first live run found that parallel container/volume deletion can race the
+  daemon, so the follow-up orders container teardown before volume/image cleanup
+  without sacrificing exhaustive failure collection ·
   [[ADR-0018-recovery-review-quickstart]] · [[recovery-review-quickstart]]
 
 - 2026-07-14 · OpenAPI contract artifact · generated `openapi.json` from the

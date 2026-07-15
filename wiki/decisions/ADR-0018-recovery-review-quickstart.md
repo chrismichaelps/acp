@@ -73,8 +73,9 @@ example without paying for a second image build.
 - Pre-clean is idempotent across Docker daemons: a case-insensitive
   `no such container|volume|image` response is success, while every other
   cleanup failure remains fatal.
-- Cleanup attempts every owned resource even if an earlier removal fails, then
-  reports every real removal error.
+- Cleanup respects Docker dependencies: it awaits container removal before
+  attempting volume and image removal. It still attempts every later owned
+  resource if an earlier removal fails, then reports every real removal error.
 - The terminal `{ "ok": true }` evidence is published only after final cleanup
   succeeds. When lifecycle execution and cleanup both fail, neither error is
   discarded.

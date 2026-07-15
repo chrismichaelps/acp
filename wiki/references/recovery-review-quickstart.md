@@ -66,10 +66,12 @@ repository, contact GitHub, or read provider credentials.
 
 Startup and final cleanup treat Docker's case-varying "no such container,"
 "no such volume," and "no such image" responses as idempotent absence. Cleanup
-attempts every owned resource even when an earlier removal fails, then reports
-all real failures. The terminal `{ "ok": true }` record is emitted only after
-final cleanup succeeds; if execution and cleanup both fail, the command
-preserves both errors and emits no success record.
+awaits container removal before dependent volume removal, then attempts every
+remaining owned resource even when an earlier removal failed and reports all
+real failures. This ordering prevents Docker's asynchronous container teardown
+from racing volume deletion. The terminal `{ "ok": true }` record is emitted
+only after final cleanup succeeds; if execution and cleanup both fail, the
+command preserves both errors and emits no success record.
 
 ## Scope
 

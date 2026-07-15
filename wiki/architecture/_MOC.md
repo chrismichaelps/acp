@@ -239,8 +239,10 @@ separate provider runner is added.
     missing-volume text in strict pre-clean. Independent review then blocked
     shared standalone image tags and success publication before incomplete
     cleanup. The documentation-first repair requires run-scoped owned images,
-    aggregate image preservation, exhaustive cleanup, and terminal evidence
-    only after verified cleanup before ACP re-review
+    aggregate image preservation, dependency-ordered exhaustive cleanup, and
+    terminal evidence only after verified cleanup before ACP re-review. The
+    first repaired live run correctly withheld success and exposed a real
+    container/volume deletion race now captured by the cleanup contract
 
 ## Referenced by
 
