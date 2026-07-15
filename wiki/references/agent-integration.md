@@ -164,6 +164,11 @@ flags enabled after provisioning the workspace under the bootstrap profile. It
 uses a separate workspace-bound reviewer token for approval and asserts the
 durable lifecycle events through completion and lease release.
 
+The same existing production-image gate then switches the durable host to
+[[trusted-session-issuance]] and proves hostile caller fields are replaced
+across every initialization transport, old revisions are unauthorized, and
+WebSocket subscriptions cannot bypass issuer/scope/workspace checks.
+
 ## The review gate
 
 A review is more than approve/reject. A reviewer can anchor **diff-anchored

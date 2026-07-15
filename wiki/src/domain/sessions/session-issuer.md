@@ -1,7 +1,7 @@
 ---
 type: module
 path: '@root/src/domain/sessions/session-issuer.ts'
-fidelity: Planned
+fidelity: Active
 domain: '[[Worker]]'
 grammar: '[[grammar/typescript]]'
 seam: '[[SessionIssuance]]'

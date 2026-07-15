@@ -43,8 +43,9 @@ future adapter, not a flag inside the static verifier.
 2. Select the configured adapter once through the application layer.
 3. Issue a grant or return opaque unauthorized.
 4. Persist static provenance with the minted ACP session.
-5. Atomically retain the immutable [[Principal]]↔[[Worker]] attribution in
-   [[Storage]].
+5. Atomically retain every immutable `(issuer, [[Principal]])`↔[[Worker]]
+   attribution in one global [[Storage]] registry so changing issuer namespace
+   cannot release a historical worker id.
 6. Before scope checks, validate provenance and exact grant equality against the
    active policy.
 
@@ -56,6 +57,8 @@ future adapter, not a flag inside the static verifier.
 - Do not treat ACP worker ids as verified external identity.
 - Do not bypass validation for JSON-RPC, WebSocket, stdio, or native RPC.
 - Do not silently hot-reload one replica.
+- Do not partition the worker attribution index by issuer id; worker ids are
+  global ACP identities.
 
 ## Depth
 

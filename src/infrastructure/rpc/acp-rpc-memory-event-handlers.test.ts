@@ -125,7 +125,13 @@ describe('AcpRpcMemoryEventHandlersLive', () => {
         }),
         rpcOptions(),
       )
-    }).pipe(Effect.provideService(AcpRpcActor, 'agent_rpc' as WorkerId))
+    }).pipe(
+      Effect.provideService(AcpRpcActor, {
+        worker_id: 'agent_rpc' as WorkerId,
+        permissions: [],
+        workspace_ids: Option.none(),
+      }),
+    )
 
     const result = await Effect.runPromise(Effect.provide(program, Runtime))
 

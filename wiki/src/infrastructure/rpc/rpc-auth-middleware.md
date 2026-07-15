@@ -17,7 +17,8 @@ aliases: [rpc-auth-middleware]
 Make native Effect RPC authorization visible at the contract and transport
 policy layer. The middleware reads the required permission scope from
 [[acp-rpc-contract]] annotations, resolves the bearer session through
-[[rpc-auth]], and provides the authenticated actor through `AcpRpcActor`.
+[[rpc-auth]], and provides the complete authenticated actor through
+`AcpRpcActor`.
 Handlers can consume that actor through [[rpc-auth]] `rpcActor`, which falls
 back to header authorization for direct `accessHandler` tests.
 
@@ -37,7 +38,9 @@ middleware tag that provides [[rpc-auth]] `AcpRpcActor` and fails with ACP
 `ProtocolError`. Its live layer captures [[app-config]], [[session-service]], and
 [[session-issuer]] once when the server layer is built; each request then reads the annotated scope
 from `options.rpc.annotations` and delegates to [[rpc-auth]] with the request
-headers.
+headers. The provided value retains worker id, granted permissions, and
+workspace bindings so workspace-aware handlers can enforce bindings after the
+contract-level scope check.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -50,6 +53,8 @@ headers.
   vocabulary.
 - ❌ Do NOT capture a transport-local issuer; middleware and direct-handler
   fallback must share the application issuer instance.
+- ❌ Do NOT provide only the resolved worker id; that discards the binding needed
+  by `rpcWorkspaceActor`.
 
 ## Depth
 

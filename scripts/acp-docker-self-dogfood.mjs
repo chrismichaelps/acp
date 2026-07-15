@@ -16,6 +16,7 @@ import { runFeatureScenario } from './acp-docker-self-scenario.mjs'
 import {
   proveAuth,
   proveRestartPersistence,
+  proveTrustedIssuance,
 } from './acp-docker-self-state-probes.mjs'
 import { proveTransports } from './acp-docker-self-transport-probes.mjs'
 
@@ -643,6 +644,7 @@ const runDockerSelfScenario = async () => {
     })
     await proveRestartPersistence({ container, scenario, cli, streamChild })
     await proveAuth({ image, authContainer, authVolume, runId })
+    await proveTrustedIssuance({ image, authContainer, authVolume, runId })
 
     await dockerOk(['rm', '-f', container])
     await dockerOk(['rm', '-f', authContainer])
@@ -680,6 +682,9 @@ const runDockerSelfScenario = async () => {
             'permission-denial',
             'workspace-binding',
             'complete-worker-lifecycle',
+            'trusted-session-issuance',
+            'revision-revocation',
+            'websocket-subscription-authorization',
           ],
           ha: true,
           edge: true,

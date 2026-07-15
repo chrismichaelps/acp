@@ -11,6 +11,7 @@ import type { CliRequest } from './commands.js'
 import type { HttpBody } from '@effect/platform/HttpBody'
 
 const requireAuthConfig = Layer.succeed(AppConfigTag, {
+  profile: 'local' as const,
   port: 4317,
   logLevel: 'info' as const,
   storageAdapter: 'memory' as const,
@@ -25,6 +26,8 @@ const requireAuthConfig = Layer.succeed(AppConfigTag, {
   sweepInterval: Duration.seconds(60),
   requireAuth: true,
   requireWorkspaceBindings: false,
+  sessionIssuer: 'trusted-client' as const,
+  sessionIssuancePolicy: Option.none(),
 })
 
 const right = (argv: readonly string[]): CliRequest => {

@@ -42,7 +42,6 @@ describe('acpRouter', () => {
     expect(body.host.kind).toBe('local')
     expect(body.capabilities.supports_sse).toBe(true)
   })
-
   it('accepts the spec capability-negotiation payload shape', async () => {
     const handler = makeHandler()
     const res = await handler(
@@ -76,7 +75,6 @@ describe('acpRouter', () => {
     expect(body.protocol_version).toBe('0.1')
     expect(body.capabilities.supports_reviews).toBe(true)
   })
-
   it('rejects an unsupported protocol version during session initialization', async () => {
     const handler = makeHandler()
     const res = await handler(
@@ -95,7 +93,6 @@ describe('acpRouter', () => {
       'invalid_request',
     )
   })
-
   const initSession = async (
     handler: (req: Request) => Promise<Response>,
     permissions: readonly string[],
@@ -440,6 +437,7 @@ describe('acpRouter', () => {
 
 // requireAuth overrides AppLive's config (rightmost merge wins) so authorize sees it.
 const requireAuthConfig = Layer.succeed(AppConfigTag, {
+  profile: 'local' as const,
   port: 4317,
   logLevel: 'info' as const,
   storageAdapter: 'memory' as const,
@@ -454,6 +452,8 @@ const requireAuthConfig = Layer.succeed(AppConfigTag, {
   sweepInterval: Duration.seconds(60),
   requireAuth: true,
   requireWorkspaceBindings: false,
+  sessionIssuer: 'trusted-client' as const,
+  sessionIssuancePolicy: Option.none(),
 })
 
 describe('acpRouter with ACP_REQUIRE_AUTH', () => {

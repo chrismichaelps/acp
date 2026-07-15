@@ -89,6 +89,33 @@ bindings, duplicate grant literals, open auth in static mode, and any hosted
 trusted-client override. Startup errors sanitize policy contents and digests.
 WebSocket subscriptions deny missing scope/binding before acknowledgement.
 
+## Production-image proof
+
+`pnpm dogfood:docker-self` extends the existing auth phase rather than adding a
+new orchestration file. Against the compiled production image it restarts one
+SQLite volume through trusted-client, static revision 1, static revision 2, and
+a hostile remap policy. The probe exercises CLI, JSON-RPC HTTP, stdio,
+header-authenticated WebSocket, native Effect RPC, missing-scope/foreign-binding
+subscriptions, revision revocation, durable principal/worker attribution, and
+credential-safe logs. The WebSocket query path is tested only as a denied
+issuance attempt and an allowed minted-session path.
+
+The native RPC proof also attempts a workspace-scoped mutation outside the
+static session's policy binding after middleware authentication and requires a
+typed `forbidden` result. The remap restart changes `issuer_id` while reusing a
+historical worker id, proving that the attribution tombstone is global rather
+than partitioned by issuer namespace.
+
+The audit proof decodes the JSON log records emitted by the production image
+and evaluates their structured annotations. It does not match terminal-rendered
+`key=value` text, because the console renderer is an operator presentation
+detail rather than part of the security-log contract. The proof fails when the
+required accepted/revoked decisions or principal attribution are absent, when a
+log line that claims to be JSON is malformed, or when any credential, digest,
+or minted session id appears anywhere in the collected container output. A
+failed assertion may report event counts, decisions, principal ids, and opaque
+forbidden-value indexes; it must never echo the forbidden values themselves.
+
 ## Referenced by
 
 [[references/_MOC]] · [[deployment]] · [[agent-integration]] ·

@@ -55,8 +55,12 @@ export const HttpAppLive: Layer.Layer<
 
 ## Algorithm
 
-1. `Layer.mergeAll(HttpLayerRouter.serve(AcpHttpRoutesLive), SweeperLive)` — the
-   route request loop and the [[sweeper]] daemon, both as scoped forked fibers.
+1. `Layer.mergeAll(HttpLayerRouter.serve(AcpHttpRoutesLive, { disableLogger:
+true }), SweeperLive)` — the route request loop and the [[sweeper]] daemon,
+   both as scoped forked fibers. The platform logger is disabled because it
+   records `HttpServerRequest.url` verbatim, including compatibility query
+   tokens. [[route-support]] and native RPC telemetry remain the canonical,
+   low-cardinality request logs.
 2. Build `ServerRuntimeLive` as `AppLive ⊕ IdClockLive ⊕ SweeperLeadershipLive`.
    `SweeperLeadershipLive` is provided from the same app runtime so Postgres
    leader election reads the same config as storage.
@@ -74,6 +78,8 @@ No behavior of its own; pure composition.
 - ❌ Do NOT call `NodeRuntime.runMain` / `Layer.launch` here — launching is the
   entrypoint's job ([[server-main]]); a launch at import time would make this
   module unsafe to import from a test.
+- ❌ Do NOT enable Effect Platform's default HTTP logger while it records raw
+  request URLs; bearer query tokens must never enter container logs.
 
 ## Depth
 
@@ -109,6 +115,13 @@ state all compose.
   unit tests by design (see [[server-main#Depth]]). _Rejected:_ an
   `import.meta`-guarded `runMain` in `main.ts` (a less idiomatic entrypoint than a
   clean seam split).
+- **Q:** Keep the framework request logger and attempt to sanitize selected query
+  keys, or disable it in favor of ACP's template-based telemetry?
+  **A:** Disable it. _Rationale:_ ACP already emits route-template, status,
+  duration, and error-code records without identifiers; the framework logger
+  adds a duplicate raw URL whose query string can contain bearer credentials.
+  _Rejected:_ maintaining a partial sensitive-query-key denylist (easy to drift
+  as compatibility parameters evolve).
 
 ## Referenced by
 

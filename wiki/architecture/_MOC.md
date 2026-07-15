@@ -100,7 +100,9 @@ Issue #327 adds the OpenAPI projection and its test plus the live discovery rout
 and its test, then splits the review HTTP groups into one cohesive production
 module so all 53 live routes participate in the contract. Each addition has an
 exact mirror. The full-method production inventory helper adds one more pair.
-The current audit is therefore 261 source files, 261 exact
+Issue #329 adds nine source modules/tests and nine exact mirror pages for the
+shared initializer, issuer port/adapters, and hostile HTTP/native-RPC coverage.
+The current audit is therefore 270 source files, 270 exact
 non-MOC pages, zero missing mirrors, and zero orphans.
 The active production audit uses the existing Dockerized ACP host directly; no
 separate provider runner is added.
@@ -247,10 +249,22 @@ separate provider runner is added.
     aggregate-reuse production runs; owned resources are absent and the shared
     aggregate image is preserved and the issue is closed
 78. ▶ [[trusted-session-issuance]] — issue #329; documentation-first hosted
-    identity slice is registered in Docker ACP. Accepted design adds a static
+    identity slice is registered in Docker ACP and implementation is complete
+    pending ACP review. The static
     digest-verified service-principal adapter, fixed server grants, provenance
     validation/revision revocation, credential-safe audit, optional OpenAPI
     issuance auth, hostile-client tests, and exact cross-transport Docker proof
+    are wired through the production application. Docker self-use exposed and
+    repaired a framework raw-URL log that retained query bearer tokens.
+    Independent security review additionally blocked native RPC
+    workspace-binding loss and
+    issuer-partitioned historical worker attribution; both contracts now have
+    generated-client/unit regressions and production-container probes. Clean
+    Linux validation passes 674 tests, lint, formatting, typecheck, static
+    policy guards, the 157-file production build, recovery quickstart, two-node
+    HA, and SQLite/two-node edge smoke; independent re-review approves the
+    repairs, exact-head aggregate `issue329exact` passes, and source/wiki parity
+    is 270/270
 
 ## Referenced by
 

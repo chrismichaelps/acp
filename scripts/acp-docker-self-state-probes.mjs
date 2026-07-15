@@ -1,7 +1,9 @@
+import { createHash } from 'node:crypto'
 import { setTimeout as delay } from 'node:timers/promises'
 import {
   assert,
   containerFetch,
+  docker,
   dockerOk,
   expectError,
   expectOk,
@@ -848,5 +850,528 @@ export const proveAuth = async ({
     narrow.session_id,
     ['work', 'list', '--workspace', allowed.id],
     'forbidden',
+  )
+}
+
+const sha256 = (value) => createHash('sha256').update(value).digest('hex')
+
+const issuanceAuditAnnotations = (logs) =>
+  logs.split('\n').flatMap((line) => {
+    const rendered = line.trim()
+    if (!rendered.startsWith('{')) return []
+    const record = JSON.parse(rendered)
+    const annotations = record?.annotations
+    return annotations?.security_event === 'session_issuance'
+      ? [annotations]
+      : []
+  })
+
+const issuancePolicy = ({
+  workspaceId,
+  mainSecret,
+  readSecret,
+  revision,
+  remapSecret,
+  issuerId = 'acp-docker-self-static',
+}) => ({
+  issuer_id: issuerId,
+  principals:
+    remapSecret === undefined
+      ? [
+          {
+            id: 'principal_docker_main',
+            revision,
+            enabled: true,
+            credential_sha256: sha256(mainSecret),
+            worker: {
+              id: 'agent_docker_policy_main',
+              name: 'Docker policy main',
+              kind: 'ci',
+              status: 'online',
+              capabilities: ['can_run_commands'],
+            },
+            permissions: ['event:read', 'work:create', 'worker:read'],
+            workspace_ids: [workspaceId],
+          },
+          {
+            id: 'principal_docker_read',
+            revision,
+            enabled: true,
+            credential_sha256: sha256(readSecret),
+            worker: {
+              id: 'agent_docker_policy_read',
+              name: 'Docker policy read',
+              kind: 'ci',
+              status: 'online',
+              capabilities: [],
+            },
+            permissions: ['worker:read'],
+            workspace_ids: [workspaceId],
+          },
+        ]
+      : [
+          {
+            id: 'principal_docker_remap',
+            revision,
+            enabled: true,
+            credential_sha256: sha256(remapSecret),
+            worker: {
+              id: 'agent_docker_policy_main',
+              name: 'Illegal remap',
+              kind: 'ci',
+              status: 'online',
+              capabilities: ['can_run_commands'],
+            },
+            permissions: ['worker:read'],
+            workspace_ids: [workspaceId],
+          },
+        ],
+})
+
+const hostileInitialize = (runId, workspaceId) => ({
+  worker: {
+    id: `agent_hostile_${runId}`,
+    name: 'Hostile caller',
+    kind: 'agent',
+  },
+  capabilities: { can_create_prs: true },
+  permissions: ['review:approve'],
+  workspace_ids: [workspaceId],
+})
+
+const websocketRpc = async ({ container, path, token = '', request }) => {
+  const script = `
+import { createRequire } from 'node:module'
+const [path, token, rawRequest] = process.argv.slice(1)
+const rootRequire = createRequire(import.meta.url)
+const platformRequire = createRequire(rootRequire.resolve('@effect/platform-node/package.json'))
+const WebSocket = platformRequire('ws')
+const socket = new WebSocket('ws://127.0.0.1:4317' + path, {
+  ...(token === '' ? {} : { headers: { authorization: 'Bearer ' + token } }),
+})
+const timeout = setTimeout(() => { console.error('websocket timeout'); process.exit(1) }, 10000)
+socket.addEventListener('open', () => socket.send(rawRequest))
+socket.addEventListener('message', (event) => {
+  clearTimeout(timeout)
+  console.log(String(event.data))
+  socket.close()
+})
+socket.addEventListener('error', () => { console.error('websocket error'); process.exit(1) })
+`
+  const output = await dockerOk([
+    'exec',
+    container,
+    'node',
+    '--input-type=module',
+    '-e',
+    script,
+    path,
+    token,
+    JSON.stringify(request),
+  ])
+  return JSON.parse(output)
+}
+
+const nativeInitialize = async ({ container, token, payload }) => {
+  const script = `
+import { Effect, Schema } from 'effect'
+import { InitializeSessionPayload } from './dist/infrastructure/http/index.js'
+import {
+  acpRpcClientHostLayer, makeAcpRpcClient, withAcpRpcBearer
+} from './dist/infrastructure/rpc/index.js'
+const [token, rawPayload] = process.argv.slice(1)
+const result = await Effect.runPromise(
+  Effect.gen(function* () {
+    const client = yield* makeAcpRpcClient
+    const payload = yield* Schema.decodeUnknown(InitializeSessionPayload)(JSON.parse(rawPayload))
+    return yield* withAcpRpcBearer(token)(client.session.initialize(payload))
+  }).pipe(
+    Effect.provide(acpRpcClientHostLayer('http://127.0.0.1:4317')),
+    Effect.scoped,
+  ),
+)
+console.log(JSON.stringify(result))
+`
+  const output = await dockerOk([
+    'exec',
+    container,
+    'node',
+    '--input-type=module',
+    '-e',
+    script,
+    token,
+    JSON.stringify(payload),
+  ])
+  return JSON.parse(output)
+}
+
+const nativeForeignWorkspace = async ({ container, token, workspaceId }) => {
+  const script = `
+import { Effect, Schema } from 'effect'
+import { CreateWorkPayload } from './dist/protocol/schema/index.js'
+import {
+  acpRpcClientHostLayer, makeAcpRpcClient, withAcpRpcBearer
+} from './dist/infrastructure/rpc/index.js'
+const [token, workspaceId] = process.argv.slice(1)
+const result = await Effect.runPromise(
+  Effect.gen(function* () {
+    const client = yield* makeAcpRpcClient
+    const payload = yield* Schema.decodeUnknown(CreateWorkPayload)({
+      workspace_id: workspaceId,
+      title: 'Denied native cross-workspace work',
+    })
+    return yield* Effect.either(
+      withAcpRpcBearer(token)(client.work.create(payload)),
+    )
+  }).pipe(
+    Effect.provide(acpRpcClientHostLayer('http://127.0.0.1:4317')),
+    Effect.scoped,
+  ),
+)
+console.log(JSON.stringify(
+  result._tag === 'Left'
+    ? { tag: result._tag, code: result.left.error.code }
+    : { tag: result._tag },
+))
+`
+  const output = await dockerOk([
+    'exec',
+    container,
+    'node',
+    '--input-type=module',
+    '-e',
+    script,
+    token,
+    workspaceId,
+  ])
+  return JSON.parse(output)
+}
+
+export const proveTrustedIssuance = async ({
+  image,
+  authContainer,
+  authVolume,
+  runId,
+}) => {
+  const mainSecret = `issuance-main-${runId}`
+  const readSecret = `issuance-read-${runId}`
+  const remapSecret = `issuance-remap-${runId}`
+  const allowedWorkspace = `workspace_static_${runId}`
+  const hostileWorkspace = `workspace_hostile_${runId}`
+  let auditLogs = ''
+
+  const captureLogs = async () => {
+    const logs = await docker(['logs', authContainer])
+    if (logs.ok) auditLogs += `${logs.stdout}\n${logs.stderr}\n`
+  }
+  const startStatic = async (policy) => {
+    await captureLogs()
+    await dockerOk(['rm', '-f', authContainer])
+    await dockerOk([
+      'run',
+      '-d',
+      '--name',
+      authContainer,
+      '-e',
+      'ACP_REQUIRE_AUTH=true',
+      '-e',
+      'ACP_REQUIRE_WORKSPACE_BINDINGS=true',
+      '-e',
+      'ACP_SESSION_ISSUER=static',
+      '-e',
+      `ACP_SESSION_ISSUANCE_POLICY=${JSON.stringify(policy)}`,
+      '-e',
+      'ACP_STORAGE_ADAPTER=sqlite',
+      '-e',
+      'ACP_SQLITE_PATH=/data/acp.sqlite',
+      '-v',
+      `${authVolume}:/data`,
+      image,
+    ])
+    await waitForReady(authContainer)
+  }
+
+  await startStatic(
+    issuancePolicy({
+      workspaceId: allowedWorkspace,
+      mainSecret,
+      readSecret,
+      revision: '1',
+    }),
+  )
+  const request = hostileInitialize(runId, hostileWorkspace)
+  const missing = await containerFetch(
+    authContainer,
+    '/v1/session/initialize',
+    { method: 'POST', body: request },
+  )
+  const wrong = await containerFetch(authContainer, '/v1/session/initialize', {
+    method: 'POST',
+    token: 'wrong-issuance-secret',
+    body: request,
+  })
+  assert(
+    missing.status === 401 &&
+      wrong.status === 401 &&
+      JSON.stringify(missing.body) === JSON.stringify(wrong.body),
+    'static issuance did not deny missing/wrong credentials identically',
+  )
+
+  const cli = makeCli(authContainer)
+  const main = await expectOk(cli, 'static CLI issuance', mainSecret, [
+    'session',
+    'init',
+    '--worker',
+    `agent_hostile_cli_${runId}`,
+    '--name',
+    'Hostile CLI caller',
+    '--permissions',
+    'review:approve',
+    '--workspace',
+    hostileWorkspace,
+  ])
+  assert(
+    JSON.stringify(main.permissions) ===
+      JSON.stringify(['event:read', 'work:create', 'worker:read']) &&
+      JSON.stringify(main.workspace_ids) === JSON.stringify([allowedWorkspace]),
+    'static CLI issuance retained hostile authority',
+  )
+  const workers = await expectOk(
+    cli,
+    'static worker attribution',
+    main.session_id,
+    ['worker', 'list'],
+  )
+  assert(
+    workers.some((worker) => worker.id === 'agent_docker_policy_main') &&
+      workers.every((worker) => worker.id !== `agent_hostile_cli_${runId}`),
+    'static issuance registered the hostile worker',
+  )
+
+  const jsonRpc = await containerFetch(authContainer, '/rpc', {
+    method: 'POST',
+    token: mainSecret,
+    body: {
+      jsonrpc: '2.0',
+      id: 'static-jsonrpc-http',
+      method: 'session.initialize',
+      params: request,
+    },
+  })
+  assert(
+    jsonRpc.body?.result?.permissions?.includes('worker:read') &&
+      !jsonRpc.body?.result?.permissions?.includes('review:approve'),
+    'JSON-RPC HTTP did not use static issuance',
+  )
+  const stdio = await stdioRpc(
+    authContainer,
+    {
+      jsonrpc: '2.0',
+      id: 'static-stdio',
+      method: 'session.initialize',
+      params: request,
+    },
+    mainSecret,
+  )
+  assert(
+    stdio.result?.permissions?.includes('worker:read') &&
+      !stdio.result?.permissions?.includes('review:approve'),
+    'stdio did not use static issuance',
+  )
+  const websocket = await websocketRpc({
+    container: authContainer,
+    path: '/rpc',
+    token: mainSecret,
+    request: {
+      jsonrpc: '2.0',
+      id: 'static-websocket-header',
+      method: 'session.initialize',
+      params: request,
+    },
+  })
+  assert(
+    websocket.result?.permissions?.includes('worker:read'),
+    'WebSocket header did not use static issuance',
+  )
+  const queryDenied = await websocketRpc({
+    container: authContainer,
+    path: `/rpc?token=${encodeURIComponent(mainSecret)}`,
+    request: {
+      jsonrpc: '2.0',
+      id: 'static-websocket-query',
+      method: 'session.initialize',
+      params: request,
+    },
+  })
+  assert(
+    queryDenied.error?.data?.error?.code === 'unauthorized',
+    'WebSocket query credential initialized a static session',
+  )
+  const native = await nativeInitialize({
+    container: authContainer,
+    token: mainSecret,
+    payload: request,
+  })
+  assert(
+    native.permissions?.includes('worker:read') &&
+      !native.permissions?.includes('review:approve'),
+    'native RPC did not use static issuance',
+  )
+  const nativeForeign = await nativeForeignWorkspace({
+    container: authContainer,
+    token: native.session_id,
+    workspaceId: hostileWorkspace,
+  })
+  assert(
+    nativeForeign.tag === 'Left' && nativeForeign.code === 'forbidden',
+    'native RPC bypassed the static session workspace binding',
+  )
+
+  const readOnly = await expectOk(
+    cli,
+    'static read-only issuance',
+    readSecret,
+    [
+      'session',
+      'init',
+      '--worker',
+      `agent_hostile_read_${runId}`,
+      '--name',
+      'Hostile read caller',
+      '--permissions',
+      'event:read',
+      '--workspace',
+      hostileWorkspace,
+    ],
+  )
+  const subscribe = (path, id) =>
+    websocketRpc({
+      container: authContainer,
+      path,
+      request: {
+        jsonrpc: '2.0',
+        id,
+        method: 'events.subscribe',
+        params: { workspace_id: allowedWorkspace },
+      },
+    })
+  const noToken = await subscribe('/rpc', 'static-subscribe-no-token')
+  const noScope = await subscribe(
+    `/rpc?token=${readOnly.session_id}`,
+    'static-subscribe-no-scope',
+  )
+  const foreign = await websocketRpc({
+    container: authContainer,
+    path: `/rpc?token=${main.session_id}`,
+    request: {
+      jsonrpc: '2.0',
+      id: 'static-subscribe-foreign',
+      method: 'events.subscribe',
+      params: { workspace_id: hostileWorkspace },
+    },
+  })
+  const allowed = await subscribe(
+    `/rpc?token=${main.session_id}`,
+    'static-subscribe-allowed',
+  )
+  assert(
+    noToken.error?.data?.error?.code === 'unauthorized' &&
+      noScope.error?.data?.error?.code === 'forbidden' &&
+      foreign.error?.data?.error?.code === 'forbidden' &&
+      allowed.result?.subscribed === true,
+    'WebSocket subscription authorization did not fail closed',
+  )
+
+  const oldSession = main.session_id
+  await startStatic(
+    issuancePolicy({
+      workspaceId: allowedWorkspace,
+      mainSecret,
+      readSecret,
+      revision: '2',
+    }),
+  )
+  const revoked = await containerFetch(authContainer, '/v1/workers', {
+    token: oldSession,
+  })
+  assert(revoked.status === 401, 'policy revision did not revoke old session')
+  const revisedCli = makeCli(authContainer)
+  const revised = await expectOk(
+    revisedCli,
+    'revised static issuance',
+    mainSecret,
+    [
+      'session',
+      'init',
+      '--worker',
+      `agent_hostile_revised_${runId}`,
+      '--name',
+      'Hostile revised caller',
+      '--workspace',
+      hostileWorkspace,
+    ],
+  )
+  assert(
+    revised.session_id !== oldSession,
+    'revised policy did not mint a fresh session',
+  )
+
+  await startStatic(
+    issuancePolicy({
+      workspaceId: allowedWorkspace,
+      mainSecret,
+      readSecret,
+      revision: '3',
+      remapSecret,
+      issuerId: 'acp-docker-self-static-remap',
+    }),
+  )
+  const remap = await containerFetch(authContainer, '/v1/session/initialize', {
+    method: 'POST',
+    token: remapSecret,
+    body: request,
+  })
+  assert(
+    remap.status === 401,
+    'historical principal/worker attribution was remapped',
+  )
+  await captureLogs()
+  const forbiddenValues = [
+    mainSecret,
+    readSecret,
+    remapSecret,
+    sha256(mainSecret),
+    sha256(readSecret),
+    sha256(remapSecret),
+    oldSession,
+    revised.session_id,
+  ]
+  const auditEvents = issuanceAuditAnnotations(auditLogs)
+  const leakedValueIndexes = forbiddenValues.flatMap((value, index) =>
+    auditLogs.includes(value) ? [index] : [],
+  )
+  const auditSummary = JSON.stringify({
+    event_count: auditEvents.length,
+    decisions: [...new Set(auditEvents.map((event) => event.decision))].sort(),
+    principal_ids: [
+      ...new Set(
+        auditEvents.map((event) => event.principal_id).filter(Boolean),
+      ),
+    ].sort(),
+    leaked_value_indexes: leakedValueIndexes,
+  })
+  assert(
+    auditEvents.some(
+      (event) =>
+        event.decision === 'accepted' &&
+        event.principal_id === 'principal_docker_main',
+    ) &&
+      auditEvents.some(
+        (event) =>
+          event.decision === 'revoked' &&
+          event.principal_id === 'principal_docker_main',
+      ) &&
+      leakedValueIndexes.length === 0,
+    `static issuance audit was incomplete or leaked credentials: ${auditSummary}`,
   )
 }

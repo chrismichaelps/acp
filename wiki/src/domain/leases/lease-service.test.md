@@ -23,6 +23,9 @@ Vitest suite over in-memory [[Storage]], [[event-store]], and explicit
 
 ## Algorithm
 
+The complete test configuration selects the local trusted-client issuer with no
+static policy; lease behavior is intentionally outside hosted issuance.
+
 Grant and persist an active lease with requested/granted events. Race a second
 holder on the same resource and require `LeaseConflictError`, requested/denied
 events, and the current holder in event data. Use configured TTL when omitted.

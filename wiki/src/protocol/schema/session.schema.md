@@ -31,9 +31,12 @@ export const Session: Schema.Struct<{
   workspace_ids: Option.Option<readonly WorkspaceId[]> // ADR-0009 binding
   issuance: Option.Option<SessionIssuanceProvenance>
 }>
-export const SessionIssuanceProvenance: Schema.Union<
-  { mode: 'static'; issuer_id: string; principal_id: string; revision: string }
->
+export const SessionIssuanceProvenance: Schema.Union<{
+  mode: 'static'
+  issuer_id: string
+  principal_id: string
+  revision: string
+}>
 export const SessionPermissions: Schema.filter<readonly Permission[]>
 export type Session = typeof Session.Type
 ```

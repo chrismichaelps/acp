@@ -11,6 +11,32 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   hostile-client cross-transport Docker evidence · issue #329 · risk HIGH ·
   [[trusted-session-issuance]]
 
+- 2026-07-15 · trusted hosted session issuance implementation · projected
+  [[ADR-0015-trusted-session-issuance]] through one shared initializer, a
+  trusted-client/static [[SessionIssuance]] seam, immutable Storage-backed
+  principal↔worker attribution, persisted issuer provenance, authorization-time
+  revocation, header-only WebSocket bootstrap, subscription authorization,
+  optional OpenAPI issuance auth, and the existing Docker self-dogfood runner;
+  hostile clients cannot retain identity, scopes, capabilities, or bindings,
+  including when their body omits a binding. Production dogfood found a raw URL
+  access log retaining query bearer tokens; [[http-app]] now disables that
+  duplicate framework logger and retains ACP's route-template telemetry. Exact
+  independent review blocked publication when native RPC middleware discarded
+  workspace bindings and an issuer-keyed registry allowed a renamed issuer to
+  reuse a historical worker id; the repair retains the complete authorized RPC
+  actor and moves bidirectional attribution into one global CAS registry.
+  Generated-client foreign-workspace and cross-issuer remap regressions are
+  wired into tests and production-container proof; independent re-review
+  approved both repairs. Exact
+  validation: 270/270 source/wiki parity; 122 test files and 674 tests green on
+  clean Linux; lint, formatting, typecheck, config/documentation guards, and a
+  157-file production build green; static issuance, revision restart, durable
+  remap denial, audit redaction, recovery quickstart, two-replica HA, and both
+  edge profiles pass together against exact-head production image run
+  `issue329exact`; the Docker ACP control plane retained its pre-run checkpoint
+  and returned healthy · issue #329 · risk HIGH ·
+  [[trusted-session-issuance]]
+
 - 2026-07-15 · recovery/review quickstart · accepted and implemented a one-command
   production-image scenario using isolated SQLite rather than process-local
   memory, with exact HTTP `201`/`409` lease contention, a nonzero saved cursor,

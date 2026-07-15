@@ -13,7 +13,12 @@
         ],
         "operationId": "session.initializeSession",
         "parameters": [],
-        "security": [],
+        "security": [
+          {
+            "AcpIssuance": []
+          },
+          {}
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -19332,6 +19337,12 @@
         "scheme": "bearer",
         "bearerFormat": "ACP session id",
         "description": "Session credential returned by POST /v1/session/initialize."
+      },
+      "AcpIssuance": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "ACP issuance credential",
+        "description": "Optional deployment-issued credential used only by POST /v1/session/initialize."
       }
     }
   },

@@ -22,6 +22,9 @@ and `requireWorkspaceBindings=true` over the in-process [[acp-router]].
 
 ## Algorithm
 
+The fixture selects local trusted-client issuance while requiring bindings, so
+this legacy boundary test remains distinct from static policy grant derivation.
+
 Initialize the same worker and permissions with no `workspace_ids`, an empty
 array, and one concrete workspace. Require HTTP 400 for missing and empty
 bindings, HTTP 200 for the bound request, and exact echo of the persisted

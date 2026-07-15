@@ -16,6 +16,8 @@ first-party Effect RPC contract selected by [[ADR-0007-effect-rpc-adoption]].
   [[session-initializer]], plus worker, workspace, work, and lease operations.
 - [[acp-rpc-handlers.test]] — aggregate session projection/mutual-exclusion,
   binding, workspace, work, and lease executable contract.
+- [[acp-rpc-session-issuance.test]] — native header credential, hostile grant
+  replacement, and minted-session authorization contract.
 - [[acp-rpc-artifact-handlers]] — native artifact evidence handlers split from
   the aggregate handler layer.
 - [[acp-rpc-artifact-handlers.test]] — stored/external artifact lifecycle and actor contract.

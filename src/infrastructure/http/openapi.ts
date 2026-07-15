@@ -8,6 +8,7 @@ const DESCRIPTION =
   'Generated from the typed route definitions; regenerate with `pnpm openapi:generate`.'
 
 const SESSION_SECURITY_SCHEME = 'AcpSession'
+const ISSUANCE_SECURITY_SCHEME = 'AcpIssuance'
 const SESSION_INITIALIZE_OPERATION = 'session.initializeSession'
 const HTTP_METHODS = [
   'get',
@@ -23,6 +24,9 @@ const HTTP_METHODS = [
 const sessionSecurity = (): OpenApi.OpenAPISecurityRequirement => ({
   [SESSION_SECURITY_SCHEME]: [],
 })
+const issuanceSecurity = (): OpenApi.OpenAPISecurityRequirement => ({
+  [ISSUANCE_SECURITY_SCHEME]: [],
+})
 
 const securePathItem = (
   pathItem: OpenApi.OpenAPISpecPathItem,
@@ -37,7 +41,7 @@ const securePathItem = (
     const isSessionInitialize =
       operation.operationId === SESSION_INITIALIZE_OPERATION
     secured[method] = isSessionInitialize
-      ? { ...operation, security: [] }
+      ? { ...operation, security: [issuanceSecurity(), {}] }
       : {
           ...operation,
           responses: {
@@ -91,6 +95,13 @@ export const buildAcpOpenApi = (): OpenApi.OpenAPISpec => {
           bearerFormat: 'ACP session id',
           description:
             'Session credential returned by POST /v1/session/initialize.',
+        },
+        [ISSUANCE_SECURITY_SCHEME]: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'ACP issuance credential',
+          description:
+            'Optional deployment-issued credential used only by POST /v1/session/initialize.',
         },
       },
     },

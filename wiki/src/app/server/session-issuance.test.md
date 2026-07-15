@@ -1,7 +1,7 @@
 ---
 type: test
 path: '@root/src/app/server/session-issuance.test.ts'
-fidelity: Planned
+fidelity: Active
 grammar: '[[grammar/typescript]]'
 seam: '[[SessionIssuance]]'
 tags: [test, integration, auth, hostile-client]
@@ -19,8 +19,9 @@ permissions, workspace bindings, and later authorization.
 ## Contract
 
 - missing and incorrect issuance credentials receive opaque 401 responses;
-- a correct credential replaces hostile worker/scopes/bindings with the static
-  grant and persists non-secret provenance;
+- a correct credential replaces hostile worker/scopes/bindings—including an
+  omitted caller binding—with the static grant and persists non-secret
+  provenance;
 - the minted session authorizes only its granted action/workspace;
 - disabling or revising the principal in a restarted policy invalidates the old
   session before scope checks; and

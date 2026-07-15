@@ -38,14 +38,20 @@ export const authorize: (
 export const authorizeTokenActor: (
   token: string,
   scope?: Permission,
-) => Effect<AuthorizedActor, UnauthorizedError | ForbiddenError | StorageError,
-  SessionIssuer | SessionService>
+) => Effect<
+  AuthorizedActor,
+  UnauthorizedError | ForbiddenError | StorageError,
+  SessionIssuer | SessionService
+>
 export const authorizeTokenWorkspace: (
   token: string,
   scope: Permission,
   workspaceId: WorkspaceId,
-) => Effect<WorkerId, UnauthorizedError | ForbiddenError | StorageError,
-  SessionIssuer | SessionService>
+) => Effect<
+  WorkerId,
+  UnauthorizedError | ForbiddenError | StorageError,
+  SessionIssuer | SessionService
+>
 export const respond: (
   route: string,
 ) => <E, R>(

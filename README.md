@@ -653,8 +653,13 @@ Beyond unit tests, several lanes exercise ACP against a _live_ host:
   then exercises every local domain and transport through the compiled public
   entry points,
   restarts the SQLite container to prove named-volume durability, verifies
-  bearer permissions and workspace binding, then reuses the image for the HA
-  and edge gates. The production-image scenario also proves that a budgeted
+  bearer permissions and workspace binding, then restarts the same durable host
+  under static issuance. The static phase rejects missing/wrong and WebSocket
+  query credentials, replaces hostile grants across CLI, JSON-RPC HTTP/stdio/
+  WebSocket, and native RPC, authorizes subscriptions before acknowledgement,
+  revokes an old session after policy revision, rejects historical worker
+  remapping, and audits without secrets. It then reuses the image for the HA and
+  edge gates. The production-image scenario also proves that a budgeted
   resume bounds inline artifacts and reports the remainder as references. The
   authenticated GitHub bridge remains an explicit opt-in sandbox lane.
 - **`node scripts/acp-docker-cli-dogfood.mjs`** (`dogfood:docker-cli`) — builds

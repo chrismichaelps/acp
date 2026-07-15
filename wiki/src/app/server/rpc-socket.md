@@ -39,6 +39,8 @@ export const makeRpcSocketHandler: <E, R>(
   | Exclude<R, HttpServerRequest.HttpServerRequest>
   | EventStore
   | HttpServerRequest.HttpServerRequest
+  | SessionIssuer
+  | SessionService
   | Scope.Scope
 >
 ```

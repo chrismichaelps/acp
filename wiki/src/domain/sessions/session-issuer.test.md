@@ -1,7 +1,7 @@
 ---
 type: module
 path: '@root/src/domain/sessions/session-issuer.test.ts'
-fidelity: Planned
+fidelity: Active
 grammar: '[[grammar/typescript]]'
 tags: [module, test, auth]
 aliases: [session-issuer.test]

@@ -1,7 +1,7 @@
 ---
 type: module
 path: '@root/src/app/server/session-initializer.ts'
-fidelity: Planned
+fidelity: Active
 domain: '[[Principal]]'
 grammar: '[[grammar/typescript]]'
 seam: '[[SessionIssuance]]'
@@ -29,8 +29,8 @@ export const initializeSession: (
   credential: string,
 ) => Effect.Effect<
   InitializeSessionResponse,
-  ProtocolError | StorageError,
-  IdClock | SessionIssuer | SessionService | WorkerService
+  ValidationError | UnauthorizedError | StorageError,
+  AppConfigTag | IdClock | SessionIssuer | SessionService | WorkerService
 >
 ```
 
@@ -43,7 +43,9 @@ credential as a caller-selected worker identity.
 1. Validate `protocol_version` through [[protocol-version]].
 2. Normalize draft capability booleans into the canonical [[Worker]] shape and
    preserve the schema-decoded requested permissions/workspace bindings as an
-   untrusted `SessionIssuanceRequest`.
+   untrusted `SessionIssuanceRequest`. Enforce the configured binding requirement
+   before issuing a trusted-client session; static grants are independently
+   required to be nonempty by policy validation.
 3. Call [[session-issuer]] `issue`. Trusted-client mode returns the request;
    static mode replaces worker, scopes, bindings, and provenance with the
    configured policy grant after durable principal binding validation.

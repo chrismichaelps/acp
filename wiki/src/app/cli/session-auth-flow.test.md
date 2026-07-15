@@ -27,6 +27,10 @@ describe('CLI authenticated session flow', () => {
 
 ## Algorithm
 
+The required-auth fixture remains a local trusted-client issuer with no static
+policy so this suite isolates CLI bearer forwarding; hostile issuance belongs to
+[[session-issuance.test]].
+
 The test builds the real `acpRouter` web handler over [[app-live]],
 [[id-clock]], and a require-auth config layer. A fake `HttpClient` converts
 Effect Platform client requests into Web `Request` objects for that handler.

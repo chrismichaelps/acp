@@ -1,7 +1,7 @@
 ---
 type: module
 path: '@root/src/infrastructure/auth/session-issuer-live.test.ts'
-fidelity: Planned
+fidelity: Active
 grammar: '[[grammar/typescript]]'
 tags: [module, test, auth, security]
 aliases: [session-issuer-live.test]
@@ -33,8 +33,8 @@ Vitest constructs `AppConfigTag` test values and executes the public
 - Capture logs and assert attribution fields exist while secret, digest, and
   session id do not.
 - Prove canonical array order and durable bidirectional principal/worker CAS;
-  deny historical remapping after disable/removal and a fresh Layer over the same
-  Storage.
+  deny historical remapping after disable/removal, a fresh Layer over the same
+  Storage, and an issuer-id change.
 - Verify Authorization parsing accepts bearer case-insensitively and rejects
   other schemes/empty values.
 

@@ -61,7 +61,9 @@ internals.
 
 Route-level logs use Effect's logger context from this wrapper and carry
 low-cardinality annotations only: method, route template, status, duration, and
-protocol error code.
+protocol error code. [[http-app]] disables Effect Platform's default request
+logger because that middleware records raw request URLs and therefore cannot
+enforce ACP's bearer-token redaction contract.
 
 ## Negative Logic (Prohibited Paths)
 

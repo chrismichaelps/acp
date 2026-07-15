@@ -44,7 +44,7 @@ describe('buildAcpOpenApi', () => {
     expect(Object.keys(spec.paths)).toContain('/v1/work/{work_id}')
   })
 
-  it('describes bearer auth on every operation except session bootstrap', () => {
+  it('describes phase-specific bearer auth for issuance and sessions', () => {
     const spec = buildAcpOpenApi()
     expect(spec.components.securitySchemes.AcpSession).toEqual({
       type: 'http',
@@ -52,6 +52,13 @@ describe('buildAcpOpenApi', () => {
       bearerFormat: 'ACP session id',
       description:
         'Session credential returned by POST /v1/session/initialize.',
+    })
+    expect(spec.components.securitySchemes.AcpIssuance).toEqual({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'ACP issuance credential',
+      description:
+        'Optional deployment-issued credential used only by POST /v1/session/initialize.',
     })
     expect(spec.security).toEqual([{ AcpSession: [] }])
 
@@ -61,7 +68,7 @@ describe('buildAcpOpenApi', () => {
     for (const { operation } of operations) {
       expect(operation.security).toEqual(
         operation.operationId === 'session.initializeSession'
-          ? []
+          ? [{ AcpIssuance: [] }, {}]
           : [{ AcpSession: [] }],
       )
       if (operation.operationId !== 'session.initializeSession') {

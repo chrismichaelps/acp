@@ -8,6 +8,7 @@ import { IdClockLive } from './identity.js'
 import { acpRouter } from './router.js'
 
 const requireWorkspaceBindingsConfig = Layer.succeed(AppConfigTag, {
+  profile: 'self-host-ha' as const,
   port: 4317,
   logLevel: 'info' as const,
   storageAdapter: 'postgres' as const,
@@ -22,6 +23,8 @@ const requireWorkspaceBindingsConfig = Layer.succeed(AppConfigTag, {
   sweepInterval: Duration.seconds(60),
   requireAuth: true,
   requireWorkspaceBindings: true,
+  sessionIssuer: 'trusted-client' as const,
+  sessionIssuancePolicy: Option.none(),
 })
 
 const handler = () =>

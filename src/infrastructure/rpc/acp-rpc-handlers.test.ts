@@ -24,6 +24,7 @@ const RuntimeWithApp = Layer.provideMerge(
 )
 
 const requireWorkspaceBindingsConfig = Layer.succeed(AppConfigTag, {
+  profile: 'self-host-ha' as const,
   port: 4317,
   logLevel: 'info' as const,
   storageAdapter: 'postgres' as const,
@@ -38,6 +39,8 @@ const requireWorkspaceBindingsConfig = Layer.succeed(AppConfigTag, {
   sweepInterval: Duration.seconds(60),
   requireAuth: true,
   requireWorkspaceBindings: true,
+  sessionIssuer: 'trusted-client' as const,
+  sessionIssuancePolicy: Option.none(),
 })
 
 const RuntimeWithWorkspaceBindings = Layer.provideMerge(
@@ -482,7 +485,13 @@ describe('AcpRpcSessionWorkerWorkspaceHandlersLive', () => {
         }),
         rpcOptions(bearer('not-a-real-session')),
       )
-    }).pipe(Effect.provideService(AcpRpcActor, 'agent_rpc' as WorkerId))
+    }).pipe(
+      Effect.provideService(AcpRpcActor, {
+        worker_id: 'agent_rpc' as WorkerId,
+        permissions: [],
+        workspace_ids: Option.none(),
+      }),
+    )
 
     const result = await Effect.runPromise(Effect.provide(program, Runtime))
 

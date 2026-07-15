@@ -7,6 +7,10 @@ import {
 import type { HttpApp } from '@effect/platform'
 import { Effect, Either, Option, Schema, Stream } from 'effect'
 import { EventStore } from '../../domain/events/index.js'
+import type {
+  SessionIssuer,
+  SessionService,
+} from '../../domain/sessions/index.js'
 import {
   executeJsonRpc,
   jsonRpcError,
@@ -15,13 +19,17 @@ import {
   parseJsonRpcCommand,
 } from '../../infrastructure/jsonrpc/index.js'
 import { Event } from '../../protocol/schema/index.js'
+import { toProtocolError } from '../../protocol/errors/protocol-error.js'
+import type { DomainError } from '../../protocol/errors/protocol-error.js'
 import type {
   JsonRpcCommand,
   JsonRpcId,
 } from '../../infrastructure/jsonrpc/index.js'
 import type { Scope } from 'effect'
 import type { Event as EventModel } from '../../protocol/schema/index.js'
+import type { WorkspaceId } from '../../protocol/schema/index.js'
 import { dispatchVia, parseErrorEnvelope } from './rpc-endpoint.js'
+import { authorizeTokenWorkspace } from './route-support.js'
 
 const decoder = new TextDecoder()
 
@@ -31,12 +39,12 @@ interface JsonRpcEventNotification {
   readonly params: unknown
 }
 
-// The bearer token (session id) for a WebSocket connection. A non-browser client
-// can set `Authorization: Bearer` on the handshake; a browser cannot, so a
-// `?token=` query parameter on the upgrade URL is the fallback. Header wins.
-const socketToken = (
-  req: HttpServerRequest.HttpServerRequest,
-): Option.Option<string> => {
+interface SocketToken {
+  readonly value: Option.Option<string>
+  readonly source: 'header' | 'query' | 'none'
+}
+
+const socketToken = (req: HttpServerRequest.HttpServerRequest): SocketToken => {
   const header = Option.flatMap(
     Headers.get(req.headers, 'authorization'),
     (value) =>
@@ -44,15 +52,17 @@ const socketToken = (
         ? Option.some(value.slice('bearer '.length).trim())
         : Option.none(),
   )
-  if (Option.isSome(header)) {
-    return header
+  if (Option.isSome(header) && header.value !== '') {
+    return { value: header, source: 'header' }
   }
   const query = req.url.indexOf('?')
   if (query < 0) {
-    return Option.none()
+    return { value: Option.none(), source: 'none' }
   }
   const token = new URLSearchParams(req.url.slice(query + 1)).get('token')
-  return token === null || token === '' ? Option.none() : Option.some(token)
+  return token === null || token === ''
+    ? { value: Option.none(), source: 'none' }
+    : { value: Option.some(token), source: 'query' }
 }
 
 const parseJson = (text: string): Option.Option<unknown> => {
@@ -96,14 +106,50 @@ const invalidSubscription = (
     }),
   )
 
+const deniedSubscription = (
+  command: JsonRpcCommand,
+  error: DomainError,
+): Option.Option<unknown> => {
+  const response = toProtocolError(error)
+  return jsonRpcError(
+    new JsonRpcRequestError({
+      code: -32603,
+      message: 'Internal error',
+      id: command.id,
+      expects_response: command.expects_response,
+      data: response.body,
+    }),
+  )
+}
+
 const startEventSubscription = (
   command: JsonRpcCommand,
+  token: Option.Option<string>,
   writeJson: (value: unknown) => Effect.Effect<void, Error>,
-): Effect.Effect<void, Error, EventStore | Scope.Scope> =>
+): Effect.Effect<
+  void,
+  Error,
+  EventStore | SessionIssuer | SessionService | Scope.Scope
+> =>
   Effect.gen(function* () {
     const workspaceId = streamWorkspaceId(command)
     if (Option.isNone(workspaceId)) {
       const error = invalidSubscription(command.id)
+      if (Option.isSome(error)) {
+        yield* writeJson(error.value)
+      }
+      return
+    }
+
+    const authorization = yield* Effect.either(
+      authorizeTokenWorkspace(
+        Option.getOrElse(token, () => ''),
+        'event:read',
+        workspaceId.value as WorkspaceId,
+      ),
+    )
+    if (Either.isLeft(authorization)) {
+      const error = deniedSubscription(command, authorization.left)
       if (Option.isSome(error)) {
         yield* writeJson(error.value)
       }
@@ -163,6 +209,8 @@ export const makeRpcSocketHandler = <E, R>(
   Error,
   | Exclude<R, HttpServerRequest.HttpServerRequest>
   | EventStore
+  | SessionIssuer
+  | SessionService
   | HttpServerRequest.HttpServerRequest
 > =>
   Effect.gen(function* () {
@@ -193,13 +241,25 @@ export const makeRpcSocketHandler = <E, R>(
                 }
                 return
               }
-              yield* startEventSubscription(subscription.value, writeJson)
+              yield* startEventSubscription(
+                subscription.value,
+                token.value,
+                writeJson,
+              )
               return
             }
+            const dispatch = dispatchVia(routerApp)
             const out = yield* executeJsonRpc(
-              dispatchVia(routerApp),
+              (request) =>
+                dispatch(
+                  request,
+                  token.source === 'query' &&
+                    request.path === '/v1/session/initialize'
+                    ? Option.none()
+                    : token.value,
+                ),
               payload.value,
-              token,
+              token.value,
             )
             if (Option.isSome(out)) {
               yield* writeJson(out.value)

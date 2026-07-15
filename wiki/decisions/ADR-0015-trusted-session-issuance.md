@@ -83,10 +83,13 @@ to stable sorted arrays before persistence/validation, so JSON ordering cannot
 accidentally revoke an unchanged revision.
 
 The first successful issuance durably and atomically records the immutable
-`(issuer_id, principal_id) ↔ worker_id` attribution in one versioned registry
-row through [[Storage]]. Later issuance must match both directions. Rename may
-change display metadata; deprovisioning never deletes or releases the principal
-or worker id. This prevents a later policy from reusing a historical worker id
+`(issuer_id, principal_id) ↔ worker_id` attribution in one **global** versioned
+registry row through [[Storage]]. Principal-side entries carry both issuer and
+principal id; worker-side entries are keyed globally by worker id and point back
+to that issuer/principal tuple. Later issuance must match both directions even
+when the configured `issuer_id` changes. Rename may change display metadata;
+deprovisioning never deletes or releases the principal or worker id. This
+prevents a later policy or renamed issuer from reusing a historical worker id
 and corrupting durable ACP attribution.
 
 The same header has a phase-specific meaning: it is an issuance credential on
@@ -126,6 +129,12 @@ credential digests are prohibited. ACP does not silently claim its application
 event store is a security log; hosted operators must retain server JSON logs in
 their normal audit sink.
 
+Executable production-image evidence parses the emitted JSON records and
+asserts their annotation fields directly. Human console formatting is outside
+this contract and must not become a brittle verifier dependency. The platform
+HTTP logger is disabled because it records raw request URLs; ACP's canonical
+route-template telemetry remains enabled and never includes query strings.
+
 ### OpenAPI contract
 
 The generated OpenAPI document defines `AcpIssuance` as an HTTP bearer scheme.
@@ -149,6 +158,8 @@ security, not a new route or protocol version.
   session provenance.
 - REST, native Effect RPC, JSON-RPC HTTP/WebSocket, CLI, and stdio share the same
   decision and revoked-session validation.
+- Native RPC middleware provides the full authorized actor grant, not only a
+  worker id, so handler workspace checks cannot lose session bindings.
 - WebSocket subscriptions cannot bypass `event:read`, workspace bindings, or
   issuer revocation, and URL query values cannot act as issuance credentials.
 - Policy parse/decode defects are sanitized; raw JSON and credential digests do
@@ -173,7 +184,7 @@ security, not a new route or protocol version.
 9. WebSocket subscription attempts with no session, missing `event:read`, a
    foreign binding, or a revoked session fail before acknowledgement.
 10. A policy cannot remap a persisted principal or worker id, including after
-    deprovisioning and restart.
+    deprovisioning, restart, or an `issuer_id` change.
 
 ## Consequences
 

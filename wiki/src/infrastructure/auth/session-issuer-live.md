@@ -1,7 +1,7 @@
 ---
 type: module
 path: '@root/src/infrastructure/auth/session-issuer-live.ts'
-fidelity: Planned
+fidelity: Active
 grammar: '[[grammar/typescript]]'
 seam: '[[SessionIssuance]]'
 depth_score: 0.86
@@ -47,8 +47,10 @@ credential and revocation failures use typed `UnauthorizedError`.
 5. On `issue`, SHA-256 the presented bearer value and compare each fixed-length
    digest without exposing match detail. Missing, wrong, and disabled all map to
    opaque unauthorized.
-6. Atomically ensure the immutable bidirectional principal↔worker mapping in one
-   versioned Storage registry row using put-if-absent/CAS retry.
+6. Atomically ensure the immutable bidirectional
+   `(issuer_id, principal_id)`↔worker mapping in one global versioned Storage
+   registry row using put-if-absent/CAS retry. Worker ids are globally unique
+   across historical issuers.
 7. Return the matched policy worker/grant and static provenance; ignore every
    authority-bearing caller field.
 8. On `validate`, require provenance and exact issuer/principal/revision/worker/
@@ -62,7 +64,7 @@ credential and revocation failures use typed `UnauthorizedError`.
 - Duplicate configuration fails before readiness rather than choosing first.
 - Policy array order does not affect grant selection.
 - Prior principal/worker attribution survives disabled or removed policy entries
-  and rejects either id being reassigned.
+  and rejects either id being reassigned, including through a changed issuer id.
 - Old trusted-client sessions are unauthorized when the host enters static mode.
 - Revision rotation revokes older sessions even when credential and grant stay
   otherwise equal.
@@ -75,6 +77,8 @@ credential and revocation failures use typed `UnauthorizedError`.
 - Do not include raw policy JSON or schema output in startup defects.
 - Do not accept host-wide static grants.
 - Do not short-circuit into a distinguishable unknown/disabled response.
+- Do not use `issuer_id` as the Storage row key; that would partition the global
+  worker tombstone index.
 
 ## Depth
 

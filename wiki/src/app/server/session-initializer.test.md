@@ -1,7 +1,7 @@
 ---
 type: test
 path: '@root/src/app/server/session-initializer.test.ts'
-fidelity: Planned
+fidelity: Active
 grammar: '[[grammar/typescript]]'
 tags: [test, auth, session]
 aliases: [session-initializer.test]
@@ -19,7 +19,8 @@ response projection.
 
 - trusted-client mode preserves a normalized request and stores no provenance;
 - static mode stores and returns only the server-derived worker, permissions,
-  workspace bindings, and provenance;
+  workspace bindings, and provenance, even when the hostile request omits its
+  own workspace binding;
 - unsupported protocol, invalid issuance, and durable binding failure register
   no worker and mint no session;
 - the stored and returned grants are identical; and

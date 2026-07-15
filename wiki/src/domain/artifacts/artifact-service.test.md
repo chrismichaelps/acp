@@ -23,6 +23,9 @@ artifact limit.
 
 ## Algorithm
 
+The complete test configuration selects the local trusted-client issuer with no
+static policy; artifact behavior is intentionally outside hosted issuance.
+
 Create host-stored evidence and require `acp://` metadata, private content, and
 `artifact.created`; create external evidence and require no private content.
 Reject missing evidence and oversized creates. Pin work/workspace indexes.

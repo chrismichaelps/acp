@@ -75,6 +75,53 @@ Docker ACP memory `memory_mrm9ldmw5` records the transport finding. The repair
 adds subscription authorization, header-only WS issuance, canonicalized grants,
 sanitized policy failures, and a durable bidirectional principal/worker registry.
 
+## Implementation and Validation
+
+- Shared REST/native initialization, static/trusted adapters, issuer provenance,
+  revocation, durable binding registry, transport auth, subscription auth, and
+  optional OpenAPI issuance security are implemented and wired through
+  `AppLive`; no new orchestration `.mjs` exists.
+- The production-image static proof covers CLI, JSON-RPC HTTP, stdio,
+  header-authenticated WebSocket, native Effect RPC, minted query sessions,
+  denied query issuance, subscription scope/binding, revision restart, durable
+  remap denial, and structured audit redaction.
+- Docker self-use exposed a real framework access-log leak for query bearer
+  values. [[http-app]] now disables the duplicate raw-URL logger; the structured
+  audit proof passes and ACP's template-based request telemetry remains active.
+- Clean Linux gate: 122 test files / 674 tests passed, 13 skipped by environment;
+  lint, formatting, typecheck, file-size, env, permission-doc, edge-pin, and the
+  157-file production build passed.
+- Production Docker gates: static issuance plus recovery quickstart and
+  two-replica HA passed in the aggregate run; SQLite and two-replica HA edge
+  smoke passed after checkpointing and briefly stopping the persisted
+  `acp-self-openapi` control plane to release its fixed host port. The same ACP
+  container restarted healthy with its state intact.
+- Exact-head aggregate `issue329exact` repeated the complete production-image
+  proof after the security repairs: SQLite lifecycle and six transports,
+  hardened auth/static issuance, restart recovery, two-replica HA, SQLite edge,
+  and two-replica HA edge all passed. The Docker ACP control plane retained
+  checkpoint `checkpoint_mrmcctok1` and returned healthy after the gate.
+- Source mirror audit: 270 source files, 270 exact non-MOC pages, zero missing,
+  zero orphaned. The user-owned untracked `install.sh` remains untouched.
+- Independent security review found two release blockers before publication:
+  native RPC middleware collapsed an authorized session to its worker id and
+  therefore lost workspace bindings, while the durable attribution registry was
+  partitioned by issuer id and could release a historical worker id after an
+  issuer rename. The documentation-first repair retains the full native actor,
+  checks its workspace in each scoped handler, and stores every issuer/principal
+  tuple plus globally unique worker ids in one CAS-protected registry row.
+  Generated-client and cross-issuer regression tests pass on clean Linux; the
+  corresponding production-container probes are part of the exact-head Docker
+  gate.
+- Independent security re-review approved both repairs and found no new
+  security or correctness blockers.
+
+## Remaining
+
+1. Docker ACP grill/review.
+2. Feature commit(s), PR targeting the repository default `main` branch, exact
+   head CI, squash merge, issue comment/closure, and branch cleanup.
+
 ## Referenced by
 
 [[ADR-0015-trusted-session-issuance]] · [[trusted-session-issuance]]

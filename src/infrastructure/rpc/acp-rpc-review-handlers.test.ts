@@ -1,5 +1,5 @@
 /** @Acp.Infra.Rpc.ReviewHandlers.Test — native review RPC handlers */
-import { Effect, Either } from 'effect'
+import { Effect, Either, Option } from 'effect'
 import { describe, expect, it } from 'vitest'
 import type { WorkerId } from '../../protocol/schema/index.js'
 import { AcpRpcGroup, AcpRpcs } from './acp-rpc-contract.js'
@@ -243,7 +243,13 @@ describe('AcpRpcReviewHandlersLive', () => {
         { review_id: review.id, met_requirements: [] },
         rpcOptions(bearer('not-a-real-session')),
       )
-    }).pipe(Effect.provideService(AcpRpcActor, 'agent_rpc' as WorkerId))
+    }).pipe(
+      Effect.provideService(AcpRpcActor, {
+        worker_id: 'agent_rpc' as WorkerId,
+        permissions: [],
+        workspace_ids: Option.none(),
+      }),
+    )
 
     const result = await Effect.runPromise(Effect.provide(program, Runtime))
 

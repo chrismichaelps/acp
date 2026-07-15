@@ -1,7 +1,7 @@
 ---
 type: module
 path: '@root/src/infrastructure/auth/index.ts'
-fidelity: Planned
+fidelity: Active
 grammar: '[[grammar/typescript]]'
 tags: [module, barrel, auth]
 aliases: [auth-index]
