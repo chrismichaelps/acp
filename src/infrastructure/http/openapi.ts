@@ -42,8 +42,8 @@ const securePathItem = (
           ...operation,
           responses: {
             ...operation.responses,
-            401: operation.responses[401] ?? authorizationError,
-            403: operation.responses[403] ?? authorizationError,
+            401: authorizationError,
+            403: authorizationError,
           },
           security: [sessionSecurity()],
         }
@@ -60,7 +60,7 @@ const securePathItem = (
 export const buildAcpOpenApi = (): OpenApi.OpenAPISpec => {
   const spec = OpenApi.fromApi(AcpHttpApi)
   const authorizationError =
-    spec.paths['/v1/session/initialize']?.post?.responses[401]
+    spec.paths['/v1/session/initialize'].post?.responses[401]
   if (authorizationError === undefined) {
     throw new Error(
       'AcpHttpApi session initialization must declare ProtocolError status 401',
