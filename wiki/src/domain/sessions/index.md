@@ -24,11 +24,12 @@ implementation files.
 
 ```typescript
 export * from './session-service.js'
+export * from './session-issuer.js'
 ```
 
 ### Linkage
 
-- **Requires:** [[session-service]]
+- **Requires:** [[session-service]], [[session-issuer]]
 - **Consumed by:** [[app-live]], [[acp-router]].
 
 ## Algorithm

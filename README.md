@@ -512,19 +512,24 @@ notifications across replicas while replay stays backed by durable storage.
 ### Authentication and scopes
 
 Local mode allows unauthenticated requests. Set `ACP_REQUIRE_AUTH=true` to
-require bearer sessions on scoped routes.
+require bearer sessions on scoped routes. For an exposed host, also select the
+trusted issuance boundary documented in
+[trusted session issuance](wiki/references/trusted-session-issuance.md).
 
-- `session.initialize` is the open bootstrap route; it mints the session id used
-  as the bearer token on later calls.
+- `ACP_SESSION_ISSUER=trusted-client` keeps `session.initialize` caller-derived
+  for controlled local/self-host use.
+- `ACP_SESSION_ISSUER=static` verifies a service credential and replaces the
+  requested worker, permissions, capabilities, and workspace bindings with one
+  server-policy grant. The hosted profile selects this fail-closed mode.
 - Session ids are opaque, high-entropy credentials (not counters or timestamps).
 - Permissions are explicit strings — `work:create`, `lease:create`,
   `review:approve`, `event:read`, and so on.
 - Missing/invalid credentials return `401`; a valid token lacking the required
   scope returns `403` with the `forbidden` error code.
 
-The CLI and stdio bridge forward `ACP_RPC_TOKEN` as the bearer token, so an
-integration can `export ACP_RPC_TOKEN=$(...)` once and reuse the scoped session
-without ACP storing any credentials.
+The CLI and stdio bridge forward `ACP_RPC_TOKEN`. In static mode it carries the
+issuance secret for `session init`; replace it with the returned `session_id`
+for later calls. ACP policy stores only the secret's SHA-256 digest.
 
 ---
 
@@ -545,6 +550,8 @@ shell rather than committing them.
 | `ACP_EVENT_BROKER`               | `in-process` (default) or `pg-notify`.                                         |
 | `ACP_REQUIRE_AUTH`               | `true` to require bearer sessions on scoped routes.                            |
 | `ACP_REQUIRE_WORKSPACE_BINDINGS` | `true` to require `workspace_ids` during session initialization.               |
+| `ACP_SESSION_ISSUER`             | `trusted-client` (local compatibility) or `static` (server-derived grants).    |
+| `ACP_SESSION_ISSUANCE_POLICY`    | Static issuer JSON policy; contains credential digests, never preimages.       |
 | `ACP_RPC_TOKEN`                  | Bearer token forwarded by the CLI / stdio bridge.                              |
 | `ACP_LOG_LEVEL`                  | `debug` \| `info` (default) \| `warn` \| `error`.                              |
 | `ACP_DEFAULT_LEASE_TTL`          | Default lease TTL when a request omits one.                                    |
@@ -646,8 +653,13 @@ Beyond unit tests, several lanes exercise ACP against a _live_ host:
   then exercises every local domain and transport through the compiled public
   entry points,
   restarts the SQLite container to prove named-volume durability, verifies
-  bearer permissions and workspace binding, then reuses the image for the HA
-  and edge gates. The production-image scenario also proves that a budgeted
+  bearer permissions and workspace binding, then restarts the same durable host
+  under static issuance. The static phase rejects missing/wrong and WebSocket
+  query credentials, replaces hostile grants across CLI, JSON-RPC HTTP/stdio/
+  WebSocket, and native RPC, authorizes subscriptions before acknowledgement,
+  revokes an old session after policy revision, rejects historical worker
+  remapping, and audits without secrets. It then reuses the image for the HA and
+  edge gates. The production-image scenario also proves that a budgeted
   resume bounds inline artifacts and reports the remainder as references. The
   authenticated GitHub bridge remains an explicit opt-in sandbox lane.
 - **`node scripts/acp-docker-cli-dogfood.mjs`** (`dogfood:docker-cli`) — builds

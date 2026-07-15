@@ -25,6 +25,8 @@ export const AppLive: Layer.Layer<
   | AppConfigTag
   | Storage
   | EventStore
+  | SessionService
+  | SessionIssuer
   | WorkUnitService
   | WorkerService
   | WorkspaceService
@@ -49,6 +51,11 @@ to WorkUnit state transitions. Merge the resulting services into one Layer.
 checkpoints/artifacts so Memory creation can persist records and emit
 `memory.created` without transport dependencies.
 
+Provide [[session-issuer-live]] exactly once from [[app-config]] and [[Storage]].
+This keeps the selected trusted-client/static policy and the durable immutable
+principal-to-worker registry shared by REST, JSON-RPC, WebSocket, stdio, and
+native RPC authorization.
+
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT bind an HTTP port here; that belongs in a future server entrypoint.
@@ -57,6 +64,7 @@ checkpoints/artifacts so Memory creation can persist records and emit
   [[app-config]].
 - ❌ Do NOT import concrete storage or broker adapters here; selection lives in
   [[storage-live]] and [[event-broker-live]].
+- ❌ Do NOT construct an issuer independently in a transport layer.
 
 ## Depth
 
@@ -78,4 +86,4 @@ same graph manually.
 
 ## Referenced by
 
-[[app-live.test]] · [[app/_MOC]] · [[src/_MOC]]
+[[app-live.test]] · [[session-issuer-live]] · [[app/_MOC]] · [[src/_MOC]]

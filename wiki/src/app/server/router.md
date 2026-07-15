@@ -38,6 +38,7 @@ export const acpRouter: HttpRouter.HttpRouter<
   | EventStore
   | IdClock
   | AppConfigTag
+  | SessionIssuer
 >
 ```
 
@@ -45,13 +46,10 @@ export const acpRouter: HttpRouter.HttpRouter<
 
 - `GET /openapi.json` → public, process-static [[openapi-route]] projection of
   the typed REST contract
-- `POST /v1/session/initialize` → register [[Worker]], mint a [[session-service]]
-  session with a high-entropy `session_id` bearer credential + host capabilities
-  (spec §9); accepts both full internal [[Worker]] records and draft §9
-  `protocol_version` + client capability handshakes, rejecting unsupported
-  versions through [[protocol-version]]; successful handshakes echo exact
-  effective permissions and workspace bindings; a permission array containing
-  both ADR-0013 role scopes is rejected before credential minting
+- `POST /v1/session/initialize` → extract the phase-specific issuance bearer and
+  delegate the complete transaction to [[session-initializer]]; successful
+  handshakes echo only the issuer's effective worker, permissions, workspace
+  bindings, and canonical host capabilities
 - `GET /v1/workers` · `GET /v1/workers/:worker_id` → read host-scoped
   [[Worker]] registry state through [[worker-routes]]
 - `GET  /v1/workspaces` → list [[Workspace]]s
@@ -122,22 +120,13 @@ OpenAPI discovery is mounted from [[openapi-route]] as a public GET beside the
 health endpoints. It serves one process-static projection and never enters
 session authorization or domain services.
 
-`initializeSession` is the one route with compatibility normalization. The HTTP
-schema accepts the draft spec handshake, where worker capability booleans sit
-beside a lean worker descriptor. The router first checks `protocol_version`
-against [[protocol-version]] and rejects unsupported client versions as
-`invalid_request`; successful responses echo the canonical
-`ACP_PROTOCOL_VERSION`. It then derives the stored [[Worker]] capability array
-from those booleans when the worker record did not already carry capabilities,
-defaults missing worker status to `online`, mints the session id through
-[[id-clock]] `secureToken` rather than the timestamp/counter id path, and
-preserves `permissions` as the host's bearer-scope extension.
-The success response echoes those exact permissions and `workspace_ids` from the
-stored session. It never reconstructs scopes from worker kind or capabilities.
-The shared [[session.schema]] permission-array refinement rejects
-`review:respond` plus `review:collaborate` before registration or token minting.
-This constrains one session only; open bootstrap remains a trusted-client
-assumption documented by [[ADR-0015-trusted-session-issuance]].
+Session initialization performs only HTTP decoding and bearer extraction here,
+then delegates to [[session-initializer]]. In trusted-client mode this preserves
+the existing local handshake. In static mode, caller worker/scopes/bindings are
+untrusted inputs: [[session-issuer]] replaces them with the configured immutable
+grant before worker registration or bearer minting. The same `Authorization`
+header is phase-specific—an issuance credential for this public operation and a
+minted ACP session id for every protected operation.
 
 `createArtifact` and `createCheckpoint` authorize both the action scope and the
 payload `workspace_id` before delegating, so a workspace-bound bearer session
@@ -173,10 +162,12 @@ URLs or identifiers.
 - ❌ Do NOT leak internal error causes — `errorToResponse` collapses unknowns to
   `internal_error`.
 - ❌ Do NOT import Node built-ins here — the runtime lives in [[server-main]].
+- ❌ Do NOT implement compatibility normalization or policy issuance here;
+  [[session-initializer]] owns the transaction for every transport.
 - ❌ Do NOT omit, infer, or widen permissions in the successful session
   handshake; echo the exact stored array.
 - ❌ Do NOT mint a session carrying both ADR-0013 role scopes.
-- ❌ Do NOT claim open bootstrap proves identity or cross-session role separation.
+- ❌ Do NOT register caller worker state before static issuance succeeds.
 - ❌ Do NOT protect `/openapi.json` with bearer auth or serve it from disk.
 
 ## Depth

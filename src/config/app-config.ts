@@ -2,8 +2,11 @@
 import { Config, Context, Duration, Effect, Layer, Option } from 'effect'
 
 export type AppLogLevel = 'debug' | 'info' | 'warn' | 'error'
+export type AppProfile = 'local' | 'single-node' | 'hosted' | 'self-host-ha'
+export type SessionIssuerMode = 'trusted-client' | 'static'
 
 export interface AppConfig {
+  readonly profile: AppProfile
   readonly port: number
   readonly logLevel: AppLogLevel
   readonly storageAdapter: 'memory' | 'sqlite' | 'postgres'
@@ -18,6 +21,8 @@ export interface AppConfig {
   readonly sweepInterval: Duration.Duration
   readonly requireAuth: boolean
   readonly requireWorkspaceBindings: boolean
+  readonly sessionIssuer: SessionIssuerMode
+  readonly sessionIssuancePolicy: Option.Option<string>
 }
 
 export const appLogLevelConfig: Config.Config<AppLogLevel> = Config.literal(
@@ -32,8 +37,6 @@ export class AppConfigTag extends Context.Tag('AppConfig')<
   AppConfig
 >() {}
 
-type AppProfile = 'local' | 'single-node' | 'hosted' | 'self-host-ha'
-
 // A deployment profile (ACP_PROFILE) is a one-variable preset over the
 // individual knobs — see [[ADR-0008-deployment-storage-topology]]. Explicit
 // ACP_* variables still override profile defaults for self-hosting, but hosted
@@ -46,14 +49,23 @@ const profileDefaults = (profile: Option.Option<AppProfile>) => {
         eventBroker: 'in-process' as const,
         requireAuth: true,
         requireWorkspaceBindings: false,
+        sessionIssuer: 'trusted-client' as const,
       }
     case 'hosted':
+      return {
+        storageAdapter: 'postgres' as const,
+        eventBroker: 'pg-notify' as const,
+        requireAuth: true,
+        requireWorkspaceBindings: true,
+        sessionIssuer: 'static' as const,
+      }
     case 'self-host-ha':
       return {
         storageAdapter: 'postgres' as const,
         eventBroker: 'pg-notify' as const,
         requireAuth: true,
         requireWorkspaceBindings: true,
+        sessionIssuer: 'trusted-client' as const,
       }
     case 'local':
       return {
@@ -61,6 +73,7 @@ const profileDefaults = (profile: Option.Option<AppProfile>) => {
         eventBroker: 'in-process' as const,
         requireAuth: false,
         requireWorkspaceBindings: false,
+        sessionIssuer: 'trusted-client' as const,
       }
   }
 }
@@ -75,6 +88,7 @@ const load = Effect.gen(function* () {
     'self-host-ha',
   )('ACP_PROFILE').pipe(Config.option)
   const defaults = profileDefaults(profile)
+  const profileName = Option.getOrElse(profile, () => 'local' as const)
   const storageAdapter = yield* Config.literal(
     'memory',
     'sqlite',
@@ -108,13 +122,35 @@ const load = Effect.gen(function* () {
   const sweepInterval = yield* Config.duration('ACP_SWEEP_INTERVAL').pipe(
     Config.withDefault(Duration.seconds(60)),
   )
-  const requireAuth = yield* Config.boolean('ACP_REQUIRE_AUTH').pipe(
+  const configuredRequireAuth = yield* Config.boolean('ACP_REQUIRE_AUTH').pipe(
     Config.withDefault(defaults.requireAuth),
   )
-  const requireWorkspaceBindings = yield* Config.boolean(
+  const configuredRequireWorkspaceBindings = yield* Config.boolean(
     'ACP_REQUIRE_WORKSPACE_BINDINGS',
   ).pipe(Config.withDefault(defaults.requireWorkspaceBindings))
+  const configuredSessionIssuer = yield* Config.literal(
+    'trusted-client',
+    'static',
+  )('ACP_SESSION_ISSUER').pipe(Config.withDefault(defaults.sessionIssuer))
+  const sessionIssuancePolicy = yield* Config.string(
+    'ACP_SESSION_ISSUANCE_POLICY',
+  ).pipe(Config.option)
+  const hosted = profileName === 'hosted'
+  const requireAuth = hosted ? true : configuredRequireAuth
+  const requireWorkspaceBindings = hosted
+    ? true
+    : configuredRequireWorkspaceBindings
+  const sessionIssuer = hosted ? ('static' as const) : configuredSessionIssuer
+  if (
+    sessionIssuer === 'static' &&
+    (!requireAuth || !requireWorkspaceBindings)
+  ) {
+    return yield* Effect.dieMessage(
+      'static session issuance requires authentication and workspace bindings',
+    )
+  }
   return {
+    profile: profileName,
     port,
     logLevel,
     storageAdapter,
@@ -129,6 +165,8 @@ const load = Effect.gen(function* () {
     sweepInterval,
     requireAuth,
     requireWorkspaceBindings,
+    sessionIssuer,
+    sessionIssuancePolicy,
   }
 })
 

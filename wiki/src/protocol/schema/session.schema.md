@@ -29,6 +29,13 @@ export const Session: Schema.Struct<{
   created_at: Timestamp
   permissions: SessionPermissions // granted scopes (spec §8)
   workspace_ids: Option.Option<readonly WorkspaceId[]> // ADR-0009 binding
+  issuance: Option.Option<SessionIssuanceProvenance>
+}>
+export const SessionIssuanceProvenance: Schema.Union<{
+  mode: 'static'
+  issuer_id: string
+  principal_id: string
+  revision: string
 }>
 export const SessionPermissions: Schema.filter<readonly Permission[]>
 export type Session = typeof Session.Type
@@ -50,6 +57,11 @@ authority for local/single-node deployments; `Option.some([...])` narrows the
 session to those workspaces. Persisted by [[session-service]] via the `session`
 collection.
 
+`issuance` is non-secret provenance for policy-issued sessions. Static sessions
+store the issuer id, principal id, and revision that authorized the immutable
+grant. Trusted-client compatibility sessions store `Option.none`. The schema
+never accepts credentials or credential digests as session state.
+
 ## Negative Logic (Prohibited Paths)
 
 - ❌ Do NOT encode workspace ids into permission strings; action permission and
@@ -58,8 +70,9 @@ collection.
   authorization must check it once the target workspace is known.
 - ❌ Do NOT allow one session record to carry both response and collaboration
   scopes.
-- ❌ Do NOT describe the array refinement as trusted identity issuance; that is
-  the separate [[ADR-0015-trusted-session-issuance]] backlog.
+- ❌ Do NOT persist issuance credentials, credential digests, or raw policy.
+- ❌ Do NOT accept a static session without complete issuer/principal/revision
+  provenance.
 
 ## Depth
 
@@ -69,4 +82,5 @@ SHALLOW (0.4). A pure data shape; the actor-resolution behavior lives in
 ## Referenced by
 
 [[session-service]] · [[schema/index]] · [[acp-http-api]] · [[src/_MOC]] ·
-[[ADR-0013-review-collaboration-permission]]
+[[ADR-0013-review-collaboration-permission]] · [[session-issuer]] ·
+[[session-issuer-live]]

@@ -100,7 +100,9 @@ Issue #327 adds the OpenAPI projection and its test plus the live discovery rout
 and its test, then splits the review HTTP groups into one cohesive production
 module so all 53 live routes participate in the contract. Each addition has an
 exact mirror. The full-method production inventory helper adds one more pair.
-The current audit is therefore 261 source files, 261 exact
+Issue #329 adds nine source modules/tests and nine exact mirror pages for the
+shared initializer, issuer port/adapters, and hostile HTTP/native-RPC coverage.
+The current audit is therefore 270 source files, 270 exact
 non-MOC pages, zero missing mirrors, and zero orphans.
 The active production audit uses the existing Dockerized ACP host directly; no
 separate provider runner is added.
@@ -124,9 +126,9 @@ separate provider runner is added.
   no invented RPC commands.
 - [[ADR-0014-workspace-administration-authority]] — PROPOSED/BACKLOG; isolate
   host provisioning and workspace lifecycle authority as a separate slice.
-- [[ADR-0015-trusted-session-issuance]] — PROPOSED/BACKLOG; replace the trusted-
-  client hosted bootstrap assumption with verified identity and server-policy-
-  derived sessions before public multi-tenant hosting.
+- [[ADR-0015-trusted-session-issuance]] — ACCEPTED; add trusted/static
+  [[SessionIssuance]], make hosted startup fail closed, derive immutable grants
+  from digest-verified service identities, and revoke by principal revision.
 - [[ADR-0016-version-bump-policy]] — ACCEPTED; infer release semver from full
   conventional commits, require explicit protocol intent, and apply validated
   version edits transactionally without tagging an uncommitted tree.
@@ -229,7 +231,7 @@ separate provider runner is added.
     repair passed 261/261 parity and the 647-test clean Linux suite; final ACP
     re-review returned GO, all checks passed, PR #332 merged, and issue #327
     closed
-77. ▶ [[recovery-review-quickstart]] — issue #328; the existing Docker
+77. ✅ [[recovery-review-quickstart]] — issue #328 / PR #333 merged; the existing Docker
     self-dogfood entry point now exposes the documented SQLite mode and runs it
     in aggregate CI. Focused clean-Linux invariants and two production-image
     runs passed with either worker winning, HTTP `409`, cursor `8`, replay
@@ -245,7 +247,25 @@ separate provider runner is added.
     container/volume deletion race now captured by the cleanup contract. The
     ordered repair passes 19 focused Linux tests plus standalone and
     aggregate-reuse production runs; owned resources are absent and the shared
-    aggregate image is preserved
+    aggregate image is preserved and the issue is closed
+78. ▶ [[trusted-session-issuance]] — issue #329; documentation-first hosted
+    identity slice is registered in Docker ACP and implementation is complete
+    in PR #334. The static
+    digest-verified service-principal adapter, fixed server grants, provenance
+    validation/revision revocation, credential-safe audit, optional OpenAPI
+    issuance auth, hostile-client tests, and exact cross-transport Docker proof
+    are wired through the production application. Docker self-use exposed and
+    repaired a framework raw-URL log that retained query bearer tokens.
+    Independent security review additionally blocked native RPC
+    workspace-binding loss and
+    issuer-partitioned historical worker attribution; both contracts now have
+    generated-client/unit regressions and production-container probes. Clean
+    Linux validation passes 674 tests, lint, formatting, typecheck, static
+    policy guards, the 157-file production build, recovery quickstart, two-node
+    HA, and SQLite/two-node edge smoke; independent re-review approves the
+    repairs, exact-head aggregate `issue329exact` passes, and source/wiki parity
+    is 270/270. Docker ACP grill `grill_mrmcmzal3` passes without blockers and
+    review `review_mrmcmdvd2` is approved
 
 ## Referenced by
 

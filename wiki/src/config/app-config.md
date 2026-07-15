@@ -25,6 +25,7 @@ documented default, exposed as a single `AppConfig` value behind a Layer.
 export type AppLogLevel = 'debug' | 'info' | 'warn' | 'error'
 
 export interface AppConfig {
+  readonly profile: 'local' | 'single-node' | 'hosted' | 'self-host-ha'
   readonly port: number
   readonly logLevel: AppLogLevel
   readonly storageAdapter: 'memory' | 'sqlite' | 'postgres'
@@ -39,6 +40,8 @@ export interface AppConfig {
   readonly sweepInterval: Duration.Duration
   readonly requireAuth: boolean
   readonly requireWorkspaceBindings: boolean
+  readonly sessionIssuer: 'trusted-client' | 'static'
+  readonly sessionIssuancePolicy: Option.Option<string>
 }
 export class AppConfigTag extends Context.Tag('AppConfig')<
   AppConfigTag,
@@ -69,12 +72,24 @@ Each field is a `Config.*` with `Config.withDefault`:
 - `ACP_REQUIRE_WORKSPACE_BINDINGS` boolean → profile default (when true,
   `session.initialize` must include at least one `workspace_ids` entry before
   the host persists a bearer session)
+- `ACP_SESSION_ISSUER` literal (`trusted-client` | `static`) → profile default;
+  `hosted` is fixed to `static`, all other profiles default to `trusted-client`
+- `ACP_SESSION_ISSUANCE_POLICY` optional JSON string → none; required and parsed
+  by [[session-issuer-live]] whenever the issuer is `static`
 
 `ACP_PROFILE` is a typed preset over storage, event fan-out, auth, and workspace
 binding policy. `local` keeps memory storage, in-process events, auth off, and
 host-wide sessions. `single-node` uses SQLite and auth while preserving host-wide
 sessions for isolated self-hosting. `hosted` and `self-host-ha` select Postgres,
 pg-notify, auth, and workspace-bound sessions.
+
+The hosted profile is a fail-closed security boundary: it requires
+`ACP_REQUIRE_AUTH=true`, `ACP_REQUIRE_WORKSPACE_BINDINGS=true`, and
+`ACP_SESSION_ISSUER=static` even when explicit environment overrides request a
+weaker value. Static issuance on any profile requires auth and workspace
+bindings. Policy contents are deliberately opaque to this module; the static
+adapter validates their schema without echoing raw configuration in startup
+errors.
 
 The repository root `.env.example` is the drift-checked runtime manifest. It
 mirrors these host variables, names the client-only `ACP_BASE_URL` /
@@ -93,6 +108,10 @@ converted to a defect, giving `Layer.Layer<AppConfigTag>` (no error param).
 - ❌ Do NOT read `process.env` directly — go through `Config`.
 - ❌ Do NOT duplicate the log-level literal set outside [[app-config]] /
   [[app-logging]].
+- ❌ Do NOT permit hosted startup with trusted-client issuance, optional auth,
+  or host-wide session grants.
+- ❌ Do NOT place credential preimages in typed config or committed examples;
+  only policy digests belong in `ACP_SESSION_ISSUANCE_POLICY`.
 
 ## Depth
 
@@ -103,4 +122,4 @@ deleting it scatters `process.env` reads and magic numbers across the codebase.
 
 [[app-config.test]] · [[session-workspace-binding.test]] · [[config/_MOC]] ·
 [[lease.schema]] · [[sse-event-stream]] · [[app-logging]] ·
-[[architecture/_MOC]] · [[src/_MOC]]
+[[architecture/_MOC]] · [[session-issuer-live]] · [[src/_MOC]]

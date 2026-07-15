@@ -27,6 +27,12 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
   inline router handlers.
 - [[session-capabilities-test]] — focused HTTP regression for advertised host
   capability flags.
+- [[session-initializer]] — transport-neutral handshake normalization, trusted
+  issuance, worker registration, secure minting, and exact grant projection.
+- [[session-initializer.test]] — shared transaction ordering and projection
+  contract.
+- [[session-issuance.test]] — live hostile-client issuance, revocation, and audit
+  secrecy contract.
 - [[route-support]] — shared authorization, response encoding, route error
   folding, and request lifecycle logging.
 - [[resource-workspace-auth]] — established generic derived-workspace
@@ -69,7 +75,8 @@ Mirror of `@root/src/app/server/`. The HTTP transport entrypoint binding
 - [[rpc-endpoint]] — `POST /rpc` JSON-RPC framing over the in-process router.
 - [[rpc-endpoint.test]] — shared-store RPC/REST, notification, batch, and error
   behavior.
-- [[rpc-socket]] — `GET /rpc` JSON-RPC WebSocket framing over the same router.
+- [[rpc-socket]] — `GET /rpc` JSON-RPC WebSocket framing, header-only issuance,
+  and authorized event subscription over the same router.
 - [[rpc-socket.test]] — real-upgrade auth, shared store, parse error, and event
   subscription behavior.
 - [[native-rpc-route]] — `/rpc/native` Effect RPC HTTP route plus legacy route

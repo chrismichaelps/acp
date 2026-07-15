@@ -15,6 +15,7 @@ import { WorkerServiceLive } from '../domain/workers/index.js'
 import { WorkspaceServiceLive } from '../domain/workspaces/index.js'
 import { EventBrokerLive } from './event-broker-live.js'
 import { StorageLive } from './storage-live.js'
+import { SessionIssuerLive } from '../infrastructure/auth/index.js'
 
 const StorageProvidedLive = Layer.provide(StorageLive, AppConfigLive)
 const StorageAndConfigLive = Layer.merge(StorageProvidedLive, AppConfigLive)
@@ -25,6 +26,10 @@ const EventBrokerProvidedLive = Layer.provideMerge(
 const EventStoreProvidedLive = Layer.provideMerge(
   EventStoreLive,
   Layer.merge(StorageProvidedLive, EventBrokerProvidedLive),
+)
+const SessionIssuerProvidedLive = Layer.provideMerge(
+  SessionIssuerLive,
+  StorageAndConfigLive,
 )
 
 const WorkUnitProvidedLive = Layer.provideMerge(
@@ -69,6 +74,7 @@ export const AppLive = Layer.mergeAll(
   StorageProvidedLive,
   EventBrokerProvidedLive,
   EventStoreProvidedLive,
+  SessionIssuerProvidedLive,
   WorkUnitProvidedLive,
   WorkerServiceLive.pipe(Layer.provide(StorageProvidedLive)),
   SessionServiceLive.pipe(Layer.provide(StorageProvidedLive)),

@@ -2,29 +2,19 @@
 import { Effect, Layer, Option } from 'effect'
 import { EventStore } from '../../domain/events/index.js'
 import { LeaseService } from '../../domain/leases/index.js'
-import { SessionService } from '../../domain/sessions/index.js'
 import { WorkUnitService } from '../../domain/work-units/index.js'
 import { WorkerService } from '../../domain/workers/index.js'
 import { WorkspaceService } from '../../domain/workspaces/index.js'
-import { AppConfigTag } from '../../config/app-config.js'
-import {
-  NotFoundError,
-  ValidationError,
-} from '../../protocol/errors/protocol-error.js'
-import {
-  ACP_PROTOCOL_VERSION,
-  isSupportedProtocolVersion,
-} from '../../protocol/schema/index.js'
+import { NotFoundError } from '../../protocol/errors/protocol-error.js'
 import type {
-  Capability,
   EventId,
   LeaseId,
-  SessionId,
   WorkId,
   WorkspaceId,
 } from '../../protocol/schema/index.js'
-import type { InitializeSessionPayload } from '../http/acp-http-api.js'
 import { IdClock } from '../../app/server/identity.js'
+import { initializeSession } from '../../app/server/session-initializer.js'
+import { bearerCredential } from '../auth/index.js'
 import { AcpRpcGroup } from './acp-rpc-contract.js'
 import { AcpRpcArtifactHandlersLive } from './acp-rpc-artifact-handlers.js'
 import { AcpRpcCheckpointHandlersLive } from './acp-rpc-checkpoint-handlers.js'
@@ -34,114 +24,12 @@ import { rpcActor, rpcWorkspaceActor } from './rpc-auth.js'
 import * as target from './rpc-resource-workspace-auth.js'
 import { toRpcError } from './rpc-error.js'
 
-const host = { name: 'ACP Local', kind: 'local' } as const
-const hostCapabilities = {
-  supports_events: true,
-  supports_reviews: true,
-  supports_signed_review_approvals: true,
-  supports_artifacts: true,
-  supports_memory: true,
-  supports_sse: true,
-} as const
-
-const hasWorkspaceBinding = (
-  workspaceIds: InitializeSessionPayload['workspace_ids'],
-) =>
-  Option.match(workspaceIds, {
-    onNone: () => false,
-    onSome: (ids) => ids.length > 0,
-  })
-
-const requireSessionWorkspaceBinding = (
-  workspaceIds: InitializeSessionPayload['workspace_ids'],
-) =>
-  Effect.gen(function* () {
-    const config = yield* AppConfigTag
-    if (!config.requireWorkspaceBindings || hasWorkspaceBinding(workspaceIds)) {
-      return
-    }
-
-    return yield* Effect.fail(
-      toRpcError(
-        new ValidationError({
-          issues: [
-            'workspace_ids must include at least one workspace when workspace-bound sessions are required',
-          ],
-        }),
-      ),
-    )
-  })
-
-const capabilityFlags: readonly (readonly [
-  keyof InitializeSessionPayload['capabilities'],
-  Capability,
-])[] = [
-  ['can_edit_files', 'can_edit_files'],
-  ['can_run_commands', 'can_run_commands'],
-  ['can_create_prs', 'can_create_prs'],
-  ['can_review', 'can_review'],
-  ['supports_checkpoints', 'supports_checkpoints'],
-  ['supports_leases', 'supports_leases'],
-]
-
-const capabilitiesFromHandshake = (
-  payload: InitializeSessionPayload,
-): readonly Capability[] => {
-  if (payload.worker.capabilities.length > 0) {
-    return payload.worker.capabilities
-  }
-  return capabilityFlags.flatMap(([flag, capability]) =>
-    payload.capabilities[flag] ? [capability] : [],
-  )
-}
-
 const sessionInitializeHandler = AcpRpcGroup.toLayerHandler(
   'session.initialize',
-  (payload) =>
-    Effect.gen(function* () {
-      if (!isSupportedProtocolVersion(payload.protocol_version)) {
-        return yield* Effect.fail(
-          toRpcError(
-            new ValidationError({
-              issues: [
-                `unsupported protocol_version: ${payload.protocol_version}`,
-              ],
-            }),
-          ),
-        )
-      }
-      yield* requireSessionWorkspaceBinding(payload.workspace_ids)
-
-      const workers = yield* WorkerService
-      const sessions = yield* SessionService
-      const idClock = yield* IdClock
-      const worker = yield* workers
-        .register({
-          ...payload.worker,
-          capabilities: [...capabilitiesFromHandshake(payload)],
-        })
-        .pipe(Effect.mapError(toRpcError))
-      const sessionId = (yield* idClock.secureToken('session')) as SessionId
-      const now = yield* idClock.now
-      yield* sessions
-        .create({
-          id: sessionId,
-          worker_id: worker.id,
-          created_at: now,
-          permissions: payload.permissions,
-          workspace_ids: payload.workspace_ids,
-        })
-        .pipe(Effect.mapError(toRpcError))
-
-      return {
-        session_id: sessionId,
-        permissions: payload.permissions,
-        protocol_version: ACP_PROTOCOL_VERSION,
-        host,
-        capabilities: hostCapabilities,
-        workspace_ids: payload.workspace_ids,
-      }
-    }),
+  (payload, options) =>
+    initializeSession(payload, bearerCredential(options.headers)).pipe(
+      Effect.mapError(toRpcError),
+    ),
 )
 
 const workerListHandler = AcpRpcGroup.toLayerHandler(

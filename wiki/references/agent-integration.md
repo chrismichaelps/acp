@@ -164,6 +164,11 @@ flags enabled after provisioning the workspace under the bootstrap profile. It
 uses a separate workspace-bound reviewer token for approval and asserts the
 durable lifecycle events through completion and lease release.
 
+The same existing production-image gate then switches the durable host to
+[[trusted-session-issuance]] and proves hostile caller fields are replaced
+across every initialization transport, old revisions are unauthorized, and
+WebSocket subscriptions cannot bypass issuer/scope/workspace checks.
+
 ## The review gate
 
 A review is more than approve/reject. A reviewer can anchor **diff-anchored
@@ -329,9 +334,13 @@ not depend on them.
 
 Local mode allows unauthenticated requests. On `ACP_REQUIRE_AUTH=true` hosts:
 
-- `session init` is the open bootstrap route; it returns the `session_id` used as
-  the bearer token on later calls plus the exact effective `permissions` and
-  `workspace_ids`; verify both echoes before using a hardened token.
+- Under `trusted-client`, `session init` is the caller-derived local bootstrap.
+- Under `static`, set `ACP_RPC_TOKEN` to the issuance credential for
+  `session init`; the host ignores authority-bearing request fields and returns
+  the server policy's worker grant. Replace `ACP_RPC_TOKEN` with the returned
+  `session_id` for later calls.
+- Always verify the returned effective `permissions` and `workspace_ids` before
+  using a hardened token.
 - When `ACP_REQUIRE_WORKSPACE_BINDINGS=true`, pass at least one existing
   workspace with `--workspace`; repeat the flag or use comma-separated ids for
   a multi-workspace session.
@@ -340,6 +349,10 @@ Local mode allows unauthenticated requests. On `ACP_REQUIRE_AUTH=true` hosts:
   on.
 - The CLI and stdio bridge forward `ACP_RPC_TOKEN`, so an integration can
   `export ACP_RPC_TOKEN=$(...)` once and reuse the scoped session.
+
+Static sessions carry issuer/principal revision provenance. A coordinated policy
+revision and host restart revokes old sessions; clients must reinitialize. See
+[[trusted-session-issuance]] for the exact operational and audit contract.
 
 ## Transports
 

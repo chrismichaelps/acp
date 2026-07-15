@@ -28,16 +28,20 @@ export const serializeOpenApi: (document: OpenApi.OpenAPISpec) => string
 ```
 
 `info.version` is [[protocol-version]] rather than package semver. The document
-defines `AcpSession` as an HTTP bearer scheme. Every operation requires it except
-`session.initializeSession`, which is the public bootstrap operation.
+defines `AcpSession` as the minted-session bearer and `AcpIssuance` as the
+optional phase-specific initialization bearer. Every operation requires
+`AcpSession`; `session.initializeSession` advertises `AcpIssuance` or no security
+so trusted-client local hosts and static issuers share one protocol operation.
 
 ## Algorithm
 
 1. Derive the base specification with `OpenApi.fromApi(AcpHttpApi)`.
 2. Pin ACP title, protocol version, and generation guidance.
-3. Add the `AcpSession` security scheme and a default bearer requirement.
-4. Walk every declared HTTP operation, retaining an empty security array only
-   for `session.initializeSession` and assigning `AcpSession` everywhere else.
+3. Add the `AcpSession` and `AcpIssuance` bearer security schemes plus a default
+   minted-session requirement.
+4. Walk every declared HTTP operation, assigning the optional alternatives
+   `[{ AcpIssuance: [] }, {}]` to `session.initializeSession` and `AcpSession`
+   everywhere else.
 5. Add the router authorization layer's standard `401` and `403` ProtocolError
    responses to every protected operation, preserving operation-specific errors.
 6. Serialize deterministically as two-space JSON with one terminal newline.
@@ -53,6 +57,8 @@ owned by the generation script; live serving is owned by [[openapi-route]].
 - Do not publish Effect's empty security arrays unchanged.
 - Do not omit the authorization layer's 401/403 responses from protected routes.
 - Do not model local `ACP_REQUIRE_AUTH=false` as the production client contract.
+- Do not model an issuance credential as `AcpSession`; they occupy different
+  phases even though both use the Authorization bearer header.
 - Do not edit `openapi.json` manually or read it from request handling code.
 
 ## Depth
@@ -65,10 +71,10 @@ serialization.
 
 - **Q:** Is a global bearer requirement enough? **A:** No. Operations are given
   explicit security arrays so generated clients do not inherit ambiguous output,
-  while session initialization explicitly opts out.
+  while session initialization explicitly advertises optional issuance auth.
 - **Q:** Does the bearer scheme prove hosted identity? **A:** No. It describes
-  current session transport only; [[ADR-0015-trusted-session-issuance]] owns the
-  hostile-client boundary.
+  bearer transport only; [[ADR-0015-trusted-session-issuance]] owns the
+  hostile-client boundary and server-derived grant.
 
 ## Referenced by
 

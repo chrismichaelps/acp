@@ -21,6 +21,7 @@ import { ArtifactService, ArtifactServiceLive } from './index.js'
 import type { Event } from '../../protocol/schema/index.js'
 
 const TestConfigLive = Layer.succeed(AppConfigTag, {
+  profile: 'local' as const,
   port: 4317,
   logLevel: 'info' as const,
   storageAdapter: 'memory' as const,
@@ -35,6 +36,8 @@ const TestConfigLive = Layer.succeed(AppConfigTag, {
   sweepInterval: Duration.seconds(60),
   requireAuth: false,
   requireWorkspaceBindings: false,
+  sessionIssuer: 'trusted-client' as const,
+  sessionIssuancePolicy: Option.none(),
 })
 
 const StorageAndEventsLive = Layer.provideMerge(

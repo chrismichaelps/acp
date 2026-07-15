@@ -9,9 +9,7 @@ import { ArtifactService } from '../../domain/artifacts/index.js'
 import { CheckpointService } from '../../domain/checkpoints/index.js'
 import { EventStore } from '../../domain/events/index.js'
 import { LeaseService } from '../../domain/leases/index.js'
-import { SessionService } from '../../domain/sessions/index.js'
 import { WorkUnitService } from '../../domain/work-units/index.js'
-import { WorkerService } from '../../domain/workers/index.js'
 import {
   InitializeSessionPayload,
   InitializeSessionResponse,
@@ -59,9 +57,7 @@ import {
 } from './review-routes.js'
 import { makeRpcHandler } from './rpc-endpoint.js'
 import { makeRpcSocketHandler } from './rpc-socket.js'
-import { ValidationError } from '../../protocol/errors/protocol-error.js'
 import {
-  ACP_PROTOCOL_VERSION,
   Artifact,
   Checkpoint,
   ClaimWorkPayload,
@@ -73,15 +69,12 @@ import {
   RequestLeasePayload,
   UpdateArtifactPayload,
   WorkUnit,
-  isSupportedProtocolVersion,
 } from '../../protocol/schema/index.js'
 import type {
   ArtifactId,
-  Capability,
   CheckpointId,
   EventId,
   LeaseId,
-  SessionId,
   WorkId,
 } from '../../protocol/schema/index.js'
 import { IdClock } from './identity.js'
@@ -89,9 +82,10 @@ import {
   authorizeWorkspace as authorizeWs,
   ok,
   pathParam,
-  requireSessionWorkspaceBinding,
   respond,
 } from './route-support.js'
+import { bearerCredential } from '../../infrastructure/auth/index.js'
+import { initializeSession as initializeSessionTransaction } from './session-initializer.js'
 import * as target from './resource-workspace-auth.js'
 import {
   archiveWorkspace,
@@ -105,77 +99,17 @@ import {
 } from './workspace-routes.js'
 import { getWorker, listWorkers } from './worker-routes.js'
 
-// Static host identity + capabilities advertised at session/initialize (spec §9).
-const host = { name: 'ACP Local', kind: 'local' } as const
-const hostCapabilities = {
-  supports_events: true,
-  supports_reviews: true,
-  supports_signed_review_approvals: true,
-  supports_artifacts: true,
-  supports_memory: true,
-  supports_sse: true,
-} as const
-
-const capabilityFlags: readonly (readonly [
-  keyof InitializeSessionPayload['capabilities'],
-  Capability,
-])[] = [
-  ['can_edit_files', 'can_edit_files'],
-  ['can_run_commands', 'can_run_commands'],
-  ['can_create_prs', 'can_create_prs'],
-  ['can_review', 'can_review'],
-  ['supports_checkpoints', 'supports_checkpoints'],
-  ['supports_leases', 'supports_leases'],
-]
-
-const capabilitiesFromHandshake = (
-  payload: InitializeSessionPayload,
-): readonly Capability[] => {
-  if (payload.worker.capabilities.length > 0) {
-    return payload.worker.capabilities
-  }
-  return capabilityFlags.flatMap(([flag, capability]) =>
-    payload.capabilities[flag] ? [capability] : [],
-  )
-}
-
 const initializeSession = respond('POST /v1/session/initialize')(
   Effect.gen(function* () {
-    const workers = yield* WorkerService
-    const sessions = yield* SessionService
-    const idClock = yield* IdClock
+    const request = yield* HttpServerRequest.HttpServerRequest
     const payload = yield* HttpServerRequest.schemaBodyJson(
       InitializeSessionPayload,
     )
-    if (!isSupportedProtocolVersion(payload.protocol_version)) {
-      return yield* Effect.fail(
-        new ValidationError({
-          issues: [`unsupported protocol_version: ${payload.protocol_version}`],
-        }),
-      )
-    }
-    yield* requireSessionWorkspaceBinding(payload.workspace_ids)
-    const worker = yield* workers.register({
-      ...payload.worker,
-      capabilities: [...capabilitiesFromHandshake(payload)],
-    })
-    const sessionId = (yield* idClock.secureToken('session')) as SessionId
-    const now = yield* idClock.now
-    yield* sessions.create({
-      id: sessionId,
-      worker_id: worker.id,
-      created_at: now,
-      permissions: payload.permissions,
-      workspace_ids: payload.workspace_ids,
-    })
-    return yield* ok(200)(InitializeSessionResponse, {
-      session_id: sessionId,
-      permissions: payload.permissions,
-      protocol_version: ACP_PROTOCOL_VERSION,
-      host,
-      capabilities: hostCapabilities,
-      workspace_ids: payload.workspace_ids,
-    })
+    const response = yield* initializeSessionTransaction(
+      payload,
+      bearerCredential(request.headers),
+    )
+    return yield* ok(200)(InitializeSessionResponse, response)
   }),
 )
 

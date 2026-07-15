@@ -48,6 +48,7 @@ file has exactly one page here. A source file with no page is UNREGISTERED.
 - [[work-units/_MOC|Work Units]] — WorkUnit lifecycle service and state machine.
 - [[workers/_MOC|Workers]] — Worker registry service (register, get, list, status).
 - [[workspaces/_MOC|Workspaces]] — Workspace registry service with `workspace.*` events.
+- [[sessions/_MOC|Sessions]] — session registry and trusted issuance port.
 
 ## infrastructure/
 
@@ -59,6 +60,7 @@ file has exactly one page here. A source file with no page is UNREGISTERED.
 - [[jsonrpc/_MOC|JSON-RPC]] — JSON-RPC 2.0 method normalization core.
 - [[sse/_MOC|SSE]] — Server-Sent Events adapter for live event streams.
 - [[platform-node/_MOC|Platform Node]] — Node-specific runtime Layers.
+- [[auth/_MOC|Auth]] — static service-identity issuance and revocation adapter.
 
 _(apps added as their slices land)_
 

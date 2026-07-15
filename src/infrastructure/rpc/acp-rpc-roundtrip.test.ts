@@ -2,6 +2,7 @@
 import { RpcTest } from '@effect/rpc'
 import { Effect, Either } from 'effect'
 import { describe, expect, it } from 'vitest'
+import type { WorkspaceId } from '../../protocol/schema/index.js'
 import { AcpRpcGroup, AcpRpcs } from './acp-rpc-contract.js'
 import { AcpRpcHandlersLive } from './acp-rpc-server.js'
 import { decodeInitialize, decodePayload } from './acp-rpc-test-support.js'
@@ -45,7 +46,27 @@ describe('native RPC round-trip', () => {
         ),
       )
 
-      return { created, denied, listed }
+      const workspaceBound = yield* client.session.initialize(
+        yield* decodeInitialize(
+          ['work:create'],
+          ['workspace_rpc_bound' as WorkspaceId],
+        ),
+      )
+      const deniedForeignWorkspace = yield* Effect.either(
+        client.work.create(
+          yield* decodePayload(AcpRpcs.workCreate.payloadSchema, {
+            workspace_id: 'workspace_rpc_foreign',
+            title: 'Should be rejected across workspace boundary',
+          }),
+          {
+            headers: {
+              authorization: `Bearer ${workspaceBound.session_id}`,
+            },
+          },
+        ),
+      )
+
+      return { created, denied, deniedForeignWorkspace, listed }
     })
 
     const result = await Effect.runPromise(
@@ -57,6 +78,10 @@ describe('native RPC round-trip', () => {
     expect(Either.isLeft(result.denied)).toBe(true)
     if (Either.isLeft(result.denied)) {
       expect(result.denied.left.error.code).toBe('forbidden')
+    }
+    expect(Either.isLeft(result.deniedForeignWorkspace)).toBe(true)
+    if (Either.isLeft(result.deniedForeignWorkspace)) {
+      expect(result.deniedForeignWorkspace.left.error.code).toBe('forbidden')
     }
   })
 })

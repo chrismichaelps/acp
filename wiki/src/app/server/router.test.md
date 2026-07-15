@@ -23,6 +23,9 @@ Vitest suite over an in-process web handler composed from `AppLive`,
 
 ## Algorithm
 
+The hardened-auth fixture explicitly selects local trusted-client issuance with
+no static policy; [[session-issuance.test]] owns hostile-client static behavior.
+
 Initialize sessions from both the internal worker shape and spec capability
 handshake, requiring canonical host capabilities, exact permission/workspace
 echo, and rejecting protocol `0.2`. Include `review:collaborate` and

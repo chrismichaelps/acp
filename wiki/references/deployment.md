@@ -56,6 +56,8 @@ deployment-shaping ones:
 | `ACP_EVENT_BROKER`               | profile      | `in-process` for one node · `pg-notify` for Postgres-backed multi-replica fan-out.                |
 | `ACP_REQUIRE_AUTH`               | profile      | `hosted`/`self-host-ha` default on; require it for any shared deployment.                         |
 | `ACP_REQUIRE_WORKSPACE_BINDINGS` | profile      | `hosted`/`self-host-ha` default on; requires each new session to name at least one workspace.     |
+| `ACP_SESSION_ISSUER`             | profile      | `hosted` defaults `static`; other profiles default `trusted-client`.                              |
+| `ACP_SESSION_ISSUANCE_POLICY`    | unset        | Required validated JSON policy for `static`; contains SHA-256 digests, never credential values.   |
 | `ACP_SESSION_TTL`                | `1h`         | Session eviction window.                                                                          |
 | `ACP_SWEEP_INTERVAL`             | `60s`        | Session/lease/retention sweep cadence; Postgres replicas elect one tick leader.                   |
 | `ACP_EVENT_RETENTION_DAYS`       | `30`         | Event retention window; values at or below zero disable pruning.                                  |
@@ -66,14 +68,12 @@ The repository's Compose services are intentionally developer-oriented: the
 workspace bindings off. Set both security flags to `true` before treating either
 service as shared infrastructure. There is no managed-hosting or OIDC manifest.
 
-> **Identity boundary:** even with both flags enabled, v0.1
-> `session.initialize` is an open self-scoped bootstrap. A caller can select its
-> worker id, allowed permission literals, and workspace bindings. Keep that
-> endpoint behind a trusted operator/network boundary; do not expose the current
-> host as a public multi-tenant credential issuer. The production hosted issuer,
-> server-side scope policy, stable external identity, revocation, and hostile-
-> client evidence are specified—but not implemented—in
-> [[ADR-0015-trusted-session-issuance]].
+> **Identity boundary:** `trusted-client` remains an open self-scoped bootstrap
+> and belongs behind a trusted operator/network boundary. Exposed hosts use
+> `static` or a future verified [[SessionIssuance]] adapter. The `hosted` profile
+> fails startup unless auth, workspace binding, and a valid static policy are all
+> present. See [[trusted-session-issuance]] for digest generation, bootstrap,
+> rotation, revision revocation, replica rollout, and audit retention.
 
 Compose owns resource naming. No service fixes `container_name`, so each checkout
 or self-audit can select a distinct project namespace without colliding with

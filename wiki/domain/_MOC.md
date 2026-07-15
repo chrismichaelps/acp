@@ -20,6 +20,7 @@ must resolve to a page here (Constitution Invariant 4).
 - [[Grill]] — a forced senior-question round within a Review.
 - [[Event]] — an immutable append-only record; the coordination primitive.
 - [[Host]] — the ACP process serving protocol state and transports.
+- [[Principal]] — a verified external identity immutably attributed to one worker.
 
 ## Referenced by
 

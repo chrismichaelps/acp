@@ -23,10 +23,13 @@ Vitest suite that provides programs with `AppLive` under an isolated Effect
 ## Algorithm
 
 Resolve config, storage, event, work, worker, workspace, lease, artifact,
-checkpoint, and review services from one composed layer. Register a worker
+checkpoint, review, session, and session-issuer services from one composed layer.
+Register a worker
 through a SQLite-backed layer and recover it from a fresh layer using the same
 database path. Finally select `pg-notify` without `ACP_DATABASE_URL` and assert
 startup exits with a `StorageError` whose operation is `connect`.
+Resolve static issuance through the same storage-backed graph and prove malformed
+or missing hosted policy prevents the application layer from becoming ready.
 
 ## Negative Logic (Prohibited Paths)
 

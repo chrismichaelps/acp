@@ -35,31 +35,51 @@ export interface AuthorizedRpcActor {
 export const authorizeRpcActor: (
   headers: Headers,
   scope?: Permission,
-) => Effect<AuthorizedRpcActor, ProtocolError, AppConfigTag | SessionService>
+) => Effect<
+  AuthorizedRpcActor,
+  ProtocolError,
+  AppConfigTag | SessionIssuer | SessionService
+>
 
 export const authorizeRpc: (
   headers: Headers,
   scope?: Permission,
-) => Effect<WorkerId, ProtocolError, AppConfigTag | SessionService>
+) => Effect<
+  WorkerId,
+  ProtocolError,
+  AppConfigTag | SessionIssuer | SessionService
+>
 
 export const authorizeRpcWorkspace: (
   headers: Headers,
   scope: Permission,
   workspaceId: WorkspaceId,
-) => Effect<WorkerId, ProtocolError, AppConfigTag | SessionService>
+) => Effect<
+  WorkerId,
+  ProtocolError,
+  AppConfigTag | SessionIssuer | SessionService
+>
 
 export const rpcActor: (
   headers: Headers,
   scope?: Permission,
-) => Effect<WorkerId, ProtocolError, AppConfigTag | SessionService>
+) => Effect<
+  WorkerId,
+  ProtocolError,
+  AppConfigTag | SessionIssuer | SessionService
+>
 
 export const rpcWorkspaceActor: (
   headers: Headers,
   scope: Permission,
   workspaceId: WorkspaceId,
-) => Effect<WorkerId, ProtocolError, AppConfigTag | SessionService>
+) => Effect<
+  WorkerId,
+  ProtocolError,
+  AppConfigTag | SessionIssuer | SessionService
+>
 
-export const AcpRpcActor: Context.Tag<WorkerId>
+export const AcpRpcActor: Context.Tag<AuthorizedRpcActor>
 ```
 
 ## Algorithm
@@ -68,7 +88,8 @@ Read `Authorization: Bearer <session_id>` from the RPC handler options headers.
 When no token is present, read [[app-config]] and either fail with
 `unauthorized` in required-auth mode or return `worker_system` in local mode.
 When a token is present, load the session, fail `unauthorized` if it is missing,
-and enforce the requested scope against the session permission list.
+revalidate its provenance through [[session-issuer]], and only then enforce the
+requested scope against the session permission list.
 `authorizeRpcActor` preserves the resolved worker id, permission list, and
 ADR-0009 workspace binding so `authorizeRpcWorkspace` can reject a valid session
 whose `workspace_ids` do not contain the requested workspace. A valid session
@@ -77,16 +98,17 @@ that lacks either the requested scope or workspace binding fails `forbidden`
 authorization denials are 403.
 
 `rpcActor` first checks whether `AcpRpcActor` exists in the current Effect
-context. When native RPC is executed through [[rpc-auth-middleware]], that actor
-has already passed the contract-level scope check, so handlers can use it
-without reparsing headers. When a direct `accessHandler` test runs without
-middleware, `rpcActor` delegates to `authorizeRpc`, preserving the old test and
-fallback behavior.
+context. When native RPC is executed through [[rpc-auth-middleware]], the full
+authorized actor—worker, scopes, and workspace bindings—has already passed the
+contract-level scope check, so handlers can use its worker id without reparsing
+headers. When a direct `accessHandler` test runs without middleware, `rpcActor`
+delegates to `authorizeRpc`, preserving the old test and fallback behavior.
 
 `rpcWorkspaceActor` follows the same middleware-aware shape. If an `AcpRpcActor`
-is already present, the handler treats it as a host-level actor supplied by the
-middleware layer. Otherwise it delegates to `authorizeRpcWorkspace` and enforces
-both the action scope and concrete workspace binding from the bearer session.
+is already present, it must still apply `hasWorkspace` to that actor's retained
+bindings before returning its worker id. Otherwise it delegates to
+`authorizeRpcWorkspace`. Both paths therefore enforce the concrete workspace
+binding; middleware scope success can never erase binding state.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -94,6 +116,10 @@ both the action scope and concrete workspace binding from the bearer session.
 - ❌ Do NOT invent RPC-specific permission names; use [[common]] scopes.
 - ❌ Do NOT duplicate token/session logic inside individual RPC handlers or
   middleware wrappers; both should delegate here.
+- ❌ Do NOT authorize a persisted static grant whose principal is disabled,
+  missing, or at a different revision.
+- ❌ Do NOT collapse the middleware actor to `WorkerId`; workspace-scoped
+  handlers require its bindings.
 
 ## Depth
 
@@ -104,4 +130,4 @@ handler must share.
 
 [[acp-rpc-handlers]] · [[rpc-auth-middleware]] ·
 [[acp-rpc-direct-workspace-scope.test]] · [[acp-rpc-review-scope.test]] ·
-[[acp-rpc-work-lease-scope.test]] · [[rpc-index]] · [[rpc/_MOC]]
+[[acp-rpc-work-lease-scope.test]] · [[session-issuer]] · [[rpc-index]] · [[rpc/_MOC]]

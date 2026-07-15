@@ -160,7 +160,7 @@ describe('rpc websocket', () => {
         jsonrpc: '2.0',
         id: 1,
         method: 'session.initialize',
-        params: { worker, permissions: ['work:create'] },
+        params: { worker, permissions: ['work:create', 'event:read'] },
       })) as { result: { session_id: string } }
 
       return await new Promise((resolve, reject) => {
@@ -215,6 +215,54 @@ describe('rpc websocket', () => {
         type: 'work.created',
         workspace_id: 'workspace_socket_events',
       },
+    })
+  })
+
+  it('denies event subscriptions before acknowledgement without scope or binding', async () => {
+    const result = await onLiveServer(async (_httpBase, wsBase) => {
+      const unscoped = (await rpcOverSocket(`${wsBase}/rpc`, {
+        jsonrpc: '2.0',
+        id: 'init-unscoped',
+        method: 'session.initialize',
+        params: { worker, permissions: ['work:create'] },
+      })) as { result: { session_id: string } }
+      const missingScope = await rpcOverSocket(
+        `${wsBase}/rpc?token=${unscoped.result.session_id}`,
+        {
+          jsonrpc: '2.0',
+          id: 'subscribe-unscoped',
+          method: 'events.subscribe',
+          params: { workspace_id: 'workspace_socket_events' },
+        },
+      )
+
+      const bound = (await rpcOverSocket(`${wsBase}/rpc`, {
+        jsonrpc: '2.0',
+        id: 'init-bound',
+        method: 'session.initialize',
+        params: {
+          worker,
+          permissions: ['event:read'],
+          workspace_ids: ['workspace_allowed'],
+        },
+      })) as { result: { session_id: string } }
+      const foreignBinding = await rpcOverSocket(
+        `${wsBase}/rpc?token=${bound.result.session_id}`,
+        {
+          jsonrpc: '2.0',
+          id: 'subscribe-foreign',
+          method: 'events.subscribe',
+          params: { workspace_id: 'workspace_denied' },
+        },
+      )
+      return { missingScope, foreignBinding }
+    })
+
+    expect(result.missingScope).toMatchObject({
+      error: { data: { error: { code: 'forbidden' } } },
+    })
+    expect(result.foreignBinding).toMatchObject({
+      error: { data: { error: { code: 'forbidden' } } },
     })
   })
 })

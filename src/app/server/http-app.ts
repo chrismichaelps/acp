@@ -31,6 +31,7 @@ export const HttpAppLive: Layer.Layer<
   never,
   StorageError,
   HttpServerType.HttpServer
-> = Layer.mergeAll(HttpLayerRouter.serve(AcpHttpRoutesLive), SweeperLive).pipe(
-  Layer.provide(ServerRuntimeLive),
-)
+> = Layer.mergeAll(
+  HttpLayerRouter.serve(AcpHttpRoutesLive, { disableLogger: true }),
+  SweeperLive,
+).pipe(Layer.provide(ServerRuntimeLive))
