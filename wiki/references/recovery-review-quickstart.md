@@ -59,7 +59,8 @@ remains covered by the broader Docker self-dogfood gate.
 The command exits nonzero on any invariant drift. Its container and volume are
 run-scoped and removed in a `finally` path, including after failures. It does
 not publish a host port, mutate a repository, contact GitHub, or read provider
-credentials.
+credentials. Startup cleanup treats Docker's case-varying "no such resource"
+response as an idempotent absence; every other cleanup error remains fatal.
 
 ## Scope
 

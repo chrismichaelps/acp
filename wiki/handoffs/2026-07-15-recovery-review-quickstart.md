@@ -71,6 +71,15 @@ image.
 Full repository gates, aggregate Docker self-dogfood, ACP grill/review, PR, and
 merge remain.
 
+## CI Repair
+
+The first exact-head Docker job on PR #333 returned NO-GO before the quickstart
+started. Docker Desktop emitted `No such volume` during local pre-clean, while
+the GitHub Linux daemon emitted lowercase `no such volume`. The cleanup helper
+matched only the uppercase form and incorrectly treated an already-absent
+volume as fatal. The accepted repair is a case-insensitive match restricted to
+`no such container|volume`; unrelated removal failures must still fail closed.
+
 ## Referenced by
 
 [[ADR-0018-recovery-review-quickstart]] · [[recovery-review-quickstart]]

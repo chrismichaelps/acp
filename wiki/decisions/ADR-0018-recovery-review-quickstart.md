@@ -62,6 +62,9 @@ example without paying for a second image build.
 - The review must be approved before `completed` is accepted.
 - The final state has no active demonstration lease.
 - Run-derived container and volume names avoid cross-checkout collisions.
+- Pre-clean is idempotent across Docker daemons: a case-insensitive
+  `no such container|volume` response is success, while every other cleanup
+  failure remains fatal.
 - No model or provider credential is read, mounted, or required.
 
 ## Failure Contract

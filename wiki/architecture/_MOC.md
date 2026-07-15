@@ -234,7 +234,9 @@ separate provider runner is added.
     runs passed with either worker winning, HTTP `409`, cursor `8`, replay
     `9,10`, durable resume, approval, release, completion, and cleanup. Clean
     Linux lint, typecheck, the 153-file production build, and all 649 repository
-    tests pass; aggregate Docker gate and ACP review remain
+    tests pass. The first aggregate CI run exposed case-varying Docker
+    missing-volume text in strict pre-clean; the documentation-first
+    case-insensitive repair is in progress before ACP review
 
 ## Referenced by
 

@@ -14,7 +14,9 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   lint, typecheck, 153-file production build, and two production-image runs with
   opposite race winners, saved cursor `8`, replay `9,10`, approved review,
   released lease, completed work, and verified cleanup · risk MEDIUM · issue
-  #328 ·
+  #328; first Linux aggregate CI exposed a case-sensitive Docker
+  `No such volume` pre-clean matcher, with the case-insensitive fail-closed
+  repair documented before code ·
   [[ADR-0018-recovery-review-quickstart]] · [[recovery-review-quickstart]]
 
 - 2026-07-14 · OpenAPI contract artifact · generated `openapi.json` from the
