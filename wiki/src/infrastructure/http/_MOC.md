@@ -17,6 +17,10 @@ Mirror of `@root/src/infrastructure/http/`.
 - [[acp-http-api-resume]] — work resume packet endpoint contract group.
 - [[http-error-mapper]] — transport boundary mapper from tagged domain errors to JSON HTTP responses.
 - [[http-error-mapper.test]] — HTTP status and storage-cause no-leak contract.
+- [[openapi-module]] — deterministic OpenAPI projection, router-auth security
+  repair, protocol identity, and canonical serialization.
+- [[openapi-module.test]] — semantic security plus byte-for-byte artifact drift
+  gate.
 
 ## Referenced by
 

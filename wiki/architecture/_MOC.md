@@ -95,10 +95,12 @@ session/workspace/work/lease behavior. Generated-client ergonomics, exact
 contract metadata, and direct/derived workspace isolation suites complete
 infrastructure parity. The final protocol suites and protocol folder MOCs first
 closed the audit at 253 exact pairs. The review-collaboration authorization
-boundary then added one production module and one focused test with their pages;
-the current audit is 255 source files, 255 exact non-MOC pages, zero missing
-mirrors, and zero orphans. The active production audit uses the existing
-Dockerized ACP host directly; no separate provider runner is added.
+boundary then added one production module and one focused test with their pages.
+Issue #327 adds the OpenAPI projection and its test plus the live discovery route
+and its test, each with an exact mirror. The current audit is therefore 259
+source files, 259 exact non-MOC pages, zero missing mirrors, and zero orphans.
+The active production audit uses the existing Dockerized ACP host directly; no
+separate provider runner is added.
 
 ## ADRs
 
@@ -125,6 +127,10 @@ Dockerized ACP host directly; no separate provider runner is added.
 - [[ADR-0016-version-bump-policy]] — ACCEPTED; infer release semver from full
   conventional commits, require explicit protocol intent, and apply validated
   version edits transactionally without tagging an uncommitted tree.
+- [[ADR-0017-openapi-contract-artifact]] — ACCEPTED; generate a protocol-versioned
+  OpenAPI artifact from typed REST routes, repair router-level bearer metadata,
+  publish public discovery, and enforce same-version 0.x compatibility plus byte
+  drift.
 
 ## Build Order (vertical slices)
 
@@ -208,6 +214,9 @@ Dockerized ACP host directly; no separate provider runner is added.
 75. ✅ ACP v1.1.0 release — synchronized public release/protocol status, passed
     independent and complete Docker ACP gates, merged PR #323, tagged the exact
     merge commit, and published the GitHub release
+76. ▶ OpenAPI contract publication — issue #327 / PR #332; documentation and
+    exact mirrors aligned before generator security hardening, complete gates,
+    Docker ACP review, and merge
 
 ## Referenced by
 

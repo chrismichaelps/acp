@@ -12,6 +12,11 @@ unauthenticated at `GET /openapi.json`. It is generated from the typed
 `AcpHttpApi` contract, so it always reflects the routes the host actually serves.
 Policy and rationale live in [[ADR-0017-openapi-contract-artifact]].
 
+The contract describes the production authorization posture: every declared REST
+operation except `session.initializeSession` carries the `AcpSession` HTTP bearer
+scheme. A local host may disable enforcement with `ACP_REQUIRE_AUTH=false`; hosted
+identity is still limited by [[ADR-0015-trusted-session-issuance]].
+
 ## What it is for
 
 - **Generate clients in any language.** Point an OpenAPI generator at
@@ -31,6 +36,9 @@ Policy and rationale live in [[ADR-0017-openapi-contract-artifact]].
 - `openapi.test.ts` — the drift gate: re-derives the document from source and
   asserts it byte-for-byte equals the committed file.
 
+The generator also repairs security metadata that cannot be inferred from the
+typed route declaration because authorization is applied in [[acp-router]].
+
 ## Regenerating after an API change
 
 Change a route, then:
@@ -42,3 +50,24 @@ pnpm check:openapi      # confirms the committed artifact matches the contract
 
 The `version` field is the protocol version, not the release version. It moves
 only when the wire contract does — see [[version-bump]].
+
+## Stability inside 0.x
+
+Within one protocol version, existing operation ids, methods/paths, required
+inputs, response fields/statuses, enums, security requirements, and meanings are
+backward compatible. Additive operations and optional fields are allowed when an
+older client can ignore them. Incompatible changes require an explicit protocol
+bump and a reviewed generated diff; regeneration alone is not approval.
+
+## Negative Logic
+
+- Do not edit `openapi.json` by hand.
+- Do not publish empty security metadata for protected routes.
+- Do not equate the bearer scheme with trusted public identity.
+- Do not stamp the document with package release semver.
+
+## Referenced by
+
+[[ADR-0017-openapi-contract-artifact]] · [[openapi-module]] ·
+[[openapi-module.test]] · [[openapi-route]] · [[references/_MOC]] ·
+[[2026-07-14-openapi-contract]]

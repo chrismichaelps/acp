@@ -17,7 +17,8 @@ aliases: [acp-router, server-router]
 
 Bind the declarative [[acp-http-api]] contract to the running domain services for
 v0.1. A manual `HttpRouter` composes focused route handlers, the SSE stream
-endpoint, and `/rpc` JSON-RPC framing over one shared application graph. Shared
+endpoint, `/rpc` JSON-RPC framing, and public OpenAPI discovery over one shared
+application graph. Shared
 authorization, success encoding, and error folding live in [[route-support]].
 
 ## Interface
@@ -42,6 +43,8 @@ export const acpRouter: HttpRouter.HttpRouter<
 
 ### Routes (spec §12)
 
+- `GET /openapi.json` → public, process-static [[openapi-route]] projection of
+  the typed REST contract
 - `POST /v1/session/initialize` → register [[Worker]], mint a [[session-service]]
   session with a high-entropy `session_id` bearer credential + host capabilities
   (spec §9); accepts both full internal [[Worker]] records and draft §9
@@ -93,7 +96,7 @@ export const acpRouter: HttpRouter.HttpRouter<
   [[id-clock]], [[acp-http-api]] (payload schemas), [[route-support]],
   [[workspace-routes]], [[worker-routes]], [[resume-routes]], [[event-routes]],
   [[health-routes]],
-  [[sse-event-stream]], [[rpc-endpoint]] (`POST /rpc` handler)
+  [[openapi-route]], [[sse-event-stream]], [[rpc-endpoint]] (`POST /rpc` handler)
 - **Consumed by:** [[server-main]] (the Node entrypoint).
 
 ## Algorithm
@@ -114,6 +117,10 @@ composition module.
 Workspace-scoped resume aggregates stay in [[workspace-routes]] beside the
 workspace work index and delegate to the owning domain services'
 `listForWorkspace` methods.
+
+OpenAPI discovery is mounted from [[openapi-route]] as a public GET beside the
+health endpoints. It serves one process-static projection and never enters
+session authorization or domain services.
 
 `initializeSession` is the one route with compatibility normalization. The HTTP
 schema accepts the draft spec handshake, where worker capability booleans sit
@@ -170,6 +177,7 @@ URLs or identifiers.
   handshake; echo the exact stored array.
 - ❌ Do NOT mint a session carrying both ADR-0013 role scopes.
 - ❌ Do NOT claim open bootstrap proves identity or cross-session role separation.
+- ❌ Do NOT protect `/openapi.json` with bearer auth or serve it from disk.
 
 ## Depth
 
@@ -229,3 +237,4 @@ composition behind a single router value. Deleting it scatters HTTP ceremony and
 [[protocol-version]] · [[src/_MOC]] ·
 [[ADR-0013-review-collaboration-permission]] ·
 [[ADR-0015-trusted-session-issuance]]
+· [[openapi-route]] · [[ADR-0017-openapi-contract-artifact]]
