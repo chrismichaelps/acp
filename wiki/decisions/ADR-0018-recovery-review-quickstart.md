@@ -27,9 +27,12 @@ SQLite named-volume support.
 
 Expose `pnpm quickstart` as a curated mode of the existing
 `scripts/acp-docker-self-dogfood.mjs` entry point. Do not add a provider runner
-or another orchestration `.mjs` file. The command builds the ordinary
-production image, starts one isolated auth-off ACP container with SQLite on a
-named volume, and drives only public HTTP and CLI surfaces.
+or another orchestration `.mjs` file. The command builds the ordinary production
+image under a run-scoped tag, starts one isolated auth-off ACP container with
+SQLite on a named volume, and drives only public HTTP and CLI surfaces. A
+standalone run owns and removes its run-scoped image. Aggregate Docker
+self-dogfood instead reuses its already-built shared image and never removes
+that image.
 
 The quickstart must:
 
@@ -44,8 +47,9 @@ The quickstart must:
    tail containing the checkpoint and handoff events;
 8. reload durable work, checkpoint, and handoff state before continuing;
 9. request and approve review before releasing the lease and completing work;
-10. emit readable narration plus a final structured evidence object, then
-    remove the isolated container and volume on success or failure.
+10. emit readable narration, attempt removal of every owned container, volume,
+    and image on success or failure, and only then publish the final structured
+    evidence object.
 
 The aggregate `pnpm dogfood:docker-self` gate invokes the identical quickstart
 scenario against its already-built image. CI therefore protects the public
@@ -61,10 +65,19 @@ example without paying for a second image build.
   insufficient evidence for the documented wire contract.
 - The review must be approved before `completed` is accepted.
 - The final state has no active demonstration lease.
-- Run-derived container and volume names avoid cross-checkout collisions.
+- Run-derived container, volume, and standalone image names avoid
+  cross-checkout collisions. Building one checkout cannot retag the image used
+  by another checkout between build and run.
+- Aggregate skip-build mode reuses the aggregate image and does not claim or
+  remove it.
 - Pre-clean is idempotent across Docker daemons: a case-insensitive
-  `no such container|volume` response is success, while every other cleanup
-  failure remains fatal.
+  `no such container|volume|image` response is success, while every other
+  cleanup failure remains fatal.
+- Cleanup attempts every owned resource even if an earlier removal fails, then
+  reports every real removal error.
+- The terminal `{ "ok": true }` evidence is published only after final cleanup
+  succeeds. When lifecycle execution and cleanup both fail, neither error is
+  discarded.
 - No model or provider credential is read, mounted, or required.
 
 ## Failure Contract
@@ -72,7 +85,8 @@ example without paying for a second image build.
 Any unexpected status, error code, event ordering, missing durable record,
 review state, work state, readiness timeout, or cleanup failure makes the
 command exit nonzero. Narration never substitutes for assertions. The final
-structured result is printed only after all invariants pass.
+structured result is printed only after all invariants and final cleanup pass.
+Cleanup failure can never be accompanied by a prior `{ "ok": true }` record.
 
 ## Relationship to ACP-Self Audits
 

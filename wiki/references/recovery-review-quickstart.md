@@ -23,9 +23,10 @@ Requirements: Docker and the repository's pinned pnpm runtime.
 pnpm quickstart
 ```
 
-The first run builds the production image. The command then creates an isolated
-SQLite-backed ACP container and named volume, narrates the lifecycle, prints a
-structured success record, and cleans its resources. Set
+The first run builds the production image under a run-scoped tag. The command
+then creates an isolated SQLite-backed ACP container and named volume, narrates
+the lifecycle, cleans its owned container, volume, and image, and only then
+prints a structured success record. Set
 `ACP_DOGFOOD_RUN_ID=<unique-value>` when a stable run identifier is useful.
 
 ## What the Command Proves
@@ -56,11 +57,19 @@ remains covered by the broader Docker self-dogfood gate.
 
 ## Failure and Cleanup
 
-The command exits nonzero on any invariant drift. Its container and volume are
-run-scoped and removed in a `finally` path, including after failures. It does
-not publish a host port, mutate a repository, contact GitHub, or read provider
-credentials. Startup cleanup treats Docker's case-varying "no such resource"
-response as an idempotent absence; every other cleanup error remains fatal.
+The command exits nonzero on any invariant drift. Its standalone image,
+container, and volume are run-scoped and removed on success and failure. The
+aggregate Docker gate reuses its already-built shared image and never removes
+it. This separation prevents concurrent checkouts from retagging or executing
+one another's images. The quickstart does not publish a host port, mutate a
+repository, contact GitHub, or read provider credentials.
+
+Startup and final cleanup treat Docker's case-varying "no such container,"
+"no such volume," and "no such image" responses as idempotent absence. Cleanup
+attempts every owned resource even when an earlier removal fails, then reports
+all real failures. The terminal `{ "ok": true }` record is emitted only after
+final cleanup succeeds; if execution and cleanup both fail, the command
+preserves both errors and emits no success record.
 
 ## Scope
 

@@ -82,6 +82,26 @@ volume as fatal. The accepted repair is a case-insensitive match restricted to
 The exported matcher and its focused upper/lower/fail-closed regression now pass
 12/12 clean-Linux tests.
 
+## Independent Review Repair
+
+Independent PR review returned NO-GO on two additional production blockers,
+both recorded as open comments in the Docker ACP review:
+
+1. standalone quickstarts used the daemon-global
+   `acp:docker-self-dogfood` tag, so concurrent checkouts could retag the image
+   between build and run and validate the wrong branch;
+2. the runner printed `{ "ok": true }` before final cleanup, and stopped
+   cleanup after the first removal error, so failure could produce contradictory
+   success evidence and leave later resources unattempted.
+
+The accepted repair gives standalone runs a run-scoped image that they own and
+remove, while aggregate skip-build mode reuses and preserves its existing
+image. Cleanup attempts all owned resources, terminal evidence moves after
+verified cleanup, and combined execution/cleanup failures remain visible.
+Focused regressions must cover image selection, owned-image cleanup, aggregate
+preservation, all-resource cleanup, no publish on cleanup failure, and
+dual-failure preservation before the ACP comments can be resolved.
+
 ## Referenced by
 
 [[ADR-0018-recovery-review-quickstart]] · [[recovery-review-quickstart]]

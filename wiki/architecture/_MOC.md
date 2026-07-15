@@ -136,7 +136,8 @@ separate provider runner is added.
   and govern same-version compatibility through reviewed diffs.
 - [[ADR-0018-recovery-review-quickstart]] — ACCEPTED; curate the existing
   production Docker self-dogfood path into a one-command SQLite recovery story
-  with wire-level collision and review evidence.
+  with wire-level collision and review evidence, run-scoped standalone image
+  ownership, exhaustive cleanup, and success publication only after cleanup.
 
 ## Build Order (vertical slices)
 
@@ -235,9 +236,11 @@ separate provider runner is added.
     `9,10`, durable resume, approval, release, completion, and cleanup. Clean
     Linux lint, typecheck, the 153-file production build, and all 649 repository
     tests pass. The first aggregate CI run exposed case-varying Docker
-    missing-volume text in strict pre-clean; the documentation-first
-    case-insensitive matcher and focused cross-daemon regression now pass before
-    ACP re-review
+    missing-volume text in strict pre-clean. Independent review then blocked
+    shared standalone image tags and success publication before incomplete
+    cleanup. The documentation-first repair requires run-scoped owned images,
+    aggregate image preservation, exhaustive cleanup, and terminal evidence
+    only after verified cleanup before ACP re-review
 
 ## Referenced by
 

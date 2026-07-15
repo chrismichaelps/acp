@@ -17,7 +17,11 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   #328; first Linux aggregate CI exposed a case-sensitive Docker
   `No such volume` pre-clean matcher, with the case-insensitive fail-closed
   repair documented before code and covered for upper/lower missing-resource
-  text plus a real removal error ·
+  text plus a real removal error; independent review additionally blocked the
+  daemon-global standalone image tag, short-circuiting cleanup, and pre-cleanup
+  success record, so the accepted follow-up isolates and removes standalone
+  images, preserves the aggregate image, attempts every cleanup action, and
+  withholds terminal success until cleanup passes while retaining dual failures ·
   [[ADR-0018-recovery-review-quickstart]] · [[recovery-review-quickstart]]
 
 - 2026-07-14 · OpenAPI contract artifact · generated `openapi.json` from the
