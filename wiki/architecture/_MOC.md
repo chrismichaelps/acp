@@ -248,9 +248,8 @@ separate provider runner is added.
     ordered repair passes 19 focused Linux tests plus standalone and
     aggregate-reuse production runs; owned resources are absent and the shared
     aggregate image is preserved and the issue is closed
-78. ▶ [[trusted-session-issuance]] — issue #329; documentation-first hosted
-    identity slice is registered in Docker ACP and implementation is complete
-    in PR #334. The static
+78. ✅ [[trusted-session-issuance]] — issue #329; documentation-first hosted
+    identity slice is merged to `main` in PR #334. The static
     digest-verified service-principal adapter, fixed server grants, provenance
     validation/revision revocation, credential-safe audit, optional OpenAPI
     issuance auth, hostile-client tests, and exact cross-transport Docker proof
@@ -265,7 +264,8 @@ separate provider runner is added.
     HA, and SQLite/two-node edge smoke; independent re-review approves the
     repairs, exact-head aggregate `issue329exact` passes, and source/wiki parity
     is 270/270. Docker ACP grill `grill_mrmcmzal3` passes without blockers and
-    review `review_mrmcmdvd2` is approved
+    review `review_mrmcmdvd2` is approved; required GitHub checks pass, issue
+    #329 is closed, and ACP work `work_mrm981wa4` is completed
 
 ## Referenced by
 
