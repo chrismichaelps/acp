@@ -23,6 +23,8 @@ Mirror of `@root/src/infrastructure/http/`.
   repair, protocol identity, and canonical serialization.
 - [[openapi-module.test]] — semantic security plus byte-for-byte artifact drift
   gate.
+- [[production-route-inventory-test-support]] — AST-based full-method production
+  `/v1` inventory shared by typed and generated contract tests.
 
 ## Referenced by
 

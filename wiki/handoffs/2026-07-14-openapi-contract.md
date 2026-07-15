@@ -33,9 +33,11 @@ aliases: [2026-07-14-openapi-contract]
 
 ## Remaining
 
-1. Resolve the original ACP review comment with the completed evidence.
-2. Obtain a green ACP grill and independent re-review.
-3. Merge PR #332 and close issue #327 only after GitHub checks remain green.
+1. Replace duplicated four-verb route regexes with the documented shared
+   full-method AST inventory and complete reciprocal wiki backlinks.
+2. Rerun focused/static gates and obtain a green ACP re-review.
+3. Adjudicate the grill, merge PR #332, and close issue #327 only after GitHub
+   checks remain green.
 
 Completed evidence: exact mirror audit `260/260`; focused Docker tests `18/18`;
 typecheck, lint, changed-file formatting, file-size, permission, environment,
@@ -67,14 +69,21 @@ operations, [[openapi-module]] projects standard auth errors, both typed and
 generated contracts compare exactly with all 53 production registrations, and
 the regenerated artifact passed the complete validation matrix above.
 
+Second ACP review result: runtime and security blockers are resolved, but the
+review remains **NO-GO** on maintainability. The duplicated production-route
+regexes recognize only GET/POST/PATCH/DELETE, and the new review contract mirror
+lacked required Algorithm, Edge Cases, Grill Log, and reciprocal backlinks.
+[[production-route-inventory-test-support]] defines the documentation-first
+repair: one TypeScript AST inventory covering the full HTTP method vocabulary.
+
 ## Exact Next Action
 
-Resolve `reviewcomment_mrld2e9j8`, answer and adjudicate every open grill question
-with the completed Docker evidence, then ask the same ACP reviewer to reassess
-the repaired diff before approving or merging.
+Implement the documented AST inventory, rerun focused/static validation, then
+ask the same ACP reviewer to reassess both maintainability findings before
+adjudicating the grill or approving the review.
 
 ## Referenced by
 
 [[ADR-0017-openapi-contract-artifact]] · [[openapi-module]] ·
 [[openapi-module.test]] · [[openapi-route]] · [[openapi-route.test]] ·
-[[grammar/typescript]]
+[[grammar/typescript]] · [[production-route-inventory-test-support]]

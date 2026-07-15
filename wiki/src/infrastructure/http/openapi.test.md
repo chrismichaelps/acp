@@ -24,8 +24,9 @@ executable drift gate between [[acp-http-api]], security repair, and the committ
 - leaves only `session.initializeSession` public and requires the bearer scheme
   for every other operation;
 - requires 401 and 403 ProtocolError responses on every protected operation;
-- compares all 53 OpenAPI method/path pairs with the production `/v1` router,
-  rather than sampling representative paths;
+- compares all 53 OpenAPI method/path pairs with the production `/v1` router
+  through [[production-route-inventory-test-support]] across every supported HTTP
+  method rather than sampling representative paths or verbs;
 - produces identical bytes across repeated builds; and
 - equals the checked-in artifact byte-for-byte.
 
@@ -36,9 +37,11 @@ executable drift gate between [[acp-http-api]], security repair, and the committ
 - Do not sample only one protected operation; enumerate all declared operations.
 - Do not let the generated artifact and typed declaration agree while both omit a
   production router registration.
+- Do not use a method-limited regular expression for production inventory.
 - Do not regenerate the artifact from inside the test.
 
 ## Referenced by
 
 [[openapi-module]] · [[ADR-0017-openapi-contract-artifact]] · [[http/_MOC]] ·
-[[2026-07-14-openapi-contract]]
+[[2026-07-14-openapi-contract]] ·
+[[production-route-inventory-test-support]]

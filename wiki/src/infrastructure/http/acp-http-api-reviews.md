@@ -58,6 +58,33 @@ All payload and success schemas reuse [[review.schema]], [[review-comment.schema
 and [[grill.schema]]. The external-id body becomes one reusable non-empty string
 schema shared with [[review-comment-routes]].
 
+## Algorithm
+
+1. Define branded path schemas for review, comment, work, grill, and question
+   identifiers through `HttpApiSchema.param`.
+2. Reuse [[review.schema]], [[review-comment.schema]], and [[grill.schema]] for
+   every request and success shape; export the external-id body once for the live
+   handler.
+3. Group review lifecycle, comment collaboration, and grill adjudication under
+   stable operation identifiers without moving handler or authorization logic.
+4. Add all three groups to [[acp-http-api]] so the generated contract includes
+   every operation already mounted by [[acp-router]].
+5. Let [[production-route-inventory-test-support]] compare the resulting typed
+   inventory against the live router across the full HTTP method vocabulary.
+
+## Edge Cases
+
+- Comment collection GET and POST share a path but remain separate operations.
+- Review respondent and collaborator actions reuse schemas while retaining their
+  distinct runtime permission boundaries in [[review-comment-routes]] and
+  [[grill-routes]].
+- The external-id request accepts a non-empty identifier, while stored legacy
+  response data remains compatible with the existing optional string field.
+- Declaring these routes is additive contract repair for behavior already live in
+  protocol 0.1; it does not create new runtime authority or a version bump.
+- Standard 401/403 responses are projected centrally by [[openapi-module]]
+  because authorization is implemented outside the typed groups.
+
 ## Negative Logic
 
 - Do not add handler logic or authorization decisions to this module.
@@ -66,6 +93,21 @@ schema shared with [[review-comment-routes]].
   one exported schema.
 - Do not treat these declarations as a protocol change; they document existing
   additive v0.1 behavior that was already reachable in production.
+
+## Grill Log
+
+- **Q:** Why split review groups out of the central API file? **A:** The vertical
+  is cohesive and keeps [[acp-http-api]] under the production file-size gate.
+  _Rejected:_ allowing the central declaration to become a shallow monolith.
+- **Q:** Do typed declarations replace live handlers? **A:** No; they describe
+  the existing handler surface for tooling and drift checks. _Rejected:_ moving
+  business or authorization logic into the schema module.
+- **Q:** Does adding 13 omitted declarations require protocol 0.2? **A:** No;
+  clients gain documentation for additive operations already reachable in v0.1.
+  _Rejected:_ treating a documentation omission as permission to hide live API.
+- **Q:** Can representative routes prove completeness? **A:** No; exact
+  full-method production parity is required. _Rejected:_ another partial method
+  or path sample.
 
 ## Depth
 

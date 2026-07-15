@@ -74,4 +74,4 @@ serialization.
 
 [[openapi-module.test]] · [[openapi-route]] · [[openapi]] ·
 [[ADR-0017-openapi-contract-artifact]] · [[http/_MOC]] · [[Transport]] ·
-[[2026-07-14-openapi-contract]]
+[[2026-07-14-openapi-contract]] · [[acp-http-api-reviews]]

@@ -238,3 +238,4 @@ composition behind a single router value. Deleting it scatters HTTP ceremony and
 [[ADR-0013-review-collaboration-permission]] ·
 [[ADR-0015-trusted-session-issuance]]
 · [[openapi-route]] · [[ADR-0017-openapi-contract-artifact]]
+· [[acp-http-api-reviews]] · [[production-route-inventory-test-support]]

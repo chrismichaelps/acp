@@ -56,7 +56,9 @@ The projection also attaches the standard `ProtocolError` response to status
 the typed declaration with the review-comment and grill routes already mounted
 by the production router. Contract tests compare every published method/path
 pair with all 53 explicit production `/v1` registrations so neither surface can
-silently omit the other.
+silently omit the other. [[production-route-inventory-test-support]] parses the
+router AST across every supported method-specific helper plus generic TRACE and
+rejects dynamic or wildcard `/v1` declarations.
 
 ### 0.x stability envelope
 
@@ -159,11 +161,15 @@ Docker self-dogfood, and an ACP grill/review gate attached to PR #332.
   decision supported by the generated diff and ACP gate until a semantic
   baseline checker is adopted. _Rejected:_ claiming stronger automation than
   the repository implements.
+- **Q:** Can exact parity rely on a four-verb source regex? **A:** No; a future
+  PUT, HEAD, OPTIONS, or TRACE could bypass it. Parse the TypeScript AST once,
+  cover the full supported method vocabulary, and reject wildcard/dynamic v1
+  registrations. _Rejected:_ freezing the current verb subset as policy.
 
 ## Referenced by
 
 [[ADR-0004-protocol-version-codecs-generated-client]] · [[architecture/_MOC]] ·
 [[decisions/_MOC]] · [[acp-http-api-reviews]] · [[openapi-module]] ·
-[[openapi-module.test]] ·
+[[openapi-module.test]] · [[production-route-inventory-test-support]] ·
 [[openapi-route]] · [[openapi]] · [[Transport]] ·
 [[2026-07-14-openapi-contract]] · [[CHANGELOG]]

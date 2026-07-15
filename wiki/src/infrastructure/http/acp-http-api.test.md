@@ -34,7 +34,9 @@ Accept only `work.progressed` through the public work-event payload. Reflect
 `AcpHttpApi` and compare every endpoint's group, name, method, and path against
 the ordered v0.1 route contract. Normalize parameter syntax, extract every
 explicit `/v1` `HttpRouter` registration, and require exact method/path set
-equality with all 53 typed operations.
+equality with all 53 typed operations. [[production-route-inventory-test-support]]
+recognizes GET, POST, PATCH, PUT, DELETE, HEAD, OPTIONS, and generic TRACE
+declarations and rejects wildcard or dynamic `/v1` registrations.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -46,6 +48,8 @@ equality with all 53 typed operations.
   permission array.
 - ❌ Do NOT combine `review:respond` and `review:collaborate` in one session.
 - ❌ Do NOT use representative route sampling as a production-parity gate.
+- ❌ Do NOT let a method-specific or generic HTTP registration bypass inventory
+  extraction because its verb or formatting is unfamiliar.
 
 ## Grill Log
 
@@ -57,4 +61,5 @@ equality with all 53 typed operations.
 ## Referenced by
 
 [[acp-http-api]] · [[http/_MOC]] · [[Transport]] · [[src/_MOC]]
-· [[acp-http-api-reviews]] · [[openapi-module.test]]
+· [[acp-http-api-reviews]] · [[openapi-module.test]] ·
+[[production-route-inventory-test-support]]

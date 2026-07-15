@@ -70,4 +70,5 @@ declarative API (see [[grammar/typescript]]).
 [[Event]] · [[acp-http-api]] · [[http-error-mapper]] · [[json-rpc]] ·
 [[stdio-main]] · [[rpc-socket]] · [[architecture/_MOC]] ·
 [[ADR-0003-event-vocabulary-domain-boundaries]] ·
-[[ADR-0017-openapi-contract-artifact]] · [[openapi-module]] · [[openapi-route]]
+[[ADR-0017-openapi-contract-artifact]] · [[openapi-module]] · [[openapi-route]] ·
+[[acp-http-api-reviews]] · [[production-route-inventory-test-support]]
