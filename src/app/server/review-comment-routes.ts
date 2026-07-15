@@ -2,6 +2,7 @@
 import { HttpServerRequest } from '@effect/platform'
 import { Effect, Schema } from 'effect'
 import { ReviewCommentService } from '../../domain/review-comments/index.js'
+import { SetReviewCommentExternalIdPayload } from '../../infrastructure/http/acp-http-api-reviews.js'
 import {
   AddReviewCommentPayload,
   ReviewComment,
@@ -120,7 +121,7 @@ export const setReviewCommentExternalId = respond(
     const commentId = yield* commentIdParam()
     yield* collaboration.reviewCommentTarget('review:collaborate', commentId)
     const body = yield* HttpServerRequest.schemaBodyJson(
-      Schema.Struct({ external_id: Schema.NonEmptyString }),
+      SetReviewCommentExternalIdPayload,
     )
     const now = yield* idClock.now
     const updated = yield* service.setExternalId(

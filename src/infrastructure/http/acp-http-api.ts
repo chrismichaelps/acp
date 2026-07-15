@@ -21,10 +21,7 @@ import {
   LeaseId,
   ProtocolError,
   RequestLeasePayload,
-  RequestReviewPayload,
   Review,
-  ReviewApprovalSignature,
-  ReviewId,
   SessionId,
   SessionPermissions,
   UpdateArtifactPayload,
@@ -41,7 +38,20 @@ import {
 } from '../../protocol/schema/index.js'
 import { EventsGroup } from './acp-http-api-events.js'
 import { MemoryGroup } from './acp-http-api-memory.js'
+import {
+  GrillGroup,
+  ReviewCommentGroup,
+  ReviewGroup,
+} from './acp-http-api-reviews.js'
 import { ResumeGroup } from './acp-http-api-resume.js'
+
+export {
+  ApproveReviewPayload,
+  GrillGroup,
+  ReviewCommentGroup,
+  ReviewGroup,
+  ReviewPath,
+} from './acp-http-api-reviews.js'
 
 export const WorkPath = Schema.Struct({
   work_id: HttpApiSchema.param('work_id', WorkId),
@@ -57,11 +67,6 @@ export const LeaseListParams = Schema.Struct({
   workspace_id: WorkspaceId,
 })
 export type LeaseListParams = typeof LeaseListParams.Type
-
-export const ReviewPath = Schema.Struct({
-  review_id: HttpApiSchema.param('review_id', ReviewId),
-})
-export type ReviewPath = typeof ReviewPath.Type
 
 export const ArtifactPath = Schema.Struct({
   artifact_id: HttpApiSchema.param('artifact_id', ArtifactId),
@@ -170,12 +175,6 @@ export const PublishWorkEventPayload = Schema.Struct({
   data: Schema.Record({ key: Schema.String, value: Schema.Unknown }),
 })
 export type PublishWorkEventPayload = typeof PublishWorkEventPayload.Type
-
-export const ApproveReviewPayload = Schema.Struct({
-  met_requirements: Schema.Array(Schema.String),
-  approval_signature: Schema.optional(ReviewApprovalSignature),
-})
-export type ApproveReviewPayload = typeof ApproveReviewPayload.Type
 
 export const ArtifactContentResponse = Schema.Struct({
   content: Schema.String,
@@ -443,48 +442,6 @@ export const CheckpointGroup = HttpApiGroup.make('checkpoints').add(
     .addError(ProtocolError, protocolError(404)),
 )
 
-export const ReviewGroup = HttpApiGroup.make('reviews')
-  .add(
-    HttpApiEndpoint.post('requestReview', '/v1/reviews')
-      .setPayload(RequestReviewPayload)
-      .addSuccess(Review, { status: 201 })
-      .addError(ProtocolError, protocolError(400))
-      .addError(ProtocolError, protocolError(404)),
-  )
-  .add(
-    HttpApiEndpoint.post('approveReview', '/v1/reviews/:review_id/approve')
-      .setPath(ReviewPath)
-      .setPayload(ApproveReviewPayload)
-      .addSuccess(Review)
-      .addError(ProtocolError, protocolError(400))
-      .addError(ProtocolError, protocolError(404))
-      .addError(ProtocolError, protocolError(409)),
-  )
-  .add(
-    HttpApiEndpoint.post('rejectReview', '/v1/reviews/:review_id/reject')
-      .setPath(ReviewPath)
-      .addSuccess(Review)
-      .addError(ProtocolError, protocolError(404))
-      .addError(ProtocolError, protocolError(409)),
-  )
-  .add(
-    HttpApiEndpoint.post(
-      'requestReviewChanges',
-      '/v1/reviews/:review_id/request_changes',
-    )
-      .setPath(ReviewPath)
-      .addSuccess(Review)
-      .addError(ProtocolError, protocolError(404))
-      .addError(ProtocolError, protocolError(409)),
-  )
-  .add(
-    HttpApiEndpoint.post('cancelReview', '/v1/reviews/:review_id/cancel')
-      .setPath(ReviewPath)
-      .addSuccess(Review)
-      .addError(ProtocolError, protocolError(404))
-      .addError(ProtocolError, protocolError(409)),
-  )
-
 export class AcpHttpApi extends HttpApi.make('acp')
   .add(SessionGroup)
   .add(WorkerGroup)
@@ -496,4 +453,6 @@ export class AcpHttpApi extends HttpApi.make('acp')
   .add(MemoryGroup)
   .add(ResumeGroup)
   .add(ReviewGroup)
+  .add(ReviewCommentGroup)
+  .add(GrillGroup)
   .add(EventsGroup) {}

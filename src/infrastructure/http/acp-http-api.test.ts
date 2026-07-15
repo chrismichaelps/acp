@@ -1,4 +1,5 @@
 /** @Acp.Infra.Http.Api.Test — reflected route contract */
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { HttpApi } from '@effect/platform'
 import { Option, Schema } from 'effect'
@@ -30,6 +31,19 @@ const reflectEndpoints = (): readonly ReflectedEndpoint[] => {
     },
   })
   return endpoints
+}
+
+const routeKey = (method: string, path: string): string =>
+  `${method.toUpperCase()} ${path.replace(/:([A-Za-z0-9_]+)/g, '{$1}')}`
+
+const productionV1Routes = (): readonly string[] => {
+  const source = readFileSync('src/app/server/router.ts', 'utf8')
+  return Array.from(
+    source.matchAll(/HttpRouter\.(get|post|patch|del)\(\s*['"]([^'"]+)['"]/g),
+    ([, method, path]) => routeKey(method === 'del' ? 'DELETE' : method, path),
+  )
+    .filter((route) => route.includes(' /v1/'))
+    .sort()
 }
 
 describe('AcpHttpApi', () => {
@@ -353,6 +367,84 @@ describe('AcpHttpApi', () => {
         path: '/v1/reviews/:review_id/cancel',
       },
       {
+        group: 'reviewComments',
+        name: 'addReviewComment',
+        method: 'POST',
+        path: '/v1/reviews/:review_id/comments',
+      },
+      {
+        group: 'reviewComments',
+        name: 'listReviewComments',
+        method: 'GET',
+        path: '/v1/reviews/:review_id/comments',
+      },
+      {
+        group: 'reviewComments',
+        name: 'resolveReviewComment',
+        method: 'POST',
+        path: '/v1/review-comments/:comment_id/resolve',
+      },
+      {
+        group: 'reviewComments',
+        name: 'reopenReviewComment',
+        method: 'POST',
+        path: '/v1/review-comments/:comment_id/reopen',
+      },
+      {
+        group: 'reviewComments',
+        name: 'setReviewCommentExternalId',
+        method: 'POST',
+        path: '/v1/review-comments/:comment_id/external-id',
+      },
+      {
+        group: 'reviewComments',
+        name: 'listWorkReviewComments',
+        method: 'GET',
+        path: '/v1/work/:work_id/review-comments',
+      },
+      {
+        group: 'grills',
+        name: 'openGrill',
+        method: 'POST',
+        path: '/v1/reviews/:review_id/grill',
+      },
+      {
+        group: 'grills',
+        name: 'listReviewGrills',
+        method: 'GET',
+        path: '/v1/reviews/:review_id/grills',
+      },
+      {
+        group: 'grills',
+        name: 'addGrillQuestion',
+        method: 'POST',
+        path: '/v1/grills/:grill_id/questions',
+      },
+      {
+        group: 'grills',
+        name: 'evaluateGrill',
+        method: 'POST',
+        path: '/v1/grills/:grill_id/evaluate',
+      },
+      {
+        group: 'grills',
+        name: 'getGrill',
+        method: 'GET',
+        path: '/v1/grills/:grill_id',
+      },
+      {
+        group: 'grills',
+        name: 'answerGrillQuestion',
+        method: 'POST',
+        path: '/v1/grill-questions/:question_id/answer',
+      },
+      {
+        group: 'grills',
+        name: 'setGrillVerdict',
+        method: 'POST',
+        path: '/v1/grill-questions/:question_id/verdict',
+      },
+      {
         group: 'events',
         name: 'replayEvents',
         method: 'GET',
@@ -365,5 +457,14 @@ describe('AcpHttpApi', () => {
         path: '/v1/events/stream',
       },
     ])
+  })
+
+  it('matches every explicit production /v1 router registration', () => {
+    const typedRoutes = reflectEndpoints()
+      .map(({ method, path }) => routeKey(method, path))
+      .sort()
+
+    expect(typedRoutes).toHaveLength(53)
+    expect(typedRoutes).toEqual(productionV1Routes())
   })
 })

@@ -26,6 +26,7 @@ const sessionSecurity = (): OpenApi.OpenAPISecurityRequirement => ({
 
 const securePathItem = (
   pathItem: OpenApi.OpenAPISpecPathItem,
+  authorizationError: OpenApi.OpenApiSpecResponse,
 ): OpenApi.OpenAPISpecPathItem => {
   const secured: OpenApi.OpenAPISpecPathItem = { ...pathItem }
 
@@ -33,13 +34,19 @@ const securePathItem = (
     const operation = pathItem[method]
     if (operation === undefined) continue
 
-    secured[method] = {
-      ...operation,
-      security:
-        operation.operationId === SESSION_INITIALIZE_OPERATION
-          ? []
-          : [sessionSecurity()],
-    }
+    const isSessionInitialize =
+      operation.operationId === SESSION_INITIALIZE_OPERATION
+    secured[method] = isSessionInitialize
+      ? { ...operation, security: [] }
+      : {
+          ...operation,
+          responses: {
+            ...operation.responses,
+            401: operation.responses[401] ?? authorizationError,
+            403: operation.responses[403] ?? authorizationError,
+          },
+          security: [sessionSecurity()],
+        }
   }
 
   return secured
@@ -52,10 +59,17 @@ const securePathItem = (
  */
 export const buildAcpOpenApi = (): OpenApi.OpenAPISpec => {
   const spec = OpenApi.fromApi(AcpHttpApi)
+  const authorizationError =
+    spec.paths['/v1/session/initialize']?.post?.responses[401]
+  if (authorizationError === undefined) {
+    throw new Error(
+      'AcpHttpApi session initialization must declare ProtocolError status 401',
+    )
+  }
   const paths: OpenApi.OpenAPISpecPaths = {}
 
   for (const [path, pathItem] of Object.entries(spec.paths)) {
-    paths[path] = securePathItem(pathItem)
+    paths[path] = securePathItem(pathItem, authorizationError)
   }
 
   return {

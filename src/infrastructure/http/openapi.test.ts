@@ -15,6 +15,27 @@ const HTTP_METHODS = [
   'trace',
 ] as const
 
+const routeKey = (method: string, path: string): string =>
+  `${method.toUpperCase()} ${path.replace(/:([A-Za-z0-9_]+)/g, '{$1}')}`
+
+const productionV1Routes = (): readonly string[] => {
+  const source = readFileSync('src/app/server/router.ts', 'utf8')
+  return Array.from(
+    source.matchAll(/HttpRouter\.(get|post|patch|del)\(\s*['"]([^'"]+)['"]/g),
+    ([, method, path]) => routeKey(method === 'del' ? 'DELETE' : method, path),
+  )
+    .filter((route) => route.includes(' /v1/'))
+    .sort()
+}
+
+const publishedOperations = (spec: ReturnType<typeof buildAcpOpenApi>) =>
+  Object.entries(spec.paths).flatMap(([path, pathItem]) =>
+    HTTP_METHODS.flatMap((method) => {
+      const operation = pathItem[method]
+      return operation === undefined ? [] : [{ method, path, operation }]
+    }),
+  )
+
 describe('buildAcpOpenApi', () => {
   it('emits an OpenAPI 3.x document with pinned identity', () => {
     const spec = buildAcpOpenApi()
@@ -43,21 +64,29 @@ describe('buildAcpOpenApi', () => {
     })
     expect(spec.security).toEqual([{ AcpSession: [] }])
 
-    const operations = Object.values(spec.paths).flatMap((pathItem) =>
-      HTTP_METHODS.flatMap((method) => {
-        const operation = pathItem[method]
-        return operation === undefined ? [] : [operation]
-      }),
-    )
-    expect(operations.length).toBeGreaterThan(1)
+    const operations = publishedOperations(spec)
+    expect(operations).toHaveLength(53)
 
-    for (const operation of operations) {
+    for (const { operation } of operations) {
       expect(operation.security).toEqual(
         operation.operationId === 'session.initializeSession'
           ? []
           : [{ AcpSession: [] }],
       )
+      if (operation.operationId !== 'session.initializeSession') {
+        expect(operation.responses[401]).toBeDefined()
+        expect(operation.responses[403]).toBeDefined()
+      }
     }
+  })
+
+  it('matches every explicit production /v1 router registration', () => {
+    const published = publishedOperations(buildAcpOpenApi())
+      .map(({ method, path }) => routeKey(method, path))
+      .sort()
+
+    expect(published).toHaveLength(53)
+    expect(published).toEqual(productionV1Routes())
   })
 
   it('is deterministic so the committed artifact cannot flap', () => {
