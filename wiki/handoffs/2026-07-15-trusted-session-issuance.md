@@ -1,6 +1,6 @@
 ---
 type: handoff
-status: active
+status: complete
 date: 2026-07-15
 issue: 329
 tags: [handoff, auth, hosted, security]
@@ -120,10 +120,15 @@ sanitized policy failures, and a durable bidirectional principal/worker registry
   exact-evidence questions with no blocking items; review
   `review_mrmcmdvd2` is approved.
 
-## Remaining
+## Closure
 
-1. Exact-head GitHub CI, squash merge, issue comment/closure, and branch
-   cleanup for PR #334.
+- PR #334 passed Local Gates and Complete Docker self-dogfood, then
+  squash-merged to `main` at `0057fec9e227dfb03d5d673c50f449d4c483b470`.
+- Issue #329 is closed with the final validation and ACP review evidence.
+- Docker ACP checkpoint `checkpoint_mrmcw9tj7` records the merge, and work
+  `work_mrm981wa4` is completed.
+- The remote feature branch is deleted; the user-owned untracked `install.sh`
+  remains untouched.
 
 ## Referenced by
 

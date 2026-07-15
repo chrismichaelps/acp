@@ -11,7 +11,7 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   hostile-client cross-transport Docker evidence · issue #329 · risk HIGH ·
   [[trusted-session-issuance]]
 
-- 2026-07-15 · trusted hosted session issuance implementation · projected
+- 2026-07-15 · trusted hosted session issuance implementation · implemented
   [[ADR-0015-trusted-session-issuance]] through one shared initializer, a
   trusted-client/static [[SessionIssuance]] seam, immutable Storage-backed
   principal↔worker attribution, persisted issuer provenance, authorization-time
@@ -36,7 +36,9 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   `issue329exact`; the Docker ACP control plane retained its pre-run checkpoint
   and returned healthy; role-separated Docker ACP grill `grill_mrmcmzal3`
   passed without blockers and review `review_mrmcmdvd2` approved PR #334 · issue
-  #329 · risk HIGH ·
+  #329 · required GitHub Local Gates and Complete Docker self-dogfood passed;
+  PR #334 squash-merged at `0057fec9e227dfb03d5d673c50f449d4c483b470`,
+  issue #329 closed, and Docker ACP work `work_mrm981wa4` completed · risk HIGH ·
   [[trusted-session-issuance]]
 
 - 2026-07-15 · recovery/review quickstart · accepted and implemented a one-command
