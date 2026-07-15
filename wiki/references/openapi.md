@@ -12,10 +12,16 @@ unauthenticated at `GET /openapi.json`. It is generated from the typed
 `AcpHttpApi` contract, so it always reflects the routes the host actually serves.
 Policy and rationale live in [[ADR-0017-openapi-contract-artifact]].
 
+The production-parity gate compares all 53 published method/path pairs with the
+explicit `/v1` registrations in [[acp-router]]. This catches a live route missing
+from the typed declaration even when the generated file matches that declaration.
+
 The contract describes the production authorization posture: every declared REST
 operation except `session.initializeSession` carries the `AcpSession` HTTP bearer
 scheme. A local host may disable enforcement with `ACP_REQUIRE_AUTH=false`; hosted
 identity is still limited by [[ADR-0015-trusted-session-issuance]].
+Protected operations also document the router's standard `401` and `403`
+ProtocolError responses.
 
 ## What it is for
 
@@ -37,7 +43,8 @@ identity is still limited by [[ADR-0015-trusted-session-issuance]].
   asserts it byte-for-byte equals the committed file.
 
 The generator also repairs security metadata that cannot be inferred from the
-typed route declaration because authorization is applied in [[acp-router]].
+typed route declaration because authorization is applied in [[acp-router]],
+including bearer requirements and standard auth error responses.
 
 ## Regenerating after an API change
 

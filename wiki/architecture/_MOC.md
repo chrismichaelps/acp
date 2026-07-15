@@ -97,8 +97,10 @@ infrastructure parity. The final protocol suites and protocol folder MOCs first
 closed the audit at 253 exact pairs. The review-collaboration authorization
 boundary then added one production module and one focused test with their pages.
 Issue #327 adds the OpenAPI projection and its test plus the live discovery route
-and its test, each with an exact mirror. The current audit is therefore 259
-source files, 259 exact non-MOC pages, zero missing mirrors, and zero orphans.
+and its test, then splits the review HTTP groups into one cohesive production
+module so all 53 live routes participate in the contract. Each addition has an
+exact mirror. The current target audit is therefore 260 source files, 260 exact
+non-MOC pages, zero missing mirrors, and zero orphans.
 The active production audit uses the existing Dockerized ACP host directly; no
 separate provider runner is added.
 
@@ -129,8 +131,8 @@ separate provider runner is added.
   version edits transactionally without tagging an uncommitted tree.
 - [[ADR-0017-openapi-contract-artifact]] — ACCEPTED; generate a protocol-versioned
   OpenAPI artifact from typed REST routes, repair router-level bearer metadata,
-  publish public discovery, and enforce same-version 0.x compatibility plus byte
-  drift.
+  publish public discovery, enforce source/artifact and production-route parity,
+  and govern same-version compatibility through reviewed diffs.
 
 ## Build Order (vertical slices)
 
@@ -214,9 +216,10 @@ separate provider runner is added.
 75. ✅ ACP v1.1.0 release — synchronized public release/protocol status, passed
     independent and complete Docker ACP gates, merged PR #323, tagged the exact
     merge commit, and published the GitHub release
-76. ▶ OpenAPI contract publication — issue #327 / PR #332; documentation, exact
-    mirrors, bearer projection, clean Linux gates, and complete production Docker
-    self-dogfood are green; independent ACP review and merge remain
+76. ▶ OpenAPI contract publication — issue #327 / PR #332; the first independent
+    ACP review found 40 documented operations against 53 live routes. The
+    documentation-first parity and protected-error repair is in progress before
+    Docker revalidation, ACP re-review, and merge
 
 ## Referenced by
 

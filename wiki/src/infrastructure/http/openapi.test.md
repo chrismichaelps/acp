@@ -23,6 +23,9 @@ executable drift gate between [[acp-http-api]], security repair, and the committ
 - defines `AcpSession` as HTTP bearer security;
 - leaves only `session.initializeSession` public and requires the bearer scheme
   for every other operation;
+- requires 401 and 403 ProtocolError responses on every protected operation;
+- compares all 53 OpenAPI method/path pairs with the production `/v1` router,
+  rather than sampling representative paths;
 - produces identical bytes across repeated builds; and
 - equals the checked-in artifact byte-for-byte.
 
@@ -31,6 +34,8 @@ executable drift gate between [[acp-http-api]], security repair, and the committ
 - Do not weaken the gate to structural JSON equality; byte drift is intentional
   review evidence.
 - Do not sample only one protected operation; enumerate all declared operations.
+- Do not let the generated artifact and typed declaration agree while both omit a
+  production router registration.
 - Do not regenerate the artifact from inside the test.
 
 ## Referenced by

@@ -33,9 +33,14 @@ aliases: [2026-07-14-openapi-contract]
 
 ## Remaining
 
-1. Push the completed commits and attach PR #332 as ACP review evidence.
-2. Open an ACP grill, obtain independent review, and resolve any findings.
-3. Merge PR #332 and close issue #327 when GitHub checks and ACP review are green.
+1. Implement [[acp-http-api-reviews]], including all 13 live review-comment and
+   grill operations omitted from the typed contract.
+2. Project standard `401` and `403` `ProtocolError` responses onto every
+   protected operation and enforce exact parity with all 53 production routes.
+3. Regenerate the artifact; rerun focused, full, build, policy, mirror, and
+   complete Docker self-dogfood gates.
+4. Resolve the ACP review finding, obtain a green re-review, then merge PR #332
+   and close issue #327 only after GitHub checks remain green.
 
 Completed evidence: exact mirror audit `259/259`; focused Docker tests `7/7`;
 typecheck, lint, changed-file formatting, file-size, permission, environment,
@@ -53,11 +58,19 @@ bootstrap, 39 `AcpSession`-protected operations, JSON content type, and POST
 `/openapi.json` → 404. The Docker coordination container restarted against its
 original named volume and recovered this work and its checkpoints.
 
+First ACP review result: **NO-GO**. The production router exposes 53 `/v1`
+operations while the generated document exposed only 40. Thirteen existing
+review-comment and grill routes were mounted outside `AcpHttpApi`, and
+representative-path tests could not detect the omission. The review also found
+that protected operations did not consistently advertise `401` and `403`, and
+that the documentation overstated byte equality as semantic compatibility
+enforcement. These findings are release blockers, not deferred cleanup.
+
 ## Exact Next Action
 
-Reviewer role: inspect the complete branch diff against `main`, challenge auth
-truthfulness, same-version stability, drift enforcement, and production wiring,
-then accept or reject each ACP grill question before approving review.
+Implement the documented HTTP review groups and exact production-router parity
+test, regenerate `openapi.json`, and rerun the Docker validation before asking
+the same ACP reviewer to reassess the resolved blockers.
 
 ## Referenced by
 

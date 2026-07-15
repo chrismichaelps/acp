@@ -15,6 +15,8 @@ Mirror of `@root/src/infrastructure/http/`.
 - [[acp-http-api-events]] — event replay and stream endpoint contract split from the central API declaration.
 - [[acp-http-api-memory]] — workspace memory endpoint contract split from the central API declaration.
 - [[acp-http-api-resume]] — work resume packet endpoint contract group.
+- [[acp-http-api-reviews]] — complete review, review-comment, and grill typed
+  endpoint contract for the production router and generated clients.
 - [[http-error-mapper]] — transport boundary mapper from tagged domain errors to JSON HTTP responses.
 - [[http-error-mapper.test]] — HTTP status and storage-cause no-leak contract.
 - [[openapi-module]] — deterministic OpenAPI projection, router-auth security

@@ -38,7 +38,9 @@ defines `AcpSession` as an HTTP bearer scheme. Every operation requires it excep
 3. Add the `AcpSession` security scheme and a default bearer requirement.
 4. Walk every declared HTTP operation, retaining an empty security array only
    for `session.initializeSession` and assigning `AcpSession` everywhere else.
-5. Serialize deterministically as two-space JSON with one terminal newline.
+5. Add the router authorization layer's standard `401` and `403` ProtocolError
+   responses to every protected operation, preserving operation-specific errors.
+6. Serialize deterministically as two-space JSON with one terminal newline.
 
 The projection is pure and performs no filesystem access. Artifact writing is
 owned by the generation script; live serving is owned by [[openapi-route]].
@@ -49,6 +51,7 @@ owned by the generation script; live serving is owned by [[openapi-route]].
 - Do not return a local partial-document type or cast through `unknown`; use the
   upstream `OpenApi.OpenAPISpec` contract.
 - Do not publish Effect's empty security arrays unchanged.
+- Do not omit the authorization layer's 401/403 responses from protected routes.
 - Do not model local `ACP_REQUIRE_AUTH=false` as the production client contract.
 - Do not edit `openapi.json` manually or read it from request handling code.
 

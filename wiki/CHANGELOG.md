@@ -9,7 +9,10 @@ Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
   `GET /openapi.json`, and gated it byte-for-byte against source · validation:
   259/259 source mirrors, focused semantic/live route tests, 644-test clean Linux
   suite, policy checks, production build, complete SQLite/auth/transport/HA/edge
-  Docker self-dogfood, and fresh-image live endpoint proof; ACP review pending ·
+  Docker self-dogfood, and fresh-image live endpoint proof; the first ACP review
+  found 40 documented operations against 53 live routes, missing protected
+  `401`/`403` responses, and overstated compatibility automation, so the PR is
+  blocked while the documented parity repair is implemented and revalidated ·
   risk MEDIUM · [[ADR-0017-openapi-contract-artifact]] · [[openapi]]
 
 - 2026-07-14 · ACP v1.1.0 · squash-merged release PR #323 at

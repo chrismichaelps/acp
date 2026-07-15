@@ -14,7 +14,8 @@ aliases: [acp-http-api.test]
 
 Pin [[acp-http-api]] capability negotiation, workspace binding, runtime protocol
 version negotiation, progress-event vocabulary, and the complete v0.1 reflected
-REST route inventory.
+REST route inventory. It also compares that declaration with the explicit
+production registrations in [[acp-router]].
 
 ## Interface
 
@@ -31,7 +32,9 @@ permission echo. Reject initialization payloads and response records containing
 both scopes with the exact mutual-exclusion issue.
 Accept only `work.progressed` through the public work-event payload. Reflect
 `AcpHttpApi` and compare every endpoint's group, name, method, and path against
-the ordered v0.1 route contract.
+the ordered v0.1 route contract. Normalize parameter syntax, extract every
+explicit `/v1` `HttpRouter` registration, and require exact method/path set
+equality with all 53 typed operations.
 
 ## Negative Logic (Prohibited Paths)
 
@@ -42,6 +45,7 @@ the ordered v0.1 route contract.
 - ❌ Do NOT accept a session response that cannot echo the exact effective
   permission array.
 - ❌ Do NOT combine `review:respond` and `review:collaborate` in one session.
+- ❌ Do NOT use representative route sampling as a production-parity gate.
 
 ## Grill Log
 
@@ -53,3 +57,4 @@ the ordered v0.1 route contract.
 ## Referenced by
 
 [[acp-http-api]] · [[http/_MOC]] · [[Transport]] · [[src/_MOC]]
+· [[acp-http-api-reviews]] · [[openapi-module.test]]
