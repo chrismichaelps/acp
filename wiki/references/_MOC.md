@@ -19,6 +19,8 @@ tags: [moc, references]
   and review-gated completion proof.
 - [[trusted-session-issuance]] — hosted static service identity, policy,
   rotation, revocation, audit, and bootstrap operations.
+- [[operational-contracts]] — event retention/replay, upgrade compatibility,
+  and backup/restore guarantees.
 
 ## Referenced by
 
