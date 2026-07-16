@@ -61,6 +61,10 @@ tags: [moc, adr]
   and sweeper telemetry as a Prometheus scrape at `GET /metrics`, off by default
   and token-gated via `ACP_METRICS_TOKEN`, with a deliberately additive series
   contract.
+- [[ADR-0020-operational-contracts]] — ACCEPTED — delete-based event retention
+  with a stable-seq replay guarantee, a `kv`/`store_meta` protocol-version boot
+  guard that fails closed on an unsupported stamp with no auto-migration, and a
+  documented+tested SQLite backup-API / Postgres `pg_dump` restore runbook.
 
 ## Referenced by
 

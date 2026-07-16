@@ -2,6 +2,23 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-16 · operational contracts + upgrade guard · made ACP's run-over-time
+  behavior an explicit, tested contract: event retention stays delete-based with
+  a monotonic never-reused `seq`, a preserved per-workspace high-water mark, an
+  exclusive prune cutoff, and cursors below the prune horizon that resume at the
+  oldest retained event instead of erroring; a fail-closed protocol-version boot
+  guard stamps `store_meta/protocol_version` on a fresh store and refuses to
+  serve when the persisted stamp is outside `SUPPORTED_PROTOCOL_VERSIONS`
+  (`IncompatibleStoreVersionError`, no automatic cross-version migration), wired
+  into the host runtime before any transport binds; backup/restore is a
+  documented+tested runbook (SQLite backup API, Postgres `pg_dump`/`pg_restore`)
+  · validation: cross-adapter retention/replay tests (in-memory + sqlite, with a
+  Postgres skipIf block), a sqlite-file boot test proving the guard gates host
+  boot, and a Docker self-dogfood backup/restore scenario for both adapters,
+  plus the full typecheck/lint/format/suite gate; README Operations section and
+  [[operational-contracts]] reference · issue #331 · risk MEDIUM ·
+  [[ADR-0020-operational-contracts]] · [[operational-contracts]]
+
 - 2026-07-15 · Prometheus scrape endpoint · projected the RPC, HTTP, and
   retention-sweeper telemetry ACP already collects as Prometheus text at
   `GET /metrics`, rendered straight from the Effect metric registry snapshot with

@@ -534,6 +534,28 @@ Live event fan-out is chosen separately: `ACP_EVENT_BROKER=in-process` (default)
 is the single-node broker; `ACP_EVENT_BROKER=pg-notify` delivers SSE/WebSocket
 notifications across replicas while replay stays backed by durable storage.
 
+### Operations
+
+Three contracts govern running a store safely over time; they are tested, not
+just documented — see the
+[operational contracts](wiki/references/operational-contracts.md) reference and
+[ADR-0020](wiki/decisions/ADR-0020-operational-contracts.md).
+
+- **Event retention & replay** — the background sweeper prunes events older than
+  `ACP_EVENT_RETENTION_DAYS` (delete-based, no compaction; `<= 0` disables it).
+  `seq` is monotonic and never reused, a workspace's newest event is never
+  pruned, and a cursor older than the prune horizon resumes at the oldest
+  retained event instead of erroring.
+- **Protocol-version upgrades** — the store stamps its protocol version once in
+  `store_meta/protocol_version`. A boot guard proceeds only when that stamp is in
+  `SUPPORTED_PROTOCOL_VERSIONS` and otherwise **fails closed** — ACP will not
+  serve against a store it cannot interpret. There is no automatic cross-version
+  data migration; a bump requires an explicit migration or a fresh store.
+- **Backup & restore** — SQLite via the SQLite backup API (a consistent
+  point-in-time copy even under writes; a raw file copy can tear); Postgres via
+  `pg_dump`/`pg_restore` (online-consistent). A restore returns the store to a
+  consistent point. The Docker self-dogfood exercises both round-trips.
+
 ### Authentication and scopes
 
 Local mode allows unauthenticated requests. Set `ACP_REQUIRE_AUTH=true` to
