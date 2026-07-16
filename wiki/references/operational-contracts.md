@@ -31,8 +31,11 @@ consequences follow directly:
 - A cursor older than the prune horizon does not error — it resumes at the
   oldest retained event, silently skipping whatever was pruned in between.
 
-New appends keep advancing `seq` across a prune; pruning never resets or
-reuses sequence numbers.
+The cutoff is exclusive: an event whose timestamp exactly equals the cutoff
+is retained, and a workspace's newest event (its `seq` high-water mark) is
+never pruned even when it is older than the cutoff — so numbering survives a
+full-history sweep. New appends keep advancing `seq` across a prune; pruning
+never resets or reuses sequence numbers.
 
 ## Upgrades
 
