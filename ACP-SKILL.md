@@ -287,6 +287,31 @@ depend on them.
 - **Release what you claim.** Complete work and release every lease so the
   workspace ends with no dangling claims.
 
+## Operational contracts you can rely on
+
+The host makes three run-over-time guarantees that shape how you recover and
+coordinate. They are tested, not aspirational — see
+[operational contracts](./wiki/references/operational-contracts.md) and the
+README **Operations** section.
+
+- **Event retention & replay.** `seq` is monotonic and never reused, so
+  `events list --after <seq>` is a stable recovery cursor. Old events may be
+  pruned (delete-based, on the host's `ACP_EVENT_RETENTION_DAYS` window; no
+  compaction), but a cursor older than the prune horizon does **not** error — it
+  resumes at the oldest retained event, silently skipping what was pruned. A
+  workspace's newest event is never pruned, so your high-water cursor stays
+  valid. Pruned events are gone for good; don't rely on unbounded history.
+- **Protocol-version guard.** The host stamps its store's protocol version once
+  and **fails closed** on boot if that stamp isn't supported — it will not serve
+  against a store it cannot interpret. As a worker this means you never
+  half-coordinate against an unreadable store: an incompatible host simply
+  refuses to start. There is no automatic cross-version data migration.
+- **Backup & restore.** After an operator restore (SQLite backup API or Postgres
+  `pg_dump`/`pg_restore`), the store returns to a consistent point and your
+  persisted state — sessions, work, leases, checkpoints, memory — comes back with
+  it. Re-run your recovery read (`work resume`, then `events list --after`)
+  before acting; treat a restore like any other restart.
+
 ## Authentication
 
 Local mode allows unauthenticated requests. On `ACP_REQUIRE_AUTH=true` hosts:
