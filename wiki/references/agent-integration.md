@@ -330,6 +330,30 @@ not depend on them.
 - **Leave handoff memory.** The next actor has no access to your conversation;
   `memory create --kind handoff` is how context crosses the boundary.
 
+## Operational contracts you can rely on
+
+The host makes three run-over-time guarantees that shape how you recover and
+coordinate. They are tested, not aspirational — see
+[[operational-contracts]] and the README **Operations** section.
+
+- **Event retention & replay.** `seq` is monotonic and never reused, so
+  `events list --after <seq>` is a stable recovery cursor. Old events may be
+  pruned (delete-based, on the host's `ACP_EVENT_RETENTION_DAYS` window; no
+  compaction), but a cursor older than the prune horizon does **not** error — it
+  resumes at the oldest retained event, silently skipping what was pruned. A
+  workspace's newest event is never pruned, so a high-water cursor stays valid.
+  Pruned events are gone for good; do not rely on unbounded history.
+- **Protocol-version guard.** The host stamps its store's protocol version once
+  and **fails closed** on boot if that stamp is unsupported — it will not serve
+  against a store it cannot interpret. A worker therefore never half-coordinates
+  against an unreadable store: an incompatible host simply refuses to start.
+  There is no automatic cross-version data migration.
+- **Backup & restore.** After an operator restore (SQLite backup API or Postgres
+  `pg_dump`/`pg_restore`), the store returns to a consistent point and persisted
+  state — sessions, work, leases, checkpoints, memory — comes back with it. Treat
+  a restore like any other restart: re-run the recovery read (`work resume`, then
+  `events list --after`) before acting.
+
 ## Authentication
 
 Local mode allows unauthenticated requests. On `ACP_REQUIRE_AUTH=true` hosts:

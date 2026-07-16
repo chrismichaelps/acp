@@ -539,7 +539,9 @@ notifications across replicas while replay stays backed by durable storage.
 Three contracts govern running a store safely over time; they are tested, not
 just documented — see the
 [operational contracts](wiki/references/operational-contracts.md) reference and
-[ADR-0020](wiki/decisions/ADR-0020-operational-contracts.md).
+[ADR-0020](wiki/decisions/ADR-0020-operational-contracts.md). Workers see the
+agent-facing side of these guarantees (replay cursor, fail-closed boot, restore
+recovery) in [`ACP-SKILL.md`](ACP-SKILL.md).
 
 - **Event retention & replay** — the background sweeper prunes events older than
   `ACP_EVENT_RETENTION_DAYS` (delete-based, no compaction; `<= 0` disables it).
