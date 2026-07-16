@@ -12,6 +12,7 @@ import {
   makeCli,
   waitForReady,
 } from './acp-docker-self-support.mjs'
+import { runBackupScenario } from './acp-docker-self-backup-scenario.mjs'
 import { runFeatureScenario } from './acp-docker-self-scenario.mjs'
 import {
   proveAuth,
@@ -653,6 +654,7 @@ const runDockerSelfScenario = async () => {
 
     const reuseImage = { ACP_DOCKER_SKIP_BUILD: 'true' }
     await runRecoveryQuickstart({ skipBuild: true })
+    await runBackupScenario({ skipBuild: true })
     await runVisible('node', ['scripts/acp-docker-ha-dogfood.mjs'], reuseImage)
     await runVisible('node', ['scripts/acp-docker-edge-smoke.mjs'], reuseImage)
 
@@ -688,6 +690,7 @@ const runDockerSelfScenario = async () => {
           ],
           ha: true,
           edge: true,
+          backup: true,
           external_gaps: [
             'gh import/sync/merge require an authenticated external repository and merge authority',
           ],
