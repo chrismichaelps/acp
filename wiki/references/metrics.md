@@ -75,4 +75,4 @@ Histograms expand into the usual cumulative `_bucket{le=...}`, `_sum`, and
 
 ## Referenced by
 
-[[00-INDEX]] · [[operational-contracts]]
+[[00-INDEX]] · [[operational-contracts]] · [[ADR-0019-metrics-scrape-endpoint]]

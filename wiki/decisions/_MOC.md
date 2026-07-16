@@ -57,6 +57,10 @@ tags: [moc, adr]
 - [[ADR-0018-recovery-review-quickstart]] — ACCEPTED — expose a deterministic
   production-image quickstart that proves HTTP lease collision, SQLite-backed
   mid-work restart recovery, cursor-tail replay, and review-gated completion.
+- [[ADR-0019-metrics-scrape-endpoint]] — ACCEPTED — project existing RPC, HTTP,
+  and sweeper telemetry as a Prometheus scrape at `GET /metrics`, off by default
+  and token-gated via `ACP_METRICS_TOKEN`, with a deliberately additive series
+  contract.
 
 ## Referenced by
 
