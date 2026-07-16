@@ -58,6 +58,7 @@ const configLayer = (value: unknown) =>
     requireWorkspaceBindings: true,
     sessionIssuer: 'static' as const,
     sessionIssuancePolicy: Option.some(JSON.stringify(value)),
+    metricsToken: Option.none(),
   })
 
 const issuerLayer = (value: unknown, storage = InMemoryStorageLive) =>

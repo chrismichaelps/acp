@@ -50,6 +50,7 @@ const StaticConfigLive = Layer.succeed(AppConfigTag, {
   requireWorkspaceBindings: true,
   sessionIssuer: 'static' as const,
   sessionIssuancePolicy: Option.some(issuancePolicy),
+  metricsToken: Option.none(),
 })
 
 const StaticIssuerLive = SessionIssuerLive.pipe(

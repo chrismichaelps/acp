@@ -1,6 +1,7 @@
 /** @Acp.Infra.Rpc.TelemetryMiddleware — native RPC structured completion logs */
 import { RpcMiddleware } from '@effect/rpc'
 import { Cause, Clock, Effect, Exit, Layer, Option } from 'effect'
+import { recordRpcCompletion } from '../metrics/index.js'
 
 const protocolErrorCode = (error: unknown): string | undefined => {
   if (typeof error !== 'object' || error === null || !('error' in error)) {
@@ -46,17 +47,26 @@ export const AcpRpcTelemetryMiddlewareLive = Layer.succeed(
         Effect.onExit((exit) =>
           Effect.gen(function* () {
             const finishedAt = yield* Clock.currentTimeMillis
+            const errors = errorAnnotations(exit)
             const annotations = {
               rpc_client_id: options.clientId,
               rpc_operation: options.rpc._tag,
               rpc_outcome: Exit.isSuccess(exit) ? 'success' : 'failure',
               duration_ms: finishedAt - startedAt,
-              ...errorAnnotations(exit),
+              ...errors,
             }
             const log = Exit.isSuccess(exit)
               ? Effect.logInfo('rpc request completed')
               : Effect.logWarning('rpc request completed')
             yield* log.pipe(Effect.annotateLogs(annotations))
+            // Mirror the same completion into the metrics registry so /metrics
+            // exposes what the log line records.
+            yield* recordRpcCompletion({
+              operation: options.rpc._tag,
+              outcome: Exit.isSuccess(exit) ? 'success' : 'failure',
+              durationMs: finishedAt - startedAt,
+              errorCode: errors.error_code,
+            })
           }),
         ),
       )

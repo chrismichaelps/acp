@@ -434,7 +434,6 @@ describe('acpRouter', () => {
     ).toBe('forbidden')
   })
 })
-
 // requireAuth overrides AppLive's config (rightmost merge wins) so authorize sees it.
 const requireAuthConfig = Layer.succeed(AppConfigTag, {
   profile: 'local' as const,
@@ -454,6 +453,7 @@ const requireAuthConfig = Layer.succeed(AppConfigTag, {
   requireWorkspaceBindings: false,
   sessionIssuer: 'trusted-client' as const,
   sessionIssuancePolicy: Option.none(),
+  metricsToken: Option.none(),
 })
 
 describe('acpRouter with ACP_REQUIRE_AUTH', () => {

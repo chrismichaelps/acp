@@ -37,6 +37,7 @@ const TestConfigLive = Layer.succeed(AppConfigTag, {
   requireWorkspaceBindings: false,
   sessionIssuer: 'trusted-client' as const,
   sessionIssuancePolicy: Option.none(),
+  metricsToken: Option.none(),
 })
 
 const StorageAndEventsLive = Layer.provideMerge(

@@ -2,6 +2,20 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-07-15 · Prometheus scrape endpoint · projected the RPC, HTTP, and
+  retention-sweeper telemetry ACP already collects as Prometheus text at
+  `GET /metrics`, rendered straight from the Effect metric registry snapshot with
+  no client-library dependency; the endpoint is off by default and
+  `ACP_METRICS_TOKEN` both enables it and gates it behind a static scrape bearer
+  (unset → `404`, wrong/missing token → `401`), sitting outside the `/v1`
+  session-scope model; the exposed series (RPC request/error counters and
+  duration histogram, HTTP request counter and duration histogram, sweeper
+  eviction/prune counters, `acp_build_info` gauge) are a deliberately additive
+  scrape contract in seconds · validation: Prometheus renderer, route auth-posture,
+  and `.env.example` completeness tests plus the full typecheck/lint/format/suite
+  gate; README observability and [[metrics]] reference · issue #330 · risk MEDIUM
+  · [[ADR-0019-metrics-scrape-endpoint]] · [[metrics]]
+
 - 2026-07-15 · trusted hosted session issuance design · accepted
   [[ADR-0015-trusted-session-issuance]] and [[SessionIssuance]] before code:
   local trusted-client compatibility plus static digest-verified service
