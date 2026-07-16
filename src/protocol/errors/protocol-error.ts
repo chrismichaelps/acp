@@ -47,6 +47,13 @@ export class StorageError extends Data.TaggedError('StorageError')<{
   readonly cause: string
 }> {}
 
+export class IncompatibleStoreVersionError extends Data.TaggedError(
+  'IncompatibleStoreVersionError',
+)<{
+  readonly stored: string
+  readonly supported: readonly string[]
+}> {}
+
 export type DomainError =
   | ValidationError
   | NotFoundError
