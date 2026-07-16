@@ -2,10 +2,14 @@
 import { HttpLayerRouter } from '@effect/platform'
 import type { HttpServer as HttpServerType } from '@effect/platform'
 import { Layer } from 'effect'
-import type { StorageError } from '../../protocol/errors/protocol-error.js'
+import type {
+  IncompatibleStoreVersionError,
+  StorageError,
+} from '../../protocol/errors/protocol-error.js'
 import { AppLive } from '../index.js'
 import { IdClockLive } from './identity.js'
 import { AcpHttpRoutesLive } from './native-rpc-route.js'
+import { StoreVersionGuardLive } from './store-version-guard.js'
 import { SweeperLive } from './sweeper.js'
 import { SweeperLeadershipLive } from './sweeper-leadership.js'
 
@@ -22,14 +26,17 @@ import { SweeperLeadershipLive } from './sweeper-leadership.js'
  * composition without running a server on import.
  */
 const AppRuntimeLive = Layer.mergeAll(AppLive, IdClockLive)
+// The store-version guard runs as the runtime is built, before any transport
+// binds, so an incompatible store fails the boot closed rather than serving
+// against data it cannot interpret.
 const ServerRuntimeLive = Layer.provideMerge(
-  SweeperLeadershipLive,
+  Layer.mergeAll(SweeperLeadershipLive, StoreVersionGuardLive),
   AppRuntimeLive,
 )
 
 export const HttpAppLive: Layer.Layer<
   never,
-  StorageError,
+  StorageError | IncompatibleStoreVersionError,
   HttpServerType.HttpServer
 > = Layer.mergeAll(
   HttpLayerRouter.serve(AcpHttpRoutesLive, { disableLogger: true }),
