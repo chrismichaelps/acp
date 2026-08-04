@@ -65,6 +65,22 @@ tags: [moc, adr]
   with a stable-seq replay guarantee, a `kv`/`store_meta` protocol-version boot
   guard that fails closed on an unsupported stamp with no auto-migration, and a
   documented+tested SQLite backup-API / Postgres `pg_dump` restore runbook.
+- [[ADR-0021-work-unit-spawn-graph]] — PROPOSED — give work units immutable
+  creation-time parentage plus stored depth, derive edge openness from
+  `WorkState` instead of storing it, and block a parent from `needs_review` or
+  `completed` while any direct child is non-terminal.
+- [[ADR-0022-coordination-hooks]] — PROPOSED — add pre-mutation, in-process
+  hooks over a closed set of coordination points, dispatched sequentially with
+  first-abort-wins, mandatory reasons on denial, and fail-closed timeouts.
+- [[ADR-0023-resource-access-policy]] — PROPOSED — layer declarative,
+  per-resource allow/deny/require_review rules above the closed `Permission`
+  vocabulary, with mandatory justifications and rules that self-test at load.
+- [[ADR-0024-worker-identity-provenance]] — PROPOSED — give workers an Ed25519
+  keypair, a bill of materials, and a TTL'd registration, verifying signatures
+  on state-changing claims as provenance layered beside session authorization.
+- [[ADR-0025-event-tail-reads-persistence-metrics]] — PROPOSED — add a bounded
+  `readEventsTail` to the storage port and storage/CAS-retry metrics, and record
+  why codex's compaction and session-index designs are not adopted.
 
 ## Referenced by
 
