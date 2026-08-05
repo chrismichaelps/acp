@@ -24,6 +24,8 @@ const expectedVariables = new Set([
   'ACP_REQUIRE_AUTH',
   'ACP_REQUIRE_WORKSPACE_BINDINGS',
   'ACP_RPC_TOKEN',
+  'ACP_SANDBOX_ADAPTER',
+  'ACP_SANDBOX_IMAGE',
   'ACP_SESSION_ISSUER',
   'ACP_SESSION_ISSUANCE_POLICY',
   'ACP_SESSION_TTL',
@@ -31,6 +33,7 @@ const expectedVariables = new Set([
   'ACP_SSE_HEARTBEAT',
   'ACP_STORAGE_ADAPTER',
   'ACP_SWEEP_INTERVAL',
+  'ACP_WORKSPACE_ROOT',
 ])
 
 const entries = readFileSync('.env.example', 'utf8')

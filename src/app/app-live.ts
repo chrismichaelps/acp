@@ -11,6 +11,8 @@ import { MemoryServiceLive } from '../domain/memory/index.js'
 import { ReviewServiceLive } from '../domain/reviews/index.js'
 import { SessionServiceLive } from '../domain/sessions/index.js'
 import { PolicyHooksLive } from './policy-layer.js'
+import { SandboxProviderLive } from './sandbox-layer.js'
+import { SandboxServiceLive } from '../domain/sandbox/index.js'
 import { WorkUnitServiceLive } from '../domain/work-units/index.js'
 import { WorkerServiceLive } from '../domain/workers/index.js'
 import { WorkspaceServiceLive } from '../domain/workspaces/index.js'
@@ -19,6 +21,7 @@ import { StorageLive } from './storage-live.js'
 import { SessionIssuerLive } from '../infrastructure/auth/index.js'
 
 const HostHooksLive = Layer.provide(PolicyHooksLive, AppConfigLive)
+const SandboxAdapterLive = Layer.provide(SandboxProviderLive, AppConfigLive)
 
 const StorageProvidedLive = Layer.provide(StorageLive, AppConfigLive)
 const StorageAndConfigLive = Layer.merge(StorageProvidedLive, AppConfigLive)
@@ -75,6 +78,18 @@ const ReviewProvidedLive = Layer.provideMerge(
   Layer.merge(WorkUnitProvidedLive, HostHooksLive),
 )
 
+// The sandbox service needs work units, leases, the configured adapter, and
+// config; nothing provisions a sandbox unless an endpoint asks it to.
+const SandboxProvidedLive = Layer.provideMerge(
+  SandboxServiceLive,
+  Layer.mergeAll(
+    WorkUnitProvidedLive,
+    LeaseProvidedLive,
+    SandboxAdapterLive,
+    AppConfigLive,
+  ),
+)
+
 export const AppLive = Layer.mergeAll(
   AppConfigLive,
   StorageProvidedLive,
@@ -92,4 +107,5 @@ export const AppLive = Layer.mergeAll(
   GrillProvidedLive,
   MemoryProvidedLive,
   ReviewProvidedLive,
+  SandboxProvidedLive,
 )

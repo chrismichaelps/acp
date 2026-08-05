@@ -106,6 +106,24 @@ export const specV1Endpoints: readonly SpecEndpoint[] = [
   },
   {
     group: 'work',
+    name: 'startWorkSandbox',
+    method: 'POST',
+    path: '/v1/work/:work_id/sandbox',
+  },
+  {
+    group: 'work',
+    name: 'getWorkSandbox',
+    method: 'GET',
+    path: '/v1/work/:work_id/sandbox',
+  },
+  {
+    group: 'work',
+    name: 'stopWorkSandbox',
+    method: 'DELETE',
+    path: '/v1/work/:work_id/sandbox',
+  },
+  {
+    group: 'work',
     name: 'listWorkChildren',
     method: 'GET',
     path: '/v1/work/:work_id/children',

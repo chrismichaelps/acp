@@ -65,12 +65,14 @@ export class SandboxProvider extends Context.Tag('SandboxProvider')<
  * sandbox. A host that has not opted in behaves exactly as one built before
  * this feature existed.
  */
+export const noSandboxProvider: SandboxProviderApi = {
+  start: (spec) =>
+    Effect.succeed({ workId: spec.workId, status: 'absent' as const }),
+  inspect: (workId) => Effect.succeed({ workId, status: 'absent' as const }),
+  stop: () => Effect.void,
+}
+
 export const NoSandboxLive: Layer.Layer<SandboxProvider> = Layer.succeed(
   SandboxProvider,
-  {
-    start: (spec) =>
-      Effect.succeed({ workId: spec.workId, status: 'absent' as const }),
-    inspect: (workId) => Effect.succeed({ workId, status: 'absent' as const }),
-    stop: () => Effect.void,
-  },
+  noSandboxProvider,
 )
