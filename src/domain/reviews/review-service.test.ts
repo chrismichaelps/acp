@@ -18,6 +18,7 @@ import {
   WorkId,
 } from '../../protocol/schema/index.js'
 import { TestAppConfigLive } from '../../config/app-config-test-support.js'
+import { NoHooksLive } from '../hooks/index.js'
 import { ReviewService, ReviewServiceLive } from './index.js'
 import type { CreateWorkInput } from '../work-units/index.js'
 import type { Event } from '../../protocol/schema/index.js'
@@ -28,7 +29,10 @@ const StorageAndEventsLive = Layer.provideMerge(
 )
 const WorkLive = Layer.provideMerge(
   WorkUnitServiceLive,
-  Layer.merge(StorageAndEventsLive, TestAppConfigLive()),
+  Layer.merge(
+    StorageAndEventsLive,
+    Layer.merge(TestAppConfigLive(), NoHooksLive),
+  ),
 )
 const TestLive = Layer.provideMerge(ReviewServiceLive, WorkLive)
 

@@ -1,6 +1,7 @@
 /** @Acp.Domain.WorkUnits.SpawnGraph.TestSupport — harness for spawn graph tests */
 import { Cause, Effect, Exit, Layer, Option, Schema } from 'effect'
 import { TestAppConfigLive } from '../../config/app-config-test-support.js'
+import { NoHooksLive } from '../hooks/index.js'
 import type { EventStore } from '../events/index.js'
 import { EventStoreLive, InProcessEventBrokerLive } from '../events/index.js'
 import { InMemoryStorageLive } from '../../infrastructure/storage/index.js'
@@ -32,7 +33,7 @@ const layerWithDepth = (maxWorkDepth: number) =>
         EventStoreLive,
         Layer.merge(InMemoryStorageLive, InProcessEventBrokerLive),
       ),
-      TestAppConfigLive({ maxWorkDepth }),
+      Layer.merge(TestAppConfigLive({ maxWorkDepth }), NoHooksLive),
     ),
   )
 

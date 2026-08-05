@@ -294,6 +294,7 @@ Failures are `{"error":{"code":...,"message":...}}`.
 | `invalid_state_transition` | 409  | Illegal work-state jump.        | Re-read `work get`; take only legal transitions.   |
 | `unauthorized`             | 401  | Missing/invalid credentials.    | Bootstrap or refresh your session token.           |
 | `forbidden`                | 403  | Token lacks the scope.          | Get a session with the needed permission.          |
+| `forbidden`                | 403  | A hook refused the mutation.    | Read the reason; the refusal is deliberate policy. |
 | `not_found`                | 404  | Missing or foreign hidden id.   | Re-list inside your binding; do not probe.         |
 | `conflict`                 | 409  | Parent has unfinished children. | Finish or cancel the listed `blocking_children`.   |
 | `invalid_request`          | 400  | Malformed body, or depth cap.   | Fix the request; do not retry unchanged.           |

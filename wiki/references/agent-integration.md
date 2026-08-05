@@ -343,6 +343,7 @@ Every command prints JSON; failures are `{"error":{"code":...,"message":...}}`.
 | `invalid_state_transition` | 409  | Illegal work-state jump.        | Re-read `work get`; only take legal transitions.    |
 | `unauthorized`             | 401  | Missing/invalid credentials.    | Bootstrap or refresh the session token.             |
 | `forbidden`                | 403  | Valid token lacks the scope.    | Request a session with the needed permission.       |
+| `forbidden`                | 403  | A hook refused the mutation.    | Read the reason; the refusal is deliberate policy.  |
 | `not_found`                | 404  | Missing or foreign hidden id.   | Re-list in your bound workspace; do not probe.      |
 | `conflict`                 | 409  | Parent has unfinished children. | Finish or cancel the listed `blocking_children`.    |
 | `invalid_request`          | 400  | Malformed body, or depth cap.   | Fix the request; do not retry it unchanged.         |

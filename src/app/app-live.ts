@@ -10,6 +10,7 @@ import { ReviewCommentServiceLive } from '../domain/review-comments/index.js'
 import { MemoryServiceLive } from '../domain/memory/index.js'
 import { ReviewServiceLive } from '../domain/reviews/index.js'
 import { SessionServiceLive } from '../domain/sessions/index.js'
+import { NoHooksLive } from '../domain/hooks/index.js'
 import { WorkUnitServiceLive } from '../domain/work-units/index.js'
 import { WorkerServiceLive } from '../domain/workers/index.js'
 import { WorkspaceServiceLive } from '../domain/workspaces/index.js'
@@ -32,9 +33,11 @@ const SessionIssuerProvidedLive = Layer.provideMerge(
   StorageAndConfigLive,
 )
 
+// Hooks default to an empty set, so a host that has not registered any behaves
+// exactly as one built before hooks existed — see [[ADR-0022-coordination-hooks]].
 const WorkUnitProvidedLive = Layer.provideMerge(
   WorkUnitServiceLive,
-  EventStoreProvidedLive,
+  Layer.merge(EventStoreProvidedLive, NoHooksLive),
 )
 const WorkspaceProvidedLive = Layer.provideMerge(
   WorkspaceServiceLive,
@@ -46,7 +49,7 @@ const ArtifactProvidedLive = Layer.provideMerge(
 )
 const LeaseProvidedLive = Layer.provideMerge(
   LeaseServiceLive,
-  Layer.merge(EventStoreProvidedLive, StorageAndConfigLive),
+  Layer.mergeAll(EventStoreProvidedLive, StorageAndConfigLive, NoHooksLive),
 )
 const CheckpointProvidedLive = Layer.provideMerge(
   CheckpointServiceLive,
@@ -66,7 +69,7 @@ const MemoryProvidedLive = Layer.provideMerge(
 )
 const ReviewProvidedLive = Layer.provideMerge(
   ReviewServiceLive,
-  WorkUnitProvidedLive,
+  Layer.merge(WorkUnitProvidedLive, NoHooksLive),
 )
 
 export const AppLive = Layer.mergeAll(

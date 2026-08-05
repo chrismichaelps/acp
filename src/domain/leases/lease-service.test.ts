@@ -16,6 +16,7 @@ import {
   WorkerId,
   WorkspaceId,
 } from '../../protocol/schema/index.js'
+import { NoHooksLive } from '../hooks/index.js'
 import { LeaseService, LeaseServiceLive } from './index.js'
 import type { Event } from '../../protocol/schema/index.js'
 
@@ -49,7 +50,10 @@ const LeaseDependenciesLive = Layer.provideMerge(
   StorageAndEventsLive,
   TestConfigLive,
 )
-const TestLive = Layer.provideMerge(LeaseServiceLive, LeaseDependenciesLive)
+const TestLive = Layer.provideMerge(
+  LeaseServiceLive,
+  Layer.merge(LeaseDependenciesLive, NoHooksLive),
+)
 
 const runSync = <A, E>(
   program: Effect.Effect<A, E, LeaseService | EventStore>,

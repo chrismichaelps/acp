@@ -62,6 +62,17 @@ export class IncompleteChildrenError extends Data.TaggedError(
   readonly blockingChildCount: number
 }> {}
 
+/**
+ * A coordination hook refused the mutation — see [[ADR-0022-coordination-hooks]].
+ * Maps to 403: the request was well-formed and the session was authorized, but
+ * policy declined it, which is distinct from a 409 meaning "retry later".
+ */
+export class HookDeniedError extends Data.TaggedError('HookDeniedError')<{
+  readonly point: string
+  readonly hookName: string
+  readonly reason: string
+}> {}
+
 /** Spawning this work unit would exceed the configured spawn-graph depth cap. */
 export class DepthLimitExceededError extends Data.TaggedError(
   'DepthLimitExceededError',
@@ -89,6 +100,7 @@ export type DomainError =
   | UnsupportedCapabilityError
   | IncompleteChildrenError
   | DepthLimitExceededError
+  | HookDeniedError
   | StorageError
 
 export interface ProtocolErrorResponse {
@@ -188,6 +200,17 @@ export const toProtocolError = (e: DomainError): ProtocolErrorResponse => {
               blocking_children: e.blockingChildren,
               blocking_child_count: e.blockingChildCount,
             },
+          ),
+        },
+      }
+    case 'HookDeniedError':
+      return {
+        httpStatus: 403,
+        body: {
+          error: envelope(
+            'forbidden',
+            `Refused by hook "${e.hookName}": ${e.reason}`,
+            { point: e.point, hook: e.hookName, reason: e.reason },
           ),
         },
       }

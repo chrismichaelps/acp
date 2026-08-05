@@ -60,6 +60,12 @@ const sweepLeasesExpiredTotal = Metric.counter(
   },
 )
 
+const hookOutcomesTotal = Metric.counter('acp_hook_outcomes_total', {
+  description:
+    'Coordination hook verdicts, by hook point, hook name, and outcome.',
+  incremental: true,
+})
+
 const buildInfo = Metric.gauge('acp_build_info', {
   description:
     'Build and protocol identity. Always 1; read the labels, not the value.',
@@ -98,6 +104,26 @@ export const recordRpcCompletion = (input: {
       )
     }
   })
+
+/**
+ * Record one coordination hook verdict. Labels are bounded — a closed set of
+ * points, host-assembly hook names, and three outcomes — so cardinality cannot
+ * grow with workload. A wedged fail-closed gate shows up here immediately,
+ * rather than being diagnosed from agent retry storms.
+ */
+export const recordHookOutcome = (input: {
+  readonly point: string
+  readonly hook: string
+  readonly outcome: string
+}): Effect.Effect<void> =>
+  Metric.update(
+    hookOutcomesTotal.pipe(
+      Metric.tagged('point', input.point),
+      Metric.tagged('hook', input.hook),
+      Metric.tagged('outcome', input.outcome),
+    ),
+    1,
+  )
 
 /** Record one HTTP boundary completion. Called from `respond`. */
 export const recordHttpCompletion = (input: {

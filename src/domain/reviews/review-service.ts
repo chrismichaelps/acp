@@ -1,9 +1,13 @@
 /** @Acp.Domain.Reviews.Service — human-in-the-loop review gate */
 import { Chunk, Context, Effect, Layer, Option, Schema } from 'effect'
 import { EventStore } from '../events/index.js'
+import { HookDispatcher } from '../hooks/index.js'
 import { WorkUnitService } from '../work-units/index.js'
 import { Storage } from '../../infrastructure/storage/index.js'
-import type { IncompleteChildrenError } from '../../protocol/errors/protocol-error.js'
+import type {
+  HookDeniedError,
+  IncompleteChildrenError,
+} from '../../protocol/errors/protocol-error.js'
 import {
   InvalidStateTransitionError,
   NotFoundError,
@@ -38,6 +42,7 @@ export type ReviewVerdictError =
   | NotFoundError
   | InvalidStateTransitionError
   | IncompleteChildrenError
+  | HookDeniedError
   | StorageError
 
 export type ReviewServiceError = ValidationError | ReviewVerdictError
@@ -116,6 +121,7 @@ const make = Effect.gen(function* () {
   const storage = yield* Storage
   const events = yield* EventStore
   const workUnits = yield* WorkUnitService
+  const hooks = yield* HookDispatcher
 
   const encodeReview = (review: Review) =>
     Schema.encode(Review)(review).pipe(
@@ -293,6 +299,15 @@ const make = Effect.gen(function* () {
       }
 
       const work = yield* requireWork(review.work_id)
+
+      yield* hooks.dispatch('review.before_verdict', {
+        point: 'review.before_verdict',
+        workspaceId: work.workspace_id,
+        actor,
+        subjectId: review.id,
+        detail: { verdict: to, work_id: review.work_id },
+      })
+
       const next: Review = { ...review, state: to }
       yield* save(next)
       yield* appendReviewEvent(
@@ -407,5 +422,5 @@ const make = Effect.gen(function* () {
 export const ReviewServiceLive: Layer.Layer<
   ReviewService,
   never,
-  Storage | EventStore | WorkUnitService
+  Storage | EventStore | WorkUnitService | HookDispatcher
 > = Layer.effect(ReviewService, make)

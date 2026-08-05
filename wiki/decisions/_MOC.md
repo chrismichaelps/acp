@@ -69,7 +69,7 @@ tags: [moc, adr]
   creation-time parentage plus stored depth, derive edge openness from
   `WorkState` instead of storing it, and block a parent from `needs_review` or
   `completed` while any direct child is non-terminal.
-- [[ADR-0022-coordination-hooks]] — PROPOSED — add pre-mutation, in-process
+- [[ADR-0022-coordination-hooks]] — ACCEPTED — add pre-mutation, in-process
   hooks over a closed set of coordination points, dispatched sequentially with
   first-abort-wins, mandatory reasons on denial, and fail-closed timeouts.
 - [[ADR-0023-resource-access-policy]] — PROPOSED — layer declarative,

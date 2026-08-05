@@ -1,8 +1,8 @@
 ---
 type: decision
-status: PROPOSED
+status: ACCEPTED
 date: 2026-08-04
-tags: [adr, proposed, hooks, gates, extensibility, transitions]
+tags: [adr, accepted, hooks, gates, extensibility, transitions]
 aliases: [ADR-0022, coordination-hooks]
 ---
 
@@ -10,7 +10,20 @@ aliases: [ADR-0022, coordination-hooks]
 
 ## Status
 
-PROPOSED.
+ACCEPTED — implemented.
+
+Delivered: `HookPoint`, `HookOutcome`, and `Hook` in `src/domain/hooks/`;
+`makeHookDispatcher` with sequential name-ordered dispatch, first-abort-wins,
+and fail-closed per-hook timeouts; `HookDeniedError` mapped to HTTP 403
+`forbidden`; the `acp_hook_outcomes_total` counter; and all four points wired —
+`work.before_claim` and `work.before_transition` in the work unit service,
+`lease.before_grant` in the lease service, `review.before_verdict` in the review
+service. `NoHooksLive` is the default in `AppLive`, so a host that registers
+nothing behaves exactly as before.
+
+Hooks are registered at host assembly by editing the layer, as this ADR
+specifies. There is deliberately no configuration file or runtime registration
+API — that would be the external-hook surface this ADR defers.
 
 ## Context
 

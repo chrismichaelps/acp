@@ -41,6 +41,7 @@ const domainTagRecord: Record<DomainError['_tag'], true> = {
   LeaseConflictError: true,
   InvalidStateTransitionError: true,
   IncompleteChildrenError: true,
+  HookDeniedError: true,
   DepthLimitExceededError: true,
   UnauthorizedError: true,
   ForbiddenError: true,

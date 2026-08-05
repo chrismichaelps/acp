@@ -1,6 +1,7 @@
 /** @Acp.Domain.WorkUnits.Service — WorkUnit persistence + state machine */
 import { Chunk, Context, Effect, Layer, Option, Schema } from 'effect'
 import { AppConfigTag } from '../../config/app-config.js'
+import { HookDispatcher } from '../hooks/index.js'
 import {
   allowedTransitions,
   childGatedTargets,
@@ -12,6 +13,7 @@ import { EventStore } from '../events/index.js'
 import { Storage } from '../../infrastructure/storage/index.js'
 import type {
   DepthLimitExceededError,
+  HookDeniedError,
   IncompleteChildrenError,
   ValidationError,
 } from '../../protocol/errors/protocol-error.js'
@@ -50,12 +52,14 @@ export type WorkUnitClaimError =
   | NotFoundError
   | ClaimConflictError
   | InvalidStateTransitionError
+  | HookDeniedError
   | StorageError
 
 export type WorkUnitTransitionError =
   | NotFoundError
   | InvalidStateTransitionError
   | IncompleteChildrenError
+  | HookDeniedError
   | StorageError
 
 export interface WorkUnitServiceApi {
@@ -118,6 +122,7 @@ const make = Effect.gen(function* () {
   const storage = yield* Storage
   const events = yield* EventStore
   const config = yield* AppConfigTag
+  const hooks = yield* HookDispatcher
 
   const encodeWork = (work: WorkUnit) =>
     Schema.encode(WorkUnit)(work).pipe(
@@ -283,6 +288,14 @@ const make = Effect.gen(function* () {
         yield* graph.assertChildrenComplete(work.id, to)
       }
 
+      yield* hooks.dispatch('work.before_transition', {
+        point: 'work.before_transition',
+        workspaceId: work.workspace_id,
+        actor,
+        subjectId: work.id,
+        detail: { from: work.state, to },
+      })
+
       const next: WorkUnit = {
         ...work,
         state: to,
@@ -321,6 +334,14 @@ const make = Effect.gen(function* () {
           }),
         )
       }
+
+      yield* hooks.dispatch('work.before_claim', {
+        point: 'work.before_claim',
+        workspaceId: work.workspace_id,
+        actor: workerId,
+        subjectId: work.id,
+        detail: { from: work.state },
+      })
 
       const next: WorkUnit = {
         ...work,
@@ -387,5 +408,5 @@ const make = Effect.gen(function* () {
 export const WorkUnitServiceLive: Layer.Layer<
   WorkUnitService,
   never,
-  Storage | EventStore | AppConfigTag
+  Storage | EventStore | AppConfigTag | HookDispatcher
 > = Layer.effect(WorkUnitService, make)
