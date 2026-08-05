@@ -65,7 +65,7 @@ tags: [moc, adr]
   with a stable-seq replay guarantee, a `kv`/`store_meta` protocol-version boot
   guard that fails closed on an unsupported stamp with no auto-migration, and a
   documented+tested SQLite backup-API / Postgres `pg_dump` restore runbook.
-- [[ADR-0021-work-unit-spawn-graph]] — PROPOSED — give work units immutable
+- [[ADR-0021-work-unit-spawn-graph]] — ACCEPTED — give work units immutable
   creation-time parentage plus stored depth, derive edge openness from
   `WorkState` instead of storing it, and block a parent from `needs_review` or
   `completed` while any direct child is non-terminal.

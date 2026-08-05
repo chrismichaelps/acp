@@ -1,7 +1,20 @@
 /** @Acp.Domain.WorkUnits.Service — WorkUnit persistence + state machine */
 import { Chunk, Context, Effect, Layer, Option, Schema } from 'effect'
+import { AppConfigTag } from '../../config/app-config.js'
+import {
+  allowedTransitions,
+  childGatedTargets,
+  eventTypeForTransition,
+} from './work-unit-states.js'
+import { makeSpawnGraph } from './work-unit-spawn-graph.js'
+import type { ListDescendantsOptions } from './work-unit-spawn-graph.js'
 import { EventStore } from '../events/index.js'
 import { Storage } from '../../infrastructure/storage/index.js'
+import type {
+  DepthLimitExceededError,
+  IncompleteChildrenError,
+  ValidationError,
+} from '../../protocol/errors/protocol-error.js'
 import {
   ClaimConflictError,
   InvalidStateTransitionError,
@@ -26,6 +39,13 @@ export interface CreateWorkInput {
   readonly now: Timestamp
 }
 
+export type WorkUnitCreateError =
+  | NotFoundError
+  | ValidationError
+  | InvalidStateTransitionError
+  | DepthLimitExceededError
+  | StorageError
+
 export type WorkUnitClaimError =
   | NotFoundError
   | ClaimConflictError
@@ -33,12 +53,15 @@ export type WorkUnitClaimError =
   | StorageError
 
 export type WorkUnitTransitionError =
-  NotFoundError | InvalidStateTransitionError | StorageError
+  | NotFoundError
+  | InvalidStateTransitionError
+  | IncompleteChildrenError
+  | StorageError
 
 export interface WorkUnitServiceApi {
   readonly create: (
     input: CreateWorkInput,
-  ) => Effect.Effect<WorkUnit, StorageError>
+  ) => Effect.Effect<WorkUnit, WorkUnitCreateError>
   readonly get: (
     workId: WorkId,
   ) => Effect.Effect<Option.Option<WorkUnit>, StorageError>
@@ -62,6 +85,15 @@ export interface WorkUnitServiceApi {
     actor: WorkerId,
     now: Timestamp,
   ) => Effect.Effect<WorkUnit, WorkUnitTransitionError>
+  /** Direct children of `workId`, ordered by id. */
+  readonly listChildren: (
+    workId: WorkId,
+  ) => Effect.Effect<readonly WorkUnit[], StorageError>
+  /** Descendants breadth-first, ordered by `(depth, id)`. */
+  readonly listDescendants: (
+    workId: WorkId,
+    opts?: ListDescendantsOptions,
+  ) => Effect.Effect<readonly WorkUnit[], StorageError>
 }
 
 export class WorkUnitService extends Context.Tag('WorkUnitService')<
@@ -70,49 +102,6 @@ export class WorkUnitService extends Context.Tag('WorkUnitService')<
 >() {}
 
 const collection = 'work'
-
-const allowedTransitions: Record<WorkState, ReadonlySet<WorkState>> = {
-  open: new Set(['claimed', 'cancelled']),
-  claimed: new Set(['running', 'cancelled']),
-  running: new Set(['blocked', 'needs_review', 'cancelled']),
-  blocked: new Set(['running']),
-  needs_review: new Set([
-    'running',
-    'approved',
-    'rejected',
-    'changes_requested',
-  ]),
-  changes_requested: new Set(['running']),
-  approved: new Set(['completed']),
-  rejected: new Set(),
-  completed: new Set(),
-  cancelled: new Set(),
-}
-
-const eventTypeForTransition = (from: WorkState, to: WorkState): EventType => {
-  switch (to) {
-    case 'claimed':
-      return 'work.claimed'
-    case 'running':
-      return from === 'claimed' ? 'work.started' : 'work.unblocked'
-    case 'blocked':
-      return 'work.blocked'
-    case 'needs_review':
-      return 'work.needs_review'
-    case 'changes_requested':
-      return 'review.changes_requested'
-    case 'approved':
-      return 'review.approved'
-    case 'rejected':
-      return 'review.rejected'
-    case 'completed':
-      return 'work.completed'
-    case 'cancelled':
-      return 'work.cancelled'
-    case 'open':
-      return 'work.created'
-  }
-}
 
 const decodeStoredWork = (value: unknown) =>
   Schema.decodeUnknown(WorkUnit)(value).pipe(
@@ -128,6 +117,7 @@ const decodeStoredWork = (value: unknown) =>
 const make = Effect.gen(function* () {
   const storage = yield* Storage
   const events = yield* EventStore
+  const config = yield* AppConfigTag
 
   const encodeWork = (work: WorkUnit) =>
     Schema.encode(WorkUnit)(work).pipe(
@@ -150,6 +140,7 @@ const make = Effect.gen(function* () {
     actor: WorkerId,
     timestamp: Timestamp,
     type: EventType,
+    extra: Record<string, unknown> = {},
   ) =>
     Effect.flatMap(
       Schema.decodeUnknown(Event)({
@@ -160,7 +151,7 @@ const make = Effect.gen(function* () {
         actor,
         timestamp,
         seq: 0,
-        data: { work_id: work.id, state: work.state },
+        data: { work_id: work.id, state: work.state, ...extra },
       }).pipe(
         Effect.mapError(
           (error) =>
@@ -210,6 +201,14 @@ const make = Effect.gen(function* () {
       }),
     )
 
+  const graph = makeSpawnGraph({
+    storage,
+    collection,
+    maxWorkDepth: config.maxWorkDepth,
+    decodeStoredWork,
+    requireWork,
+  })
+
   interface VersionedWork {
     readonly work: WorkUnit
     readonly version: number
@@ -236,26 +235,34 @@ const make = Effect.gen(function* () {
       }),
     )
 
-  const create: WorkUnitServiceApi['create'] = (input) => {
-    const work: WorkUnit = {
-      id: input.id,
-      workspace_id: input.payload.workspace_id,
-      title: input.payload.title,
-      description: input.payload.description,
-      state: 'open',
-      priority: Option.getOrElse(input.payload.priority, () => 'normal'),
-      created_by: input.createdBy,
-      assigned_to: Option.none(),
-      created_at: input.now,
-      updated_at: input.now,
-    }
+  const create: WorkUnitServiceApi['create'] = (input) =>
+    Effect.gen(function* () {
+      const depth = yield* graph.resolveDepth(
+        input.payload.parent_id,
+        input.payload.workspace_id,
+      )
+      const work: WorkUnit = {
+        id: input.id,
+        workspace_id: input.payload.workspace_id,
+        title: input.payload.title,
+        description: input.payload.description,
+        state: 'open',
+        priority: Option.getOrElse(input.payload.priority, () => 'normal'),
+        created_by: input.createdBy,
+        assigned_to: Option.none(),
+        parent_id: input.payload.parent_id,
+        depth,
+        created_at: input.now,
+        updated_at: input.now,
+      }
 
-    return Effect.gen(function* () {
       yield* save(work)
-      yield* appendWorkEvent(work, input.createdBy, input.now, 'work.created')
+      yield* appendWorkEvent(work, input.createdBy, input.now, 'work.created', {
+        parent_id: Option.getOrNull(work.parent_id),
+        depth,
+      })
       return work
     })
-  }
 
   const transitionWork = (
     work: WorkUnit,
@@ -270,6 +277,10 @@ const make = Effect.gen(function* () {
         return yield* Effect.fail(
           new InvalidStateTransitionError({ from: work.state, to }),
         )
+      }
+
+      if (childGatedTargets.has(to)) {
+        yield* graph.assertChildrenComplete(work.id, to)
       }
 
       const next: WorkUnit = {
@@ -368,11 +379,13 @@ const make = Effect.gen(function* () {
     claim,
     transition,
     transitionSilently,
+    listChildren: graph.listChildren,
+    listDescendants: graph.listDescendants,
   } satisfies WorkUnitServiceApi
 })
 
 export const WorkUnitServiceLive: Layer.Layer<
   WorkUnitService,
   never,
-  Storage | EventStore
+  Storage | EventStore | AppConfigTag
 > = Layer.effect(WorkUnitService, make)

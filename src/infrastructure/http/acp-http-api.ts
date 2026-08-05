@@ -58,6 +58,17 @@ export const WorkPath = Schema.Struct({
 })
 export type WorkPath = typeof WorkPath.Type
 
+/** Bounds on a spawn-graph descendant read; both default host-side when absent. */
+export const DescendantsQuery = Schema.Struct({
+  max_depth: Schema.optional(
+    Schema.NumberFromString.pipe(Schema.int(), Schema.positive()),
+  ),
+  limit: Schema.optional(
+    Schema.NumberFromString.pipe(Schema.int(), Schema.positive()),
+  ),
+})
+export type DescendantsQuery = typeof DescendantsQuery.Type
+
 export const LeasePath = Schema.Struct({
   lease_id: HttpApiSchema.param('lease_id', LeaseId),
 })
@@ -326,6 +337,22 @@ export const WorkGroup = HttpApiGroup.make('work')
       .setPayload(PublishWorkEventPayload)
       .addSuccess(Event, { status: 201 })
       .addError(ProtocolError, protocolError(400))
+      .addError(ProtocolError, protocolError(404)),
+  )
+  .add(
+    HttpApiEndpoint.get('listWorkChildren', '/v1/work/:work_id/children')
+      .setPath(WorkPath)
+      .addSuccess(Schema.Array(WorkUnit))
+      .addError(ProtocolError, protocolError(401))
+      .addError(ProtocolError, protocolError(404)),
+  )
+  .add(
+    HttpApiEndpoint.get('listWorkDescendants', '/v1/work/:work_id/descendants')
+      .setPath(WorkPath)
+      .setUrlParams(DescendantsQuery)
+      .addSuccess(Schema.Array(WorkUnit))
+      .addError(ProtocolError, protocolError(400))
+      .addError(ProtocolError, protocolError(401))
       .addError(ProtocolError, protocolError(404)),
   )
   .add(

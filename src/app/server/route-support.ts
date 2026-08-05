@@ -28,17 +28,27 @@ import type {
 
 const systemActor = 'worker_system' as WorkerId
 
-const domainTags = new Set<string>([
-  'ValidationError',
-  'NotFoundError',
-  'ClaimConflictError',
-  'LeaseConflictError',
-  'InvalidStateTransitionError',
-  'UnauthorizedError',
-  'ForbiddenError',
-  'UnsupportedCapabilityError',
-  'StorageError',
-])
+/**
+ * Every `DomainError` tag, as a record so TypeScript requires a member for each
+ * one. A plain `Set<string>` silently dropped new errors here — an unlisted tag
+ * is treated as a defect and surfaces as 500 instead of its mapped status — so
+ * the exhaustiveness is enforced by the key type rather than by review.
+ */
+const domainTagRecord: Record<DomainError['_tag'], true> = {
+  ValidationError: true,
+  NotFoundError: true,
+  ClaimConflictError: true,
+  LeaseConflictError: true,
+  InvalidStateTransitionError: true,
+  IncompleteChildrenError: true,
+  DepthLimitExceededError: true,
+  UnauthorizedError: true,
+  ForbiddenError: true,
+  UnsupportedCapabilityError: true,
+  StorageError: true,
+}
+
+const domainTags = new Set<string>(Object.keys(domainTagRecord))
 
 const bearerToken = Effect.map(HttpServerRequest.HttpServerRequest, (req) =>
   Option.match(Headers.get(req.headers, 'authorization'), {

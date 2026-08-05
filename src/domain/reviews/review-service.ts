@@ -3,6 +3,7 @@ import { Chunk, Context, Effect, Layer, Option, Schema } from 'effect'
 import { EventStore } from '../events/index.js'
 import { WorkUnitService } from '../work-units/index.js'
 import { Storage } from '../../infrastructure/storage/index.js'
+import type { IncompleteChildrenError } from '../../protocol/errors/protocol-error.js'
 import {
   InvalidStateTransitionError,
   NotFoundError,
@@ -28,16 +29,23 @@ export interface RequestReviewInput {
   readonly now: Timestamp
 }
 
-export type ReviewServiceError =
-  ValidationError | NotFoundError | InvalidStateTransitionError | StorageError
+/**
+ * Errors a review verdict can surface. `IncompleteChildrenError` reaches here
+ * because a verdict drives the underlying work unit's state machine, which is
+ * gated by the spawn graph — see [[ADR-0021-work-unit-spawn-graph]].
+ */
+export type ReviewVerdictError =
+  | NotFoundError
+  | InvalidStateTransitionError
+  | IncompleteChildrenError
+  | StorageError
+
+export type ReviewServiceError = ValidationError | ReviewVerdictError
 
 export interface ReviewServiceApi {
   readonly request: (
     input: RequestReviewInput,
-  ) => Effect.Effect<
-    Review,
-    NotFoundError | InvalidStateTransitionError | StorageError
-  >
+  ) => Effect.Effect<Review, ReviewVerdictError>
   readonly get: (
     reviewId: ReviewId,
   ) => Effect.Effect<Option.Option<Review>, StorageError>
@@ -58,26 +66,17 @@ export interface ReviewServiceApi {
     reviewId: ReviewId,
     actor: WorkerId,
     now: Timestamp,
-  ) => Effect.Effect<
-    Review,
-    NotFoundError | InvalidStateTransitionError | StorageError
-  >
+  ) => Effect.Effect<Review, ReviewVerdictError>
   readonly requestChanges: (
     reviewId: ReviewId,
     actor: WorkerId,
     now: Timestamp,
-  ) => Effect.Effect<
-    Review,
-    NotFoundError | InvalidStateTransitionError | StorageError
-  >
+  ) => Effect.Effect<Review, ReviewVerdictError>
   readonly cancel: (
     reviewId: ReviewId,
     actor: WorkerId,
     now: Timestamp,
-  ) => Effect.Effect<
-    Review,
-    NotFoundError | InvalidStateTransitionError | StorageError
-  >
+  ) => Effect.Effect<Review, ReviewVerdictError>
 }
 
 export class ReviewService extends Context.Tag('ReviewService')<

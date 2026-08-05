@@ -63,7 +63,7 @@ describe('buildAcpOpenApi', () => {
     expect(spec.security).toEqual([{ AcpSession: [] }])
 
     const operations = publishedOperations(spec)
-    expect(operations).toHaveLength(53)
+    expect(operations).toHaveLength(55)
 
     for (const { operation } of operations) {
       expect(operation.security).toEqual(
@@ -83,7 +83,7 @@ describe('buildAcpOpenApi', () => {
       .map(({ method, path }) => routeKey(method, path))
       .sort()
 
-    expect(published).toHaveLength(53)
+    expect(published).toHaveLength(55)
     expect(published).toEqual(productionV1RouteKeys())
   })
 

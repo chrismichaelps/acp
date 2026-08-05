@@ -1,9 +1,9 @@
 /** @Acp.Infra.Rpc.Handlers.Test — native RPC domain handlers */
-import { Duration, Effect, Either, Layer, Option } from 'effect'
+import { Effect, Either, Layer, Option } from 'effect'
 import { describe, expect, it } from 'vitest'
 import { AppLive } from '../../app/index.js'
 import { IdClockLive } from '../../app/server/identity.js'
-import { AppConfigTag } from '../../config/app-config.js'
+import { TestAppConfigLive } from '../../config/app-config-test-support.js'
 import { SessionService } from '../../domain/sessions/index.js'
 import type { WorkerId, WorkspaceId } from '../../protocol/schema/index.js'
 import { InitializeSessionPayload } from '../http/index.js'
@@ -23,27 +23,14 @@ const RuntimeWithApp = Layer.provideMerge(
   Layer.mergeAll(AppLive, IdClockLive),
 )
 
-const requireWorkspaceBindingsConfig = Layer.succeed(AppConfigTag, {
-  profile: 'self-host-ha' as const,
-  port: 4317,
-  logLevel: 'info' as const,
-  storageAdapter: 'postgres' as const,
-  eventBroker: 'pg-notify' as const,
-  sqlitePath: 'acp.sqlite',
+const requireWorkspaceBindingsConfig = TestAppConfigLive({
+  profile: 'self-host-ha',
+  storageAdapter: 'postgres',
+  eventBroker: 'pg-notify',
   databaseUrl: Option.some('postgres://acp.example/acp'),
-  defaultLeaseTtl: Duration.minutes(15),
-  eventRetentionDays: 30,
-  maxArtifactSizeBytes: 16 * 1024 * 1024,
-  sseHeartbeat: Duration.seconds(15),
-  sessionTtl: Duration.hours(1),
-  sweepInterval: Duration.seconds(60),
   requireAuth: true,
   requireWorkspaceBindings: true,
-  sessionIssuer: 'trusted-client' as const,
-  sessionIssuancePolicy: Option.none(),
-  metricsToken: Option.none(),
 })
-
 const RuntimeWithWorkspaceBindings = Layer.provideMerge(
   AcpRpcSessionWorkerWorkspaceHandlersLive,
   Layer.mergeAll(AppLive, IdClockLive, requireWorkspaceBindingsConfig),

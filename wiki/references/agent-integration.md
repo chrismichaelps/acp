@@ -132,6 +132,35 @@ Happy path: `open → claimed → running → needs_review → approved → comp
 running` covers external stalls. `completed`, `rejected`, and `cancelled` are
 terminal, and `cancelled` is reachable from any pre-review state.
 
+### Delegating work: the spawn graph
+
+An agent that decomposes a task passes `parent_id` when creating each subtask.
+The host records the lineage and derives `depth` (a root is `0`); both are
+immutable, so a parent always predates its child and the graph cannot cycle.
+See [[ADR-0021-work-unit-spawn-graph]].
+
+```bash
+acp work create "Migrate the schema" --workspace workspace_xxx --parent work_parent
+```
+
+Two rules follow, and both can fail a call that previously succeeded:
+
+- **A parent cannot finish while its children are unfinished.** Moving a parent
+  to `needs_review` or `completed` returns `conflict` (HTTP 409) while any direct
+  child is not `completed`, `rejected`, or `cancelled`; the response details list
+  `blocking_children` and `blocking_child_count`. Finish or cancel them, then
+  retry. Only direct children are checked — a live grandchild already pins its
+  own parent, which pins this one transitively.
+- **Only unfinished parents accept children.** The parent must be `open`,
+  `claimed`, `running`, `blocked`, or `changes_requested`, or creation returns
+  `invalid_state_transition`. Exceeding `ACP_MAX_WORK_DEPTH` (default 10)
+  returns `invalid_request`.
+
+Subtree reads: `GET /v1/work/:work_id/children` returns direct children ordered
+by id; `GET /v1/work/:work_id/descendants` walks breadth-first ordered by
+`(depth, id)` and accepts `max_depth` and `limit`. A worker that dies leaving
+non-terminal descendants is precisely what these reads surface.
+
 ### Auth-on bootstrap for the complete worker loop
 
 The workspace must already exist. On a host with both `ACP_REQUIRE_AUTH=true`
@@ -308,16 +337,17 @@ cloud_sandbox | ci_job`.
 
 Every command prints JSON; failures are `{"error":{"code":...,"message":...}}`.
 
-| Code                       | HTTP | When                          | Correct response                                    |
-| -------------------------- | ---- | ----------------------------- | --------------------------------------------------- |
-| `lease_conflict`           | 409  | Resource already leased.      | Back off, wait/retry, or coordinate — do not force. |
-| `invalid_state_transition` | 409  | Illegal work-state jump.      | Re-read `work get`; only take legal transitions.    |
-| `unauthorized`             | 401  | Missing/invalid credentials.  | Bootstrap or refresh the session token.             |
-| `forbidden`                | 403  | Valid token lacks the scope.  | Request a session with the needed permission.       |
-| `not_found`                | 404  | Missing or foreign hidden id. | Re-list in your bound workspace; do not probe.      |
+| Code                       | HTTP | When                            | Correct response                                    |
+| -------------------------- | ---- | ------------------------------- | --------------------------------------------------- |
+| `lease_conflict`           | 409  | Resource already leased.        | Back off, wait/retry, or coordinate — do not force. |
+| `invalid_state_transition` | 409  | Illegal work-state jump.        | Re-read `work get`; only take legal transitions.    |
+| `unauthorized`             | 401  | Missing/invalid credentials.    | Bootstrap or refresh the session token.             |
+| `forbidden`                | 403  | Valid token lacks the scope.    | Request a session with the needed permission.       |
+| `not_found`                | 404  | Missing or foreign hidden id.   | Re-list in your bound workspace; do not probe.      |
+| `conflict`                 | 409  | Parent has unfinished children. | Finish or cancel the listed `blocking_children`.    |
+| `invalid_request`          | 400  | Malformed body, or depth cap.   | Fix the request; do not retry it unchanged.         |
 
-`conflict` and `rate_limited` are reserved codes with no current producer — do
-not depend on them.
+`rate_limited` is a reserved code with no current producer — do not depend on it.
 
 ## Multi-agent etiquette
 

@@ -17,6 +17,7 @@ import {
   WorkspaceId,
   WorkId,
 } from '../../protocol/schema/index.js'
+import { TestAppConfigLive } from '../../config/app-config-test-support.js'
 import { ReviewService, ReviewServiceLive } from './index.js'
 import type { CreateWorkInput } from '../work-units/index.js'
 import type { Event } from '../../protocol/schema/index.js'
@@ -25,7 +26,10 @@ const StorageAndEventsLive = Layer.provideMerge(
   EventStoreLive,
   Layer.merge(InMemoryStorageLive, InProcessEventBrokerLive),
 )
-const WorkLive = Layer.provideMerge(WorkUnitServiceLive, StorageAndEventsLive)
+const WorkLive = Layer.provideMerge(
+  WorkUnitServiceLive,
+  Layer.merge(StorageAndEventsLive, TestAppConfigLive()),
+)
 const TestLive = Layer.provideMerge(ReviewServiceLive, WorkLive)
 
 const runSync = <A, E>(

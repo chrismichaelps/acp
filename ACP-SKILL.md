@@ -137,6 +137,31 @@ Happy path: `open → claimed → running → needs_review → approved → comp
 running` covers external stalls. `completed`, `rejected`, and `cancelled` are
 terminal, and `cancelled` is reachable from any pre-review state.
 
+### Delegating work: the spawn graph
+
+Pass `parent_id` when creating work that another unit asked for. The host records
+the lineage and derives `depth` (a root is `0`); neither can change afterwards.
+
+```bash
+acp work create "Migrate the schema" --workspace workspace_xxx --parent work_parent
+```
+
+Two rules follow from it, and both can fail a call that used to succeed:
+
+- **A parent cannot finish while its children are unfinished.** Moving a parent
+  to `needs_review` or `completed` returns `conflict` (HTTP 409) while any direct
+  child is not `completed`, `rejected`, or `cancelled`. The response lists the
+  blocking child ids. Finish or cancel them, then retry.
+- **Only unfinished parents accept children.** A parent must be `open`,
+  `claimed`, `running`, `blocked`, or `changes_requested`; otherwise creation
+  returns `invalid_state_transition`. Depth beyond `ACP_MAX_WORK_DEPTH`
+  (default 10) returns `invalid_request`.
+
+Read a subtree with `GET /v1/work/:work_id/children` for direct children, or
+`/descendants` (optional `max_depth` and `limit`) for the whole tree,
+breadth-first. A worker that dies leaving non-terminal descendants is exactly
+what these reads surface.
+
 ## 4. The review gate
 
 A review is more than approve/reject. A reviewer can anchor **diff-anchored
@@ -263,16 +288,17 @@ cloud_sandbox | ci_job`. Every command prints JSON on stdout.
 
 Failures are `{"error":{"code":...,"message":...}}`.
 
-| Code                       | HTTP | When                          | What you do                                        |
-| -------------------------- | ---- | ----------------------------- | -------------------------------------------------- |
-| `lease_conflict`           | 409  | Resource already leased.      | Back off, wait/retry, or coordinate — never force. |
-| `invalid_state_transition` | 409  | Illegal work-state jump.      | Re-read `work get`; take only legal transitions.   |
-| `unauthorized`             | 401  | Missing/invalid credentials.  | Bootstrap or refresh your session token.           |
-| `forbidden`                | 403  | Token lacks the scope.        | Get a session with the needed permission.          |
-| `not_found`                | 404  | Missing or foreign hidden id. | Re-list inside your binding; do not probe.         |
+| Code                       | HTTP | When                            | What you do                                        |
+| -------------------------- | ---- | ------------------------------- | -------------------------------------------------- |
+| `lease_conflict`           | 409  | Resource already leased.        | Back off, wait/retry, or coordinate — never force. |
+| `invalid_state_transition` | 409  | Illegal work-state jump.        | Re-read `work get`; take only legal transitions.   |
+| `unauthorized`             | 401  | Missing/invalid credentials.    | Bootstrap or refresh your session token.           |
+| `forbidden`                | 403  | Token lacks the scope.          | Get a session with the needed permission.          |
+| `not_found`                | 404  | Missing or foreign hidden id.   | Re-list inside your binding; do not probe.         |
+| `conflict`                 | 409  | Parent has unfinished children. | Finish or cancel the listed `blocking_children`.   |
+| `invalid_request`          | 400  | Malformed body, or depth cap.   | Fix the request; do not retry unchanged.           |
 
-`conflict` and `rate_limited` are reserved with no current producer — don't
-depend on them.
+`rate_limited` is reserved with no current producer — don't depend on it.
 
 ## 8. Rules of the road
 

@@ -1,0 +1,76 @@
+/** @Acp.Domain.WorkUnits.States — the work unit state machine, as data */
+import type { EventType, WorkState } from '../../protocol/schema/index.js'
+
+/** The only legal state transitions. An empty set marks a terminal state. */
+export const allowedTransitions: Record<WorkState, ReadonlySet<WorkState>> = {
+  open: new Set(['claimed', 'cancelled']),
+  claimed: new Set(['running', 'cancelled']),
+  running: new Set(['blocked', 'needs_review', 'cancelled']),
+  blocked: new Set(['running']),
+  needs_review: new Set([
+    'running',
+    'approved',
+    'rejected',
+    'changes_requested',
+  ]),
+  changes_requested: new Set(['running']),
+  approved: new Set(['completed']),
+  rejected: new Set(),
+  completed: new Set(),
+  cancelled: new Set(),
+}
+
+/**
+ * A state is terminal when the transition table admits nothing further. Derived
+ * from the table rather than listed separately so a future `WorkState` cannot
+ * silently escape the spawn-graph completion gate.
+ */
+export const isTerminal = (state: WorkState): boolean =>
+  allowedTransitions[state].size === 0
+
+/**
+ * States in which a parent may still take on new children. Listed explicitly
+ * rather than derived, so that a newly added `WorkState` defaults to refusing
+ * children — the conservative direction. See [[ADR-0021-work-unit-spawn-graph]].
+ */
+export const childAcceptingStates: ReadonlySet<WorkState> = new Set([
+  'open',
+  'claimed',
+  'running',
+  'blocked',
+  'changes_requested',
+])
+
+/** Transitions a parent may not take while a direct child is unfinished. */
+export const childGatedTargets: ReadonlySet<WorkState> = new Set([
+  'needs_review',
+  'completed',
+])
+
+export const eventTypeForTransition = (
+  from: WorkState,
+  to: WorkState,
+): EventType => {
+  switch (to) {
+    case 'claimed':
+      return 'work.claimed'
+    case 'running':
+      return from === 'claimed' ? 'work.started' : 'work.unblocked'
+    case 'blocked':
+      return 'work.blocked'
+    case 'needs_review':
+      return 'work.needs_review'
+    case 'changes_requested':
+      return 'review.changes_requested'
+    case 'approved':
+      return 'review.approved'
+    case 'rejected':
+      return 'review.rejected'
+    case 'completed':
+      return 'work.completed'
+    case 'cancelled':
+      return 'work.cancelled'
+    case 'open':
+      return 'work.created'
+  }
+}

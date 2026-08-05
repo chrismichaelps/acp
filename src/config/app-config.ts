@@ -15,6 +15,7 @@ export interface AppConfig {
   readonly databaseUrl: Option.Option<string>
   readonly defaultLeaseTtl: Duration.Duration
   readonly eventRetentionDays: number
+  readonly maxWorkDepth: number
   readonly maxArtifactSizeBytes: number
   readonly sseHeartbeat: Duration.Duration
   readonly sessionTtl: Duration.Duration
@@ -111,6 +112,9 @@ const load = Effect.gen(function* () {
   const eventRetentionDays = yield* Config.integer(
     'ACP_EVENT_RETENTION_DAYS',
   ).pipe(Config.withDefault(30))
+  const maxWorkDepth = yield* Config.integer('ACP_MAX_WORK_DEPTH').pipe(
+    Config.withDefault(10),
+  )
   const maxArtifactSizeMb = yield* Config.integer(
     'ACP_MAX_ARTIFACT_SIZE_MB',
   ).pipe(Config.withDefault(16))
@@ -165,6 +169,7 @@ const load = Effect.gen(function* () {
     databaseUrl,
     defaultLeaseTtl,
     eventRetentionDays,
+    maxWorkDepth,
     maxArtifactSizeBytes: maxArtifactSizeMb * 1024 * 1024,
     sseHeartbeat,
     sessionTtl,

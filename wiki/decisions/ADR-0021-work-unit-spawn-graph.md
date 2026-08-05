@@ -1,8 +1,8 @@
 ---
 type: decision
-status: PROPOSED
+status: ACCEPTED
 date: 2026-08-04
-tags: [adr, proposed, work-units, delegation, lineage, state-machine]
+tags: [adr, accepted, work-units, delegation, lineage, state-machine]
 aliases: [ADR-0021, work-unit-spawn-graph]
 ---
 
@@ -10,7 +10,20 @@ aliases: [ADR-0021, work-unit-spawn-graph]
 
 ## Status
 
-PROPOSED.
+ACCEPTED — implemented.
+
+Delivered: `parent_id`/`depth` on `WorkUnit` and `CreateWorkPayload`; `parent_id`
+promoted to `INDEXED_FIELDS`; `work-unit-states.ts` and `work-unit-spawn-graph.ts`
+extracted from the service; `IncompleteChildrenError` (409 `conflict`) and
+`DepthLimitExceededError` (400 `invalid_request`); `ACP_MAX_WORK_DEPTH`;
+`GET /v1/work/:work_id/children` and `/descendants`; `acp work create --parent`,
+`acp work children`, `acp work descendants`.
+
+Deferred to a follow-up: the native RPC and JSON-RPC transports do not yet expose
+the two subtree reads. Creating a child works on every transport, because
+`parent_id` rides the existing `CreateWorkPayload`, and the completion gate lives
+in the domain service, so it already applies to all transports. Only the two read
+endpoints are REST- and CLI-only today.
 
 ## Context
 
@@ -83,7 +96,9 @@ child must share a workspace, or a subtree could escape workspace-scoped
 queries, the event log, and auth scoping; `depth` must be within
 `ACP_MAX_WORK_DEPTH` (`DepthLimitExceededError`); and the parent must be in a
 child-accepting state — `open`, `claimed`, `running`, `blocked`, or
-`changes_requested`.
+`changes_requested` — failing with `InvalidStateTransitionError` carrying
+`to: "spawn_child"`, since that refusal is about the parent's state rather than
+the request's shape.
 
 ### The completion gate
 
@@ -106,8 +121,14 @@ recursion already guarantees.
 
 `WorkUnitServiceApi` gains `listChildren(workId)` — one indexed `queryBy` — and
 `listDescendants(workId, { maxDepth?, limit? })`, breadth-first with one indexed
-query per level, ordered by `(depth, id)`. Both bounds default to the configured
-depth cap so an unbounded call cannot become an unbounded read.
+query per level, ordered by `(depth, id)`.
+
+`maxDepth` bounds traversal and defaults to the configured depth cap — a true
+bound on the tree, so the default cannot hide anything. `limit` bounds the node
+count and defaults to a separate `DEFAULT_DESCENDANT_LIMIT` of 1000. The two
+defaults are deliberately different: an earlier draft pointed both at the depth
+cap, which would silently truncate an eleven-child subtree at ten. The unbounded
+dimension is fan-out, not depth, so it needs its own ceiling.
 
 Deterministic ordering is a requirement, not a nicety: the dogfood scripts
 assert exact output, and callers merge persisted graph state with live state.
