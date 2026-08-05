@@ -100,6 +100,11 @@ import {
 } from './workspace-routes.js'
 import { getWorker, listWorkers } from './worker-routes.js'
 import { listWorkChildren, listWorkDescendants } from './work-graph-routes.js'
+import {
+  getWorkSandbox,
+  startWorkSandbox,
+  stopWorkSandbox,
+} from './work-sandbox-routes.js'
 
 const initializeSession = respond('POST /v1/session/initialize')(
   Effect.gen(function* () {
@@ -349,7 +354,13 @@ const workGraphRouter = workRouter.pipe(
   HttpRouter.get('/v1/work/:work_id/descendants', listWorkDescendants),
 )
 
-const resumeRouter = workGraphRouter.pipe(
+const sandboxRouter = workGraphRouter.pipe(
+  HttpRouter.post('/v1/work/:work_id/sandbox', startWorkSandbox),
+  HttpRouter.get('/v1/work/:work_id/sandbox', getWorkSandbox),
+  HttpRouter.del('/v1/work/:work_id/sandbox', stopWorkSandbox),
+)
+
+const resumeRouter = sandboxRouter.pipe(
   HttpRouter.get('/v1/work/:work_id/resume', getWorkResumePacket),
 )
 

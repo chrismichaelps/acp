@@ -23,12 +23,21 @@ IPC, no host PID namespace, no Docker socket mount, and no host environment
 inherited. `start` is idempotent — the container name is derived from the work
 id, so a restart converges on one sandbox instead of accumulating them.
 
-Deferred: wiring the provider into the work lifecycle (nothing calls `start`
-yet), the `ACP_SANDBOX_ADAPTER` configuration seam, and the microVM-backed
-`docker-sandbox` adapter. The enforcement logic and the isolation contract are
-the parts worth getting right first, and both are complete and tested; turning
-them on for real work is the next slice and is where the operational blast
-radius actually begins.
+Also delivered: `SandboxService`, which composes a work unit's active leases
+into a mount plan and hands it to the configured provider; the
+`ACP_SANDBOX_ADAPTER` / `ACP_SANDBOX_IMAGE` / `ACP_WORKSPACE_ROOT` seam,
+selecting `docker` without an image being a startup failure rather than a silent
+fall back to no isolation; and `POST`, `GET` and `DELETE`
+`/v1/work/:work_id/sandbox`.
+
+Provisioning is explicit, not automatic on claim: container start takes seconds
+where every other ACP operation takes milliseconds, and claiming work must not
+block on it. Provisioning without `ACP_WORKSPACE_ROOT` is refused, because
+without a root there is no boundary for leased paths to sit inside and the mount
+plan would be unbounded.
+
+Deferred: the microVM-backed `docker-sandbox` adapter, and a network allow-list
+— egress is currently denied outright, which is the safe end of that axis.
 
 ## Context
 

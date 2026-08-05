@@ -17,6 +17,9 @@ export interface AppConfig {
   readonly eventRetentionDays: number
   readonly maxWorkDepth: number
   readonly policyFile: Option.Option<string>
+  readonly sandboxAdapter: 'none' | 'docker'
+  readonly sandboxImage: Option.Option<string>
+  readonly workspaceRoot: Option.Option<string>
   readonly maxArtifactSizeBytes: number
   readonly sseHeartbeat: Duration.Duration
   readonly sessionTtl: Duration.Duration
@@ -115,6 +118,17 @@ const load = Effect.gen(function* () {
   ).pipe(Config.withDefault(30))
   // Unset means the policy engine is absent and behaviour is unchanged.
   const policyFile = yield* Config.string('ACP_POLICY_FILE').pipe(Config.option)
+  // `none` provisions nothing, so a host that has not opted in is unchanged.
+  const sandboxAdapter = yield* Config.literal(
+    'none',
+    'docker',
+  )('ACP_SANDBOX_ADAPTER').pipe(Config.withDefault('none' as const))
+  const sandboxImage = yield* Config.string('ACP_SANDBOX_IMAGE').pipe(
+    Config.option,
+  )
+  const workspaceRoot = yield* Config.string('ACP_WORKSPACE_ROOT').pipe(
+    Config.option,
+  )
   const maxWorkDepth = yield* Config.integer('ACP_MAX_WORK_DEPTH').pipe(
     Config.withDefault(10),
   )
@@ -174,6 +188,9 @@ const load = Effect.gen(function* () {
     eventRetentionDays,
     maxWorkDepth,
     policyFile,
+    sandboxAdapter,
+    sandboxImage,
+    workspaceRoot,
     maxArtifactSizeBytes: maxArtifactSizeMb * 1024 * 1024,
     sseHeartbeat,
     sessionTtl,

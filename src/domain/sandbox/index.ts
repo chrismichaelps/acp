@@ -6,7 +6,16 @@ export type {
   MountPlanInput,
   RejectedMount,
 } from './mount-plan.js'
-export { NoSandboxLive, SandboxProvider } from './sandbox-provider.js'
+export {
+  NoSandboxLive,
+  noSandboxProvider,
+  SandboxProvider,
+} from './sandbox-provider.js'
+export { SandboxService, SandboxServiceLive } from './sandbox-service.js'
+export type {
+  SandboxServiceApi,
+  SandboxServiceError,
+} from './sandbox-service.js'
 export type {
   SandboxHandle,
   SandboxProviderApi,

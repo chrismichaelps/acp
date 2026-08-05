@@ -5412,6 +5412,831 @@
         }
       }
     },
+    "/v1/work/{work_id}/sandbox": {
+      "post": {
+        "tags": [
+          "work"
+        ],
+        "operationId": "work.startWorkSandbox",
+        "parameters": [
+          {
+            "name": "work_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "work_id",
+                    "status"
+                  ],
+                  "properties": {
+                    "work_id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "starting",
+                        "running",
+                        "exited",
+                        "absent"
+                      ]
+                    },
+                    "external_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "exit_code": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/Int"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpApiDecodeError"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "error"
+                      ],
+                      "properties": {
+                        "error": {
+                          "type": "object",
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "enum": [
+                                "invalid_request",
+                                "unauthorized",
+                                "forbidden",
+                                "not_found",
+                                "conflict",
+                                "claim_conflict",
+                                "lease_conflict",
+                                "invalid_state_transition",
+                                "unsupported_capability",
+                                "rate_limited",
+                                "internal_error"
+                              ]
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "details": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "required": [],
+                                  "properties": {},
+                                  "additionalProperties": {
+                                    "$id": "/schemas/unknown",
+                                    "title": "unknown"
+                                  }
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "work"
+        ],
+        "operationId": "work.getWorkSandbox",
+        "parameters": [
+          {
+            "name": "work_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "work_id",
+                    "status"
+                  ],
+                  "properties": {
+                    "work_id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "starting",
+                        "running",
+                        "exited",
+                        "absent"
+                      ]
+                    },
+                    "external_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "exit_code": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/Int"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpApiDecodeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "work"
+        ],
+        "operationId": "work.stopWorkSandbox",
+        "parameters": [
+          {
+            "name": "work_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "stopped"
+                  ],
+                  "properties": {
+                    "stopped": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpApiDecodeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/work/{work_id}/children": {
       "get": {
         "tags": [

@@ -15,7 +15,6 @@ import {
   CreateArtifactPayload,
   CreateCheckpointPayload,
   CreateWorkPayload,
-  CreateWorkspacePayload,
   Event,
   Lease,
   LeaseId,
@@ -25,17 +24,17 @@ import {
   SessionId,
   SessionPermissions,
   UpdateArtifactPayload,
-  UpdateWorkspacePayload,
   WorkId,
   Worker,
-  Workspace,
   WorkspaceId,
   WorkState,
   WorkerKind,
   WorkerStatus,
   WorkUnit,
   ACP_PROTOCOL_VERSION,
+  Sandbox,
 } from '../../protocol/schema/index.js'
+import { WorkspaceGroup } from './acp-http-api-workspaces.js'
 import { EventsGroup } from './acp-http-api-events.js'
 import { MemoryGroup } from './acp-http-api-memory.js'
 import {
@@ -225,80 +224,6 @@ export const WorkerGroup = HttpApiGroup.make('workers')
       .addError(ProtocolError, protocolError(404)),
   )
 
-export const WorkspaceGroup = HttpApiGroup.make('workspaces')
-  .add(
-    HttpApiEndpoint.get('listWorkspaces', '/v1/workspaces')
-      .addSuccess(Schema.Array(Workspace))
-      .addError(ProtocolError, protocolError(401)),
-  )
-  .add(
-    HttpApiEndpoint.post('createWorkspace', '/v1/workspaces')
-      .setPayload(CreateWorkspacePayload)
-      .addSuccess(Workspace, { status: 201 })
-      .addError(ProtocolError, protocolError(400))
-      .addError(ProtocolError, protocolError(401)),
-  )
-  .add(
-    HttpApiEndpoint.patch('updateWorkspace', '/v1/workspaces/:workspace_id')
-      .setPath(WorkspacePath)
-      .setPayload(UpdateWorkspacePayload)
-      .addSuccess(Workspace)
-      .addError(ProtocolError, protocolError(400))
-      .addError(ProtocolError, protocolError(401))
-      .addError(ProtocolError, protocolError(404)),
-  )
-  .add(
-    HttpApiEndpoint.post(
-      'archiveWorkspace',
-      '/v1/workspaces/:workspace_id/archive',
-    )
-      .setPath(WorkspacePath)
-      .addSuccess(Workspace)
-      .addError(ProtocolError, protocolError(401))
-      .addError(ProtocolError, protocolError(404))
-      .addError(ProtocolError, protocolError(409)),
-  )
-  .add(
-    HttpApiEndpoint.get(
-      'listWorkspaceWork',
-      '/v1/workspaces/:workspace_id/work',
-    )
-      .setPath(WorkspacePath)
-      .addSuccess(Schema.Array(WorkUnit))
-      .addError(ProtocolError, protocolError(401))
-      .addError(ProtocolError, protocolError(404)),
-  )
-  .add(
-    HttpApiEndpoint.get(
-      'listWorkspaceCheckpoints',
-      '/v1/workspaces/:workspace_id/checkpoints',
-    )
-      .setPath(WorkspacePath)
-      .addSuccess(Schema.Array(Checkpoint))
-      .addError(ProtocolError, protocolError(401))
-      .addError(ProtocolError, protocolError(404)),
-  )
-  .add(
-    HttpApiEndpoint.get(
-      'listWorkspaceArtifacts',
-      '/v1/workspaces/:workspace_id/artifacts',
-    )
-      .setPath(WorkspacePath)
-      .addSuccess(Schema.Array(Artifact))
-      .addError(ProtocolError, protocolError(401))
-      .addError(ProtocolError, protocolError(404)),
-  )
-  .add(
-    HttpApiEndpoint.get(
-      'listWorkspaceReviews',
-      '/v1/workspaces/:workspace_id/reviews',
-    )
-      .setPath(WorkspacePath)
-      .addSuccess(Schema.Array(Review))
-      .addError(ProtocolError, protocolError(401))
-      .addError(ProtocolError, protocolError(404)),
-  )
-
 export const WorkGroup = HttpApiGroup.make('work')
   .add(
     HttpApiEndpoint.post('createWork', '/v1/work')
@@ -337,6 +262,28 @@ export const WorkGroup = HttpApiGroup.make('work')
       .setPayload(PublishWorkEventPayload)
       .addSuccess(Event, { status: 201 })
       .addError(ProtocolError, protocolError(400))
+      .addError(ProtocolError, protocolError(404)),
+  )
+  .add(
+    HttpApiEndpoint.post('startWorkSandbox', '/v1/work/:work_id/sandbox')
+      .setPath(WorkPath)
+      .addSuccess(Sandbox, { status: 201 })
+      .addError(ProtocolError, protocolError(400))
+      .addError(ProtocolError, protocolError(403))
+      .addError(ProtocolError, protocolError(404)),
+  )
+  .add(
+    HttpApiEndpoint.get('getWorkSandbox', '/v1/work/:work_id/sandbox')
+      .setPath(WorkPath)
+      .addSuccess(Sandbox)
+      .addError(ProtocolError, protocolError(401))
+      .addError(ProtocolError, protocolError(404)),
+  )
+  .add(
+    HttpApiEndpoint.del('stopWorkSandbox', '/v1/work/:work_id/sandbox')
+      .setPath(WorkPath)
+      .addSuccess(Schema.Struct({ stopped: Schema.Boolean }))
+      .addError(ProtocolError, protocolError(403))
       .addError(ProtocolError, protocolError(404)),
   )
   .add(
@@ -483,3 +430,5 @@ export class AcpHttpApi extends HttpApi.make('acp')
   .add(ReviewCommentGroup)
   .add(GrillGroup)
   .add(EventsGroup) {}
+
+export { WorkspaceGroup } from './acp-http-api-workspaces.js'
