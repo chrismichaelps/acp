@@ -78,8 +78,8 @@ tags: [moc, adr]
 - [[ADR-0024-worker-identity-provenance]] — PROPOSED — give workers an Ed25519
   keypair, a bill of materials, and a TTL'd registration, verifying signatures
   on state-changing claims as provenance layered beside session authorization.
-- [[ADR-0025-event-tail-reads-persistence-metrics]] — PROPOSED — add a bounded
-  `readEventsTail` to the storage port and storage/CAS-retry metrics, and record
+- [[ADR-0025-event-tail-reads-persistence-metrics]] — ACCEPTED — add a bounded
+  `readEventsTail` to the storage port and a CAS-contention counter, and record
   why codex's compaction and session-index designs are not adopted.
 
 ## Referenced by

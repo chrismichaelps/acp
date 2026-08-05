@@ -19449,6 +19449,16 @@
             "description": "a string to be decoded into a number"
           },
           {
+            "name": "tail",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "a string to be decoded into a number"
+            },
+            "required": false,
+            "description": "a string to be decoded into a number"
+          },
+          {
             "name": "type",
             "in": "query",
             "schema": {

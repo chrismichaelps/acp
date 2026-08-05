@@ -93,6 +93,21 @@ export interface StorageApi {
     limit?: Option.Option<number>,
   ) => Effect.Effect<Chunk.Chunk<Event>, StorageError>
   /**
+   * The `limit` highest-`seq` events for a workspace, returned **ascending by
+   * `seq`** — the query runs descending, but every existing `Event` consumer
+   * (replay, cursor advance, SSE catch-up) assumes ascending order, and a second
+   * ordering convention on one type is how history eventually gets replayed
+   * backwards. See [[ADR-0025-event-tail-reads]].
+   *
+   * `limit` is required: an unbounded tail read is a full scan with a friendly
+   * name. Returns the newest *retained* events — pruning never reuses `seq`, so
+   * a tail read and a cursor read agree about ordering and identity.
+   */
+  readonly readEventsTail: (
+    workspaceId: string,
+    limit: number,
+  ) => Effect.Effect<Chunk.Chunk<Event>, StorageError>
+  /**
    * Delete events whose `timestamp` is strictly before `cutoff` (an ISO-8601
    * UTC instant), returning how many were removed. The newest event per
    * workspace (highest `seq`) is always retained so the append `seq`

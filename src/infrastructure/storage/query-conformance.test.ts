@@ -1,8 +1,10 @@
 /** @Acp.Infra.Storage.QueryConformance — queryBy + version-CAS parity across adapters */
 import { describe, expect, it } from 'vitest'
-import { Chunk, Effect, Option } from 'effect'
+import { Chunk, Effect, Option, Schema } from 'effect'
 import type { Layer } from 'effect'
 import type { StorageError } from '../../protocol/errors/protocol-error.js'
+import { Event } from '../../protocol/schema/index.js'
+import type { EventDraft } from './index.js'
 import {
   InMemoryStorageLive,
   SqliteMemoryStorageLive,
@@ -21,6 +23,28 @@ const adapters: readonly (readonly [
   ['in-memory', InMemoryStorageLive],
   ['sqlite', SqliteMemoryStorageLive],
 ]
+
+/** Builds a branded EventDraft; Storage assigns `seq` on append. */
+const eventDraft = (workspace: string, n: number): EventDraft => {
+  const full = Schema.decodeUnknownSync(Event)({
+    id: `event_${workspace}_${String(n)}`,
+    type: 'work.created',
+    workspace_id: workspace,
+    actor: 'agent_claude_code',
+    timestamp: '2026-08-04T10:00:00Z',
+    seq: 0,
+    data: { n: String(n) },
+  })
+  return {
+    id: full.id,
+    type: full.type,
+    workspace_id: full.workspace_id,
+    work_id: full.work_id,
+    actor: full.actor,
+    timestamp: full.timestamp,
+    data: full.data,
+  }
+}
 
 describe.each(adapters)('storage conformance — %s', (_name, layer) => {
   const run = <A, E>(program: Effect.Effect<A, E, Storage>): A =>
@@ -111,6 +135,76 @@ describe.each(adapters)('storage conformance — %s', (_name, layer) => {
       }),
     )
     expect(rows).toEqual(['c1'])
+  })
+
+  // Tail reads answer "the last N events", which `readEventsAfter` can only do
+  // by scanning from seq 0 — see [[ADR-0025-event-tail-reads]]. The contract is
+  // deliberately ascending on return even though the query runs descending, so
+  // every existing Event consumer keeps its one ordering assumption.
+  const seedEvents = (count: number, workspace = 'ws_a') =>
+    Effect.gen(function* () {
+      const s = yield* Storage
+      for (let n = 1; n <= count; n += 1) {
+        yield* s.appendEvent(workspace, eventDraft(workspace, n))
+      }
+    })
+
+  const seqsOf = (chunk: Chunk.Chunk<{ readonly seq: number }>) =>
+    Chunk.toReadonlyArray(chunk).map((event) => event.seq)
+
+  it('returns the newest events in ascending seq order', () => {
+    const seqs = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* seedEvents(5)
+        return seqsOf(yield* s.readEventsTail('ws_a', 3))
+      }),
+    )
+    expect(seqs).toEqual([3, 4, 5])
+  })
+
+  it('returns everything when the log holds fewer events than the limit', () => {
+    const seqs = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* seedEvents(2)
+        return seqsOf(yield* s.readEventsTail('ws_a', 10))
+      }),
+    )
+    expect(seqs).toEqual([1, 2])
+  })
+
+  it('is empty for a workspace with no events', () => {
+    const events = run(
+      Effect.flatMap(Storage, (s) => s.readEventsTail('ws_unknown', 5)),
+    )
+    expect(Chunk.toReadonlyArray(events)).toEqual([])
+  })
+
+  it('never crosses workspace boundaries', () => {
+    const seqs = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* seedEvents(3, 'ws_a')
+        yield* seedEvents(3, 'ws_b')
+        const tail = yield* s.readEventsTail('ws_b', 10)
+        return Chunk.toReadonlyArray(tail).map((e) => e.workspace_id)
+      }),
+    )
+    expect(new Set(seqs)).toEqual(new Set(['ws_b']))
+  })
+
+  it('agrees with readEventsAfter over the overlapping range', () => {
+    const both = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* seedEvents(5)
+        const tail = yield* s.readEventsTail('ws_a', 2)
+        const after = yield* s.readEventsAfter('ws_a', 3, Option.none())
+        return { tail: seqsOf(tail), after: seqsOf(after) }
+      }),
+    )
+    expect(both.tail).toEqual(both.after)
   })
 
   it('returns only rows matching every filter, ordered by id', () => {

@@ -13,6 +13,45 @@ const right = (argv: readonly string[]): CliRequest => {
 }
 
 describe('event command parsing', () => {
+  it('sends tail instead of after_seq when --tail is given', () => {
+    expect(
+      right(['events', 'list', '--workspace', 'workspace_1', '--tail', '5']),
+    ).toEqual({
+      method: 'GET',
+      path: '/v1/events?workspace_id=workspace_1&tail=5',
+      label: 'events list',
+    })
+  })
+
+  it('rejects --tail combined with --after', () => {
+    const parsed = parseArgs([
+      'events',
+      'list',
+      '--workspace',
+      'workspace_1',
+      '--tail',
+      '5',
+      '--after',
+      '2',
+    ])
+    expect(Either.isLeft(parsed)).toBe(true)
+  })
+
+  it('rejects a non-positive --tail', () => {
+    expect(
+      Either.isLeft(
+        parseArgs([
+          'events',
+          'list',
+          '--workspace',
+          'workspace_1',
+          '--tail',
+          '0',
+        ]),
+      ),
+    ).toBe(true)
+  })
+
   it('marks events stream as streaming with the workspace query', () => {
     const req = right(['events', 'stream', '--workspace', 'workspace 1'])
     expect(req.stream).toBe(true)

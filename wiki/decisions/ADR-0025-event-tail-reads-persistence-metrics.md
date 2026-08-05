@@ -1,8 +1,8 @@
 ---
 type: decision
-status: PROPOSED
+status: ACCEPTED
 date: 2026-08-04
-tags: [adr, proposed, events, storage, metrics, retention]
+tags: [adr, accepted, events, storage, metrics, retention]
 aliases: [ADR-0025, event-tail-reads]
 ---
 
@@ -10,7 +10,26 @@ aliases: [ADR-0025, event-tail-reads]
 
 ## Status
 
-PROPOSED.
+ACCEPTED — implemented, with one narrowing.
+
+Delivered: `readEventsTail` on the storage port and all three adapters, covered
+by the shared conformance suite; `EventStore.readTail`; `GET /v1/events?tail=N`,
+rejecting `tail` together with `after_seq`; `acp events list --tail`; and the
+`acp_storage_cas_conflicts_total` counter.
+
+Narrowed: per-operation storage count and duration series are **not** shipped.
+Instrumenting all fifteen port methods across three adapters would add timing
+overhead to every storage call for a signal the RPC and HTTP histograms already
+approximate. The CAS counter — which this ADR's own Rationale calls the one with
+real diagnostic value — is delivered in full. Per-operation timing can be
+revisited if request-level latency ever proves too coarse to localise a problem.
+
+Corrected: this ADR originally said ACP's "version-CAS writes retry under
+contention". Only one of the three CAS call sites actually retries
+(`session-issuer-live.ts`); work claims and grill answers surface a conflict to
+the caller instead. The counter therefore records _lost swaps_ rather than
+retries, which is the signal an operator needs in either case, and it is
+recorded inside the adapters so a future CAS write cannot forget to report it.
 
 ## Context
 
@@ -79,7 +98,7 @@ agree about ordering and identity.
 
 Additive series on `GET /metrics`, following the additive contract
 [[ADR-0019-metrics-scrape-endpoint]] already sets: storage operation count and
-duration labelled by operation and adapter, plus a CAS-retry counter.
+duration labelled by operation and adapter, plus a counter for CAS swaps lost to contention.
 
 The CAS-retry counter is the one with real diagnostic value. ACP's version-CAS
 writes retry under contention, and contention is exactly what a coordination

@@ -1,5 +1,6 @@
 /** @Acp.Infra.Storage.InMemory — Ref-guarded in-memory adapter */
 import { Chunk, Effect, HashMap, Layer, Option, Ref } from 'effect'
+import { recordCasConflict } from '../metrics/index.js'
 import { Storage } from './storage.js'
 import type { StorageApi, StoredRecord } from './storage.js'
 import {
@@ -101,7 +102,11 @@ const make = Effect.gen(function* () {
       }
       const stored: StoredRecord = { value, version: current.version + 1 }
       return [true, HashMap.set(cs, collection, HashMap.set(inner, id, stored))]
-    })
+    }).pipe(
+      Effect.tap((swapped) =>
+        swapped ? Effect.void : recordCasConflict(collection),
+      ),
+    )
 
   const list: StorageApi['list'] = (collection) =>
     Effect.map(Ref.get(collections), (cs) =>
@@ -210,6 +215,17 @@ const make = Effect.gen(function* () {
       }),
     )
 
+  const readEventsTail: StorageApi['readEventsTail'] = (workspaceId, limit) =>
+    Effect.map(Ref.get(events), (es) =>
+      Option.match(HashMap.get(es, workspaceId), {
+        onNone: () => Chunk.empty<Event>(),
+        onSome: (chunk) =>
+          // Stored ascending, so the newest `limit` is a tail slice; the result
+          // stays ascending, as the port documents.
+          Chunk.takeRight(chunk, limit),
+      }),
+    )
+
   const appendMemory: StorageApi['appendMemory'] = (workspaceId, draft) =>
     Ref.modify(memory, (ms) => {
       const chunk = Option.getOrElse(HashMap.get(ms, workspaceId), () =>
@@ -268,6 +284,7 @@ const make = Effect.gen(function* () {
     remove,
     appendEvent,
     readEventsAfter,
+    readEventsTail,
     pruneEventsBefore,
     appendMemory,
     readMemory,

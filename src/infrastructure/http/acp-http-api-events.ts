@@ -25,6 +25,12 @@ export const EventsReplayParams = Schema.Struct({
     Schema.NumberFromString.pipe(Schema.int(), Schema.positive()),
     { as: 'Option' },
   ),
+  // Newest-first read bound. Mutually exclusive with `after_seq`: a request
+  // supplying both has no single sensible meaning, so the route rejects it.
+  tail: Schema.optionalWith(
+    Schema.NumberFromString.pipe(Schema.int(), Schema.positive()),
+    { as: 'Option' },
+  ),
   // Optional server-side event-type filter. Kept lenient (a plain string) so an
   // unknown type yields an empty replay rather than a 400 — matching the CLI's
   // prior client-side `--type` behavior, now honored across every transport.

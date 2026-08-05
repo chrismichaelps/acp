@@ -4,6 +4,7 @@ export {
   recordHttpCompletion,
   recordSweep,
   recordHookOutcome,
+  recordCasConflict,
   recordBuildInfo,
 } from './instruments.js'
 export {
