@@ -16,6 +16,7 @@ export interface AppConfig {
   readonly defaultLeaseTtl: Duration.Duration
   readonly eventRetentionDays: number
   readonly maxWorkDepth: number
+  readonly policyFile: Option.Option<string>
   readonly maxArtifactSizeBytes: number
   readonly sseHeartbeat: Duration.Duration
   readonly sessionTtl: Duration.Duration
@@ -112,6 +113,8 @@ const load = Effect.gen(function* () {
   const eventRetentionDays = yield* Config.integer(
     'ACP_EVENT_RETENTION_DAYS',
   ).pipe(Config.withDefault(30))
+  // Unset means the policy engine is absent and behaviour is unchanged.
+  const policyFile = yield* Config.string('ACP_POLICY_FILE').pipe(Config.option)
   const maxWorkDepth = yield* Config.integer('ACP_MAX_WORK_DEPTH').pipe(
     Config.withDefault(10),
   )
@@ -170,6 +173,7 @@ const load = Effect.gen(function* () {
     defaultLeaseTtl,
     eventRetentionDays,
     maxWorkDepth,
+    policyFile,
     maxArtifactSizeBytes: maxArtifactSizeMb * 1024 * 1024,
     sseHeartbeat,
     sessionTtl,

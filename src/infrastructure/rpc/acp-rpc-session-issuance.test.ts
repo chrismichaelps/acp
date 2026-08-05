@@ -45,6 +45,7 @@ const StaticConfigLive = Layer.succeed(AppConfigTag, {
   defaultLeaseTtl: Duration.minutes(15),
   eventRetentionDays: 30,
   maxWorkDepth: 10,
+  policyFile: Option.none(),
   maxArtifactSizeBytes: 16 * 1024 * 1024,
   sseHeartbeat: Duration.seconds(15),
   sessionTtl: Duration.hours(1),

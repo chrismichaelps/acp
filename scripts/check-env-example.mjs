@@ -18,6 +18,7 @@ const expectedVariables = new Set([
   'ACP_MAX_ARTIFACT_SIZE_MB',
   'ACP_MAX_WORK_DEPTH',
   'ACP_METRICS_TOKEN',
+  'ACP_POLICY_FILE',
   'ACP_PORT',
   'ACP_PROFILE',
   'ACP_REQUIRE_AUTH',

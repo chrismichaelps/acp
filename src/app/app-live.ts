@@ -10,13 +10,15 @@ import { ReviewCommentServiceLive } from '../domain/review-comments/index.js'
 import { MemoryServiceLive } from '../domain/memory/index.js'
 import { ReviewServiceLive } from '../domain/reviews/index.js'
 import { SessionServiceLive } from '../domain/sessions/index.js'
-import { NoHooksLive } from '../domain/hooks/index.js'
+import { PolicyHooksLive } from './policy-layer.js'
 import { WorkUnitServiceLive } from '../domain/work-units/index.js'
 import { WorkerServiceLive } from '../domain/workers/index.js'
 import { WorkspaceServiceLive } from '../domain/workspaces/index.js'
 import { EventBrokerLive } from './event-broker-live.js'
 import { StorageLive } from './storage-live.js'
 import { SessionIssuerLive } from '../infrastructure/auth/index.js'
+
+const HostHooksLive = Layer.provide(PolicyHooksLive, AppConfigLive)
 
 const StorageProvidedLive = Layer.provide(StorageLive, AppConfigLive)
 const StorageAndConfigLive = Layer.merge(StorageProvidedLive, AppConfigLive)
@@ -33,11 +35,12 @@ const SessionIssuerProvidedLive = Layer.provideMerge(
   StorageAndConfigLive,
 )
 
-// Hooks default to an empty set, so a host that has not registered any behaves
-// exactly as one built before hooks existed — see [[ADR-0022-coordination-hooks]].
+// The dispatcher is built from ACP_POLICY_FILE: absent means no hooks, so a
+// host without a policy behaves exactly as one built before hooks existed.
+// See [[ADR-0022-coordination-hooks]] and [[ADR-0023-resource-access-policy]].
 const WorkUnitProvidedLive = Layer.provideMerge(
   WorkUnitServiceLive,
-  Layer.merge(EventStoreProvidedLive, NoHooksLive),
+  Layer.merge(EventStoreProvidedLive, HostHooksLive),
 )
 const WorkspaceProvidedLive = Layer.provideMerge(
   WorkspaceServiceLive,
@@ -49,7 +52,7 @@ const ArtifactProvidedLive = Layer.provideMerge(
 )
 const LeaseProvidedLive = Layer.provideMerge(
   LeaseServiceLive,
-  Layer.mergeAll(EventStoreProvidedLive, StorageAndConfigLive, NoHooksLive),
+  Layer.mergeAll(EventStoreProvidedLive, StorageAndConfigLive, HostHooksLive),
 )
 const CheckpointProvidedLive = Layer.provideMerge(
   CheckpointServiceLive,
@@ -69,7 +72,7 @@ const MemoryProvidedLive = Layer.provideMerge(
 )
 const ReviewProvidedLive = Layer.provideMerge(
   ReviewServiceLive,
-  Layer.merge(WorkUnitProvidedLive, NoHooksLive),
+  Layer.merge(WorkUnitProvidedLive, HostHooksLive),
 )
 
 export const AppLive = Layer.mergeAll(
