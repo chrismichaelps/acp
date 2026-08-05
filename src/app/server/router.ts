@@ -99,6 +99,7 @@ import {
   updateWorkspace,
 } from './workspace-routes.js'
 import { getWorker, listWorkers } from './worker-routes.js'
+import { listWorkChildren, listWorkDescendants } from './work-graph-routes.js'
 
 const initializeSession = respond('POST /v1/session/initialize')(
   Effect.gen(function* () {
@@ -341,7 +342,14 @@ const workRouter = HttpRouter.empty.pipe(
   HttpRouter.get('/v1/work/:work_id/reviews', listWorkReviews),
 )
 
-const resumeRouter = workRouter.pipe(
+// Spawn graph reads live in their own stage: `workRouter` is at the pipe arity
+// ceiling, and lineage is a distinct concern from the work lifecycle.
+const workGraphRouter = workRouter.pipe(
+  HttpRouter.get('/v1/work/:work_id/children', listWorkChildren),
+  HttpRouter.get('/v1/work/:work_id/descendants', listWorkDescendants),
+)
+
+const resumeRouter = workGraphRouter.pipe(
   HttpRouter.get('/v1/work/:work_id/resume', getWorkResumePacket),
 )
 

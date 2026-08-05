@@ -3,6 +3,7 @@ export {
   recordRpcCompletion,
   recordHttpCompletion,
   recordSweep,
+  recordHookOutcome,
   recordBuildInfo,
 } from './instruments.js'
 export {

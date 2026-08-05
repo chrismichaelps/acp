@@ -1,8 +1,8 @@
 /** @Acp.App.Server.Router.Test — HTTP routes over a web handler */
 import { describe, expect, it } from 'vitest'
 import { HttpApp } from '@effect/platform'
-import { Duration, Layer, Option } from 'effect'
-import { AppConfigTag } from '../../config/app-config.js'
+import { Layer } from 'effect'
+import { TestAppConfigLive } from '../../config/app-config-test-support.js'
 import { AppLive } from '../index.js'
 import { IdClockLive } from './identity.js'
 import { acpRouter } from './router.js'
@@ -435,26 +435,7 @@ describe('acpRouter', () => {
   })
 })
 // requireAuth overrides AppLive's config (rightmost merge wins) so authorize sees it.
-const requireAuthConfig = Layer.succeed(AppConfigTag, {
-  profile: 'local' as const,
-  port: 4317,
-  logLevel: 'info' as const,
-  storageAdapter: 'memory' as const,
-  eventBroker: 'in-process' as const,
-  sqlitePath: 'acp.sqlite',
-  databaseUrl: Option.none(),
-  defaultLeaseTtl: Duration.minutes(15),
-  eventRetentionDays: 30,
-  maxArtifactSizeBytes: 16 * 1024 * 1024,
-  sseHeartbeat: Duration.seconds(15),
-  sessionTtl: Duration.hours(1),
-  sweepInterval: Duration.seconds(60),
-  requireAuth: true,
-  requireWorkspaceBindings: false,
-  sessionIssuer: 'trusted-client' as const,
-  sessionIssuancePolicy: Option.none(),
-  metricsToken: Option.none(),
-})
+const requireAuthConfig = TestAppConfigLive({ requireAuth: true })
 
 describe('acpRouter with ACP_REQUIRE_AUTH', () => {
   const makeAuthHandler = () =>

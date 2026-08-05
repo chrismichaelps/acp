@@ -47,6 +47,41 @@ export class StorageError extends Data.TaggedError('StorageError')<{
   readonly cause: string
 }> {}
 
+/**
+ * A parent may not enter `needs_review` or `completed` while a direct child is
+ * non-terminal — see [[ADR-0021-work-unit-spawn-graph]]. `blockingChildren` is
+ * capped so the payload stays bounded; `blockingChildCount` keeps the message
+ * honest when the list is truncated.
+ */
+export class IncompleteChildrenError extends Data.TaggedError(
+  'IncompleteChildrenError',
+)<{
+  readonly workId: string
+  readonly to: string
+  readonly blockingChildren: readonly string[]
+  readonly blockingChildCount: number
+}> {}
+
+/**
+ * A coordination hook refused the mutation — see [[ADR-0022-coordination-hooks]].
+ * Maps to 403: the request was well-formed and the session was authorized, but
+ * policy declined it, which is distinct from a 409 meaning "retry later".
+ */
+export class HookDeniedError extends Data.TaggedError('HookDeniedError')<{
+  readonly point: string
+  readonly hookName: string
+  readonly reason: string
+}> {}
+
+/** Spawning this work unit would exceed the configured spawn-graph depth cap. */
+export class DepthLimitExceededError extends Data.TaggedError(
+  'DepthLimitExceededError',
+)<{
+  readonly parentId: string
+  readonly depth: number
+  readonly maxDepth: number
+}> {}
+
 export class IncompatibleStoreVersionError extends Data.TaggedError(
   'IncompatibleStoreVersionError',
 )<{
@@ -63,6 +98,9 @@ export type DomainError =
   | UnauthorizedError
   | ForbiddenError
   | UnsupportedCapabilityError
+  | IncompleteChildrenError
+  | DepthLimitExceededError
+  | HookDeniedError
   | StorageError
 
 export interface ProtocolErrorResponse {
@@ -146,6 +184,48 @@ export const toProtocolError = (e: DomainError): ProtocolErrorResponse => {
             'invalid_state_transition',
             `Cannot transition from ${e.from} to ${e.to}.`,
             { from: e.from, to: e.to },
+          ),
+        },
+      }
+    case 'IncompleteChildrenError':
+      return {
+        httpStatus: 409,
+        body: {
+          error: envelope(
+            'conflict',
+            `Cannot transition ${e.workId} to ${e.to} while ${String(e.blockingChildCount)} child work unit(s) remain unfinished.`,
+            {
+              work_id: e.workId,
+              to: e.to,
+              blocking_children: e.blockingChildren,
+              blocking_child_count: e.blockingChildCount,
+            },
+          ),
+        },
+      }
+    case 'HookDeniedError':
+      return {
+        httpStatus: 403,
+        body: {
+          error: envelope(
+            'forbidden',
+            `Refused by hook "${e.hookName}": ${e.reason}`,
+            { point: e.point, hook: e.hookName, reason: e.reason },
+          ),
+        },
+      }
+    case 'DepthLimitExceededError':
+      return {
+        httpStatus: 400,
+        body: {
+          error: envelope(
+            'invalid_request',
+            `Spawning under ${e.parentId} would reach depth ${String(e.depth)}, exceeding the limit of ${String(e.maxDepth)}.`,
+            {
+              parent_id: e.parentId,
+              depth: e.depth,
+              max_depth: e.maxDepth,
+            },
           ),
         },
       }

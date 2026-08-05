@@ -1,6 +1,7 @@
 /** @Acp.Domain.Leases.Service — Lease lifecycle + conflict guard */
 import { Chunk, Context, Duration, Effect, Layer, Option, Schema } from 'effect'
 import { AppConfigTag } from '../../config/app-config.js'
+import { HookDispatcher } from '../hooks/index.js'
 import { EventStore } from '../events/index.js'
 import { Storage } from '../../infrastructure/storage/index.js'
 import {
@@ -17,6 +18,7 @@ import {
   resourceCollection,
   resourceKey,
 } from './resource-lock.js'
+import type { HookDeniedError } from '../../protocol/errors/protocol-error.js'
 import type {
   EventType,
   LeaseId,
@@ -42,7 +44,7 @@ export type LeaseServiceError =
 export interface LeaseServiceApi {
   readonly request: (
     input: RequestLeaseInput,
-  ) => Effect.Effect<Lease, LeaseConflictError | StorageError>
+  ) => Effect.Effect<Lease, LeaseConflictError | HookDeniedError | StorageError>
   readonly get: (
     leaseId: LeaseId,
   ) => Effect.Effect<Option.Option<Lease>, StorageError>
@@ -123,6 +125,7 @@ const make = Effect.gen(function* () {
   const storage = yield* Storage
   const events = yield* EventStore
   const config = yield* AppConfigTag
+  const hooks = yield* HookDispatcher
 
   const encodeLease = (lease: Lease) =>
     Schema.encode(Lease)(lease).pipe(
@@ -310,6 +313,14 @@ const make = Effect.gen(function* () {
         )
       }
 
+      yield* hooks.dispatch('lease.before_grant', {
+        point: 'lease.before_grant',
+        workspaceId: input.payload.workspace_id,
+        actor: input.payload.holder,
+        subjectId: input.payload.resource.uri,
+        detail: { resource_kind: input.payload.resource.kind },
+      })
+
       const lease: Lease = {
         id: input.id,
         workspace_id: input.payload.workspace_id,
@@ -473,5 +484,5 @@ const make = Effect.gen(function* () {
 export const LeaseServiceLive: Layer.Layer<
   LeaseService,
   never,
-  Storage | EventStore | AppConfigTag
+  Storage | EventStore | AppConfigTag | HookDispatcher
 > = Layer.effect(LeaseService, make)

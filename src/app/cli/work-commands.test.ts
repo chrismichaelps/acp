@@ -11,6 +11,77 @@ const right = (argv: readonly string[]): CliRequest => {
 }
 
 describe('work commands', () => {
+  it('maps --parent to a parent_id on work create', () => {
+    expect(
+      right([
+        'work',
+        'create',
+        'Migrate the schema',
+        '--workspace',
+        'workspace_1',
+        '--parent',
+        'work_parent',
+      ]),
+    ).toEqual({
+      method: 'POST',
+      path: '/v1/work',
+      body: {
+        workspace_id: 'workspace_1',
+        title: 'Migrate the schema',
+        parent_id: 'work_parent',
+      },
+      label: 'work create',
+    })
+  })
+
+  it('omits parent_id when --parent is absent', () => {
+    const request = right([
+      'work',
+      'create',
+      'Root task',
+      '--workspace',
+      'workspace_1',
+    ])
+    expect(request.body).toEqual({
+      workspace_id: 'workspace_1',
+      title: 'Root task',
+    })
+  })
+
+  it('maps work children to the direct-children route', () => {
+    expect(right(['work', 'children', 'work_1'])).toEqual({
+      method: 'GET',
+      path: '/v1/work/work_1/children',
+      label: 'work children',
+    })
+  })
+
+  it('maps work descendants without bounds', () => {
+    expect(right(['work', 'descendants', 'work_1'])).toEqual({
+      method: 'GET',
+      path: '/v1/work/work_1/descendants',
+      label: 'work descendants',
+    })
+  })
+
+  it('passes descendant bounds through as query parameters', () => {
+    expect(
+      right([
+        'work',
+        'descendants',
+        'work_1',
+        '--max-depth',
+        '2',
+        '--limit',
+        '50',
+      ]),
+    ).toEqual({
+      method: 'GET',
+      path: '/v1/work/work_1/descendants?max_depth=2&limit=50',
+      label: 'work descendants',
+    })
+  })
+
   it('maps work list to the workspace collection route', () => {
     expect(right(['work', 'list', '--workspace', 'workspace_1'])).toEqual({
       method: 'GET',

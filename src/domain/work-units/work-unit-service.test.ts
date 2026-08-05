@@ -19,6 +19,8 @@ import {
   WorkerId,
   WorkspaceId,
 } from '../../protocol/schema/index.js'
+import { TestAppConfigLive } from '../../config/app-config-test-support.js'
+import { NoHooksLive } from '../hooks/index.js'
 import { WorkUnitService, WorkUnitServiceLive } from './index.js'
 import type { CreateWorkInput } from './index.js'
 import type { Event } from '../../protocol/schema/index.js'
@@ -28,7 +30,13 @@ const StorageAndEventsLive = Layer.provideMerge(
   Layer.merge(InMemoryStorageLive, InProcessEventBrokerLive),
 )
 
-const TestLive = Layer.provideMerge(WorkUnitServiceLive, StorageAndEventsLive)
+const TestLive = Layer.provideMerge(
+  WorkUnitServiceLive,
+  Layer.merge(
+    StorageAndEventsLive,
+    Layer.merge(TestAppConfigLive(), NoHooksLive),
+  ),
+)
 
 const runSync = <A, E>(
   program: Effect.Effect<A, E, WorkUnitService | EventStore>,
@@ -53,7 +61,10 @@ const CasFailingStorageAndEventsLive = Layer.provideMerge(
 
 const CasFailingTestLive = Layer.provideMerge(
   WorkUnitServiceLive,
-  CasFailingStorageAndEventsLive,
+  Layer.merge(
+    CasFailingStorageAndEventsLive,
+    Layer.merge(TestAppConfigLive(), NoHooksLive),
+  ),
 )
 
 const workId = Schema.decodeUnknownSync(WorkId)('work_state_machine')

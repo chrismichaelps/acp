@@ -1,8 +1,13 @@
 /** @Acp.Domain.Reviews.Service — human-in-the-loop review gate */
 import { Chunk, Context, Effect, Layer, Option, Schema } from 'effect'
 import { EventStore } from '../events/index.js'
+import { HookDispatcher } from '../hooks/index.js'
 import { WorkUnitService } from '../work-units/index.js'
 import { Storage } from '../../infrastructure/storage/index.js'
+import type {
+  HookDeniedError,
+  IncompleteChildrenError,
+} from '../../protocol/errors/protocol-error.js'
 import {
   InvalidStateTransitionError,
   NotFoundError,
@@ -28,16 +33,24 @@ export interface RequestReviewInput {
   readonly now: Timestamp
 }
 
-export type ReviewServiceError =
-  ValidationError | NotFoundError | InvalidStateTransitionError | StorageError
+/**
+ * Errors a review verdict can surface. `IncompleteChildrenError` reaches here
+ * because a verdict drives the underlying work unit's state machine, which is
+ * gated by the spawn graph — see [[ADR-0021-work-unit-spawn-graph]].
+ */
+export type ReviewVerdictError =
+  | NotFoundError
+  | InvalidStateTransitionError
+  | IncompleteChildrenError
+  | HookDeniedError
+  | StorageError
+
+export type ReviewServiceError = ValidationError | ReviewVerdictError
 
 export interface ReviewServiceApi {
   readonly request: (
     input: RequestReviewInput,
-  ) => Effect.Effect<
-    Review,
-    NotFoundError | InvalidStateTransitionError | StorageError
-  >
+  ) => Effect.Effect<Review, ReviewVerdictError>
   readonly get: (
     reviewId: ReviewId,
   ) => Effect.Effect<Option.Option<Review>, StorageError>
@@ -58,26 +71,17 @@ export interface ReviewServiceApi {
     reviewId: ReviewId,
     actor: WorkerId,
     now: Timestamp,
-  ) => Effect.Effect<
-    Review,
-    NotFoundError | InvalidStateTransitionError | StorageError
-  >
+  ) => Effect.Effect<Review, ReviewVerdictError>
   readonly requestChanges: (
     reviewId: ReviewId,
     actor: WorkerId,
     now: Timestamp,
-  ) => Effect.Effect<
-    Review,
-    NotFoundError | InvalidStateTransitionError | StorageError
-  >
+  ) => Effect.Effect<Review, ReviewVerdictError>
   readonly cancel: (
     reviewId: ReviewId,
     actor: WorkerId,
     now: Timestamp,
-  ) => Effect.Effect<
-    Review,
-    NotFoundError | InvalidStateTransitionError | StorageError
-  >
+  ) => Effect.Effect<Review, ReviewVerdictError>
 }
 
 export class ReviewService extends Context.Tag('ReviewService')<
@@ -117,6 +121,7 @@ const make = Effect.gen(function* () {
   const storage = yield* Storage
   const events = yield* EventStore
   const workUnits = yield* WorkUnitService
+  const hooks = yield* HookDispatcher
 
   const encodeReview = (review: Review) =>
     Schema.encode(Review)(review).pipe(
@@ -294,6 +299,15 @@ const make = Effect.gen(function* () {
       }
 
       const work = yield* requireWork(review.work_id)
+
+      yield* hooks.dispatch('review.before_verdict', {
+        point: 'review.before_verdict',
+        workspaceId: work.workspace_id,
+        actor,
+        subjectId: review.id,
+        detail: { verdict: to, work_id: review.work_id },
+      })
+
       const next: Review = { ...review, state: to }
       yield* save(next)
       yield* appendReviewEvent(
@@ -408,5 +422,5 @@ const make = Effect.gen(function* () {
 export const ReviewServiceLive: Layer.Layer<
   ReviewService,
   never,
-  Storage | EventStore | WorkUnitService
+  Storage | EventStore | WorkUnitService | HookDispatcher
 > = Layer.effect(ReviewService, make)

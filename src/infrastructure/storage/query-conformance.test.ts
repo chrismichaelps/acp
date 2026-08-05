@@ -26,6 +26,93 @@ describe.each(adapters)('storage conformance — %s', (_name, layer) => {
   const run = <A, E>(program: Effect.Effect<A, E, Storage>): A =>
     Effect.runSync(Effect.provide(program, layer))
 
+  // parent_id is the spawn-graph scoping column added by
+  // [[ADR-0021-work-unit-spawn-graph]]. SQLite adds it as a plain column filled
+  // on write; Postgres derives it as a generated column. Both must answer the
+  // same child query, and both must treat a parentless row as unmatched rather
+  // than as a child of anything.
+  it('filters children by parent_id, ordered by id', () => {
+    const rows = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* s.put('work', 'c2', {
+          id: 'c2',
+          workspace_id: 'a',
+          parent_id: 'p1',
+        })
+        yield* s.put('work', 'c1', {
+          id: 'c1',
+          workspace_id: 'a',
+          parent_id: 'p1',
+        })
+        yield* s.put('work', 'c3', {
+          id: 'c3',
+          workspace_id: 'a',
+          parent_id: 'p2',
+        })
+        yield* s.put('work', 'root', { id: 'root', workspace_id: 'a' })
+        yield* s.put('work', 'nulled', {
+          id: 'nulled',
+          workspace_id: 'a',
+          parent_id: null,
+        })
+        const children = yield* s.queryBy('work', [
+          { field: 'parent_id', value: 'p1' },
+        ])
+        return Chunk.toReadonlyArray(children).map(
+          (row) => (row as { id: string }).id,
+        )
+      }),
+    )
+    expect(rows).toEqual(['c1', 'c2'])
+  })
+
+  it('returns no children for a parent that has none', () => {
+    const rows = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* s.put('work', 'c1', {
+          id: 'c1',
+          workspace_id: 'a',
+          parent_id: 'p1',
+        })
+        const children = yield* s.queryBy('work', [
+          { field: 'parent_id', value: 'p_absent' },
+        ])
+        return Chunk.toReadonlyArray(children)
+      }),
+    )
+    expect(rows).toEqual([])
+  })
+
+  it('combines parent_id with other filters', () => {
+    const rows = run(
+      Effect.gen(function* () {
+        const s = yield* Storage
+        yield* s.put('work', 'c1', {
+          id: 'c1',
+          workspace_id: 'a',
+          parent_id: 'p1',
+          state: 'open',
+        })
+        yield* s.put('work', 'c2', {
+          id: 'c2',
+          workspace_id: 'a',
+          parent_id: 'p1',
+          state: 'completed',
+        })
+        const openChildren = yield* s.queryBy('work', [
+          { field: 'parent_id', value: 'p1' },
+          { field: 'state', value: 'open' },
+        ])
+        return Chunk.toReadonlyArray(openChildren).map(
+          (row) => (row as { id: string }).id,
+        )
+      }),
+    )
+    expect(rows).toEqual(['c1'])
+  })
+
   it('returns only rows matching every filter, ordered by id', () => {
     const rows = run(
       Effect.gen(function* () {

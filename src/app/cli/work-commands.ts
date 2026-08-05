@@ -4,6 +4,7 @@ import {
   encodePathSegment,
   flag,
   optional,
+  optionalAs,
   optionalClientFilter,
   optionalQuery,
   positional,
@@ -23,6 +24,7 @@ export const workCommandHandlers: Readonly<Record<string, CommandHandler>> = {
           title,
           ...optional(flags, 'description'),
           ...optional(flags, 'priority'),
+          ...optionalAs(flags, 'parent', 'parent_id'),
         },
         label: 'work create',
       }
@@ -41,6 +43,32 @@ export const workCommandHandlers: Readonly<Record<string, CommandHandler>> = {
         path: `/v1/workspaces/${encodePathSegment(workspaceId)}/work`,
         ...(clientFilters.length > 0 ? { clientFilters } : {}),
         label: 'work list',
+      }
+    }),
+
+  'work children': ({ positionals }) =>
+    Either.gen(function* () {
+      const workId = yield* positional(positionals, 0, 'work_id')
+      return {
+        method: 'GET',
+        path: `/v1/work/${encodePathSegment(workId)}/children`,
+        label: 'work children',
+      }
+    }),
+
+  'work descendants': ({ positionals, flags }) =>
+    Either.gen(function* () {
+      const workId = yield* positional(positionals, 0, 'work_id')
+      const query = [
+        ...optionalQuery(flags, 'max-depth', 'max_depth'),
+        ...optionalQuery(flags, 'limit'),
+      ]
+      return {
+        method: 'GET',
+        path:
+          `/v1/work/${encodePathSegment(workId)}/descendants` +
+          (query.length > 0 ? `?${query.join('&')}` : ''),
+        label: 'work descendants',
       }
     }),
 

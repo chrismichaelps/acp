@@ -16,6 +16,7 @@ const expectedVariables = new Set([
   'ACP_EVENT_RETENTION_DAYS',
   'ACP_LOG_LEVEL',
   'ACP_MAX_ARTIFACT_SIZE_MB',
+  'ACP_MAX_WORK_DEPTH',
   'ACP_METRICS_TOKEN',
   'ACP_PORT',
   'ACP_PROFILE',

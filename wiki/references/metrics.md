@@ -43,17 +43,18 @@ The series below are a scrape contract: alerting rules depend on them, so the se
 grows deliberately. Durations are seconds — the Prometheus convention — even
 though the sources measure milliseconds.
 
-| Metric                              | Type      | Labels                      | Meaning                                               |
-| ----------------------------------- | --------- | --------------------------- | ----------------------------------------------------- |
-| `acp_rpc_requests_total`            | counter   | `operation`, `outcome`      | Native RPC calls completed.                           |
-| `acp_rpc_errors_total`              | counter   | `operation`, `error_code`   | RPC failures, by ACP protocol error code.             |
-| `acp_rpc_request_duration_seconds`  | histogram | `operation`                 | RPC latency.                                          |
-| `acp_http_requests_total`           | counter   | `method`, `route`, `status` | HTTP requests completed (excludes `/metrics` itself). |
-| `acp_http_request_duration_seconds` | histogram | `method`, `route`           | HTTP boundary latency.                                |
-| `acp_sweep_events_pruned_total`     | counter   | —                           | Events deleted by the retention sweeper.              |
-| `acp_sweep_sessions_evicted_total`  | counter   | —                           | Sessions evicted after TTL expiry.                    |
-| `acp_sweep_leases_expired_total`    | counter   | —                           | Leases lapsed after their deadline.                   |
-| `acp_build_info`                    | gauge     | `protocol_version`          | Always `1`; read the labels, not the value.           |
+| Metric                              | Type      | Labels                      | Meaning                                                           |
+| ----------------------------------- | --------- | --------------------------- | ----------------------------------------------------------------- |
+| `acp_rpc_requests_total`            | counter   | `operation`, `outcome`      | Native RPC calls completed.                                       |
+| `acp_rpc_errors_total`              | counter   | `operation`, `error_code`   | RPC failures, by ACP protocol error code.                         |
+| `acp_rpc_request_duration_seconds`  | histogram | `operation`                 | RPC latency.                                                      |
+| `acp_http_requests_total`           | counter   | `method`, `route`, `status` | HTTP requests completed (excludes `/metrics` itself).             |
+| `acp_http_request_duration_seconds` | histogram | `method`, `route`           | HTTP boundary latency.                                            |
+| `acp_sweep_events_pruned_total`     | counter   | —                           | Events deleted by the retention sweeper.                          |
+| `acp_sweep_sessions_evicted_total`  | counter   | —                           | Sessions evicted after TTL expiry.                                |
+| `acp_sweep_leases_expired_total`    | counter   | —                           | Leases lapsed after their deadline.                               |
+| `acp_hook_outcomes_total`           | counter   | `point`, `hook`, `outcome`  | Coordination hook verdicts — see [[ADR-0022-coordination-hooks]]. |
+| `acp_build_info`                    | gauge     | `protocol_version`          | Always `1`; read the labels, not the value.                       |
 
 Histograms expand into the usual cumulative `_bucket{le=...}`, `_sum`, and
 `_count` families. Latency buckets are the Prometheus client defaults
