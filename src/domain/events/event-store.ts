@@ -17,6 +17,14 @@ export interface EventStoreApi {
     afterSeq: number,
     limit?: Option.Option<number>,
   ) => Effect.Effect<Chunk.Chunk<Event>, StorageError>
+  /**
+   * The newest `limit` events, ascending by `seq` — see
+   * [[ADR-0025-event-tail-reads]].
+   */
+  readonly readTail: (
+    workspaceId: string,
+    limit: number,
+  ) => Effect.Effect<Chunk.Chunk<Event>, StorageError>
   readonly subscribe: (
     workspaceId: string,
   ) => Effect.Effect<Stream.Stream<Event>, never, Scope.Scope>
@@ -45,6 +53,9 @@ const make = Effect.gen(function* () {
     limit,
   ) => storage.readEventsAfter(workspaceId, afterSeq, limit)
 
+  const readTail: EventStoreApi['readTail'] = (workspaceId, limit) =>
+    storage.readEventsTail(workspaceId, limit)
+
   const pruneBefore: EventStoreApi['pruneBefore'] = (cutoff) =>
     storage.pruneEventsBefore(cutoff)
 
@@ -57,6 +68,7 @@ const make = Effect.gen(function* () {
   return {
     append,
     readAfter,
+    readTail,
     subscribe,
     pruneBefore,
   } satisfies EventStoreApi

@@ -5,6 +5,7 @@ import { Chunk, Effect, Layer, Option, Redacted, Schema } from 'effect'
 import { StorageError } from '../../protocol/errors/protocol-error.js'
 import { Event, Memory } from '../../protocol/schema/index.js'
 import { Storage } from './storage.js'
+import { recordCasConflict } from '../metrics/index.js'
 import { INDEXED_FIELDS } from './index-columns.js'
 import type { StorageApi, StoredRecord } from './storage.js'
 
@@ -145,6 +146,9 @@ const make = Effect.gen(function* () {
       RETURNING 1 AS one`.pipe(
       Effect.map((rows) => rows.length === 1),
       Effect.mapError(storageError('replace_if_version')),
+      Effect.tap((swapped) =>
+        swapped ? Effect.void : recordCasConflict(collection),
+      ),
     )
 
   const putIfAbsent: StorageApi['putIfAbsent'] = (collection, id, value) =>
@@ -258,6 +262,19 @@ const make = Effect.gen(function* () {
       Effect.map(Chunk.fromIterable),
     )
 
+  const readEventsTail: StorageApi['readEventsTail'] = (workspaceId, limit) =>
+    sql<ValueRow>`SELECT value FROM events
+                  WHERE workspace_id = ${workspaceId}
+                  ORDER BY seq DESC
+                  LIMIT ${limit}`.pipe(
+      Effect.mapError(storageError('read_events_tail')),
+      Effect.flatMap((rows) =>
+        Effect.forEach(rows, (row) => decodeEvent('decode_event', row.value)),
+      ),
+      // The query is newest-first; the contract is ascending.
+      Effect.map((events) => Chunk.fromIterable([...events].reverse())),
+    )
+
   const pruneEventsBefore: StorageApi['pruneEventsBefore'] = (cutoff) =>
     sql<{ readonly one: number }>`
       DELETE FROM events
@@ -326,6 +343,7 @@ const make = Effect.gen(function* () {
     remove,
     appendEvent,
     readEventsAfter,
+    readEventsTail,
     pruneEventsBefore,
     appendMemory,
     readMemory,

@@ -15,6 +15,7 @@ import {
   seqRow,
   storageTry,
 } from './sqlite-support.js'
+import { recordCasConflict } from '../metrics/index.js'
 import { extractIndexColumns, INDEXED_FIELDS } from './index-columns.js'
 import {
   buildQueryBySql,
@@ -148,6 +149,14 @@ const make = (path: string) =>
        ORDER BY seq ASC
        LIMIT ?`,
     )
+    // Descending with a LIMIT uses the same (workspace_id, seq) index as the
+    // cursor read; callers get the rows re-sorted ascending below.
+    const readEventsTailStmt = db.prepare(
+      `SELECT value FROM events
+       WHERE workspace_id = ?
+       ORDER BY seq DESC
+       LIMIT ?`,
+    )
     // Delete aged events but never a workspace's newest row, so MAX(seq) — the
     // append high-water-mark — is preserved even after a full-history sweep.
     const pruneEventsStmt = db.prepare(
@@ -244,7 +253,9 @@ const make = (path: string) =>
             ).changes,
           ),
         )
-        return changes === 1
+        const swapped = changes === 1
+        if (!swapped) yield* recordCasConflict(collection)
+        return swapped
       })
 
     const putIfAbsent: StorageApi['putIfAbsent'] = (collection, id, value) =>
@@ -353,6 +364,20 @@ const make = (path: string) =>
         Number(pruneEventsStmt.run(cutoff).changes),
       )
 
+    const readEventsTail: StorageApi['readEventsTail'] = (workspaceId, limit) =>
+      Effect.gen(function* () {
+        const rows = yield* storageTry('read_events_tail', () =>
+          jsonRows(readEventsTailStmt.all(workspaceId, limit)),
+        )
+        const events = yield* Effect.forEach(rows, (row) =>
+          Effect.flatMap(parseJson('decode_event_json', row.value), (value) =>
+            decodeEvent('decode_event', value),
+          ),
+        )
+        // The query is newest-first; the contract is ascending.
+        return Chunk.fromIterable([...events].reverse())
+      })
+
     const readEventsAfter: StorageApi['readEventsAfter'] = (
       workspaceId,
       afterSeq,
@@ -456,6 +481,7 @@ const make = (path: string) =>
       remove,
       appendEvent,
       readEventsAfter,
+      readEventsTail,
       pruneEventsBefore,
       appendMemory,
       readMemory,

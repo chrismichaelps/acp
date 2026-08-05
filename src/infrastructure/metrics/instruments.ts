@@ -66,6 +66,15 @@ const hookOutcomesTotal = Metric.counter('acp_hook_outcomes_total', {
   incremental: true,
 })
 
+const storageCasConflictsTotal = Metric.counter(
+  'acp_storage_cas_conflicts_total',
+  {
+    description:
+      'Version-CAS swaps that lost to a concurrent write, by collection.',
+    incremental: true,
+  },
+)
+
 const buildInfo = Metric.gauge('acp_build_info', {
   description:
     'Build and protocol identity. Always 1; read the labels, not the value.',
@@ -111,6 +120,21 @@ export const recordRpcCompletion = (input: {
  * grow with workload. A wedged fail-closed gate shows up here immediately,
  * rather than being diagnosed from agent retry storms.
  */
+/**
+ * Record one lost version-CAS swap. Recorded in the adapters rather than at the
+ * call sites, so a future CAS write cannot forget to report contention.
+ *
+ * Not every caller retries — the session-issuer binding does, while work claims
+ * and grill answers surface a conflict instead — so this counts the contention
+ * itself, which is the signal an operator needs either way. Without it, agents
+ * converging on one workspace show up only as unexplained latency.
+ */
+export const recordCasConflict = (collection: string): Effect.Effect<void> =>
+  Metric.update(
+    storageCasConflictsTotal.pipe(Metric.tagged('collection', collection)),
+    1,
+  )
+
 export const recordHookOutcome = (input: {
   readonly point: string
   readonly hook: string
