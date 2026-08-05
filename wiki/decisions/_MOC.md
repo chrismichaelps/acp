@@ -81,7 +81,7 @@ tags: [moc, adr]
 - [[ADR-0025-event-tail-reads-persistence-metrics]] — ACCEPTED — add a bounded
   `readEventsTail` to the storage port and a CAS-contention counter, and record
   why codex's compaction and session-index designs are not adopted.
-- [[ADR-0026-agent-sandbox-runtime]] — PROPOSED — let ACP provision and
+- [[ADR-0026-agent-sandbox-runtime]] — ACCEPTED — let ACP provision and
   supervise an isolated execution environment per work unit behind a
   `SandboxProvider` port, turning leases into read-write mounts so they stop
   being advisory, while deliberately never owning the agent harness.

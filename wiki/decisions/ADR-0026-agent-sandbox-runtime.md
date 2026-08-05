@@ -1,8 +1,8 @@
 ---
 type: decision
-status: PROPOSED
+status: ACCEPTED
 date: 2026-08-05
-tags: [adr, proposed, runtime, sandbox, docker, isolation, leases]
+tags: [adr, accepted, runtime, sandbox, docker, isolation, leases]
 aliases: [ADR-0026, agent-sandbox-runtime]
 ---
 
@@ -10,7 +10,25 @@ aliases: [ADR-0026, agent-sandbox-runtime]
 
 ## Status
 
-PROPOSED.
+ACCEPTED — implemented for the `none` and `docker` adapters.
+
+Delivered: `computeMountPlan`, which projects a work unit's active leases onto
+read-write mounts over a read-only workspace; the `SandboxProvider` port with
+`NoSandboxLive` as the default; and a `docker` adapter over the Docker Engine
+API. The security-relevant payload construction is a pure function
+(`toCreateContainerRequest`) so it is asserted exhaustively without a daemon:
+read-only root ordered before the writable overlays, egress denied unless hosts
+are named, `Privileged: false`, `CapDrop: ["ALL"]`, `no-new-privileges`, private
+IPC, no host PID namespace, no Docker socket mount, and no host environment
+inherited. `start` is idempotent — the container name is derived from the work
+id, so a restart converges on one sandbox instead of accumulating them.
+
+Deferred: wiring the provider into the work lifecycle (nothing calls `start`
+yet), the `ACP_SANDBOX_ADAPTER` configuration seam, and the microVM-backed
+`docker-sandbox` adapter. The enforcement logic and the isolation contract are
+the parts worth getting right first, and both are complete and tested; turning
+them on for real work is the next slice and is where the operational blast
+radius actually begins.
 
 ## Context
 
