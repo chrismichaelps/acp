@@ -1,8 +1,8 @@
 ---
 type: decision
-status: PROPOSED
+status: ACCEPTED
 date: 2026-08-04
-tags: [adr, proposed, policy, authorization, resources, leases]
+tags: [adr, accepted, policy, authorization, resources, leases]
 aliases: [ADR-0023, resource-access-policy]
 ---
 
@@ -10,7 +10,36 @@ aliases: [ADR-0023, resource-access-policy]
 
 ## Status
 
-PROPOSED.
+ACCEPTED — implemented, with two refinements found during implementation.
+
+Delivered: `PolicyDocument`, `PolicyRule`, and the evaluator in
+`src/domain/policy/`; first-match-wins evaluation; a required top-level
+`default`; justifications required on non-allow rules; load-time `match` /
+`notMatch` self-validation checked against the whole document, so a rule
+shadowed by an earlier one fails to load rather than sitting there never
+firing; `ACP_POLICY_FILE`, loaded in `PolicyHooksLive`, which aborts startup on
+a malformed, self-inconsistent, or unreadable policy.
+
+**Refinement 1 — policy rides the hook seam.** This ADR was written before
+[[ADR-0022-coordination-hooks]] was implemented. Rather than add a second
+interception mechanism, policy is projected onto the existing hook points as a
+built-in hook. It inherits dispatch ordering, the fail-closed timeout, the
+`acp_hook_outcomes_total` counter, and the 403 mapping, and it gives the hook
+seam its first real consumer. Policy still runs after the session's permission
+check, so it can only narrow, never grant.
+
+**Refinement 2 — `require_review` is reserved, not enforced.** A hook can only
+allow or deny, and "route this into review" has no coherent meaning for a lease
+grant, since reviews are scoped to work units. A policy naming `require_review`
+is therefore **refused at load**. Silently treating it as `allow` would be a
+hole; treating it as `deny` would misrepresent the operator's intent. The
+vocabulary stays in the schema so a future slice can honour it without a
+breaking change.
+
+Also narrowed: the governed actions are `lease.grant` and `work.claim` — the two
+mutations that name a resource. The per-workspace overlay is deferred; a single
+host policy is the useful first slice, and overlay merge semantics deserve a
+demonstrated need.
 
 ## Context
 

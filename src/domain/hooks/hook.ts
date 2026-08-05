@@ -23,8 +23,12 @@ export interface HookPayload {
   readonly actor: string
   /** The entity being mutated — work id, lease resource, or review id. */
   readonly subjectId: string
-  /** Point-specific context, e.g. the target state of a transition. */
-  readonly detail: Readonly<Record<string, string>>
+  /**
+   * Point-specific context, e.g. the target state of a transition. Values are
+   * `string | undefined` because an arbitrary key lookup can miss — the type
+   * should not promise a hook that every key it asks for is present.
+   */
+  readonly detail: Readonly<Record<string, string | undefined>>
 }
 
 /**

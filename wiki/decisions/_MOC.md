@@ -72,7 +72,7 @@ tags: [moc, adr]
 - [[ADR-0022-coordination-hooks]] — ACCEPTED — add pre-mutation, in-process
   hooks over a closed set of coordination points, dispatched sequentially with
   first-abort-wins, mandatory reasons on denial, and fail-closed timeouts.
-- [[ADR-0023-resource-access-policy]] — PROPOSED — layer declarative,
+- [[ADR-0023-resource-access-policy]] — ACCEPTED — layer declarative,
   per-resource allow/deny/require_review rules above the closed `Permission`
   vocabulary, with mandatory justifications and rules that self-test at load.
 - [[ADR-0024-worker-identity-provenance]] — PROPOSED — give workers an Ed25519
