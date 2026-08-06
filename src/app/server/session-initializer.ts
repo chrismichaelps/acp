@@ -1,5 +1,5 @@
 /** @Acp.App.Server.SessionInitializer — shared session initialization transaction */
-import { Effect, Option } from 'effect'
+import { DateTime, Duration, Effect, Option, Schema } from 'effect'
 import { AppConfigTag } from '../../config/app-config.js'
 import { SessionIssuer, SessionService } from '../../domain/sessions/index.js'
 import { WorkerService } from '../../domain/workers/index.js'
@@ -15,6 +15,7 @@ import type {
 import {
   ACP_PROTOCOL_VERSION,
   isSupportedProtocolVersion,
+  Timestamp,
 } from '../../protocol/schema/index.js'
 import type { Capability, SessionId } from '../../protocol/schema/index.js'
 import { IdClock } from './identity.js'
@@ -91,22 +92,31 @@ export const initializeSession = (
       )
     }
 
+    const idClock = yield* IdClock
+    const now = yield* idClock.now
+    // The handshake is the heartbeat: each one re-stamps the deadline, so a
+    // worker that keeps connecting stays live and one that stops lapses.
+    const registrationDeadline = Schema.decodeUnknownSync(Timestamp)(
+      DateTime.formatIso(
+        DateTime.unsafeMake(
+          Date.parse(now) + Duration.toMillis(config.workerRegistrationTtl),
+        ),
+      ),
+    )
+
     const issuer = yield* SessionIssuer
     const grant = yield* issuer.issue(credential, {
       worker: {
         ...payload.worker,
         capabilities: capabilitiesFromHandshake(payload),
-        // Registration TTL is not yet swept, so no expiry is recorded.
-        expires_at: Option.none(),
+        expires_at: Option.some(registrationDeadline),
       },
       permissions: payload.permissions,
       workspace_ids: payload.workspace_ids,
     })
     const workers = yield* WorkerService
     const worker = yield* workers.register(grant.worker)
-    const idClock = yield* IdClock
     const sessionId = (yield* idClock.secureToken('session')) as SessionId
-    const now = yield* idClock.now
     const sessions = yield* SessionService
     const session = yield* sessions.create({
       id: sessionId,

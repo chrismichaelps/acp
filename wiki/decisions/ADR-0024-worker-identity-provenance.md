@@ -52,9 +52,14 @@ every verdict funnels through one check rather than three call sites that could
 drift apart; `ACP_WORKER_REGISTRATION_TTL`; and `WorkerService.expireLapsed`,
 run by the background sweeper beside session eviction and lease expiry.
 
-Still deferred: `grill.answer` signing, and stamping `expires_at` at
-registration — expiry is implemented and swept, but nothing sets a deadline yet,
-so no worker currently lapses. Both are wiring on top of finished machinery.
+The registration lifecycle is now closed: the handshake stamps `expires_at`
+from `ACP_WORKER_REGISTRATION_TTL`, so each connection acts as the heartbeat —
+a worker that keeps connecting stays live, one that stops lapses and the
+sweeper marks it `offline`.
+
+Still deferred: `grill.answer` signing. The verification service is
+action-agnostic and the vocabulary already includes the action, so this is
+wiring rather than design.
 
 Strengthened by [[ADR-0026-agent-sandbox-runtime]]: once the runtime launches
 the agent process, the bill of materials stops being self-reported and becomes
