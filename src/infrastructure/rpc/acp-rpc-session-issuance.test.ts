@@ -57,6 +57,7 @@ const StaticConfigLive = Layer.succeed(AppConfigTag, {
   requireAuth: true,
   requireWorkspaceBindings: true,
   requireWorkerSignatures: false,
+  workerRegistrationTtl: Duration.hours(24),
   sessionIssuer: 'static' as const,
   sessionIssuancePolicy: Option.some(policy),
   metricsToken: Option.none(),

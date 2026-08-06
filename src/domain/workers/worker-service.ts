@@ -6,7 +6,11 @@ import {
   StorageError,
 } from '../../protocol/errors/protocol-error.js'
 import { Worker } from '../../protocol/schema/index.js'
-import type { WorkerId, WorkerStatus } from '../../protocol/schema/index.js'
+import type {
+  Timestamp,
+  WorkerId,
+  WorkerStatus,
+} from '../../protocol/schema/index.js'
 
 export interface WorkerServiceApi {
   readonly register: (worker: Worker) => Effect.Effect<Worker, StorageError>
@@ -18,6 +22,15 @@ export interface WorkerServiceApi {
     workerId: WorkerId,
     status: WorkerStatus,
   ) => Effect.Effect<Worker, NotFoundError | StorageError>
+  /**
+   * Marks workers whose registration lapsed as `offline`, returning those it
+   * changed. The row and its `expires_at` survive — events attribute work by
+   * worker id, so deleting one would leave dangling references and destroy the
+   * audit trail. See [[ADR-0024-worker-identity-provenance]].
+   */
+  readonly expireLapsed: (
+    now: Timestamp,
+  ) => Effect.Effect<readonly Worker[], StorageError>
 }
 
 export class WorkerService extends Context.Tag('WorkerService')<
@@ -88,11 +101,30 @@ const make = Effect.gen(function* () {
       return Effect.as(save(next), next)
     })
 
+  const expireLapsed: WorkerServiceApi['expireLapsed'] = (now) =>
+    Effect.flatMap(list(), (workers) =>
+      Effect.forEach(
+        workers.filter(
+          (worker) =>
+            worker.status !== 'offline' &&
+            Option.match(worker.expires_at, {
+              onNone: () => false,
+              onSome: (deadline) => deadline <= now,
+            }),
+        ),
+        (worker) => {
+          const next: Worker = { ...worker, status: 'offline' as const }
+          return Effect.as(save(next), next)
+        },
+      ),
+    )
+
   return {
     register,
     get,
     list,
     setStatus,
+    expireLapsed,
   } satisfies WorkerServiceApi
 })
 

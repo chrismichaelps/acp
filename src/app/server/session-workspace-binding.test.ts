@@ -30,6 +30,7 @@ const requireWorkspaceBindingsConfig = Layer.succeed(AppConfigTag, {
   requireAuth: true,
   requireWorkspaceBindings: true,
   requireWorkerSignatures: false,
+  workerRegistrationTtl: Duration.hours(24),
   sessionIssuer: 'trusted-client' as const,
   sessionIssuancePolicy: Option.none(),
   metricsToken: Option.none(),

@@ -47,9 +47,14 @@ Two rules the ADR did not settle, decided during implementation:
   the worker unconditionally, which silently made registration a precondition of
   every claim; 71 tests caught it.
 
-Still deferred: signing for `review.verdict` and `grill.answer`, and TTL
-sweeping of lapsed registrations. The verification service is action-agnostic,
-so extending it is wiring rather than design.
+Also delivered: `review.verdict` signing, verified in `transitionReview` so
+every verdict funnels through one check rather than three call sites that could
+drift apart; `ACP_WORKER_REGISTRATION_TTL`; and `WorkerService.expireLapsed`,
+run by the background sweeper beside session eviction and lease expiry.
+
+Still deferred: `grill.answer` signing, and stamping `expires_at` at
+registration — expiry is implemented and swept, but nothing sets a deadline yet,
+so no worker currently lapses. Both are wiring on top of finished machinery.
 
 Strengthened by [[ADR-0026-agent-sandbox-runtime]]: once the runtime launches
 the agent process, the bill of materials stops being self-reported and becomes

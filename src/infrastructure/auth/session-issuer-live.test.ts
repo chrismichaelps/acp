@@ -63,6 +63,7 @@ const configLayer = (value: unknown) =>
     requireAuth: true,
     requireWorkspaceBindings: true,
     requireWorkerSignatures: false,
+    workerRegistrationTtl: Duration.hours(24),
     sessionIssuer: 'static' as const,
     sessionIssuancePolicy: Option.some(JSON.stringify(value)),
     metricsToken: Option.none(),

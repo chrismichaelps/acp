@@ -43,6 +43,7 @@ const TestConfigLive = Layer.succeed(AppConfigTag, {
   requireAuth: false,
   requireWorkspaceBindings: false,
   requireWorkerSignatures: false,
+  workerRegistrationTtl: Duration.hours(24),
   sessionIssuer: 'trusted-client' as const,
   sessionIssuancePolicy: Option.none(),
   metricsToken: Option.none(),

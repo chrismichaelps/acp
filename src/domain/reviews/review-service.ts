@@ -2,9 +2,11 @@
 import { Chunk, Context, Effect, Layer, Option, Schema } from 'effect'
 import { EventStore } from '../events/index.js'
 import { HookDispatcher } from '../hooks/index.js'
+import { WorkerIdentityService } from '../identity/index.js'
 import { WorkUnitService } from '../work-units/index.js'
 import { Storage } from '../../infrastructure/storage/index.js'
 import type {
+  ForbiddenError,
   HookDeniedError,
   IncompleteChildrenError,
 } from '../../protocol/errors/protocol-error.js'
@@ -19,6 +21,7 @@ import type {
   EventType,
   RequestReviewPayload,
   ReviewId,
+  WorkerAssertionPayload,
   ReviewApprovalSignature,
   ReviewState,
   Timestamp,
@@ -43,6 +46,7 @@ export type ReviewVerdictError =
   | InvalidStateTransitionError
   | IncompleteChildrenError
   | HookDeniedError
+  | ForbiddenError
   | StorageError
 
 export type ReviewServiceError = ValidationError | ReviewVerdictError
@@ -66,16 +70,20 @@ export interface ReviewServiceApi {
     now: Timestamp,
     metRequirements: readonly string[],
     approvalSignature?: Option.Option<ReviewApprovalSignature>,
+    /** Provenance for the verdict; required when signatures are enforced. */
+    assertion?: WorkerAssertionPayload,
   ) => Effect.Effect<Review, ReviewServiceError>
   readonly reject: (
     reviewId: ReviewId,
     actor: WorkerId,
     now: Timestamp,
+    assertion?: WorkerAssertionPayload,
   ) => Effect.Effect<Review, ReviewVerdictError>
   readonly requestChanges: (
     reviewId: ReviewId,
     actor: WorkerId,
     now: Timestamp,
+    assertion?: WorkerAssertionPayload,
   ) => Effect.Effect<Review, ReviewVerdictError>
   readonly cancel: (
     reviewId: ReviewId,
@@ -122,6 +130,7 @@ const make = Effect.gen(function* () {
   const events = yield* EventStore
   const workUnits = yield* WorkUnitService
   const hooks = yield* HookDispatcher
+  const identity = yield* WorkerIdentityService
 
   const encodeReview = (review: Review) =>
     Schema.encode(Review)(review).pipe(
@@ -290,8 +299,28 @@ const make = Effect.gen(function* () {
     actor: WorkerId,
     now: Timestamp,
     to: ReviewState,
+    assertion?: WorkerAssertionPayload,
   ) =>
     Effect.gen(function* () {
+      // Every verdict funnels through here, so provenance is checked once
+      // rather than at three call sites that could drift apart.
+      yield* identity.verify({
+        workerId: actor,
+        action: 'review.verdict',
+        targetId: review.id,
+        assertion:
+          assertion === undefined
+            ? Option.none()
+            : Option.some({
+                workerId: assertion.worker_id,
+                action: assertion.action,
+                targetId: assertion.target_id,
+                timestamp: assertion.timestamp,
+                signature: assertion.signature,
+              }),
+        now,
+      })
+
       if (review.state !== 'requested') {
         return yield* Effect.fail(
           new InvalidStateTransitionError({ from: review.state, to }),
@@ -326,6 +355,7 @@ const make = Effect.gen(function* () {
     now,
     metRequirements,
     approvalSignature = Option.none(),
+    assertion,
   ) =>
     Effect.flatMap(requireReview(reviewId), (review) =>
       Effect.gen(function* () {
@@ -345,6 +375,7 @@ const make = Effect.gen(function* () {
           actor,
           now,
           'approved',
+          assertion,
         )
         yield* workUnits.transitionSilently(
           review.work_id,
@@ -356,10 +387,21 @@ const make = Effect.gen(function* () {
       }),
     )
 
-  const reject: ReviewServiceApi['reject'] = (reviewId, actor, now) =>
+  const reject: ReviewServiceApi['reject'] = (
+    reviewId,
+    actor,
+    now,
+    assertion,
+  ) =>
     Effect.flatMap(requireReview(reviewId), (review) =>
       Effect.gen(function* () {
-        const rejected = yield* transitionReview(review, actor, now, 'rejected')
+        const rejected = yield* transitionReview(
+          review,
+          actor,
+          now,
+          'rejected',
+          assertion,
+        )
         yield* workUnits.transitionSilently(
           review.work_id,
           'rejected',
@@ -374,6 +416,7 @@ const make = Effect.gen(function* () {
     reviewId,
     actor,
     now,
+    assertion,
   ) =>
     Effect.flatMap(requireReview(reviewId), (review) =>
       Effect.gen(function* () {
@@ -382,6 +425,7 @@ const make = Effect.gen(function* () {
           actor,
           now,
           'changes_requested',
+          assertion,
         )
         yield* workUnits.transitionSilently(
           review.work_id,
@@ -422,5 +466,9 @@ const make = Effect.gen(function* () {
 export const ReviewServiceLive: Layer.Layer<
   ReviewService,
   never,
-  Storage | EventStore | WorkUnitService | HookDispatcher
+  | Storage
+  | EventStore
+  | WorkUnitService
+  | HookDispatcher
+  | WorkerIdentityService
 > = Layer.effect(ReviewService, make)
