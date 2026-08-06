@@ -2,7 +2,9 @@
 import { Chunk, Context, Effect, Layer, Option, Schema } from 'effect'
 import { EventStore } from '../events/index.js'
 import { ReviewCommentService } from '../review-comments/index.js'
+import { WorkerIdentityService } from '../identity/index.js'
 import { Storage } from '../../infrastructure/storage/index.js'
+import type { ForbiddenError } from '../../protocol/errors/protocol-error.js'
 import {
   NotFoundError,
   StorageError,
@@ -10,6 +12,7 @@ import {
 } from '../../protocol/errors/protocol-error.js'
 import { Grill, GrillQuestion, Event } from '../../protocol/schema/index.js'
 import type {
+  WorkerAssertionPayload,
   OpenGrillPayload,
   AddGrillQuestionPayload,
   Grill as GrillType,
@@ -41,6 +44,8 @@ export interface AnswerGrillQuestionInput {
   readonly answer: string
   readonly answeredBy: WorkerId
   readonly now: Timestamp
+  /** Provenance for the answer; required when signatures are enforced. */
+  readonly assertion?: WorkerAssertionPayload
 }
 
 export interface GrillServiceApi {
@@ -57,7 +62,10 @@ export interface GrillServiceApi {
   readonly answer: (
     questionId: GrillQuestionId,
     input: AnswerGrillQuestionInput,
-  ) => Effect.Effect<GrillQuestionType, NotFoundError | StorageError>
+  ) => Effect.Effect<
+    GrillQuestionType,
+    NotFoundError | ForbiddenError | StorageError
+  >
   readonly setVerdict: (
     questionId: GrillQuestionId,
     verdict: 'accepted' | 'rejected',
@@ -113,6 +121,7 @@ const make = Effect.gen(function* () {
   const storage = yield* Storage
   const events = yield* EventStore
   const reviewComments = yield* ReviewCommentService
+  const identity = yield* WorkerIdentityService
 
   const encodeGrill = (g: GrillType) =>
     Schema.encode(Grill)(g).pipe(
@@ -340,6 +349,25 @@ const make = Effect.gen(function* () {
 
   const answer: GrillServiceApi['answer'] = (questionId, input) =>
     Effect.gen(function* () {
+      // Checked before the write, so a refused answer leaves no trace — the
+      // grill gate rests on knowing who actually answered.
+      yield* identity.verify({
+        workerId: input.answeredBy,
+        action: 'grill.answer',
+        targetId: questionId,
+        assertion:
+          input.assertion === undefined
+            ? Option.none()
+            : Option.some({
+                workerId: input.assertion.worker_id,
+                action: input.assertion.action,
+                targetId: input.assertion.target_id,
+                timestamp: input.assertion.timestamp,
+                signature: input.assertion.signature,
+              }),
+        now: input.now,
+      })
+
       const next = yield* casQuestion(questionId, (q) => ({
         ...q,
         answer: Option.some(input.answer),
@@ -455,5 +483,5 @@ const make = Effect.gen(function* () {
 export const GrillServiceLive: Layer.Layer<
   GrillService,
   never,
-  Storage | EventStore | ReviewCommentService
+  Storage | EventStore | ReviewCommentService | WorkerIdentityService
 > = Layer.effect(GrillService, make)

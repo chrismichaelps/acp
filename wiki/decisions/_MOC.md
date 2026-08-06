@@ -75,7 +75,7 @@ tags: [moc, adr]
 - [[ADR-0023-resource-access-policy]] — ACCEPTED — layer declarative,
   per-resource allow/deny/require_review rules above the closed `Permission`
   vocabulary, with mandatory justifications and rules that self-test at load.
-- [[ADR-0024-worker-identity-provenance]] — PARTIAL — give workers an Ed25519
+- [[ADR-0024-worker-identity-provenance]] — ACCEPTED — give workers an Ed25519
   keypair, a bill of materials, and a TTL'd registration, verifying signatures
   on state-changing claims as provenance layered beside session authorization.
 - [[ADR-0025-event-tail-reads-persistence-metrics]] — ACCEPTED — add a bounded

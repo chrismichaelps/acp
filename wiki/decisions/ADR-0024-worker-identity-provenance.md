@@ -1,6 +1,6 @@
 ---
 type: decision
-status: PARTIAL
+status: ACCEPTED
 date: 2026-08-04
 tags: [adr, proposed, identity, provenance, workers, audit, signing]
 aliases: [ADR-0024, worker-identity-provenance]
@@ -10,7 +10,7 @@ aliases: [ADR-0024, worker-identity-provenance]
 
 ## Status
 
-PARTIALLY IMPLEMENTED.
+ACCEPTED — implemented.
 
 Delivered: the Ed25519 assertion core in `src/domain/identity/` — a canonical
 signing payload, verification, and a bounded replay window — plus `public_key`,
@@ -57,9 +57,10 @@ from `ACP_WORKER_REGISTRATION_TTL`, so each connection acts as the heartbeat —
 a worker that keeps connecting stays live, one that stops lapses and the
 sweeper marks it `offline`.
 
-Still deferred: `grill.answer` signing. The verification service is
-action-agnostic and the vocabulary already includes the action, so this is
-wiring rather than design.
+`grill.answer` signing now ships too, checked before the write so a refused
+answer leaves no half-attributed trace. All four actions this ADR named are
+verified: `worker.register` (via the handshake, which also stamps the
+registration deadline), `work.claim`, `review.verdict`, and `grill.answer`.
 
 Strengthened by [[ADR-0026-agent-sandbox-runtime]]: once the runtime launches
 the agent process, the bill of materials stops being self-reported and becomes
