@@ -28,6 +28,7 @@ export interface AppConfig {
   readonly requireAuth: boolean
   readonly requireWorkspaceBindings: boolean
   readonly requireWorkerSignatures: boolean
+  readonly workerRegistrationTtl: Duration.Duration
   readonly sessionIssuer: SessionIssuerMode
   readonly sessionIssuancePolicy: Option.Option<string>
   readonly metricsToken: Option.Option<string>
@@ -161,6 +162,11 @@ const load = Effect.gen(function* () {
   const requireWorkerSignatures = yield* Config.boolean(
     'ACP_REQUIRE_WORKER_SIGNATURES',
   ).pipe(Config.withDefault(false))
+  // Generous by default: a busy worker should never trip it, and expiry is a
+  // liveness signal rather than a security control.
+  const workerRegistrationTtl = yield* Config.duration(
+    'ACP_WORKER_REGISTRATION_TTL',
+  ).pipe(Config.withDefault(Duration.hours(24)))
   const configuredSessionIssuer = yield* Config.literal(
     'trusted-client',
     'static',
@@ -210,6 +216,7 @@ const load = Effect.gen(function* () {
     requireAuth,
     requireWorkspaceBindings,
     requireWorkerSignatures,
+    workerRegistrationTtl,
     sessionIssuer,
     sessionIssuancePolicy,
     metricsToken,

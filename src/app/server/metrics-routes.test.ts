@@ -30,6 +30,7 @@ const configWith = (metricsToken: Option.Option<string>): AppConfig => ({
   requireAuth: false,
   requireWorkspaceBindings: false,
   requireWorkerSignatures: false,
+  workerRegistrationTtl: Duration.hours(24),
   sessionIssuer: 'trusted-client',
   sessionIssuancePolicy: Option.none(),
   metricsToken,

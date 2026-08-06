@@ -1,6 +1,6 @@
 ---
 type: decision
-status: PARTIAL
+status: ACCEPTED
 date: 2026-08-04
 tags: [adr, proposed, identity, provenance, workers, audit, signing]
 aliases: [ADR-0024, worker-identity-provenance]
@@ -10,7 +10,7 @@ aliases: [ADR-0024, worker-identity-provenance]
 
 ## Status
 
-PARTIALLY IMPLEMENTED.
+ACCEPTED — implemented.
 
 Delivered: the Ed25519 assertion core in `src/domain/identity/` — a canonical
 signing payload, verification, and a bounded replay window — plus `public_key`,
@@ -47,9 +47,39 @@ Two rules the ADR did not settle, decided during implementation:
   the worker unconditionally, which silently made registration a precondition of
   every claim; 71 tests caught it.
 
-Still deferred: signing for `review.verdict` and `grill.answer`, and TTL
-sweeping of lapsed registrations. The verification service is action-agnostic,
-so extending it is wiring rather than design.
+Also delivered: `review.verdict` signing, verified in `transitionReview` so
+every verdict funnels through one check rather than three call sites that could
+drift apart; `ACP_WORKER_REGISTRATION_TTL`; and `WorkerService.expireLapsed`,
+run by the background sweeper beside session eviction and lease expiry.
+
+The registration lifecycle is now closed: the handshake stamps `expires_at`
+from `ACP_WORKER_REGISTRATION_TTL`, so each connection acts as the heartbeat —
+a worker that keeps connecting stays live, one that stops lapses and the
+sweeper marks it `offline`.
+
+`grill.answer` verification ships too, checked before the write so a refused
+answer leaves no half-attributed trace.
+
+**Enforcement is end-to-end for `work.claim` only.** A self-review before merge
+found that enabling `ACP_REQUIRE_WORKER_SIGNATURES` would have refused every
+review verdict and grill answer outright: verification demanded proof, but no
+verdict or grill transport carries an assertion — those endpoints have no
+request body at all — so no caller could ever supply one. A config flag that
+bricks reviews when enabled is not shippable, documented or not.
+
+Verdicts and grill answers are therefore **verified-if-supplied**: a supplied
+assertion is fully checked, including forgery and replay, but absent proof is
+not a refusal until the wire can carry it. `work.claim` is unaffected — its
+payload carries `assertion` and every transport threads it.
+
+The same review found `review.cancel` had no `assertion` parameter while
+routing through the same verification funnel, making cancellation impossible
+under enforcement. `cancel` now accepts one, so every path through
+`transitionReview` can prove itself.
+
+Remaining to close the loop: `assertion` on the verdict and grill-answer wire
+payloads, plus the transports. Until then the ADR is honest that enforcement
+covers one action, not four.
 
 Strengthened by [[ADR-0026-agent-sandbox-runtime]]: once the runtime launches
 the agent process, the bill of materials stops being self-reported and becomes

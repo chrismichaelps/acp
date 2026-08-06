@@ -10,7 +10,7 @@ import {
 import { WorkerService, WorkerServiceLive } from '../../domain/workers/index.js'
 import { InMemoryStorageLive } from '../../infrastructure/storage/index.js'
 import { InitializeSessionPayload } from '../../infrastructure/http/index.js'
-import { WorkerId } from '../../protocol/schema/index.js'
+import { Timestamp, WorkerId } from '../../protocol/schema/index.js'
 import { IdClockLive } from './identity.js'
 import { initializeSession } from './session-initializer.js'
 
@@ -37,6 +37,7 @@ const ConfigLive = Layer.succeed(AppConfigTag, {
   requireAuth: false,
   requireWorkspaceBindings: false,
   requireWorkerSignatures: false,
+  workerRegistrationTtl: Duration.hours(24),
   sessionIssuer: 'trusted-client' as const,
   sessionIssuancePolicy: Option.none(),
   metricsToken: Option.none(),
@@ -61,6 +62,56 @@ const payload = (protocolVersion = '0.1') =>
     capabilities: { can_edit_files: true, supports_leases: true },
     permissions: ['work:create'],
   })
+
+describe('initializeSession — registration TTL', () => {
+  it('stamps a registration deadline from the configured TTL', async () => {
+    const stored = await Effect.runPromise(
+      Effect.gen(function* () {
+        yield* initializeSession(payload(), '')
+        const workers = yield* WorkerService
+        return yield* workers.get(
+          Schema.decodeUnknownSync(WorkerId)('agent_requested'),
+        )
+      }).pipe(Effect.provide(Runtime)),
+    )
+    const worker = Option.getOrThrow(stored)
+    expect(Option.isSome(worker.expires_at)).toBe(true)
+  })
+
+  it('lapses that registration once the deadline passes, keeping the row', async () => {
+    // The deadline comes from the handshake, not the test; a far-future sweep
+    // stands in for elapsed time. This is the half ADR-0024 was missing: expiry
+    // was swept but nothing ever set a deadline.
+    const result = await Effect.runPromise(
+      Effect.gen(function* () {
+        yield* initializeSession(payload(), '')
+        const workers = yield* WorkerService
+        const id = Schema.decodeUnknownSync(WorkerId)('agent_requested')
+        const lapsed = yield* workers.expireLapsed(
+          Schema.decodeUnknownSync(Timestamp)('2099-01-01T00:00:00Z'),
+        )
+        const after = yield* workers.get(id)
+        return { lapsed, worker: Option.getOrThrow(after) }
+      }).pipe(Effect.provide(Runtime)),
+    )
+    expect(result.lapsed.map((w) => w.id)).toEqual(['agent_requested'])
+    expect(result.worker.status).toBe('offline')
+    expect(Option.isSome(result.worker.expires_at)).toBe(true)
+  })
+
+  it('does not lapse a registration that is still live', async () => {
+    const lapsed = await Effect.runPromise(
+      Effect.gen(function* () {
+        yield* initializeSession(payload(), '')
+        const workers = yield* WorkerService
+        return yield* workers.expireLapsed(
+          Schema.decodeUnknownSync(Timestamp)('2020-01-01T00:00:00Z'),
+        )
+      }).pipe(Effect.provide(Runtime)),
+    )
+    expect(lapsed).toEqual([])
+  })
+})
 
 describe('initializeSession', () => {
   it('normalizes, registers, and stores the exact trusted-client grant', async () => {

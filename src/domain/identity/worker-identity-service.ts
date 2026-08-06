@@ -20,6 +20,14 @@ export interface VerifyIdentityInput {
   readonly targetId: string
   readonly assertion: Option.Option<WorkerAssertion>
   readonly now: string
+  /**
+   * Whether absent proof is a refusal. Defaults to the configured enforcement.
+   *
+   * Set `false` for actions whose transports cannot yet carry an assertion:
+   * requiring proof a caller has no way to supply would refuse the action
+   * outright, so those are verified-if-supplied until the wire catches up.
+   */
+  readonly required?: boolean
 }
 
 export interface IdentityOutcome {
@@ -49,7 +57,8 @@ const make = Effect.gen(function* () {
       // Nothing to check and nothing required: return without reading the
       // worker at all. Looking it up here would silently make registration a
       // precondition of every claim, which is not what provenance is for.
-      if (Option.isNone(input.assertion) && !config.requireWorkerSignatures) {
+      const required = input.required ?? config.requireWorkerSignatures
+      if (Option.isNone(input.assertion) && !required) {
         return { signed: false }
       }
 

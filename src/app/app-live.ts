@@ -82,7 +82,11 @@ const ReviewCommentProvidedLive = Layer.provideMerge(
 )
 const GrillProvidedLive = Layer.provideMerge(
   GrillServiceLive,
-  Layer.merge(ReviewCommentProvidedLive, EventStoreProvidedLive),
+  Layer.mergeAll(
+    ReviewCommentProvidedLive,
+    EventStoreProvidedLive,
+    WorkerIdentityProvidedLive,
+  ),
 )
 const MemoryProvidedLive = Layer.provideMerge(
   MemoryServiceLive,

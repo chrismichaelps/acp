@@ -35,6 +35,7 @@ const expectedVariables = new Set([
   'ACP_SSE_HEARTBEAT',
   'ACP_STORAGE_ADAPTER',
   'ACP_SWEEP_INTERVAL',
+  'ACP_WORKER_REGISTRATION_TTL',
   'ACP_WORKSPACE_ROOT',
 ])
 

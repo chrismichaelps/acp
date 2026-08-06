@@ -33,6 +33,7 @@ export const testAppConfig = (
   requireAuth: false,
   requireWorkspaceBindings: false,
   requireWorkerSignatures: false,
+  workerRegistrationTtl: Duration.hours(24),
   sessionIssuer: 'trusted-client',
   sessionIssuancePolicy: Option.none(),
   metricsToken: Option.none(),

@@ -6,9 +6,15 @@ import { LeaseService } from '../../domain/leases/index.js'
 import { SessionService } from '../../domain/sessions/index.js'
 import { recordSweep } from '../../infrastructure/metrics/index.js'
 import type { StorageError } from '../../protocol/errors/protocol-error.js'
-import type { Lease, Session, WorkerId } from '../../protocol/schema/index.js'
+import type {
+  Lease,
+  Session,
+  Worker,
+  WorkerId,
+} from '../../protocol/schema/index.js'
 import { IdClock } from './identity.js'
 import { SweeperLeadership } from './sweeper-leadership.js'
+import { WorkerService } from '../../domain/workers/index.js'
 
 const systemActor = 'worker_system' as WorkerId
 
@@ -17,6 +23,7 @@ const MS_PER_DAY = 86_400_000
 export interface SweepResult {
   readonly evictedSessions: readonly Session[]
   readonly expiredLeases: readonly Lease[]
+  readonly expiredWorkers: readonly Worker[]
   readonly prunedEvents: number
 }
 
@@ -28,17 +35,26 @@ export interface SweepResult {
 export const sweepOnce: Effect.Effect<
   SweepResult,
   StorageError,
-  SessionService | LeaseService | EventStore | AppConfigTag | IdClock
+  | SessionService
+  | LeaseService
+  | WorkerService
+  | EventStore
+  | AppConfigTag
+  | IdClock
 > = Effect.gen(function* () {
   const idClock = yield* IdClock
   const config = yield* AppConfigTag
   const sessions = yield* SessionService
   const leases = yield* LeaseService
+  const workers = yield* WorkerService
   const events = yield* EventStore
 
   const now = yield* idClock.now
   const evictedSessions = yield* sessions.evictExpired(now, config.sessionTtl)
   const expiredLeases = yield* leases.expireAllDue(systemActor, now)
+  // A lapsed registration becomes `offline`; the row survives so events
+  // attributing work to it keep resolving.
+  const expiredWorkers = yield* workers.expireLapsed(now)
 
   // A retention of <= 0 days disables event pruning entirely.
   const prunedEvents =
@@ -56,6 +72,7 @@ export const sweepOnce: Effect.Effect<
     Effect.annotateLogs({
       evictedSessions: evictedSessions.length,
       expiredLeases: expiredLeases.length,
+      expiredWorkers: expiredWorkers.length,
       prunedEvents,
     }),
   )
@@ -66,12 +83,13 @@ export const sweepOnce: Effect.Effect<
     expiredLeases: expiredLeases.length,
   })
 
-  return { evictedSessions, expiredLeases, prunedEvents }
+  return { evictedSessions, expiredLeases, expiredWorkers, prunedEvents }
 })
 
 export const sweepOnceWithLeadership: Effect.Effect<
   Option.Option<SweepResult>,
   StorageError,
+  | WorkerService
   | SessionService
   | LeaseService
   | EventStore
@@ -94,6 +112,7 @@ export const SweeperLive: Layer.Layer<
   never,
   | SessionService
   | LeaseService
+  | WorkerService
   | EventStore
   | AppConfigTag
   | IdClock

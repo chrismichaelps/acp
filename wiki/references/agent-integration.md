@@ -307,6 +307,8 @@ worker     list | get <worker_id>
 workspace  create --name <n> --kind <k> --uri <u> [--default-branch <b>] | update <id> | archive <id> | list
 work       create <title> --workspace <id> [--priority <p>] [--description <d>]
 work       list --workspace <id> | get <id> | resume <id> [--budget <n>] | claim <id> --worker <id> | update <id> --state <state>
+work       children <id> | descendants <id> [--max-depth <n>] [--limit <n>]
+events     list --workspace <id> [--after <seq>] [--limit <n>] [--tail <n>] [--type <t>]
 lease      request --workspace <id> --holder <id> --kind <k> --uri <u> [--ttl <n>]
 lease      list --workspace <id> | renew <id> [--ttl <n>] | revoke <id> | release <id>
 checkpoint create --workspace <id> --work <id> --summary <s> | list --work <id>|--workspace <id> | latest --work <id>
@@ -384,6 +386,53 @@ coordinate. They are tested, not aspirational — see
   state — sessions, work, leases, checkpoints, memory — comes back with it. Treat
   a restore like any other restart: re-run the recovery read (`work resume`, then
   `events list --after`) before acting.
+
+## Worker identity (optional)
+
+A worker may prove _which software_ produced a claim, separately from whether
+its session was permitted to make one — see
+[[ADR-0024-worker-identity-provenance]]. Sessions authorize; identity
+attributes. Verification runs after the permission check and a valid signature
+never widens access, so a compromised worker key is not an escalation path.
+
+Declared at `session init`: `public_key` (base64 SPKI Ed25519 — the host stores
+only the public half and has no API that accepts private key material) and `bom`
+(`worker_version`, `harness`, `location`). Capabilities describe what a worker
+claims it can do; the bill of materials describes what is actually running.
+
+Four actions accept an `assertion` binding `worker_id`, `action`, `target_id`
+and `timestamp` into one signature, so a captured assertion cannot be lifted
+onto a different worker, action, or target: `worker.register`, `work.claim`,
+`review.verdict`, `grill.answer`.
+
+- Unsigned claims are permitted unless `ACP_REQUIRE_WORKER_SIGNATURES` is on,
+  in which case an unsigned state-changing claim returns `403 forbidden`.
+- A signature that fails to verify is refused in **either** mode: enforcement
+  governs whether proof is required, not whether a failed proof is acceptable.
+- The timestamp must sit within a 60s skew window, bounding how long a captured
+  assertion stays replayable against its own target.
+- Each `session init` re-stamps `expires_at` from
+  `ACP_WORKER_REGISTRATION_TTL`, so the handshake is the heartbeat. A lapsed
+  registration becomes `offline` on the next sweep; the row survives so events
+  attributing work to that id keep resolving.
+
+## Sandboxed execution (optional)
+
+With `ACP_SANDBOX_ADAPTER=docker`, a work unit runs in an isolated container
+whose only writable paths are the ones that work unit holds active leases on —
+the workspace itself is mounted read-only. This is where a lease stops being
+advisory: an agent that never acquired one cannot write the file, whatever tool
+it reaches for. See [[ADR-0026-agent-sandbox-runtime]].
+
+```
+POST   /v1/work/:work_id/sandbox    provision from current leases
+GET    /v1/work/:work_id/sandbox    status
+DELETE /v1/work/:work_id/sandbox    tear down
+```
+
+Acquire leases **before** provisioning. Mounts are computed at start, and a
+lease acquired afterwards does not widen a running sandbox — live remounting is
+precisely the privileged operation the boundary exists to prevent.
 
 ## Authentication
 
