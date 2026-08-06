@@ -1,6 +1,6 @@
 /** @Acp.App.Server.GrillRoutes — forced senior-question review gate handlers */
 import { HttpServerRequest } from '@effect/platform'
-import { Effect, Schema } from 'effect'
+import { Effect, Option, Schema } from 'effect'
 import { GrillService } from '../../domain/grills/index.js'
 import {
   AddGrillQuestionPayload,
@@ -23,7 +23,7 @@ import { ValidationError } from '../../protocol/errors/protocol-error.js'
 import { IdClock } from './identity.js'
 import * as target from './resource-workspace-auth.js'
 import * as collaboration from './review-collaboration-auth.js'
-import { ok, pathParam, respond } from './route-support.js'
+import { ok, pathParam, respond, workerAssertion } from './route-support.js'
 
 const reviewIdParam = () =>
   Effect.map(pathParam('review_id'), (v) => v as ReviewId)
@@ -122,10 +122,15 @@ export const answerGrillQuestion = respond(
     )
     const idClock = yield* IdClock
     const now = yield* idClock.now
+    const assertion = yield* workerAssertion
     const answered = yield* service.answer(questionId, {
       answer: payload.answer,
       answeredBy: actor,
       now,
+      ...Option.match(assertion, {
+        onNone: () => ({}),
+        onSome: (given) => ({ assertion: given }),
+      }),
     })
     return yield* ok(200)(GrillQuestion, answered)
   }),

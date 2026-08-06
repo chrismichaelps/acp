@@ -7,7 +7,7 @@ import { RequestReviewPayload, Review } from '../../protocol/schema/index.js'
 import type { ReviewId } from '../../protocol/schema/index.js'
 import { IdClock } from './identity.js'
 import * as target from './resource-workspace-auth.js'
-import { ok, pathParam, respond } from './route-support.js'
+import { ok, pathParam, respond, workerAssertion } from './route-support.js'
 
 export const requestReview = respond('POST /v1/reviews')(
   Effect.gen(function* () {
@@ -32,12 +32,14 @@ export const approveReview = respond('POST /v1/reviews/:review_id/approve')(
       yield* HttpServerRequest.schemaBodyJson(ApproveReviewPayload)
     const now = yield* idClock.now
     const { actor } = yield* target.review('review:approve', reviewId)
+    const assertion = yield* workerAssertion
     const review = yield* service.approve(
       reviewId,
       actor,
       now,
       payload.met_requirements,
       Option.fromNullable(payload.approval_signature),
+      Option.getOrUndefined(assertion),
     )
     return yield* ok(200)(Review, review)
   }),
@@ -50,7 +52,13 @@ export const rejectReview = respond('POST /v1/reviews/:review_id/reject')(
     const reviewId = (yield* pathParam('review_id')) as ReviewId
     const now = yield* idClock.now
     const { actor } = yield* target.review('review:reject', reviewId)
-    const review = yield* service.reject(reviewId, actor, now)
+    const assertion = yield* workerAssertion
+    const review = yield* service.reject(
+      reviewId,
+      actor,
+      now,
+      Option.getOrUndefined(assertion),
+    )
     return yield* ok(200)(Review, review)
   }),
 )
@@ -64,7 +72,13 @@ export const requestReviewChanges = respond(
     const reviewId = (yield* pathParam('review_id')) as ReviewId
     const now = yield* idClock.now
     const { actor } = yield* target.review('review:request_changes', reviewId)
-    const review = yield* service.requestChanges(reviewId, actor, now)
+    const assertion = yield* workerAssertion
+    const review = yield* service.requestChanges(
+      reviewId,
+      actor,
+      now,
+      Option.getOrUndefined(assertion),
+    )
     return yield* ok(200)(Review, review)
   }),
 )
@@ -76,7 +90,13 @@ export const cancelReview = respond('POST /v1/reviews/:review_id/cancel')(
     const reviewId = (yield* pathParam('review_id')) as ReviewId
     const now = yield* idClock.now
     const { actor } = yield* target.review('review:cancel', reviewId)
-    const review = yield* service.cancel(reviewId, actor, now)
+    const assertion = yield* workerAssertion
+    const review = yield* service.cancel(
+      reviewId,
+      actor,
+      now,
+      Option.getOrUndefined(assertion),
+    )
     return yield* ok(200)(Review, review)
   }),
 )

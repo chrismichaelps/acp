@@ -10,6 +10,10 @@ export type {
   WorkerAssertion,
 } from './worker-assertion.js'
 export {
+  ACP_ASSERTION_HEADER,
+  decodeAssertionHeader,
+} from './assertion-header.js'
+export {
   WorkerIdentityService,
   WorkerIdentityServiceLive,
 } from './worker-identity-service.js'

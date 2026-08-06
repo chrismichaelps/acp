@@ -60,26 +60,32 @@ sweeper marks it `offline`.
 `grill.answer` verification ships too, checked before the write so a refused
 answer leaves no half-attributed trace.
 
-**Enforcement is end-to-end for `work.claim` only.** A self-review before merge
-found that enabling `ACP_REQUIRE_WORKER_SIGNATURES` would have refused every
+**Provenance travels as a header**, `x-acp-assertion`, carrying base64url JSON.
+
+A self-review before merge found that enforcement would have refused every
 review verdict and grill answer outright: verification demanded proof, but no
-verdict or grill transport carries an assertion — those endpoints have no
-request body at all — so no caller could ever supply one. A config flag that
-bricks reviews when enabled is not shippable, documented or not.
+verdict or grill transport could carry an assertion — reject, request-changes
+and cancel have no request body at all — so no caller could ever supply one. A
+config flag that bricks reviews when enabled is not shippable, documented or
+not.
 
-Verdicts and grill answers are therefore **verified-if-supplied**: a supplied
-assertion is fully checked, including forgery and replay, but absent proof is
-not a refusal until the wire can carry it. `work.claim` is unaffected — its
-payload carries `assertion` and every transport threads it.
+A header rather than a body field settles that: it adds no body to bodyless
+endpoints, it is uniform across REST and native RPC instead of one mechanism
+per protocol, and it matches what the value is — metadata about the request,
+travelling beside the bearer token it accompanies. The duplicate
+`ClaimWorkPayload.assertion` field was removed so there is exactly one way in.
 
-The same review found `review.cancel` had no `assertion` parameter while
-routing through the same verification funnel, making cancellation impossible
+Absence and malformation are deliberately different answers. An absent header
+means no proof was offered, permitted unless signatures are enforced. A
+present-but-unreadable header is a `400`: treating it as absence would let a
+corrupted or tampered header silently downgrade to an unsigned request.
+
+The same review found `review.cancel` routed through the shared verification
+funnel while exposing no `assertion` parameter, making cancellation impossible
 under enforcement. `cancel` now accepts one, so every path through
 `transitionReview` can prove itself.
 
-Remaining to close the loop: `assertion` on the verdict and grill-answer wire
-payloads, plus the transports. Until then the ADR is honest that enforcement
-covers one action, not four.
+All four actions are now enforceable end-to-end.
 
 Strengthened by [[ADR-0026-agent-sandbox-runtime]]: once the runtime launches
 the agent process, the bill of materials stops being self-reported and becomes

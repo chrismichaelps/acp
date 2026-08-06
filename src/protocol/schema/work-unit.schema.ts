@@ -66,11 +66,5 @@ export type WorkerAssertionPayload = typeof WorkerAssertionPayload.Type
 
 export const ClaimWorkPayload = Schema.Struct({
   worker_id: WorkerId,
-  /**
-   * Optional unless ACP_REQUIRE_WORKER_SIGNATURES is on. Declared with plain
-   * `Schema.optional` rather than an Option: a client omitting provenance
-   * should not have to name it, and every existing caller stays valid.
-   */
-  assertion: Schema.optional(WorkerAssertionPayload),
 })
 export type ClaimWorkPayload = typeof ClaimWorkPayload.Type

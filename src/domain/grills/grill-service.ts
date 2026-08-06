@@ -355,9 +355,6 @@ const make = Effect.gen(function* () {
         workerId: input.answeredBy,
         action: 'grill.answer',
         targetId: questionId,
-        // As with verdicts: the answer transport carries no assertion yet, so
-        // proof is checked when given but never demanded.
-        required: false,
         assertion:
           input.assertion === undefined
             ? Option.none()
