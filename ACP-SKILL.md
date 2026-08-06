@@ -258,6 +258,8 @@ worker     list | get <worker_id>
 workspace  create --name <n> --kind <k> --uri <u> [--default-branch <b>] | update <id> | archive <id> | list
 work       create <title> --workspace <id> [--priority <p>] [--description <d>]
 work       list --workspace <id> | get <id> | resume <id> [--budget <n>] | claim <id> --worker <id> | update <id> --state <state>
+work       children <id> | descendants <id> [--max-depth <n>] [--limit <n>]
+events     list --workspace <id> [--after <seq>] [--limit <n>] [--tail <n>] [--type <t>]
 lease      request --workspace <id> --holder <id> --kind <k> --uri <u> [--ttl <n>]
 lease      list --workspace <id> | renew <id> [--ttl <n>] | revoke <id> | release <id>
 checkpoint create --workspace <id> --work <id> --summary <s> | list --work <id>|--workspace <id> | latest --work <id>
@@ -338,6 +340,53 @@ README **Operations** section.
   persisted state — sessions, work, leases, checkpoints, memory — comes back with
   it. Re-run your recovery read (`work resume`, then `events list --after`)
   before acting; treat a restore like any other restart.
+
+## Worker identity (optional)
+
+A worker may prove _which software_ produced a claim, separately from whether
+its session was allowed to make one. Sessions authorize; identity attributes. A
+valid signature never grants access, so this can never widen what you may do.
+
+At `session init` you may declare:
+
+- `public_key` — base64 SPKI Ed25519. The host stores only the public half and
+  never accepts private key material. Rotation is re-registration.
+- `bom` — `worker_version`, `harness`, `location`. What is actually running,
+  as opposed to what your capabilities claim you can do.
+
+Four actions accept an `assertion` signing `worker_id`, `action`, `target_id`
+and `timestamp` together, so a captured assertion cannot be replayed against a
+different target: `worker.register`, `work.claim`, `review.verdict`,
+`grill.answer`.
+
+Rules to code against:
+
+- **Unsigned is fine by default.** `ACP_REQUIRE_WORKER_SIGNATURES` is off unless
+  an operator turns it on; then an unsigned state-changing claim returns `403`.
+- **A bad signature is always refused**, enforced or not. Enforcement decides
+  whether proof is _required_, not whether a _failed_ proof is acceptable.
+- **Assertions expire.** The timestamp must be within 60s of host time; sign at
+  the moment you act, not ahead of time.
+- **Registration lapses.** Each `session init` re-stamps `expires_at` from
+  `ACP_WORKER_REGISTRATION_TTL`, so the handshake is your heartbeat. Stop
+  connecting and the sweeper marks you `offline`; the record survives so past
+  work stays attributable.
+
+## Sandboxed execution (optional)
+
+On a host with `ACP_SANDBOX_ADAPTER=docker`, a work unit can run in an isolated
+container where **only the paths it holds leases on are writable** — the
+workspace is mounted read-only. A lease stops being advisory: writing a file you
+never leased fails at the filesystem, not with a conflict error.
+
+```
+POST   /v1/work/:work_id/sandbox    provision from current leases
+GET    /v1/work/:work_id/sandbox    status
+DELETE /v1/work/:work_id/sandbox    tear down
+```
+
+Acquire your leases **before** provisioning: mounts are computed at start, and a
+lease taken afterwards does not widen a running sandbox.
 
 ## Authentication
 
