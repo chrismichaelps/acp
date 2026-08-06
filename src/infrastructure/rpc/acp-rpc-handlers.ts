@@ -188,7 +188,7 @@ const workClaimHandler = AcpRpcGroup.toLayerHandler(
       const idClock = yield* IdClock
       const now = yield* idClock.now
       return yield* service
-        .claim(payload.work_id, payload.worker_id, now)
+        .claim(payload.work_id, payload.worker_id, now, payload.assertion)
         .pipe(Effect.mapError(toRpcError))
     }),
 )

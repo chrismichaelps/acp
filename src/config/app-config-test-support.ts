@@ -32,6 +32,7 @@ export const testAppConfig = (
   sweepInterval: Duration.seconds(60),
   requireAuth: false,
   requireWorkspaceBindings: false,
+  requireWorkerSignatures: false,
   sessionIssuer: 'trusted-client',
   sessionIssuancePolicy: Option.none(),
   metricsToken: Option.none(),

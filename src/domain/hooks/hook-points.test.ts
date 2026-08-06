@@ -1,6 +1,7 @@
 /** @Acp.Domain.Hooks.Points.Test — every gated point actually dispatches */
 import { describe, expect, it } from 'vitest'
 import { Cause, Effect, Exit, Layer, Option, Schema } from 'effect'
+import { TestIdentityLive } from '../identity/identity-test-support.js'
 import { TestAppConfigLive } from '../../config/app-config-test-support.js'
 import { EventStoreLive, InProcessEventBrokerLive } from '../events/index.js'
 import { InMemoryStorageLive } from '../../infrastructure/storage/index.js'
@@ -47,7 +48,11 @@ const layerWith = (hooks: readonly Hook[]) => {
       EventStoreLive,
       Layer.merge(InMemoryStorageLive, InProcessEventBrokerLive),
     ),
-    Layer.merge(TestAppConfigLive(), HookDispatcherLive(hooks)),
+    Layer.mergeAll(
+      TestAppConfigLive(),
+      HookDispatcherLive(hooks),
+      TestIdentityLive,
+    ),
   )
   const work = Layer.provideMerge(WorkUnitServiceLive, base)
   return Layer.mergeAll(

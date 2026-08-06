@@ -13,6 +13,7 @@ import { SessionServiceLive } from '../domain/sessions/index.js'
 import { PolicyHooksLive } from './policy-layer.js'
 import { SandboxProviderLive } from './sandbox-layer.js'
 import { SandboxServiceLive } from '../domain/sandbox/index.js'
+import { WorkerIdentityServiceLive } from '../domain/identity/index.js'
 import { WorkUnitServiceLive } from '../domain/work-units/index.js'
 import { WorkerServiceLive } from '../domain/workers/index.js'
 import { WorkspaceServiceLive } from '../domain/workspaces/index.js'
@@ -41,9 +42,23 @@ const SessionIssuerProvidedLive = Layer.provideMerge(
 // The dispatcher is built from ACP_POLICY_FILE: absent means no hooks, so a
 // host without a policy behaves exactly as one built before hooks existed.
 // See [[ADR-0022-coordination-hooks]] and [[ADR-0023-resource-access-policy]].
+// Identity sits under work units: a claim is attributed after the session has
+// already authorized it — see [[ADR-0024-worker-identity-provenance]].
+const WorkerIdentityProvidedLive = Layer.provideMerge(
+  WorkerIdentityServiceLive,
+  Layer.mergeAll(
+    WorkerServiceLive.pipe(Layer.provide(StorageProvidedLive)),
+    AppConfigLive,
+  ),
+)
+
 const WorkUnitProvidedLive = Layer.provideMerge(
   WorkUnitServiceLive,
-  Layer.merge(EventStoreProvidedLive, HostHooksLive),
+  Layer.mergeAll(
+    EventStoreProvidedLive,
+    HostHooksLive,
+    WorkerIdentityProvidedLive,
+  ),
 )
 const WorkspaceProvidedLive = Layer.provideMerge(
   WorkspaceServiceLive,

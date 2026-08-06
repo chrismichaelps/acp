@@ -1,6 +1,7 @@
 /** @Acp.Domain.Reviews.Service.Test — human-in-the-loop review gate */
 import { describe, expect, it } from 'vitest'
 import { Chunk, Effect, Layer, Option, Schema } from 'effect'
+import { TestIdentityLive } from '../identity/identity-test-support.js'
 import {
   EventStore,
   EventStoreLive,
@@ -31,7 +32,7 @@ const WorkLive = Layer.provideMerge(
   WorkUnitServiceLive,
   Layer.merge(
     StorageAndEventsLive,
-    Layer.merge(TestAppConfigLive(), NoHooksLive),
+    Layer.mergeAll(TestAppConfigLive(), NoHooksLive, TestIdentityLive),
   ),
 )
 const TestLive = Layer.provideMerge(ReviewServiceLive, WorkLive)
