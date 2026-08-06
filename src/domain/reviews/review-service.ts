@@ -89,6 +89,13 @@ export interface ReviewServiceApi {
     reviewId: ReviewId,
     actor: WorkerId,
     now: Timestamp,
+    /**
+     * Cancelling is a review state change like any other, so it must be able
+     * to prove itself. Without this parameter, enforcement made cancel
+     * impossible: `transitionReview` demanded a signature the caller had no
+     * way to supply.
+     */
+    assertion?: WorkerAssertionPayload,
   ) => Effect.Effect<Review, ReviewVerdictError>
 }
 
@@ -308,6 +315,10 @@ const make = Effect.gen(function* () {
         workerId: actor,
         action: 'review.verdict',
         targetId: review.id,
+        // No verdict transport carries an assertion yet, so requiring one
+        // would refuse every verdict the moment enforcement is enabled.
+        // Supplied proof is still checked; see [[ADR-0024-worker-identity-provenance]].
+        required: false,
         assertion:
           assertion === undefined
             ? Option.none()
@@ -437,7 +448,12 @@ const make = Effect.gen(function* () {
       }),
     )
 
-  const cancel: ReviewServiceApi['cancel'] = (reviewId, actor, now) =>
+  const cancel: ReviewServiceApi['cancel'] = (
+    reviewId,
+    actor,
+    now,
+    assertion,
+  ) =>
     Effect.flatMap(requireReview(reviewId), (review) =>
       Effect.gen(function* () {
         const cancelled = yield* transitionReview(
@@ -445,6 +461,7 @@ const make = Effect.gen(function* () {
           actor,
           now,
           'cancelled',
+          assertion,
         )
         yield* workUnits.transition(review.work_id, 'running', actor, now)
         return cancelled

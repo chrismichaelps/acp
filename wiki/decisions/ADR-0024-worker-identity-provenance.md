@@ -57,10 +57,29 @@ from `ACP_WORKER_REGISTRATION_TTL`, so each connection acts as the heartbeat —
 a worker that keeps connecting stays live, one that stops lapses and the
 sweeper marks it `offline`.
 
-`grill.answer` signing now ships too, checked before the write so a refused
-answer leaves no half-attributed trace. All four actions this ADR named are
-verified: `worker.register` (via the handshake, which also stamps the
-registration deadline), `work.claim`, `review.verdict`, and `grill.answer`.
+`grill.answer` verification ships too, checked before the write so a refused
+answer leaves no half-attributed trace.
+
+**Enforcement is end-to-end for `work.claim` only.** A self-review before merge
+found that enabling `ACP_REQUIRE_WORKER_SIGNATURES` would have refused every
+review verdict and grill answer outright: verification demanded proof, but no
+verdict or grill transport carries an assertion — those endpoints have no
+request body at all — so no caller could ever supply one. A config flag that
+bricks reviews when enabled is not shippable, documented or not.
+
+Verdicts and grill answers are therefore **verified-if-supplied**: a supplied
+assertion is fully checked, including forgery and replay, but absent proof is
+not a refusal until the wire can carry it. `work.claim` is unaffected — its
+payload carries `assertion` and every transport threads it.
+
+The same review found `review.cancel` had no `assertion` parameter while
+routing through the same verification funnel, making cancellation impossible
+under enforcement. `cancel` now accepts one, so every path through
+`transitionReview` can prove itself.
+
+Remaining to close the loop: `assertion` on the verdict and grill-answer wire
+payloads, plus the transports. Until then the ADR is honest that enforcement
+covers one action, not four.
 
 Strengthened by [[ADR-0026-agent-sandbox-runtime]]: once the runtime launches
 the agent process, the bill of materials stops being self-reported and becomes
