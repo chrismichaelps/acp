@@ -22,6 +22,13 @@ export interface CreateContainerRequest {
     readonly SecurityOpt: readonly string[]
     readonly PidMode: string
     readonly IpcMode: string
+    /**
+     * OCI runtime. Omitted means the daemon default (`runc`), which shares the
+     * host kernel and is not a boundary for hostile code. Setting `runsc`
+     * (gVisor) or `kata` (microVM) hardens the sandbox through the same Engine
+     * API — the reason isolation strength is configuration, not a rewrite.
+     */
+    readonly Runtime?: string
   }
 }
 
@@ -41,6 +48,7 @@ export const containerNameFor = (workId: WorkId): string =>
 export const toCreateContainerRequest = (
   spec: SandboxSpec,
   image: string,
+  runtime?: string,
 ): CreateContainerRequest => ({
   Image: image,
   Labels: {
@@ -77,6 +85,7 @@ export const toCreateContainerRequest = (
     // namespaces; sharing either would defeat the isolation entirely.
     PidMode: '',
     IpcMode: 'private',
+    ...(runtime === undefined ? {} : { Runtime: runtime }),
   },
 })
 

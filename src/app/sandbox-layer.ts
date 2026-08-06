@@ -30,6 +30,12 @@ export const SandboxProviderLive: Layer.Layer<
         ),
       onSome: Effect.succeed,
     })
-    return makeDockerSandboxProvider(dockerEngineOverSocket(), { image })
+    return makeDockerSandboxProvider(dockerEngineOverSocket(), {
+      image,
+      ...Option.match(config.sandboxRuntime, {
+        onNone: () => ({}),
+        onSome: (runtime) => ({ runtime }),
+      }),
+    })
   }),
 )

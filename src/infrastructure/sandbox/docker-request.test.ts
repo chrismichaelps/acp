@@ -22,8 +22,8 @@ const spec = (over: Partial<SandboxSpec> = {}): SandboxSpec => ({
   ...over,
 })
 
-const request = (over: Partial<SandboxSpec> = {}) =>
-  toCreateContainerRequest(spec(over), 'acp/agent:1')
+const request = (over: Partial<SandboxSpec> = {}, runtime?: string) =>
+  toCreateContainerRequest(spec(over), 'acp/agent:1', runtime)
 
 describe('docker create request — filesystem', () => {
   it('mounts the workspace root read-only', () => {
@@ -97,6 +97,29 @@ describe('docker create request — privilege', () => {
   it('does not mount the docker socket', () => {
     const sources = request().HostConfig.Mounts.map((m) => m.Source)
     expect(sources).not.toContain('/var/run/docker.sock')
+  })
+})
+
+describe('docker create request — hardened runtime', () => {
+  // Containers share the host kernel, so `runc` is not a boundary for hostile
+  // code. gVisor and Kata plug into the same Engine API through HostConfig
+  // .Runtime, which is why hardening is a config value rather than a rewrite.
+  it('omits Runtime when none is configured, deferring to the daemon default', () => {
+    expect(request().HostConfig.Runtime).toBeUndefined()
+  })
+
+  it.each(['runsc', 'kata', 'kata-cc'])(
+    'passes %s through as the runtime',
+    (runtime) => {
+      expect(request({}, runtime).HostConfig.Runtime).toBe(runtime)
+    },
+  )
+
+  it('keeps every other guarantee when a hardened runtime is set', () => {
+    const req = request({}, 'runsc')
+    expect(req.HostConfig.Privileged).toBe(false)
+    expect(req.HostConfig.CapDrop).toEqual(['ALL'])
+    expect(req.HostConfig.Mounts[0]?.ReadOnly).toBe(true)
   })
 })
 

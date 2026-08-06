@@ -1,6 +1,6 @@
 ---
 type: decision
-status: PROPOSED
+status: PARTIAL
 date: 2026-08-04
 tags: [adr, proposed, identity, provenance, workers, audit, signing]
 aliases: [ADR-0024, worker-identity-provenance]
@@ -10,7 +10,35 @@ aliases: [ADR-0024, worker-identity-provenance]
 
 ## Status
 
-PROPOSED.
+PARTIALLY IMPLEMENTED.
+
+Delivered: the Ed25519 assertion core in `src/domain/identity/` — a canonical
+signing payload, verification, and a bounded replay window — plus `public_key`,
+`bom`, and `expires_at` on `Worker`, declarable at handshake. Both new worker
+fields are optional, so unsigned workers stay first-class.
+
+The canonical payload is JSON with a fixed field order rather than a
+delimiter-joined string. Joining on a separator lets a crafted field shift the
+boundaries, so a worker id of `agent_a|work.claim` could forge a claim about
+another target; JSON escapes the delimiters, and a test asserts it. Verification
+returns a reason rather than throwing, because malformed keys, signatures and
+timestamps are untrusted network input and a crash is not an acceptable answer
+to any of them.
+
+Corrected: this ADR said expiry moves a worker to an `expired` status.
+`WorkerStatus` is a closed literal union, so adding a member is a protocol break
+for every consumer — the same reason ADR-0021 declined a new `EventType`. A
+lapsed worker is `offline`, and `expires_at` in the past distinguishes a
+registration that lapsed from one that shut down cleanly. No protocol change.
+
+Deferred: enforcement wiring. Nothing verifies an assertion yet, there is no
+`ACP_REQUIRE_WORKER_SIGNATURES`, and TTL sweeping is not implemented. The
+cryptography is the part that must be right before anything depends on it, and
+it is complete and adversarially tested; turning it on is the next slice.
+
+Strengthened by [[ADR-0026-agent-sandbox-runtime]]: once the runtime launches
+the agent process, the bill of materials stops being self-reported and becomes
+host-observed — which closes the honesty gap this ADR's Grill Log flagged.
 
 ## Context
 

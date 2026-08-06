@@ -24,6 +24,7 @@ export const testAppConfig = (
   policyFile: Option.none(),
   sandboxAdapter: 'none',
   sandboxImage: Option.none(),
+  sandboxRuntime: Option.none(),
   workspaceRoot: Option.none(),
   maxArtifactSizeBytes: 16 * 1024 * 1024,
   sseHeartbeat: Duration.seconds(15),

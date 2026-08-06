@@ -345,6 +345,43 @@
                             "supports_leases"
                           ]
                         }
+                      },
+                      "public_key": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/components/schemas/NonEmptyString"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "bom": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "required": [
+                              "worker_version",
+                              "harness",
+                              "location"
+                            ],
+                            "properties": {
+                              "worker_version": {
+                                "$ref": "#/components/schemas/NonEmptyString"
+                              },
+                              "harness": {
+                                "$ref": "#/components/schemas/NonEmptyString"
+                              },
+                              "location": {
+                                "$ref": "#/components/schemas/NonEmptyString"
+                              }
+                            },
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       }
                     },
                     "additionalProperties": false
@@ -507,6 +544,53 @@
                             "supports_leases"
                           ]
                         }
+                      },
+                      "public_key": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/components/schemas/NonEmptyString"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "bom": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "required": [
+                              "worker_version",
+                              "harness",
+                              "location"
+                            ],
+                            "properties": {
+                              "worker_version": {
+                                "$ref": "#/components/schemas/NonEmptyString"
+                              },
+                              "harness": {
+                                "$ref": "#/components/schemas/NonEmptyString"
+                              },
+                              "location": {
+                                "$ref": "#/components/schemas/NonEmptyString"
+                              }
+                            },
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "expires_at": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       }
                     },
                     "additionalProperties": false
@@ -735,6 +819,53 @@
                           "supports_leases"
                         ]
                       }
+                    },
+                    "public_key": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/NonEmptyString"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "bom": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "worker_version",
+                            "harness",
+                            "location"
+                          ],
+                          "properties": {
+                            "worker_version": {
+                              "$ref": "#/components/schemas/NonEmptyString"
+                            },
+                            "harness": {
+                              "$ref": "#/components/schemas/NonEmptyString"
+                            },
+                            "location": {
+                              "$ref": "#/components/schemas/NonEmptyString"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "expires_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   },
                   "additionalProperties": false

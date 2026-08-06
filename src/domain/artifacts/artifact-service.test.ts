@@ -34,6 +34,7 @@ const TestConfigLive = Layer.succeed(AppConfigTag, {
   policyFile: Option.none(),
   sandboxAdapter: 'none' as const,
   sandboxImage: Option.none(),
+  sandboxRuntime: Option.none(),
   workspaceRoot: Option.none(),
   maxArtifactSizeBytes: 16,
   sseHeartbeat: Duration.seconds(15),
