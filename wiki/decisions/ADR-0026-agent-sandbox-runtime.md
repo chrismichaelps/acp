@@ -106,6 +106,26 @@ Three adapters are anticipated; only the first two are in this slice:
 - **`docker`** — containers via the Docker Engine API.
 - **`docker-sandbox`** — microVM-backed, deferred until the tooling stabilises.
 
+### Isolation strength is configuration, not an adapter
+
+The `docker` adapter talks to the Docker Engine API, which every Linux host with
+a daemon already exposes. Plain `runc` containers share the host kernel, so they
+are a boundary for _first-party_ agents but not for hostile code.
+
+The hardening path is `HostConfig.Runtime`: setting `runsc` reaches gVisor's
+syscall interception, and `kata` reaches microVM isolation with its own kernel —
+through the **same** Engine API and the same adapter. `ACP_SANDBOX_RUNTIME`
+therefore moves a deployment from container-grade to hardware-grade isolation
+without changing a line of ACP, which is why isolation strength is a config
+value rather than a fork in the code.
+
+**Docker Sandboxes (`sbx`) is deliberately not the server path.** It is a
+genuinely good microVM implementation, but it is a CLI aimed at developer
+machines: ACP would have to shell out to it, and a long-lived Linux host has no
+reason to depend on a desktop-oriented tool when the Engine API plus a hardened
+runtime reaches the same isolation. It remains a sensible future adapter for
+running ACP locally, which is exactly what a port makes cheap.
+
 ### Leases become mounts
 
 This is the point of the feature. A sandbox for a work unit mounts the workspace

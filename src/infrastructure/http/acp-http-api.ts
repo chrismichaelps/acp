@@ -118,6 +118,11 @@ export const InitializeSessionWorker = Schema.Struct({
   capabilities: Schema.optionalWith(Schema.Array(Capability), {
     default: () => [],
   }),
+  // A worker declares its identity at handshake: the public half of its key and
+  // what software is running. Both optional, so unsigned workers stay
+  // first-class — see [[ADR-0024-worker-identity-provenance]].
+  public_key: Worker.fields.public_key,
+  bom: Worker.fields.bom,
 })
 export type InitializeSessionWorker = typeof InitializeSessionWorker.Type
 

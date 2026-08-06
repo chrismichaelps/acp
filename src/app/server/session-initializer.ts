@@ -96,6 +96,8 @@ export const initializeSession = (
       worker: {
         ...payload.worker,
         capabilities: capabilitiesFromHandshake(payload),
+        // Registration TTL is not yet swept, so no expiry is recorded.
+        expires_at: Option.none(),
       },
       permissions: payload.permissions,
       workspace_ids: payload.workspace_ids,

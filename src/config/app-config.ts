@@ -19,6 +19,7 @@ export interface AppConfig {
   readonly policyFile: Option.Option<string>
   readonly sandboxAdapter: 'none' | 'docker'
   readonly sandboxImage: Option.Option<string>
+  readonly sandboxRuntime: Option.Option<string>
   readonly workspaceRoot: Option.Option<string>
   readonly maxArtifactSizeBytes: number
   readonly sseHeartbeat: Duration.Duration
@@ -126,6 +127,10 @@ const load = Effect.gen(function* () {
   const sandboxImage = yield* Config.string('ACP_SANDBOX_IMAGE').pipe(
     Config.option,
   )
+  // Hardened OCI runtime (runsc / kata). Unset uses the daemon default.
+  const sandboxRuntime = yield* Config.string('ACP_SANDBOX_RUNTIME').pipe(
+    Config.option,
+  )
   const workspaceRoot = yield* Config.string('ACP_WORKSPACE_ROOT').pipe(
     Config.option,
   )
@@ -190,6 +195,7 @@ const load = Effect.gen(function* () {
     policyFile,
     sandboxAdapter,
     sandboxImage,
+    sandboxRuntime,
     workspaceRoot,
     maxArtifactSizeBytes: maxArtifactSizeMb * 1024 * 1024,
     sseHeartbeat,

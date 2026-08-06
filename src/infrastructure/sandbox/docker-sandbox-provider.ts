@@ -41,6 +41,12 @@ const asStorageError = (op: string) => (cause: Error) =>
 export interface DockerSandboxOptions {
   /** Image the agent runs in. Operator-chosen; ACP never builds it. */
   readonly image: string
+  /**
+   * OCI runtime, e.g. `runsc` (gVisor) or `kata` (microVM). Omitted uses the
+   * daemon default, which shares the host kernel — adequate for first-party
+   * agents, not a boundary for hostile code.
+   */
+  readonly runtime?: string
 }
 
 export const makeDockerSandboxProvider = (
@@ -74,7 +80,10 @@ export const makeDockerSandboxProvider = (
         // than duplicating. Removing first keeps `start` idempotent.
         yield* engine.removeContainer(name).pipe(Effect.ignore)
         const id = yield* engine
-          .createContainer(name, toCreateContainerRequest(spec, options.image))
+          .createContainer(
+            name,
+            toCreateContainerRequest(spec, options.image, options.runtime),
+          )
           .pipe(Effect.mapError(asStorageError('sandbox_create')))
         yield* engine
           .startContainer(id)
