@@ -1,5 +1,6 @@
 /** @Acp.Domain.WorkUnits.SpawnGraph.TestSupport — harness for spawn graph tests */
 import { Cause, Effect, Exit, Layer, Option, Schema } from 'effect'
+import { TestIdentityLive } from '../identity/identity-test-support.js'
 import { TestAppConfigLive } from '../../config/app-config-test-support.js'
 import { NoHooksLive } from '../hooks/index.js'
 import type { EventStore } from '../events/index.js'
@@ -33,7 +34,11 @@ const layerWithDepth = (maxWorkDepth: number) =>
         EventStoreLive,
         Layer.merge(InMemoryStorageLive, InProcessEventBrokerLive),
       ),
-      Layer.merge(TestAppConfigLive({ maxWorkDepth }), NoHooksLive),
+      Layer.mergeAll(
+        TestAppConfigLive({ maxWorkDepth }),
+        NoHooksLive,
+        TestIdentityLive,
+      ),
     ),
   )
 

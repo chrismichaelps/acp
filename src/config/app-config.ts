@@ -27,6 +27,7 @@ export interface AppConfig {
   readonly sweepInterval: Duration.Duration
   readonly requireAuth: boolean
   readonly requireWorkspaceBindings: boolean
+  readonly requireWorkerSignatures: boolean
   readonly sessionIssuer: SessionIssuerMode
   readonly sessionIssuancePolicy: Option.Option<string>
   readonly metricsToken: Option.Option<string>
@@ -155,6 +156,11 @@ const load = Effect.gen(function* () {
   const configuredRequireWorkspaceBindings = yield* Config.boolean(
     'ACP_REQUIRE_WORKSPACE_BINDINGS',
   ).pipe(Config.withDefault(defaults.requireWorkspaceBindings))
+  // Off by default: workers gain a key-management responsibility, so operators
+  // run unenforced first and enforce once coverage is complete.
+  const requireWorkerSignatures = yield* Config.boolean(
+    'ACP_REQUIRE_WORKER_SIGNATURES',
+  ).pipe(Config.withDefault(false))
   const configuredSessionIssuer = yield* Config.literal(
     'trusted-client',
     'static',
@@ -203,6 +209,7 @@ const load = Effect.gen(function* () {
     sweepInterval,
     requireAuth,
     requireWorkspaceBindings,
+    requireWorkerSignatures,
     sessionIssuer,
     sessionIssuancePolicy,
     metricsToken,

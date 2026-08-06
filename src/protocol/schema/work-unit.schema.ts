@@ -49,7 +49,28 @@ export const CreateWorkPayload = Schema.Struct({
 })
 export type CreateWorkPayload = typeof CreateWorkPayload.Type
 
+/** An Ed25519 assertion binding a worker to one action on one target. */
+export const WorkerAssertionPayload = Schema.Struct({
+  worker_id: WorkerId,
+  action: Schema.Literal(
+    'worker.register',
+    'work.claim',
+    'review.verdict',
+    'grill.answer',
+  ),
+  target_id: Schema.NonEmptyString,
+  timestamp: Timestamp,
+  signature: Schema.NonEmptyString,
+})
+export type WorkerAssertionPayload = typeof WorkerAssertionPayload.Type
+
 export const ClaimWorkPayload = Schema.Struct({
   worker_id: WorkerId,
+  /**
+   * Optional unless ACP_REQUIRE_WORKER_SIGNATURES is on. Declared with plain
+   * `Schema.optional` rather than an Option: a client omitting provenance
+   * should not have to name it, and every existing caller stays valid.
+   */
+  assertion: Schema.optional(WorkerAssertionPayload),
 })
 export type ClaimWorkPayload = typeof ClaimWorkPayload.Type

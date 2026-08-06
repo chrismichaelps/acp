@@ -29,6 +29,7 @@ const requireWorkspaceBindingsConfig = Layer.succeed(AppConfigTag, {
   sweepInterval: Duration.seconds(60),
   requireAuth: true,
   requireWorkspaceBindings: true,
+  requireWorkerSignatures: false,
   sessionIssuer: 'trusted-client' as const,
   sessionIssuancePolicy: Option.none(),
   metricsToken: Option.none(),

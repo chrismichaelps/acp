@@ -2,6 +2,7 @@
 import { Chunk, Context, Effect, Layer, Option, Schema } from 'effect'
 import { AppConfigTag } from '../../config/app-config.js'
 import { HookDispatcher } from '../hooks/index.js'
+import { WorkerIdentityService } from '../identity/index.js'
 import {
   allowedTransitions,
   childGatedTargets,
@@ -13,6 +14,7 @@ import { EventStore } from '../events/index.js'
 import { Storage } from '../../infrastructure/storage/index.js'
 import type {
   DepthLimitExceededError,
+  ForbiddenError,
   HookDeniedError,
   IncompleteChildrenError,
   ValidationError,
@@ -26,6 +28,7 @@ import {
 import { Event, WorkUnit } from '../../protocol/schema/index.js'
 import type {
   CreateWorkPayload,
+  WorkerAssertionPayload,
   EventType,
   Timestamp,
   WorkId,
@@ -53,6 +56,7 @@ export type WorkUnitClaimError =
   | ClaimConflictError
   | InvalidStateTransitionError
   | HookDeniedError
+  | ForbiddenError
   | StorageError
 
 export type WorkUnitTransitionError =
@@ -76,6 +80,8 @@ export interface WorkUnitServiceApi {
     workId: WorkId,
     workerId: WorkerId,
     now: Timestamp,
+    /** Provenance for the claim; required when signatures are enforced. */
+    assertion?: WorkerAssertionPayload,
   ) => Effect.Effect<WorkUnit, WorkUnitClaimError>
   readonly transition: (
     workId: WorkId,
@@ -123,6 +129,7 @@ const make = Effect.gen(function* () {
   const events = yield* EventStore
   const config = yield* AppConfigTag
   const hooks = yield* HookDispatcher
+  const identity = yield* WorkerIdentityService
 
   const encodeWork = (work: WorkUnit) =>
     Schema.encode(WorkUnit)(work).pipe(
@@ -315,9 +322,35 @@ const make = Effect.gen(function* () {
       return next
     })
 
-  const claim: WorkUnitServiceApi['claim'] = (workId, workerId, now) =>
+  const claim: WorkUnitServiceApi['claim'] = (
+    workId,
+    workerId,
+    now,
+    assertion,
+  ) =>
     Effect.gen(function* () {
       const { work, version } = yield* requireVersionedWork(workId)
+
+      // Provenance is checked in the domain so every transport inherits it,
+      // and after the session has already authorized the call: a signature
+      // never grants access, it only attributes — see
+      // [[ADR-0024-worker-identity-provenance]].
+      yield* identity.verify({
+        workerId,
+        action: 'work.claim',
+        targetId: workId,
+        assertion:
+          assertion === undefined
+            ? Option.none()
+            : Option.some({
+                workerId: assertion.worker_id,
+                action: assertion.action,
+                targetId: assertion.target_id,
+                timestamp: assertion.timestamp,
+                signature: assertion.signature,
+              }),
+        now,
+      })
       if (work.state !== 'open' && Option.isSome(work.assigned_to)) {
         return yield* Effect.fail(
           new ClaimConflictError({
@@ -408,5 +441,5 @@ const make = Effect.gen(function* () {
 export const WorkUnitServiceLive: Layer.Layer<
   WorkUnitService,
   never,
-  Storage | EventStore | AppConfigTag | HookDispatcher
+  Storage | EventStore | AppConfigTag | HookDispatcher | WorkerIdentityService
 > = Layer.effect(WorkUnitService, make)

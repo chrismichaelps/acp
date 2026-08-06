@@ -62,6 +62,7 @@ const configLayer = (value: unknown) =>
     sweepInterval: Duration.seconds(60),
     requireAuth: true,
     requireWorkspaceBindings: true,
+    requireWorkerSignatures: false,
     sessionIssuer: 'static' as const,
     sessionIssuancePolicy: Option.some(JSON.stringify(value)),
     metricsToken: Option.none(),

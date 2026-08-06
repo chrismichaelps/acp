@@ -1,6 +1,7 @@
 /** @Acp.Domain.Sandbox.Service.Test — leases, mounts and provider composed */
 import { describe, expect, it } from 'vitest'
 import { Cause, Effect, Exit, Layer, Option, Schema } from 'effect'
+import { TestIdentityLive } from '../identity/identity-test-support.js'
 import { TestAppConfigLive } from '../../config/app-config-test-support.js'
 import { EventStoreLive, InProcessEventBrokerLive } from '../events/index.js'
 import { NoHooksLive } from '../hooks/index.js'
@@ -50,7 +51,7 @@ const layerWith = (providerLayer: Layer.Layer<SandboxProvider>) => {
       EventStoreLive,
       Layer.merge(InMemoryStorageLive, InProcessEventBrokerLive),
     ),
-    Layer.mergeAll(config, NoHooksLive),
+    Layer.mergeAll(config, NoHooksLive, TestIdentityLive),
   )
   const work = Layer.provideMerge(WorkUnitServiceLive, base)
   const leases = Layer.provideMerge(LeaseServiceLive, base)

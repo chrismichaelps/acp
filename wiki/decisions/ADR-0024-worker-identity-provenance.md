@@ -31,10 +31,25 @@ for every consumer — the same reason ADR-0021 declined a new `EventType`. A
 lapsed worker is `offline`, and `expires_at` in the past distinguishes a
 registration that lapsed from one that shut down cleanly. No protocol change.
 
-Deferred: enforcement wiring. Nothing verifies an assertion yet, there is no
-`ACP_REQUIRE_WORKER_SIGNATURES`, and TTL sweeping is not implemented. The
-cryptography is the part that must be right before anything depends on it, and
-it is complete and adversarially tested; turning it on is the next slice.
+Enforcement now ships: `WorkerIdentityService`,
+`ACP_REQUIRE_WORKER_SIGNATURES` (off by default), and verification on
+`work.claim`, checked in the domain service so every transport inherits it and
+after the session has already authorized the call.
+
+Two rules the ADR did not settle, decided during implementation:
+
+- **A failed proof is refused in both modes.** Enforcement governs whether proof
+  is _required_, not whether a _failed_ proof is acceptable — accepting a
+  signature that does not verify would make the recorded `signed` flag
+  meaningless.
+- **Verification reads the worker only when it needs the key.** An unsigned
+  claim under unenforced mode returns without a lookup. An earlier version read
+  the worker unconditionally, which silently made registration a precondition of
+  every claim; 71 tests caught it.
+
+Still deferred: signing for `review.verdict` and `grill.answer`, and TTL
+sweeping of lapsed registrations. The verification service is action-agnostic,
+so extending it is wiring rather than design.
 
 Strengthened by [[ADR-0026-agent-sandbox-runtime]]: once the runtime launches
 the agent process, the bill of materials stops being self-reported and becomes

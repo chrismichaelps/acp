@@ -146,7 +146,12 @@ const claimWork = respond('POST /v1/work/:work_id/claim')(
     const payload = yield* HttpServerRequest.schemaBodyJson(ClaimWorkPayload)
     const now = yield* idClock.now
     yield* target.work('work:claim', workId)
-    const work = yield* service.claim(workId, payload.worker_id, now)
+    const work = yield* service.claim(
+      workId,
+      payload.worker_id,
+      now,
+      payload.assertion,
+    )
     return yield* ok(200)(WorkUnit, work)
   }),
 )
