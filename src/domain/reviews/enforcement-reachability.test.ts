@@ -34,6 +34,28 @@ const enforced = TestAppConfigLive({ requireWorkerSignatures: true })
 const { publicKey, privateKey } = generateKeyPairSync('ed25519')
 const workersLive = WorkerServiceLive.pipe(Layer.provide(InMemoryStorageLive))
 
+const signAs = (action: 'work.claim' | 'review.verdict', targetId: string) => {
+  const claims = {
+    workerId: 'agent_a',
+    action,
+    targetId,
+    timestamp: now as string,
+  }
+  return {
+    worker_id: workerId,
+    action,
+    target_id: targetId,
+    timestamp: now,
+    signature: sign(
+      null,
+      Buffer.from(canonicalAssertionPayload(claims), 'utf8'),
+      privateKey,
+    ).toString('base64'),
+  }
+}
+
+const signVerdict = (targetId: string) => signAs('review.verdict', targetId)
+
 const signClaim = (targetId: string) => {
   const claims = {
     workerId: 'agent_a',
@@ -75,10 +97,71 @@ const TestLive = Layer.provideMerge(ReviewServiceLive, work)
 
 // Regression: enabling ACP_REQUIRE_WORKER_SIGNATURES once made every review
 // verdict impossible. Verification lived in `transitionReview`, but no verdict
-// transport carries an assertion, so the host demanded proof no caller could
-// supply. Verdicts are now verified-if-supplied rather than required.
+// transport could carry an assertion, so the host demanded proof no caller
+// could supply. Provenance now travels as a header on every transport, and
+// `cancel` takes an assertion like the other verdicts — so enforcement is
+// satisfiable rather than a dead end.
 describe('review verdicts under signature enforcement', () => {
-  it('cancels without an assertion rather than refusing it outright', () => {
+  it('accepts a signed cancel', () => {
+    const exit = Effect.runSyncExit(
+      Effect.provide(
+        Effect.gen(function* () {
+          const workers = yield* WorkerService
+          yield* workers.register(
+            Schema.decodeUnknownSync(Worker)({
+              id: 'agent_a',
+              name: 'A',
+              kind: 'agent',
+              status: 'online',
+              capabilities: [],
+              public_key: publicKeyToBase64(publicKey),
+            }),
+          )
+          const w = yield* WorkUnitService
+          const reviews = yield* ReviewService
+          yield* w.create({
+            id: workId,
+            payload: Schema.decodeUnknownSync(CreateWorkPayload)({
+              workspace_id: workspaceId,
+              title: 'T',
+            }),
+            createdBy: workerId,
+            now,
+          })
+          yield* w.claim(workId, workerId, now, signClaim('work_1'))
+          yield* w.transition(workId, 'running', workerId, now)
+          yield* reviews.request({
+            id: 'review_1' as ReviewId,
+            payload: Schema.decodeUnknownSync(RequestReviewPayload)({
+              work_id: 'work_1',
+              requested_by: workerId,
+              requirements: [],
+            }),
+            now,
+          })
+          return yield* reviews.cancel(
+            'review_1' as ReviewId,
+            workerId,
+            now,
+            signVerdict('review_1'),
+          )
+        }),
+        TestLive,
+      ),
+    )
+    if (Exit.isFailure(exit)) {
+      const detail = Option.getOrNull(Cause.failureOption(exit.cause)) as {
+        _tag?: string
+        reason?: string
+      } | null
+      throw new Error(
+        `cancel was refused: ${detail?._tag ?? 'unknown'} ${detail?.reason ?? ''}`,
+      )
+    }
+    expect(Exit.isSuccess(exit)).toBe(true)
+  })
+
+  it('refuses an unsigned cancel, now that one can be signed', () => {
     const exit = Effect.runSyncExit(
       Effect.provide(
         Effect.gen(function* () {
@@ -120,15 +203,6 @@ describe('review verdicts under signature enforcement', () => {
         TestLive,
       ),
     )
-    if (Exit.isFailure(exit)) {
-      const detail = Option.getOrNull(Cause.failureOption(exit.cause)) as {
-        _tag?: string
-        reason?: string
-      } | null
-      throw new Error(
-        `cancel was refused: ${detail?._tag ?? 'unknown'} ${detail?.reason ?? ''}`,
-      )
-    }
-    expect(Exit.isSuccess(exit)).toBe(true)
+    expect(Exit.isFailure(exit)).toBe(true)
   })
 })

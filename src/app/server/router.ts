@@ -84,6 +84,7 @@ import {
   ok,
   pathParam,
   respond,
+  workerAssertion,
 } from './route-support.js'
 import { bearerCredential } from '../../infrastructure/auth/index.js'
 import { initializeSession as initializeSessionTransaction } from './session-initializer.js'
@@ -146,11 +147,12 @@ const claimWork = respond('POST /v1/work/:work_id/claim')(
     const payload = yield* HttpServerRequest.schemaBodyJson(ClaimWorkPayload)
     const now = yield* idClock.now
     yield* target.work('work:claim', workId)
+    const assertion = yield* workerAssertion
     const work = yield* service.claim(
       workId,
       payload.worker_id,
       now,
-      payload.assertion,
+      Option.getOrUndefined(assertion),
     )
     return yield* ok(200)(WorkUnit, work)
   }),

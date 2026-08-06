@@ -23,6 +23,7 @@ import { AcpRpcReviewHandlersLive } from './acp-rpc-review-handlers.js'
 import { rpcActor, rpcWorkspaceActor } from './rpc-auth.js'
 import * as target from './rpc-resource-workspace-auth.js'
 import { toRpcError } from './rpc-error.js'
+import { rpcAssertion } from './rpc-assertion.js'
 
 const sessionInitializeHandler = AcpRpcGroup.toLayerHandler(
   'session.initialize',
@@ -187,8 +188,9 @@ const workClaimHandler = AcpRpcGroup.toLayerHandler(
       const service = yield* WorkUnitService
       const idClock = yield* IdClock
       const now = yield* idClock.now
+      const assertion = yield* rpcAssertion(options.headers)
       return yield* service
-        .claim(payload.work_id, payload.worker_id, now, payload.assertion)
+        .claim(payload.work_id, payload.worker_id, now, assertion)
         .pipe(Effect.mapError(toRpcError))
     }),
 )

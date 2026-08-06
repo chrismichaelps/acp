@@ -359,6 +359,11 @@ and `timestamp` together, so a captured assertion cannot be replayed against a
 different target: `worker.register`, `work.claim`, `review.verdict`,
 `grill.answer`.
 
+Send it as the **`x-acp-assertion`** header — base64url-encoded JSON of
+`{ worker_id, action, target_id, timestamp, signature }`. The header travels
+beside your bearer token on every transport. A header that is present but
+unreadable is a `400`, not a silent fallback to unsigned.
+
 Rules to code against:
 
 - **Unsigned is fine by default.** `ACP_REQUIRE_WORKER_SIGNATURES` is off unless

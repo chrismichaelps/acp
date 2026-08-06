@@ -9,6 +9,10 @@ import { Clock, Effect, Either, Option, Schema } from 'effect'
 import { AppConfigTag } from '../../config/app-config.js'
 import { SessionIssuer, SessionService } from '../../domain/sessions/index.js'
 import { recordHttpCompletion } from '../../infrastructure/metrics/index.js'
+import {
+  ACP_ASSERTION_HEADER,
+  decodeAssertionHeader,
+} from '../../domain/identity/index.js'
 import { toHttpErrorResponse } from '../../infrastructure/http/index.js'
 import {
   toProtocolError,
@@ -27,6 +31,22 @@ import type {
 } from '../../protocol/schema/index.js'
 
 const systemActor = 'worker_system' as WorkerId
+
+/**
+ * The worker assertion accompanying this request, if any.
+ *
+ * A malformed header fails the request rather than decoding to "absent": a
+ * corrupted or tampered assertion must not silently downgrade to an unsigned
+ * call. See [[ADR-0024-worker-identity-provenance]].
+ */
+export const workerAssertion = Effect.flatMap(
+  HttpServerRequest.HttpServerRequest,
+  (request) =>
+    Either.match(
+      decodeAssertionHeader(Headers.get(request.headers, ACP_ASSERTION_HEADER)),
+      { onLeft: Effect.fail, onRight: Effect.succeed },
+    ),
+)
 
 /**
  * Every `DomainError` tag, as a record so TypeScript requires a member for each

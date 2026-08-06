@@ -315,10 +315,6 @@ const make = Effect.gen(function* () {
         workerId: actor,
         action: 'review.verdict',
         targetId: review.id,
-        // No verdict transport carries an assertion yet, so requiring one
-        // would refuse every verdict the moment enforcement is enabled.
-        // Supplied proof is still checked; see [[ADR-0024-worker-identity-provenance]].
-        required: false,
         assertion:
           assertion === undefined
             ? Option.none()

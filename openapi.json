@@ -5123,40 +5123,6 @@
                 "properties": {
                   "worker_id": {
                     "type": "string"
-                  },
-                  "assertion": {
-                    "type": "object",
-                    "required": [
-                      "worker_id",
-                      "action",
-                      "target_id",
-                      "timestamp",
-                      "signature"
-                    ],
-                    "properties": {
-                      "worker_id": {
-                        "type": "string"
-                      },
-                      "action": {
-                        "type": "string",
-                        "enum": [
-                          "worker.register",
-                          "work.claim",
-                          "review.verdict",
-                          "grill.answer"
-                        ]
-                      },
-                      "target_id": {
-                        "$ref": "#/components/schemas/NonEmptyString"
-                      },
-                      "timestamp": {
-                        "type": "string"
-                      },
-                      "signature": {
-                        "$ref": "#/components/schemas/NonEmptyString"
-                      }
-                    },
-                    "additionalProperties": false
                   }
                 },
                 "additionalProperties": false
