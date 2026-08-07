@@ -10,6 +10,7 @@ import {
 } from './work-unit-states.js'
 import {
   makeSpawnGraph,
+  newWorkUnit,
   planSubtreeCancellation,
 } from './work-unit-spawn-graph.js'
 import type {
@@ -108,6 +109,15 @@ export interface WorkUnitServiceApi {
     actor: WorkerId,
     now: Timestamp,
   ) => Effect.Effect<WorkUnit, WorkUnitTransitionError>
+  /**
+   * Runs the same checks as `transition` — legality and the spawn-graph
+   * completion gate — without writing anything, so a caller that must persist
+   * other state alongside a transition can refuse before it does.
+   */
+  readonly canTransition: (
+    workId: WorkId,
+    to: WorkState,
+  ) => Effect.Effect<void, WorkUnitTransitionError>
   /**
    * Cancels a work unit and its descendants, deepest-first, cancelling the root
    * only when nothing was blocked — see [[ADR-0027-subtree-cancellation]].
@@ -276,21 +286,7 @@ const make = Effect.gen(function* () {
         input.payload.parent_id,
         input.payload.workspace_id,
       )
-      const work: WorkUnit = {
-        id: input.id,
-        workspace_id: input.payload.workspace_id,
-        title: input.payload.title,
-        description: input.payload.description,
-        state: 'open',
-        priority: Option.getOrElse(input.payload.priority, () => 'normal'),
-        created_by: input.createdBy,
-        assigned_to: Option.none(),
-        parent_id: input.payload.parent_id,
-        depth,
-        created_at: input.now,
-        updated_at: input.now,
-      }
-
+      const work = newWorkUnit(input, depth)
       yield* save(work)
       yield* appendWorkEvent(work, input.createdBy, input.now, 'work.created', {
         parent_id: Option.getOrNull(work.parent_id),
@@ -429,6 +425,19 @@ const make = Effect.gen(function* () {
       return next
     })
 
+  const canTransition: WorkUnitServiceApi['canTransition'] = (workId, to) =>
+    Effect.gen(function* () {
+      const work = yield* requireWork(workId)
+      if (!allowedTransitions[work.state].has(to)) {
+        return yield* Effect.fail(
+          new InvalidStateTransitionError({ from: work.state, to }),
+        )
+      }
+      if (childGatedTargets.has(to)) {
+        yield* graph.assertChildrenComplete(workId, to)
+      }
+    })
+
   const cancelSubtree: WorkUnitServiceApi['cancelSubtree'] = (
     workId,
     actor,
@@ -477,6 +486,7 @@ const make = Effect.gen(function* () {
     claim,
     transition,
     transitionSilently,
+    canTransition,
     cancelSubtree,
     listChildren: graph.listChildren,
     listDescendants: graph.listDescendants,
