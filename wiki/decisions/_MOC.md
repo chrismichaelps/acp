@@ -89,6 +89,9 @@ tags: [moc, adr]
   deepest-first with the root last, report units whose state admits no
   `cancelled` edge instead of forcing them, and replace atomicity with
   idempotence so a partial cascade is resumable.
+- [[ADR-0028-cancelling-blocked-work]] — ACCEPTED — let `blocked` reach
+  `cancelled` directly, so abandoning externally-stalled work no longer requires
+  writing a false `work.unblocked` event to get there.
 
 ## Referenced by
 
