@@ -6,7 +6,10 @@ export const allowedTransitions: Record<WorkState, ReadonlySet<WorkState>> = {
   open: new Set(['claimed', 'cancelled']),
   claimed: new Set(['running', 'cancelled']),
   running: new Set(['blocked', 'needs_review', 'cancelled']),
-  blocked: new Set(['running']),
+  // `cancelled` alongside `running`: blocked work is stalled on something
+  // external, and abandoning it should not require pretending it resumed first.
+  // See [[ADR-0028-cancelling-blocked-work]].
+  blocked: new Set(['running', 'cancelled']),
   needs_review: new Set([
     'running',
     'approved',

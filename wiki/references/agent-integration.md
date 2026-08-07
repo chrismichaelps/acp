@@ -112,6 +112,7 @@ stateDiagram-v2
     running --> needs_review
     running --> blocked
     blocked --> running
+    blocked --> cancelled
     needs_review --> approved
     needs_review --> changes_requested
     needs_review --> running
@@ -129,7 +130,8 @@ stateDiagram-v2
 Happy path: `open → claimed → running → needs_review → approved → completed`.
 `review request` is the only path that performs `running → needs_review`;
 `request-changes` sends work to `changes_requested → running`; `blocked ⇄
-running` covers external stalls. `completed`, `rejected`, and `cancelled` are
+running` covers external stalls, and `blocked → cancelled` abandons work whose
+blocker will not clear. `completed`, `rejected`, and `cancelled` are
 terminal, and `cancelled` is reachable from any pre-review state.
 
 ### Delegating work: the spawn graph

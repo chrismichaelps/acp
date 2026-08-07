@@ -95,11 +95,12 @@ assumed: callers get the ids cancelled and the units that stopped the root from
 being cancelled. An agent that ignores the report will believe a subtree is
 cancelled when its root is still live.
 
-A `blocked` work unit cannot be cancelled at all — not by this operation and not
-directly, because the transition table has no `blocked → cancelled` edge. That
-is arguably a gap in the state machine independent of cascade, but changing the
-table alters behaviour well beyond this ADR, so it is recorded here as a
-question rather than answered inside a cascade feature.
+A `blocked` work unit could not be cancelled at all when this ADR shipped —
+not by this operation and not directly — because the transition table had no
+`blocked → cancelled` edge. That was recorded here as an open question rather
+than answered inside a cascade feature, and is now settled by
+[[ADR-0028-cancelling-blocked-work]]: blocked descendants are cancellable, so
+they no longer block a cascade.
 
 ## Alternatives
 
