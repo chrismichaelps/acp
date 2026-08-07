@@ -432,6 +432,13 @@ unreadable is a `400`, not a silent fallback to unsigned.
   registration becomes `offline` on the next sweep; the row survives so events
   attributing work to that id keep resolving.
 
+## Workspace policy overlays (optional)
+
+A workspace may carry its own policy overlay alongside the host's. Both are
+evaluated and the **stricter** result wins, so an overlay can add refusals the
+host does not have but can never grant something the host refused. A denial
+names the rule that caused it, preferring the overlay when both would refuse.
+
 ## Sandboxed execution (optional)
 
 With `ACP_SANDBOX_ADAPTER=docker`, a work unit runs in an isolated container

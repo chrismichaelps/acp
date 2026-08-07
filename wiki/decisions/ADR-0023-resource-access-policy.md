@@ -37,9 +37,23 @@ vocabulary stays in the schema so a future slice can honour it without a
 breaking change.
 
 Also narrowed: the governed actions are `lease.grant` and `work.claim` — the two
-mutations that name a resource. The per-workspace overlay is deferred; a single
-host policy is the useful first slice, and overlay merge semantics deserve a
-demonstrated need.
+mutations that name a resource.
+
+**Per-workspace overlays now ship.** `ACP_POLICY_OVERLAY_DIR` holds
+`<workspace_id>.json` documents, each evaluated alongside the host policy with
+the **more restrictive** result winning.
+
+That rule is what makes an overlay safe to hand to a workspace owner: it can add
+denials the host lacks, but a permissive overlay rule — or a permissive overlay
+`default` — can never turn a host denial into an allow. Merging by taking the
+stricter of two decisions gives the narrowing property structurally, rather than
+by a check someone has to remember. Without it, an overlay file would be a
+privilege-escalation path.
+
+When both would refuse, the **overlay** rule is named: an operator debugging a
+refusal needs to know which file to edit, and the workspace-local one is both
+the likelier answer and the cheaper to change. A malformed overlay aborts
+startup exactly as a malformed host policy does.
 
 ## Context
 

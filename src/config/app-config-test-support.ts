@@ -22,6 +22,7 @@ export const testAppConfig = (
   eventRetentionDays: 30,
   maxWorkDepth: 10,
   policyFile: Option.none(),
+  policyOverlayDir: Option.none(),
   hooksFile: Option.none(),
   sandboxAdapter: 'none',
   sandboxImage: Option.none(),

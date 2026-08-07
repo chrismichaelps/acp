@@ -1,6 +1,6 @@
 /** @Acp.App.PolicyLayer.Test — a policy file gates real coordination */
 import { describe, expect, it } from 'vitest'
-import { mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Effect, Exit, Layer, Option } from 'effect'
@@ -17,11 +17,29 @@ const writePolicy = (document: unknown): string => {
   return path
 }
 
-const dispatcherFor = (policyFile: Option.Option<string>) =>
+const dispatcherFor = (
+  policyFile: Option.Option<string>,
+  policyOverlayDir: Option.Option<string> = Option.none(),
+) =>
   Layer.provide(
     PolicyHooksLive,
-    Layer.succeed(AppConfigTag, testAppConfig({ policyFile })),
+    Layer.succeed(
+      AppConfigTag,
+      testAppConfig({ policyFile, policyOverlayDir }),
+    ),
   )
+
+/** Writes `<workspace>.json` into a fresh overlay directory. */
+const writeOverlay = (workspace: string, document: unknown): string => {
+  const dir = mkdtempSync(join(tmpdir(), 'acp-overlay-'))
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(
+    join(dir, `${workspace}.json`),
+    JSON.stringify(document),
+    'utf8',
+  )
+  return dir
+}
 
 const leasePayload: HookPayload = {
   point: 'lease.before_grant',
@@ -61,6 +79,71 @@ const validPolicy = {
     },
   ],
 }
+
+describe('policy layer — workspace overlays', () => {
+  const permissiveHost = { default: 'allow', rules: [] }
+
+  const overlayDenyingSrc = {
+    default: 'allow',
+    rules: [
+      {
+        name: 'workspace-freeze',
+        action: 'lease.grant',
+        resource: { uri: 'file:///src/**' },
+        decision: 'deny',
+        justification: 'this workspace is frozen',
+      },
+    ],
+  }
+
+  it('applies a workspace overlay on top of a permissive host policy', () => {
+    const exit = Effect.runSyncExit(
+      Effect.provide(
+        Effect.flatMap(HookDispatcher, (hooks) =>
+          hooks.dispatch('lease.before_grant', leasePayload),
+        ),
+        dispatcherFor(
+          Option.some(writePolicy(permissiveHost)),
+          Option.some(writeOverlay('workspace_1', overlayDenyingSrc)),
+        ),
+      ),
+    )
+    expect(Exit.isSuccess(exit)).toBe(false)
+  })
+
+  it('leaves a workspace without an overlay on the host policy', () => {
+    const exit = Effect.runSyncExit(
+      Effect.provide(
+        Effect.flatMap(HookDispatcher, (hooks) =>
+          hooks.dispatch('lease.before_grant', {
+            ...leasePayload,
+            workspaceId: 'workspace_other',
+          }),
+        ),
+        dispatcherFor(
+          Option.some(writePolicy(permissiveHost)),
+          Option.some(writeOverlay('workspace_1', overlayDenyingSrc)),
+        ),
+      ),
+    )
+    expect(Exit.isSuccess(exit)).toBe(true)
+  })
+
+  it('aborts startup on a malformed overlay', () => {
+    const exit = Effect.runSyncExit(
+      Effect.provide(
+        Effect.flatMap(HookDispatcher, (hooks) =>
+          hooks.dispatch('lease.before_grant', leasePayload),
+        ),
+        dispatcherFor(
+          Option.some(writePolicy(permissiveHost)),
+          Option.some(writeOverlay('workspace_1', { rules: [] })),
+        ),
+      ),
+    )
+    expect(Exit.isFailure(exit)).toBe(true)
+  })
+})
 
 describe('policy layer', () => {
   it('leaves coordination unchanged when no policy file is configured', () => {
