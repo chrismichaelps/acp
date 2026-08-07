@@ -57,6 +57,7 @@ const fakeEngine = (
           ),
         )
       },
+      listRuntimes: () => Effect.succeed(['runc']),
       removeContainer: (name) => {
         recorded.calls.push(`remove:${name}`)
         return Effect.zipRight(fail('remove'), Effect.void)

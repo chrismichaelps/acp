@@ -1,8 +1,11 @@
 /** @Acp.App.SandboxLayer — selects the sandbox adapter from configuration */
-import { Effect, Layer, Option } from 'effect'
+import { Effect, Either, Layer, Option } from 'effect'
 import { AppConfigTag } from '../config/app-config.js'
 import { noSandboxProvider, SandboxProvider } from '../domain/sandbox/index.js'
-import { makeDockerSandboxProvider } from '../infrastructure/sandbox/index.js'
+import {
+  assertRuntimeAvailable,
+  makeDockerSandboxProvider,
+} from '../infrastructure/sandbox/index.js'
 import { dockerEngineOverSocket } from '../infrastructure/sandbox/docker-engine.js'
 
 /**
@@ -30,7 +33,25 @@ export const SandboxProviderLive: Layer.Layer<
         ),
       onSome: Effect.succeed,
     })
-    return makeDockerSandboxProvider(dockerEngineOverSocket(), {
+    const engine = dockerEngineOverSocket()
+
+    // Isolation strength must never be silently weaker than requested, so a
+    // runtime the daemon does not offer fails startup rather than surfacing
+    // later as a container-create error.
+    const available = yield* engine
+      .listRuntimes()
+      .pipe(
+        Effect.orDieWith(
+          (cause) =>
+            new Error(`cannot reach the Docker daemon: ${cause.message}`),
+        ),
+      )
+    const preflight = assertRuntimeAvailable(config.sandboxRuntime, available)
+    if (Either.isLeft(preflight)) {
+      return yield* Effect.dieMessage(preflight.left)
+    }
+
+    return makeDockerSandboxProvider(engine, {
       image,
       ...Option.match(config.sandboxRuntime, {
         onNone: () => ({}),
