@@ -86,6 +86,36 @@ export const planSubtreeCancellation = (
   return { toCancel, blocked }
 }
 
+/** Builds the initial `WorkUnit` for a create, given its resolved depth. */
+export const newWorkUnit = (
+  input: {
+    readonly id: WorkId
+    readonly payload: {
+      readonly workspace_id: WorkspaceId
+      readonly title: string
+      readonly description: Option.Option<string>
+      readonly priority: Option.Option<WorkUnit['priority']>
+      readonly parent_id: Option.Option<WorkId>
+    }
+    readonly createdBy: WorkUnit['created_by']
+    readonly now: WorkUnit['created_at']
+  },
+  depth: number,
+): WorkUnit => ({
+  id: input.id,
+  workspace_id: input.payload.workspace_id,
+  title: input.payload.title,
+  description: input.payload.description,
+  state: 'open',
+  priority: Option.getOrElse(input.payload.priority, () => 'normal'),
+  created_by: input.createdBy,
+  assigned_to: Option.none(),
+  parent_id: input.payload.parent_id,
+  depth,
+  created_at: input.now,
+  updated_at: input.now,
+})
+
 export interface SpawnGraphDeps {
   readonly storage: StorageApi
   readonly collection: string

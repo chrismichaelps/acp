@@ -62,6 +62,8 @@ describe('resume routes', () => {
       'artifact:create',
       'review:create',
       'review:collaborate',
+      'work:claim',
+      'work:update',
     ])
 
     const createdWork = await handler(
@@ -114,6 +116,15 @@ describe('resume routes', () => {
       }),
     )
     const artifact = (await storedArtifact.json()) as { id: string }
+    // Work must reach `running` before a review can be requested: `open` admits
+    // no `needs_review` edge. This previously appeared to work because a
+    // refused request still persisted the review — see the request-ordering fix.
+    await handler(
+      authedJson(token, `/v1/work/${work.id}/claim`, { worker_id: worker.id }),
+    )
+    await handler(
+      authedJson(token, `/v1/work/${work.id}`, { state: 'running' }, 'PATCH'),
+    )
     await handler(
       authedJson(token, '/v1/reviews', {
         work_id: work.id,

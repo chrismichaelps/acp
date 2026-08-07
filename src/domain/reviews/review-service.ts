@@ -284,6 +284,14 @@ const make = Effect.gen(function* () {
         created_at: input.now,
       }
 
+      // Check before writing. The transition is the part that can legitimately
+      // refuse — the work may already be in review, or the spawn-graph gate may
+      // hold it back for live children — and doing it *after* the write left a
+      // dangling review plus a `review.requested` event describing a request
+      // that never took effect. Checking first keeps the log's causal order
+      // (request, then transition) while making a refusal write nothing.
+      yield* workUnits.canTransition(review.work_id, 'needs_review')
+
       yield* save(review)
       yield* appendReviewEvent(
         review,
