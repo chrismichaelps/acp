@@ -104,7 +104,7 @@ Three adapters are anticipated; only the first two are in this slice:
 - **`none`** — the default. No sandbox is provisioned and behaviour is exactly
   as today, so a host that has not opted in is unchanged.
 - **`docker`** — containers via the Docker Engine API.
-- **`docker-sandbox`** — microVM-backed, deferred until the tooling stabilises.
+- **`docker-sandbox`** — microVM-backed. **Declined**, not deferred; see below.
 
 ### Isolation strength is configuration, not an adapter
 
@@ -118,6 +118,23 @@ through the **same** Engine API and the same adapter. `ACP_SANDBOX_RUNTIME`
 therefore moves a deployment from container-grade to hardware-grade isolation
 without changing a line of ACP, which is why isolation strength is a config
 value rather than a fork in the code.
+
+**The `docker-sandbox` adapter is declined.** Leaving it listed as "deferred"
+implied it was coming; it is not, and a phantom TODO is worse than a decision.
+
+What it would add over the shipped adapter is per-sandbox microVMs. On a Linux
+server that is already reachable through `ACP_SANDBOX_RUNTIME=kata` on the same
+Engine API. On Docker Desktop the daemon offers only `runc` — verified — but
+every container already runs inside Desktop's LinuxKit VM, so a hardware
+boundary exists regardless, just at the VM rather than per sandbox. Either way
+the marginal isolation does not justify shelling out to a CLI from a long-lived
+server.
+
+Because that runtime availability differs by host, the configured runtime is
+now **checked at startup**: a daemon that does not offer `ACP_SANDBOX_RUNTIME`
+fails the host rather than silently running weaker isolation than requested.
+That was the real risk hiding behind this adapter question — an operator setting
+`kata` on a daemon without it, and believing they were hardened.
 
 **Docker Sandboxes (`sbx`) is deliberately not the server path.** It is a
 genuinely good microVM implementation, but it is a CLI aimed at developer

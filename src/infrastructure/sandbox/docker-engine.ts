@@ -84,6 +84,15 @@ export const dockerEngineOverSocket = (
         State: { Status: string; ExitCode: number }
       }
     }),
+  listRuntimes: () =>
+    Effect.gen(function* () {
+      const res = yield* call(socketPath, 'GET', '/info')
+      const ok = yield* expectOk('docker info')(res)
+      const info = JSON.parse(ok.body) as {
+        Runtimes?: Record<string, unknown>
+      }
+      return Object.keys(info.Runtimes ?? {})
+    }),
   removeContainer: (name) =>
     call(socketPath, 'DELETE', `/containers/${name}?force=true`).pipe(
       Effect.flatMap((res) =>

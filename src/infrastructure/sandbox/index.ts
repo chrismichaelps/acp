@@ -9,6 +9,7 @@ export type {
   DockerMount,
   DockerState,
 } from './docker-request.js'
+export { assertRuntimeAvailable } from './runtime-preflight.js'
 export {
   DockerSandboxLive,
   makeDockerSandboxProvider,

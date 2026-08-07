@@ -33,6 +33,8 @@ export interface DockerEngineApi {
     Error
   >
   readonly removeContainer: (name: string) => Effect.Effect<void, Error>
+  /** OCI runtimes the daemon offers, for the startup preflight. */
+  readonly listRuntimes: () => Effect.Effect<readonly string[], Error>
 }
 
 const asStorageError = (op: string) => (cause: Error) =>
