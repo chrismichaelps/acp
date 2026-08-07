@@ -100,7 +100,11 @@ import {
   updateWorkspace,
 } from './workspace-routes.js'
 import { getWorker, listWorkers } from './worker-routes.js'
-import { listWorkChildren, listWorkDescendants } from './work-graph-routes.js'
+import {
+  cancelWorkSubtree,
+  listWorkChildren,
+  listWorkDescendants,
+} from './work-graph-routes.js'
 import {
   getWorkSandbox,
   startWorkSandbox,
@@ -359,6 +363,7 @@ const workRouter = HttpRouter.empty.pipe(
 const workGraphRouter = workRouter.pipe(
   HttpRouter.get('/v1/work/:work_id/children', listWorkChildren),
   HttpRouter.get('/v1/work/:work_id/descendants', listWorkDescendants),
+  HttpRouter.post('/v1/work/:work_id/cancel_subtree', cancelWorkSubtree),
 )
 
 const sandboxRouter = workGraphRouter.pipe(

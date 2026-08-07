@@ -85,6 +85,10 @@ tags: [moc, adr]
   supervise an isolated execution environment per work unit behind a
   `SandboxProvider` port, turning leases into read-write mounts so they stop
   being advisory, while deliberately never owning the agent harness.
+- [[ADR-0027-subtree-cancellation]] — PROPOSED — cancel a spawn subtree
+  deepest-first with the root last, report units whose state admits no
+  `cancelled` edge instead of forcing them, and replace atomicity with
+  idempotence so a partial cascade is resumable.
 
 ## Referenced by
 

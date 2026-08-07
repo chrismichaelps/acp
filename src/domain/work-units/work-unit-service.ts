@@ -8,8 +8,14 @@ import {
   childGatedTargets,
   eventTypeForTransition,
 } from './work-unit-states.js'
-import { makeSpawnGraph } from './work-unit-spawn-graph.js'
-import type { ListDescendantsOptions } from './work-unit-spawn-graph.js'
+import {
+  makeSpawnGraph,
+  planSubtreeCancellation,
+} from './work-unit-spawn-graph.js'
+import type {
+  BlockedCancellation,
+  ListDescendantsOptions,
+} from './work-unit-spawn-graph.js'
 import { EventStore } from '../events/index.js'
 import { Storage } from '../../infrastructure/storage/index.js'
 import type {
@@ -66,6 +72,13 @@ export type WorkUnitTransitionError =
   | HookDeniedError
   | StorageError
 
+export interface CancelSubtreeResult {
+  /** Cancelled by this call, deepest-first. Empty on a re-run. */
+  readonly cancelled: readonly WorkId[]
+  /** Non-terminal units whose state admits no `cancelled` edge. */
+  readonly blocked: readonly BlockedCancellation[]
+}
+
 export interface WorkUnitServiceApi {
   readonly create: (
     input: CreateWorkInput,
@@ -95,6 +108,16 @@ export interface WorkUnitServiceApi {
     actor: WorkerId,
     now: Timestamp,
   ) => Effect.Effect<WorkUnit, WorkUnitTransitionError>
+  /**
+   * Cancels a work unit and its descendants, deepest-first, cancelling the root
+   * only when nothing was blocked — see [[ADR-0027-subtree-cancellation]].
+   * Not atomic; idempotent instead, so a partial cascade is safe to re-run.
+   */
+  readonly cancelSubtree: (
+    workId: WorkId,
+    actor: WorkerId,
+    now: Timestamp,
+  ) => Effect.Effect<CancelSubtreeResult, WorkUnitTransitionError>
   /** Direct children of `workId`, ordered by id. */
   readonly listChildren: (
     workId: WorkId,
@@ -406,6 +429,27 @@ const make = Effect.gen(function* () {
       return next
     })
 
+  const cancelSubtree: WorkUnitServiceApi['cancelSubtree'] = (
+    workId,
+    actor,
+    now,
+  ) =>
+    Effect.gen(function* () {
+      const root = yield* requireWork(workId)
+      const plan = planSubtreeCancellation(
+        root,
+        yield* graph.listDescendants(workId),
+      )
+      // Not atomic — the storage port exposes no cross-row transaction — so a
+      // partial cascade is left safe to re-run rather than claimed as complete.
+      const cancelled: WorkId[] = []
+      for (const unit of plan.toCancel) {
+        yield* transitionWork(unit, 'cancelled', actor, now)
+        cancelled.push(unit.id)
+      }
+      return { cancelled, blocked: plan.blocked }
+    })
+
   const transition: WorkUnitServiceApi['transition'] = (
     workId,
     to,
@@ -433,6 +477,7 @@ const make = Effect.gen(function* () {
     claim,
     transition,
     transitionSilently,
+    cancelSubtree,
     listChildren: graph.listChildren,
     listDescendants: graph.listDescendants,
   } satisfies WorkUnitServiceApi

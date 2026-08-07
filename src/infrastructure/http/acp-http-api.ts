@@ -33,6 +33,7 @@ import {
   WorkUnit,
   ACP_PROTOCOL_VERSION,
   Sandbox,
+  CancelSubtreeResponse,
 } from '../../protocol/schema/index.js'
 import { WorkspaceGroup } from './acp-http-api-workspaces.js'
 import { EventsGroup } from './acp-http-api-events.js'
@@ -290,6 +291,17 @@ export const WorkGroup = HttpApiGroup.make('work')
       .addSuccess(Schema.Struct({ stopped: Schema.Boolean }))
       .addError(ProtocolError, protocolError(403))
       .addError(ProtocolError, protocolError(404)),
+  )
+  .add(
+    HttpApiEndpoint.post(
+      'cancelWorkSubtree',
+      '/v1/work/:work_id/cancel_subtree',
+    )
+      .setPath(WorkPath)
+      .addSuccess(CancelSubtreeResponse)
+      .addError(ProtocolError, protocolError(403))
+      .addError(ProtocolError, protocolError(404))
+      .addError(ProtocolError, protocolError(409)),
   )
   .add(
     HttpApiEndpoint.get('listWorkChildren', '/v1/work/:work_id/children')

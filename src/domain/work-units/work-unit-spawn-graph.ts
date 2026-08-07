@@ -17,7 +17,11 @@ import type {
   WorkspaceId,
   WorkState,
 } from '../../protocol/schema/index.js'
-import { childAcceptingStates, isTerminal } from './work-unit-states.js'
+import {
+  allowedTransitions,
+  childAcceptingStates,
+  isTerminal,
+} from './work-unit-states.js'
 
 /** Bounds the `blockingChildren` list so a refusal payload stays small. */
 const maxReportedBlockingChildren = 10
@@ -38,6 +42,49 @@ export type ResolveDepthError =
   | InvalidStateTransitionError
   | DepthLimitExceededError
   | StorageError
+
+/** A unit the cascade cannot cancel, and the state that prevents it. */
+export interface BlockedCancellation {
+  readonly work_id: WorkId
+  readonly state: WorkState
+}
+
+export interface SubtreeCancellationPlan {
+  /** Units to cancel, deepest-first. */
+  readonly toCancel: readonly WorkUnit[]
+  readonly blocked: readonly BlockedCancellation[]
+}
+
+/**
+ * Decides what a subtree cancellation may do, without doing any of it.
+ *
+ * Descendants come deepest-first so a parent is never cancelled above a live
+ * child, and the root is included only when nothing blocks — cancelling it over
+ * a live descendant would create exactly the shape the completion gate prevents
+ * from the other direction. Already-terminal units are skipped silently: they
+ * are finished, which is what cancellation wanted. See
+ * [[ADR-0027-subtree-cancellation]].
+ */
+export const planSubtreeCancellation = (
+  root: WorkUnit,
+  descendants: readonly WorkUnit[],
+): SubtreeCancellationPlan => {
+  const toCancel: WorkUnit[] = []
+  const blocked: BlockedCancellation[] = []
+
+  for (const unit of [...descendants].reverse()) {
+    if (isTerminal(unit.state)) continue
+    if (allowedTransitions[unit.state].has('cancelled')) toCancel.push(unit)
+    else blocked.push({ work_id: unit.id, state: unit.state })
+  }
+
+  if (blocked.length === 0 && !isTerminal(root.state)) {
+    if (allowedTransitions[root.state].has('cancelled')) toCancel.push(root)
+    else blocked.push({ work_id: root.id, state: root.state })
+  }
+
+  return { toCancel, blocked }
+}
 
 export interface SpawnGraphDeps {
   readonly storage: StorageApi

@@ -46,6 +46,16 @@ export const workCommandHandlers: Readonly<Record<string, CommandHandler>> = {
       }
     }),
 
+  'work cancel-subtree': ({ positionals }) =>
+    Either.gen(function* () {
+      const workId = yield* positional(positionals, 0, 'work_id')
+      return {
+        method: 'POST',
+        path: `/v1/work/${encodePathSegment(workId)}/cancel_subtree`,
+        label: 'work cancel-subtree',
+      }
+    }),
+
   'work children': ({ positionals }) =>
     Either.gen(function* () {
       const workId = yield* positional(positionals, 0, 'work_id')

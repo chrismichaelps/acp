@@ -68,3 +68,12 @@ export const ClaimWorkPayload = Schema.Struct({
   worker_id: WorkerId,
 })
 export type ClaimWorkPayload = typeof ClaimWorkPayload.Type
+
+/** Outcome of a subtree cancellation — see [[ADR-0027-subtree-cancellation]]. */
+export const CancelSubtreeResponse = Schema.Struct({
+  /** Cancelled by this call, deepest-first. Empty on a re-run. */
+  cancelled: Schema.Array(WorkId),
+  /** Units whose state admits no `cancelled` edge, so the root was left live. */
+  blocked: Schema.Array(Schema.Struct({ work_id: WorkId, state: WorkState })),
+})
+export type CancelSubtreeResponse = typeof CancelSubtreeResponse.Type
