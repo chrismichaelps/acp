@@ -1,6 +1,6 @@
 /** @Acp.Domain.Reviews.RequestOrdering.Test — a refused request must persist nothing */
 import { describe, expect, it } from 'vitest'
-import { Chunk, Effect, Layer, Option, Schema } from 'effect'
+import { Chunk, Effect, Layer, Schema } from 'effect'
 import { TestAppConfigLive } from '../../config/app-config-test-support.js'
 import { TestIdentityLive } from '../identity/identity-test-support.js'
 import {
