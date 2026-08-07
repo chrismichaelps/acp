@@ -2,7 +2,14 @@
 import { readFileSync } from 'node:fs'
 import { Effect, Either, Layer, Option } from 'effect'
 import { AppConfigTag } from '../config/app-config.js'
-import { HookDispatcher, makeHookDispatcher } from '../domain/hooks/index.js'
+import {
+  HookDispatcher,
+  loadWebhookHooks,
+  makeHookDispatcher,
+  makeWebhookHook,
+} from '../domain/hooks/index.js'
+import type { Hook } from '../domain/hooks/index.js'
+import { webhookTransport } from '../infrastructure/hooks/index.js'
 import { loadPolicy, policyHooks } from '../domain/policy/index.js'
 
 /**
@@ -15,29 +22,61 @@ import { loadPolicy, policyHooks } from '../domain/policy/index.js'
  * the failure operators cannot see, so loud at boot beats silent in production —
  * the same stance the [[ADR-0020-operational-contracts]] version guard takes.
  */
+/** Reads and parses a configured JSON file, failing startup if it cannot. */
+const readJson = (kind: string, path: string) =>
+  Effect.try({
+    try: () => JSON.parse(readFileSync(path, 'utf8')) as unknown,
+    catch: (cause) =>
+      new Error(`cannot read ${kind} file ${path}: ${String(cause)}`),
+  }).pipe(Effect.orDie)
+
+const policyHooksFrom = (config: {
+  readonly policyFile: Option.Option<string>
+}) =>
+  Option.match(config.policyFile, {
+    onNone: () => Effect.succeed<readonly Hook[]>([]),
+    onSome: (path) =>
+      Effect.gen(function* () {
+        const loaded = loadPolicy(yield* readJson('policy', path))
+        if (Either.isLeft(loaded)) {
+          return yield* Effect.dieMessage(
+            `invalid policy file ${path}: ${loaded.left.issues.join('; ')}`,
+          )
+        }
+        return policyHooks(loaded.right)
+      }),
+  })
+
+const webhookHooksFrom = (config: {
+  readonly hooksFile: Option.Option<string>
+}) =>
+  Option.match(config.hooksFile, {
+    onNone: () => Effect.succeed<readonly Hook[]>([]),
+    onSome: (path) =>
+      Effect.gen(function* () {
+        const loaded = loadWebhookHooks(yield* readJson('hooks', path))
+        if (Either.isLeft(loaded)) {
+          return yield* Effect.dieMessage(
+            `invalid hooks file ${path}: ${loaded.left.issues.join('; ')}`,
+          )
+        }
+        return loaded.right.hooks.map((declaration) =>
+          makeWebhookHook(declaration, webhookTransport(declaration.url)),
+        )
+      }),
+  })
+
 export const PolicyHooksLive: Layer.Layer<HookDispatcher, never, AppConfigTag> =
   Layer.effect(
     HookDispatcher,
     Effect.gen(function* () {
       const config = yield* AppConfigTag
-      return yield* Option.match(config.policyFile, {
-        onNone: () => Effect.succeed(makeHookDispatcher([])),
-        onSome: (path) =>
-          Effect.gen(function* () {
-            const raw = yield* Effect.try({
-              try: () => JSON.parse(readFileSync(path, 'utf8')) as unknown,
-              catch: (cause) =>
-                new Error(`cannot read policy file ${path}: ${String(cause)}`),
-            }).pipe(Effect.orDie)
-
-            const loaded = loadPolicy(raw)
-            if (Either.isLeft(loaded)) {
-              return yield* Effect.dieMessage(
-                `invalid policy file ${path}: ${loaded.left.issues.join('; ')}`,
-              )
-            }
-            return makeHookDispatcher(policyHooks(loaded.right))
-          }),
-      })
+      // Policy hooks are name-prefixed `00-`, so they evaluate before any
+      // operator webhook at the same point — a local deny should not pay for a
+      // network round trip first.
+      return makeHookDispatcher([
+        ...(yield* policyHooksFrom(config)),
+        ...(yield* webhookHooksFrom(config)),
+      ])
     }),
   )

@@ -13,3 +13,12 @@ export {
   makeHookDispatcher,
 } from './hook-dispatcher.js'
 export type { HookDispatcherApi } from './hook-dispatcher.js'
+export {
+  decodeWebhookResponse,
+  loadWebhookHooks,
+  makeWebhookHook,
+} from './webhook-hook.js'
+export type {
+  WebhookHookDeclaration,
+  WebhookHooksDocument,
+} from './webhook-hook.js'

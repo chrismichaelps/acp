@@ -19,6 +19,7 @@ const configWith = (metricsToken: Option.Option<string>): AppConfig => ({
   eventRetentionDays: 30,
   maxWorkDepth: 10,
   policyFile: Option.none(),
+  hooksFile: Option.none(),
   sandboxAdapter: 'none' as const,
   sandboxImage: Option.none(),
   sandboxRuntime: Option.none(),
