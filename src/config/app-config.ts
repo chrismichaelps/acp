@@ -17,6 +17,7 @@ export interface AppConfig {
   readonly eventRetentionDays: number
   readonly maxWorkDepth: number
   readonly policyFile: Option.Option<string>
+  readonly hooksFile: Option.Option<string>
   readonly sandboxAdapter: 'none' | 'docker'
   readonly sandboxImage: Option.Option<string>
   readonly sandboxRuntime: Option.Option<string>
@@ -122,6 +123,8 @@ const load = Effect.gen(function* () {
   // Unset means the policy engine is absent and behaviour is unchanged.
   const policyFile = yield* Config.string('ACP_POLICY_FILE').pipe(Config.option)
   // `none` provisions nothing, so a host that has not opted in is unchanged.
+  // Unset means no webhook hooks; in-process hooks are unaffected.
+  const hooksFile = yield* Config.string('ACP_HOOKS_FILE').pipe(Config.option)
   const sandboxAdapter = yield* Config.literal(
     'none',
     'docker',
@@ -205,6 +208,7 @@ const load = Effect.gen(function* () {
     eventRetentionDays,
     maxWorkDepth,
     policyFile,
+    hooksFile,
     sandboxAdapter,
     sandboxImage,
     sandboxRuntime,

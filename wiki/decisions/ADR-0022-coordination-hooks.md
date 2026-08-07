@@ -21,9 +21,31 @@ and fail-closed per-hook timeouts; `HookDeniedError` mapped to HTTP 403
 service. `NoHooksLive` is the default in `AppLive`, so a host that registers
 nothing behaves exactly as before.
 
-Hooks are registered at host assembly by editing the layer, as this ADR
-specifies. There is deliberately no configuration file or runtime registration
-API — that would be the external-hook surface this ADR defers.
+**Webhook hooks now ship**, reversing half of the deferral below.
+
+The original objection was that external hooks need a sandboxing story and put
+unbounded third-party latency in front of every lease grant. Webhooks answer
+both without new machinery: no code runs in the host, so there is nothing to
+sandbox, and the per-hook fail-closed timeout this ADR already specifies is
+exactly what bounds the latency. Subprocess hooks remain deferred — those are
+the ones that would need sandboxing.
+
+`ACP_HOOKS_FILE` declares them, so operators register gates by configuration
+rather than by recompiling the host, which was the real usability cost of
+assembly-time registration. Endpoints must be **https**: a plaintext endpoint
+would carry coordination details in the clear, and any hop could forge a verdict
+the host treats as authoritative. Every failure — unreachable, slow, or an
+undecodable verdict — is a `DenyAbort`, because an endpoint that is down cannot
+be told apart from one that would have denied.
+
+The verdict wire format requires a reason on both denial shapes, enforcing what
+the local `HookOutcome` type already makes unconstructable. It deliberately
+tolerates unrecognised fields: rejecting them would turn a benign
+`{ decision: "allow", requestId: "…" }` into a fail-closed refusal, bricking
+coordination over harmless metadata.
+
+Policy hooks are name-prefixed `00-`, so a local denial never pays for a network
+round trip first.
 
 ## Context
 
