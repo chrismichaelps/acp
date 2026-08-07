@@ -8,3 +8,5 @@ export type {
   PolicyRule,
 } from './policy-engine.js'
 export { policyHooks } from './policy-hook.js'
+export type { PolicyOverlays } from './policy-hook.js'
+export { evaluateWithOverlay } from './policy-overlay.js'

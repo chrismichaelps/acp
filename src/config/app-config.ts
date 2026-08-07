@@ -17,6 +17,7 @@ export interface AppConfig {
   readonly eventRetentionDays: number
   readonly maxWorkDepth: number
   readonly policyFile: Option.Option<string>
+  readonly policyOverlayDir: Option.Option<string>
   readonly hooksFile: Option.Option<string>
   readonly sandboxAdapter: 'none' | 'docker'
   readonly sandboxImage: Option.Option<string>
@@ -124,6 +125,11 @@ const load = Effect.gen(function* () {
   const policyFile = yield* Config.string('ACP_POLICY_FILE').pipe(Config.option)
   // `none` provisions nothing, so a host that has not opted in is unchanged.
   // Unset means no webhook hooks; in-process hooks are unaffected.
+  // Directory of <workspace_id>.json overlays. Each may only narrow the host
+  // policy, never widen it.
+  const policyOverlayDir = yield* Config.string('ACP_POLICY_OVERLAY_DIR').pipe(
+    Config.option,
+  )
   const hooksFile = yield* Config.string('ACP_HOOKS_FILE').pipe(Config.option)
   const sandboxAdapter = yield* Config.literal(
     'none',
@@ -208,6 +214,7 @@ const load = Effect.gen(function* () {
     eventRetentionDays,
     maxWorkDepth,
     policyFile,
+    policyOverlayDir,
     hooksFile,
     sandboxAdapter,
     sandboxImage,

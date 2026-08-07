@@ -19,6 +19,7 @@ const requireWorkspaceBindingsConfig = Layer.succeed(AppConfigTag, {
   eventRetentionDays: 30,
   maxWorkDepth: 10,
   policyFile: Option.none(),
+  policyOverlayDir: Option.none(),
   hooksFile: Option.none(),
   sandboxAdapter: 'none' as const,
   sandboxImage: Option.none(),

@@ -1,5 +1,6 @@
 /** @Acp.App.PolicyLayer — loads the configured policy into hook registration */
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
+import { basename, extname, join } from 'node:path'
 import { Effect, Either, Layer, Option } from 'effect'
 import { AppConfigTag } from '../config/app-config.js'
 import {
@@ -11,6 +12,7 @@ import {
 import type { Hook } from '../domain/hooks/index.js'
 import { webhookTransport } from '../infrastructure/hooks/index.js'
 import { loadPolicy, policyHooks } from '../domain/policy/index.js'
+import type { PolicyDocument, PolicyOverlays } from '../domain/policy/index.js'
 
 /**
  * Builds the host's hook dispatcher from the configured policy file.
@@ -30,8 +32,45 @@ const readJson = (kind: string, path: string) =>
       new Error(`cannot read ${kind} file ${path}: ${String(cause)}`),
   }).pipe(Effect.orDie)
 
+/**
+ * Loads `<workspace_id>.json` overlays from a directory.
+ *
+ * A malformed overlay aborts startup exactly as a malformed host policy does:
+ * an access rule that silently stopped applying is the failure an operator
+ * cannot see.
+ */
+const overlaysFrom = (config: {
+  readonly policyOverlayDir: Option.Option<string>
+}): Effect.Effect<PolicyOverlays> =>
+  Option.match(config.policyOverlayDir, {
+    onNone: () => Effect.succeed<PolicyOverlays>(new Map()),
+    onSome: (dir) =>
+      Effect.gen(function* () {
+        const files = yield* Effect.try({
+          try: () =>
+            readdirSync(dir).filter((name) => extname(name) === '.json'),
+          catch: (cause) =>
+            new Error(`cannot read overlay dir ${dir}: ${String(cause)}`),
+        }).pipe(Effect.orDie)
+
+        const overlays = new Map<string, PolicyDocument>()
+        for (const file of files) {
+          const path = join(dir, file)
+          const loaded = loadPolicy(yield* readJson('policy overlay', path))
+          if (Either.isLeft(loaded)) {
+            return yield* Effect.dieMessage(
+              `invalid policy overlay ${path}: ${loaded.left.issues.join('; ')}`,
+            )
+          }
+          overlays.set(basename(file, '.json'), loaded.right)
+        }
+        return overlays
+      }),
+  })
+
 const policyHooksFrom = (config: {
   readonly policyFile: Option.Option<string>
+  readonly policyOverlayDir: Option.Option<string>
 }) =>
   Option.match(config.policyFile, {
     onNone: () => Effect.succeed<readonly Hook[]>([]),
@@ -43,7 +82,7 @@ const policyHooksFrom = (config: {
             `invalid policy file ${path}: ${loaded.left.issues.join('; ')}`,
           )
         }
-        return policyHooks(loaded.right)
+        return policyHooks(loaded.right, yield* overlaysFrom(config))
       }),
   })
 

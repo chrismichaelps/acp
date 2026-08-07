@@ -20,6 +20,7 @@ const expectedVariables = new Set([
   'ACP_MAX_WORK_DEPTH',
   'ACP_METRICS_TOKEN',
   'ACP_POLICY_FILE',
+  'ACP_POLICY_OVERLAY_DIR',
   'ACP_PORT',
   'ACP_PROFILE',
   'ACP_REQUIRE_AUTH',

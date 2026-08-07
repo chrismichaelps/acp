@@ -1,8 +1,8 @@
 /** @Acp.Domain.Policy.Hook — policy evaluation as coordination hooks */
-import { Effect } from 'effect'
+import { Effect, Option } from 'effect'
 import { allow, denyAbort } from '../hooks/index.js'
 import type { Hook, HookPayload } from '../hooks/index.js'
-import { evaluatePolicy } from './policy-engine.js'
+import { evaluateWithOverlay } from './policy-overlay.js'
 import type { PolicyAction, PolicyDocument } from './policy-engine.js'
 
 /**
@@ -19,10 +19,14 @@ const toRequest = (action: PolicyAction, payload: HookPayload) => ({
   resourceUri: payload.subjectId,
 })
 
+/** Overlays keyed by workspace id; a workspace without one uses the host policy. */
+export type PolicyOverlays = ReadonlyMap<string, PolicyDocument>
+
 const hookFor = (
   action: PolicyAction,
   point: Hook['point'],
   policy: PolicyDocument,
+  overlays: PolicyOverlays,
 ): Hook => ({
   // Prefixed so policy always evaluates before hooks registered later in the
   // alphabet; dispatch order is by name, per [[ADR-0022-coordination-hooks]].
@@ -30,7 +34,11 @@ const hookFor = (
   point,
   run: (payload) =>
     Effect.sync(() => {
-      const outcome = evaluatePolicy(policy, toRequest(action, payload))
+      const outcome = evaluateWithOverlay(
+        policy,
+        Option.fromNullable(overlays.get(payload.workspaceId)),
+        toRequest(action, payload),
+      )
       if (outcome.decision === 'allow') return allow
       // A refused agent that is not told why will retry; the justification is
       // required on non-allow rules precisely so this message can be useful.
@@ -55,7 +63,10 @@ const hookFor = (
  * rule can refuse an action the caller was authorized for, but can never grant
  * one it was not — a policy file is not a privilege-escalation path.
  */
-export const policyHooks = (policy: PolicyDocument): readonly Hook[] => [
-  hookFor('lease.grant', 'lease.before_grant', policy),
-  hookFor('work.claim', 'work.before_claim', policy),
+export const policyHooks = (
+  policy: PolicyDocument,
+  overlays: PolicyOverlays = new Map(),
+): readonly Hook[] => [
+  hookFor('lease.grant', 'lease.before_grant', policy, overlays),
+  hookFor('work.claim', 'work.before_claim', policy, overlays),
 ]

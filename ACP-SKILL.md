@@ -387,6 +387,13 @@ Rules to code against:
   connecting and the sweeper marks you `offline`; the record survives so past
   work stays attributable.
 
+## Workspace policy overlays (optional)
+
+A workspace may carry its own policy overlay alongside the host's. Both are
+evaluated and the **stricter** result wins, so an overlay can add refusals the
+host does not have but can never grant something the host refused. A denial
+names the rule that caused it, preferring the overlay when both would refuse.
+
 ## Sandboxed execution (optional)
 
 On a host with `ACP_SANDBOX_ADAPTER=docker`, a work unit can run in an isolated
