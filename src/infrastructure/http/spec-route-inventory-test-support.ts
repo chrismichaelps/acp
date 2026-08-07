@@ -124,6 +124,12 @@ export const specV1Endpoints: readonly SpecEndpoint[] = [
   },
   {
     group: 'work',
+    name: 'cancelWorkSubtree',
+    method: 'POST',
+    path: '/v1/work/:work_id/cancel_subtree',
+  },
+  {
+    group: 'work',
     name: 'listWorkChildren',
     method: 'GET',
     path: '/v1/work/:work_id/children',

@@ -157,6 +157,13 @@ Two rules follow from it, and both can fail a call that used to succeed:
   returns `invalid_state_transition`. Depth beyond `ACP_MAX_WORK_DEPTH`
   (default 10) returns `invalid_request`.
 
+Abandon a decomposed task with `POST /v1/work/:work_id/cancel_subtree`. It
+cancels descendants deepest-first and the root last, and **only cancels the
+root when nothing blocked** — a parent must never sit cancelled above live
+children. Units in `blocked`, `needs_review`, `changes_requested` or `approved`
+admit no `cancelled` transition, so they come back in `blocked` rather than
+being forced. Resolve those and call it again; it is idempotent.
+
 Read a subtree with `GET /v1/work/:work_id/children` for direct children, or
 `/descendants` (optional `max_depth` and `limit`) for the whole tree,
 breadth-first. A worker that dies leaving non-terminal descendants is exactly
@@ -259,6 +266,7 @@ workspace  create --name <n> --kind <k> --uri <u> [--default-branch <b>] | updat
 work       create <title> --workspace <id> [--priority <p>] [--description <d>]
 work       list --workspace <id> | get <id> | resume <id> [--budget <n>] | claim <id> --worker <id> | update <id> --state <state>
 work       children <id> | descendants <id> [--max-depth <n>] [--limit <n>]
+work       cancel-subtree <id>
 events     list --workspace <id> [--after <seq>] [--limit <n>] [--tail <n>] [--type <t>]
 lease      request --workspace <id> --holder <id> --kind <k> --uri <u> [--ttl <n>]
 lease      list --workspace <id> | renew <id> [--ttl <n>] | revoke <id> | release <id>

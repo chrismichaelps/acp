@@ -8,16 +8,22 @@ import {
 } from '../../protocol/errors/protocol-error.js'
 import { WorkUnit } from '../../protocol/schema/index.js'
 import type { WorkId } from '../../protocol/schema/index.js'
+import { IdClock } from './identity.js'
+import { CancelSubtreeResponse } from '../../protocol/schema/index.js'
 import { authorizeWorkspace, ok, pathParam, respond } from './route-support.js'
 
 const workIdParam = () =>
   Effect.map(pathParam('work_id'), (workId) => workId as WorkId)
 
 /**
- * Resolves the work unit and authorizes against its workspace. Reading a
- * subtree is a workspace read, so it carries the same scope as listing work.
+ * Resolves the work unit and authorizes against its workspace, returning the
+ * service and the acting worker. Reads carry `workspace:read`; cancelling a
+ * subtree mutates it, so that path passes a write scope instead.
  */
-const requireAuthorizedWork = (workId: WorkId) =>
+const requireAuthorizedWork = (
+  workId: WorkId,
+  scope: 'workspace:read' | 'work:update' = 'workspace:read',
+) =>
   Effect.gen(function* () {
     const service = yield* WorkUnitService
     const stored = yield* service.get(workId)
@@ -26,8 +32,8 @@ const requireAuthorizedWork = (workId: WorkId) =>
         Effect.fail(new NotFoundError({ entity: 'work', id: workId })),
       onSome: Effect.succeed,
     })
-    yield* authorizeWorkspace('workspace:read', found.workspace_id)
-    return service
+    const actor = yield* authorizeWorkspace(scope, found.workspace_id)
+    return { service, actor }
   })
 
 /**
@@ -51,10 +57,30 @@ const positiveIntParam = (
       )
 }
 
+export const cancelWorkSubtree = respond(
+  'POST /v1/work/:work_id/cancel_subtree',
+)(
+  Effect.gen(function* () {
+    const idClock = yield* IdClock
+    const workId = yield* workIdParam()
+    // Cancelling mutates the subtree, so this needs a write scope.
+    const { service, actor } = yield* requireAuthorizedWork(
+      workId,
+      'work:update',
+    )
+    const now = yield* idClock.now
+    const result = yield* service.cancelSubtree(workId, actor, now)
+    return yield* ok(200)(CancelSubtreeResponse, {
+      cancelled: result.cancelled,
+      blocked: result.blocked,
+    })
+  }),
+)
+
 export const listWorkChildren = respond('GET /v1/work/:work_id/children')(
   Effect.gen(function* () {
     const workId = yield* workIdParam()
-    const service = yield* requireAuthorizedWork(workId)
+    const { service } = yield* requireAuthorizedWork(workId)
     const children = yield* service.listChildren(workId)
     return yield* ok(200)(Schema.Array(WorkUnit), children)
   }),
@@ -65,7 +91,7 @@ export const listWorkDescendants = respond('GET /v1/work/:work_id/descendants')(
     const request = yield* HttpServerRequest.HttpServerRequest
     const params = new URL(request.url, 'http://acp.local').searchParams
     const workId = yield* workIdParam()
-    const service = yield* requireAuthorizedWork(workId)
+    const { service } = yield* requireAuthorizedWork(workId)
     const maxDepth = yield* positiveIntParam(params, 'max_depth')
     const limit = yield* positiveIntParam(params, 'limit')
     const descendants = yield* service.listDescendants(workId, {
