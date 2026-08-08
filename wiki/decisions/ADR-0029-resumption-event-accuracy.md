@@ -60,7 +60,7 @@ transition for which the claim is true.
 `work.resumed`: work has returned from the review gate and is live again.
 
 These two share an event deliberately. They are the same fact — the review gate
-released the unit — and the *reason* it released is already fully recorded by
+released the unit — and the _reason_ it released is already fully recorded by
 the preceding `review.cancelled` or `review.changes_requested` event. Minting a
 second event type to re-encode information the log already carries would add
 wire vocabulary without adding knowledge.
