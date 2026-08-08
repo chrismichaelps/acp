@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { Cause, Effect, Exit, Layer, Option, Schema } from 'effect'
 import { TestIdentityLive } from '../identity/identity-test-support.js'
+import { CostServiceLive } from '../cost/index.js'
 import { TestAppConfigLive } from '../../config/app-config-test-support.js'
 import { EventStoreLive, InProcessEventBrokerLive } from '../events/index.js'
 import { NoHooksLive } from '../hooks/index.js'
@@ -53,7 +54,8 @@ const layerWith = (providerLayer: Layer.Layer<SandboxProvider>) => {
     ),
     Layer.mergeAll(config, NoHooksLive, TestIdentityLive),
   )
-  const work = Layer.provideMerge(WorkUnitServiceLive, base)
+  const cost = Layer.provideMerge(CostServiceLive, base)
+  const work = Layer.provideMerge(WorkUnitServiceLive, Layer.merge(base, cost))
   const leases = Layer.provideMerge(LeaseServiceLive, base)
   return Layer.provideMerge(
     SandboxServiceLive,

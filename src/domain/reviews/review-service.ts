@@ -6,6 +6,7 @@ import { WorkerIdentityService } from '../identity/index.js'
 import { WorkUnitService } from '../work-units/index.js'
 import { Storage } from '../../infrastructure/storage/index.js'
 import type {
+  BudgetExhaustedError,
   ForbiddenError,
   HookDeniedError,
   IncompleteChildrenError,
@@ -47,6 +48,7 @@ export type ReviewVerdictError =
   | IncompleteChildrenError
   | HookDeniedError
   | ForbiddenError
+  | BudgetExhaustedError
   | StorageError
 
 export type ReviewServiceError = ValidationError | ReviewVerdictError

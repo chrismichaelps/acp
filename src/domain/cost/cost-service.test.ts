@@ -1,7 +1,7 @@
 /** @Acp.Domain.Cost.Service.Test — entries, rollups and budget admission */
 import { describe, expect, it } from 'vitest'
 import { Effect, Option, Schema } from 'effect'
-import { Storage } from '../../infrastructure/storage/index.js'
+import type { Storage } from '../../infrastructure/storage/index.js'
 import { CostEntryId } from '../../protocol/schema/index.js'
 import { WorkUnitService } from '../work-units/index.js'
 import { CostService } from './cost-service.js'
@@ -17,8 +17,7 @@ const entryId = (raw: string) => Schema.decodeUnknownSync(CostEntryId)(raw)
 
 const run = <A, E>(
   program: Effect.Effect<A, E, CostService | WorkUnitService | Storage>,
-) =>
-  Effect.runPromise(Effect.provide(program, CostTestLayer))
+) => Effect.runPromise(Effect.provide(program, CostTestLayer))
 
 describe('CostService.report', () => {
   it('prices own spend and propagates descendant spend to every ancestor', () =>
@@ -140,6 +139,54 @@ describe('CostService.checkAdmission', () => {
         const types = (yield* h.readEvents()).map((event) => event.type)
         expect(types).toContain('budget.granted')
         expect(types).toContain('budget.exhausted')
+      }),
+    ))
+})
+
+describe('work-unit budget enforcement', () => {
+  it('refuses a claim when an ancestor budget is exhausted', () =>
+    run(
+      Effect.gen(function* () {
+        const h = yield* makeHarness
+        const cost = yield* CostService
+        const work = yield* WorkUnitService
+        yield* h.setBudget(h.rootId, 1)
+        yield* cost.report({
+          entry_id: entryId('cost_claim_spent'),
+          work_id: h.rootId,
+          worker_id: Option.none(),
+          usage: { ...zeroUsage, cpu_seconds: 1 },
+          source: 'metered',
+          now: costNow,
+        })
+        const result = yield* Effect.either(
+          work.claim(h.grandchildId, costWorkerId, costNow),
+        )
+        expect(result._tag).toBe('Left')
+        if (result._tag === 'Left') {
+          expect(result.left._tag).toBe('BudgetExhaustedError')
+        }
+      }),
+    ))
+
+  it('does not interrupt work already running past its budget', () =>
+    run(
+      Effect.gen(function* () {
+        const h = yield* makeHarness
+        const cost = yield* CostService
+        const work = yield* WorkUnitService
+        yield* h.setBudget(h.rootId, 1)
+        yield* cost.report({
+          entry_id: entryId('cost_running_spent'),
+          work_id: h.rootId,
+          worker_id: Option.none(),
+          usage: { ...zeroUsage, cpu_seconds: 1 },
+          source: 'metered',
+          now: costNow,
+        })
+        expect(Option.getOrThrow(yield* work.get(h.rootId)).state).toBe(
+          'running',
+        )
       }),
     ))
 })

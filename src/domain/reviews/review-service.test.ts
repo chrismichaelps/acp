@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { Chunk, Effect, Layer, Option, Schema } from 'effect'
 import { TestIdentityLive } from '../identity/identity-test-support.js'
+import { CostServiceLive } from '../cost/index.js'
 import {
   EventStore,
   EventStoreLive,
@@ -28,12 +29,14 @@ const StorageAndEventsLive = Layer.provideMerge(
   EventStoreLive,
   Layer.merge(InMemoryStorageLive, InProcessEventBrokerLive),
 )
+const BaseLive = Layer.merge(
+  StorageAndEventsLive,
+  Layer.mergeAll(TestAppConfigLive(), NoHooksLive, TestIdentityLive),
+)
+const CostLive = Layer.provideMerge(CostServiceLive, BaseLive)
 const WorkLive = Layer.provideMerge(
   WorkUnitServiceLive,
-  Layer.merge(
-    StorageAndEventsLive,
-    Layer.mergeAll(TestAppConfigLive(), NoHooksLive, TestIdentityLive),
-  ),
+  Layer.merge(BaseLive, CostLive),
 )
 const TestLive = Layer.provideMerge(ReviewServiceLive, WorkLive)
 

@@ -36,8 +36,8 @@ const base = Layer.merge(
   ),
   Layer.mergeAll(TestAppConfigLive(), NoHooksLive, TestIdentityLive),
 )
-const work = Layer.provideMerge(WorkUnitServiceLive, base)
 const cost = Layer.provideMerge(CostServiceLive, base)
+const work = Layer.provideMerge(WorkUnitServiceLive, Layer.merge(base, cost))
 
 export const CostTestLayer = Layer.merge(work, cost)
 
@@ -49,8 +49,8 @@ export interface CostHarness {
   readonly setBudget: (
     workId: WorkId,
     limitMicroUsd: number,
-  ) => Effect.Effect<CostRollup, never>
-  readonly readEvents: () => Effect.Effect<readonly Event[], never>
+  ) => Effect.Effect<CostRollup>
+  readonly readEvents: () => Effect.Effect<readonly Event[]>
 }
 
 const create = (id: WorkId, parent?: WorkId) =>

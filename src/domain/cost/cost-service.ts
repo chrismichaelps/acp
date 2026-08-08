@@ -4,10 +4,10 @@ import { Storage } from '../../infrastructure/storage/storage.js'
 import { EventStore } from '../events/index.js'
 import {
   BudgetExhaustedError,
-  NotFoundError,
   StorageError,
   UnpricedModelError,
 } from '../../protocol/errors/protocol-error.js'
+import type { NotFoundError } from '../../protocol/errors/protocol-error.js'
 import { CostEntry, Event, PriceTable } from '../../protocol/schema/index.js'
 import type {
   Budget,
@@ -56,7 +56,7 @@ export interface CostServiceApi {
   ) => Effect.Effect<PriceTable, CostServiceError>
   readonly budgetPath: (
     workId: WorkId,
-  ) => Effect.Effect<readonly BudgetOnPath[], CostServiceError>
+  ) => Effect.Effect<readonly BudgetOnPath[], NotFoundError | StorageError>
   /**
    * Admission at an entry boundary. `actor` names who is entering, so the
    * `budget.exhausted` event records who was refused rather than only what.
@@ -65,7 +65,7 @@ export interface CostServiceApi {
     workId: WorkId,
     actor: WorkerId,
     now: Timestamp,
-  ) => Effect.Effect<void, CostServiceError | BudgetExhaustedError>
+  ) => Effect.Effect<void, NotFoundError | StorageError | BudgetExhaustedError>
 }
 
 export class CostService extends Context.Tag('CostService')<
