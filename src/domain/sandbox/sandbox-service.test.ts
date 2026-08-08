@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { Cause, Effect, Exit, Layer, Option, Schema } from 'effect'
 import { TestIdentityLive } from '../identity/identity-test-support.js'
-import { CostServiceLive } from '../cost/index.js'
+import { CostService, CostServiceLive, zeroUsage } from '../cost/index.js'
 import { TestAppConfigLive } from '../../config/app-config-test-support.js'
 import { EventStoreLive, InProcessEventBrokerLive } from '../events/index.js'
 import { NoHooksLive } from '../hooks/index.js'
@@ -11,6 +11,7 @@ import { LeaseService, LeaseServiceLive } from '../leases/index.js'
 import { WorkUnitService, WorkUnitServiceLive } from '../work-units/index.js'
 import {
   CreateWorkPayload,
+  CostEntryId,
   RequestLeasePayload,
   Timestamp,
   WorkId,
@@ -26,6 +27,7 @@ const workerId = Schema.decodeUnknownSync(WorkerId)('agent_a')
 const workspaceId = Schema.decodeUnknownSync(WorkspaceId)('workspace_sbx')
 const workId = Schema.decodeUnknownSync(WorkId)('work_1')
 const now = Schema.decodeUnknownSync(Timestamp)('2026-08-05T10:00:00Z')
+const stoppedAt = Schema.decodeUnknownSync(Timestamp)('2026-08-05T10:00:30Z')
 
 /** Captures the spec handed to the provider, so composition is observable. */
 const recordingProvider = () => {
@@ -63,7 +65,7 @@ const layerWith = (providerLayer: Layer.Layer<SandboxProvider>) => {
   )
 }
 
-type Env = SandboxService | WorkUnitService | LeaseService
+type Env = SandboxService | WorkUnitService | LeaseService | CostService
 
 const runExit = <A, E>(
   program: Effect.Effect<A, E, Env>,
@@ -107,6 +109,16 @@ const takeLease = (uri: string, forWork = workId) =>
   )
 
 const ensure = Effect.flatMap(SandboxService, (svc) => svc.ensure(workId, now))
+
+const priceCompute = Effect.flatMap(CostService, (cost) =>
+  cost.setPriceTable({
+    workspace_id: workspaceId,
+    models: {},
+    cpu_micro_usd_per_second: 10,
+    mib_micro_usd_per_second: 0,
+    updated_at: now,
+  }),
+)
 
 describe('sandbox service', () => {
   it('mounts the workspace read-only and leased paths read-write', () => {
@@ -180,5 +192,53 @@ describe('sandbox service', () => {
     )
     expect(Exit.isSuccess(exit)).toBe(true)
     expect(seen).toEqual([])
+  })
+
+  it('refuses to provision when the work budget is exhausted', () => {
+    const { layer } = recordingProvider()
+    const exit = runExit(
+      Effect.gen(function* () {
+        yield* createWork
+        yield* priceCompute
+        const cost = yield* CostService
+        yield* cost.setBudget(workId, {
+          limit_micro_usd: 1,
+          set_by: workerId,
+          set_at: now,
+        })
+        yield* cost.report({
+          entry_id: Schema.decodeUnknownSync(CostEntryId)('cost_sbx_spent'),
+          work_id: workId,
+          worker_id: Option.none(),
+          usage: { ...zeroUsage, cpu_seconds: 1 },
+          source: 'metered',
+          now,
+        })
+        return yield* ensure
+      }),
+      layer,
+    )
+    expect(failureTag(exit)).toBe('BudgetExhaustedError')
+  })
+
+  it('meters sandbox lifetime once when stopped repeatedly', () => {
+    const { layer } = recordingProvider()
+    const exit = runExit(
+      Effect.gen(function* () {
+        yield* createWork
+        yield* priceCompute
+        const sandbox = yield* SandboxService
+        const cost = yield* CostService
+        yield* sandbox.ensure(workId, now)
+        yield* sandbox.stop(workId, stoppedAt)
+        yield* sandbox.stop(workId, stoppedAt)
+        return yield* cost.rollupOf(workId)
+      }),
+      layer,
+    )
+    expect(Exit.isSuccess(exit)).toBe(true)
+    if (Exit.isSuccess(exit)) {
+      expect(exit.value.own_micro_usd).toBe(300)
+    }
   })
 })

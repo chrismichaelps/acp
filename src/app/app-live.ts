@@ -113,6 +113,7 @@ const SandboxProvidedLive = Layer.provideMerge(
     LeaseProvidedLive,
     SandboxAdapterLive,
     AppConfigLive,
+    CostProvidedLive,
   ),
 )
 

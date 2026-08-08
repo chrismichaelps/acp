@@ -69,7 +69,8 @@ export const stopWorkSandbox = respond('DELETE /v1/work/:work_id/sandbox')(
     const sandbox = yield* SandboxService
     const workId = yield* workIdParam()
     yield* authorizeWork(workId, 'work:update')
-    yield* sandbox.stop(workId)
+    const idClock = yield* IdClock
+    yield* sandbox.stop(workId, yield* idClock.now)
     return yield* ok(200)(Schema.Struct({ stopped: Schema.Boolean }), {
       stopped: true,
     })
