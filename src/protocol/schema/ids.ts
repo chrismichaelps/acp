@@ -43,3 +43,6 @@ export type EventId = typeof EventId.Type
 
 export const SessionId = Schema.String.pipe(Schema.brand('SessionId'))
 export type SessionId = typeof SessionId.Type
+
+export const CostEntryId = Schema.String.pipe(Schema.brand('CostEntryId'))
+export type CostEntryId = typeof CostEntryId.Type

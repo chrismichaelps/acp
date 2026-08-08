@@ -66,6 +66,8 @@ const domainTagRecord: Record<DomainError['_tag'], true> = {
   UnauthorizedError: true,
   ForbiddenError: true,
   UnsupportedCapabilityError: true,
+  BudgetExhaustedError: true,
+  UnpricedModelError: true,
   StorageError: true,
 }
 

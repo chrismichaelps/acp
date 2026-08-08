@@ -9,6 +9,8 @@ export const ErrorCode = Schema.Literal(
   'conflict',
   'claim_conflict',
   'lease_conflict',
+  'budget_exhausted',
+  'unpriced_model',
   'invalid_state_transition',
   'unsupported_capability',
   'rate_limited',

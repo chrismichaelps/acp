@@ -101,7 +101,33 @@ export type DomainError =
   | IncompleteChildrenError
   | DepthLimitExceededError
   | HookDeniedError
+  | BudgetExhaustedError
+  | UnpricedModelError
   | StorageError
+
+/**
+ * A budget on the path from this work unit to the workspace root is spent.
+ * Names the unit whose budget was exceeded, because with subtree rollup the
+ * refused unit and the budget-carrying unit are usually different.
+ */
+export class BudgetExhaustedError extends Data.TaggedError(
+  'BudgetExhaustedError',
+)<{
+  readonly workId: string
+  readonly budgetWorkId: string
+  readonly limitMicroUsd: number
+  readonly inclusiveMicroUsd: number
+}> {}
+
+/**
+ * A cost report named a model with no price while a budget was in force.
+ * Refusing here is what stops a budget being escaped by reporting spend under
+ * an unknown model name; with no budget in force the report is accepted.
+ */
+export class UnpricedModelError extends Data.TaggedError('UnpricedModelError')<{
+  readonly workId: string
+  readonly model: string
+}> {}
 
 export interface ProtocolErrorResponse {
   readonly httpStatus: number
@@ -237,6 +263,33 @@ export const toProtocolError = (e: DomainError): ProtocolErrorResponse => {
             'unsupported_capability',
             `Capability ${e.capability} is not supported.`,
             { capability: e.capability },
+          ),
+        },
+      }
+    case 'BudgetExhaustedError':
+      return {
+        httpStatus: 403,
+        body: {
+          error: envelope(
+            'budget_exhausted',
+            `Budget on ${e.budgetWorkId} is spent: ${String(e.inclusiveMicroUsd)} of ${String(e.limitMicroUsd)} micro-USD.`,
+            {
+              work_id: e.workId,
+              budget_work_id: e.budgetWorkId,
+              limit_micro_usd: e.limitMicroUsd,
+              inclusive_micro_usd: e.inclusiveMicroUsd,
+            },
+          ),
+        },
+      }
+    case 'UnpricedModelError':
+      return {
+        httpStatus: 400,
+        body: {
+          error: envelope(
+            'unpriced_model',
+            `Model "${e.model}" has no price in this workspace, and a budget is in force.`,
+            { work_id: e.workId, model: e.model },
           ),
         },
       }
