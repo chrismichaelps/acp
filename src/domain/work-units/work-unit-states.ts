@@ -58,7 +58,16 @@ export const eventTypeForTransition = (
     case 'claimed':
       return 'work.claimed'
     case 'running':
-      return from === 'claimed' ? 'work.started' : 'work.unblocked'
+      // Three origins reach `running`, and each means something different to a
+      // consumer replaying the log. Collapsing the last two into
+      // `work.unblocked` asserted a `blocked` state the unit was never in,
+      // which is the replay corruption [[ADR-0028-cancelling-blocked-work]]
+      // refused to accept from the other direction. See [[ADR-0029-resumption-event-accuracy]].
+      return from === 'claimed'
+        ? 'work.started'
+        : from === 'blocked'
+          ? 'work.unblocked'
+          : 'work.resumed'
     case 'blocked':
       return 'work.blocked'
     case 'needs_review':

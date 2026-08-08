@@ -459,7 +459,7 @@ const main = async () => {
     'work.progressed',
     'review.requested',
     'review.changes_requested',
-    'work.unblocked',
+    'work.resumed',
     'review.approved',
     'lease.released',
     'work.completed',

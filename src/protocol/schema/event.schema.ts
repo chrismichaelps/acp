@@ -16,6 +16,7 @@ export const EventType = Schema.Literal(
   'work.progressed',
   'work.blocked',
   'work.unblocked',
+  'work.resumed',
   'work.needs_review',
   'work.completed',
   'work.cancelled',
