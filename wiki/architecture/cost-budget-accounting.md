@@ -237,8 +237,11 @@ SSE tail consumer with it. Only budget _decisions_ are causal.
 - **Service, over the in-memory store:** attested and metered append; ancestor
   CAS propagation; refusal at each of the three boundaries; unpriced-model
   behaviour with and without a budget in force.
-- **Conformance:** new queries added to `query-conformance.test.ts` so SQLite,
-  Postgres, and in-memory stay in step.
+- **Conformance:** none needed. The three new collections scope on
+  `workspace_id` and `work_id`, both already in `INDEXED_FIELDS`, so no adapter
+  gains a promoted column and `query-conformance.test.ts` is unchanged. Should a
+  later slice need a new indexed field, that is when the conformance additions
+  are owed.
 
 ## Out of scope
 
