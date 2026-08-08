@@ -107,6 +107,13 @@ non-MOC pages, zero missing mirrors, and zero orphans.
 The active production audit uses the existing Dockerized ACP host directly; no
 separate provider runner is added.
 
+## Designs (pre-ADR)
+
+- [[cost-budget-accounting]] — DRAFT; sub-project A of the control-plane
+  evolution. Dimensioned cost ledger, workspace-scoped pricing derived at read
+  time, subtree budget rollup, enforcement at claim boundaries. Opens as
+  ADR-0030 when implementation starts.
+
 ## ADRs
 
 - [[ADR-0001-architecture-foundation]] — ACCEPTED.
