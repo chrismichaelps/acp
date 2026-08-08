@@ -85,13 +85,17 @@ tags: [moc, adr]
   supervise an isolated execution environment per work unit behind a
   `SandboxProvider` port, turning leases into read-write mounts so they stop
   being advisory, while deliberately never owning the agent harness.
-- [[ADR-0027-subtree-cancellation]] — PROPOSED — cancel a spawn subtree
+- [[ADR-0027-subtree-cancellation]] — ACCEPTED — cancel a spawn subtree
   deepest-first with the root last, report units whose state admits no
   `cancelled` edge instead of forcing them, and replace atomicity with
   idempotence so a partial cascade is resumable.
 - [[ADR-0028-cancelling-blocked-work]] — ACCEPTED — let `blocked` reach
   `cancelled` directly, so abandoning externally-stalled work no longer requires
   writing a false `work.unblocked` event to get there.
+- [[ADR-0029-resumption-event-accuracy]] — ACCEPTED — reserve `work.unblocked`
+  for the one origin that was actually blocked and add `work.resumed` for work
+  returning from the review gate, so replaying the log stops implying a
+  `blocked` state that never existed.
 
 ## Referenced by
 

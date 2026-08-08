@@ -288,6 +288,8 @@ reconstruct where a unit stands:
 | `needs_review → approved`          | `review approve`                | `review.approved`          |
 | `needs_review → changes_requested` | `review request-changes`        | `review.changes_requested` |
 | `needs_review → rejected`          | `review reject`                 | `review.rejected`          |
+| `needs_review → running`           | `review cancel`                 | `work.resumed`             |
+| `changes_requested → running`      | `work update --state running`   | `work.resumed`             |
 | `approved → completed`             | `work update --state completed` | `work.completed`           |
 | `* → cancelled`                    | `work update --state cancelled` | `work.cancelled`           |
 

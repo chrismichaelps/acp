@@ -125,8 +125,10 @@ approved -> completed
 `changes_requested` is included in [[common]] `WorkState` because spec §14 includes
 the transition path even though spec §10.3 omitted it from the prose list.
 `needs_review -> running` is reserved for [[review-service]] cancellation; the
-transition emits `work.unblocked` because the review gate has been withdrawn
-without creating a reviewer outcome.
+transition emits `work.resumed` because the review gate has been withdrawn
+without creating a reviewer outcome. `work.unblocked` is reserved for the one
+origin that was actually blocked, `blocked -> running` — see
+[[ADR-0029-resumption-event-accuracy]].
 
 ## Negative Logic (Prohibited Paths)
 

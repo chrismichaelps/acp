@@ -270,7 +270,10 @@ describe('ReviewService', () => {
       'review.requested',
       'work.needs_review',
       'review.cancelled',
-      'work.unblocked',
+      // The unit went to review, not to `blocked`, so its return to `running`
+      // is a resumption. Reporting `work.unblocked` here claimed a state it
+      // was never in.
+      'work.resumed',
     ])
   })
 

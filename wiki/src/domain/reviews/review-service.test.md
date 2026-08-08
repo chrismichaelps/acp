@@ -28,7 +28,7 @@ work `needs_review`, and ordered request/work events. Approve only with every
 requirement met, transition work to approved, and persist/emit optional signature
 evidence. Reject partial requirements. Request changes and require coupled
 `changes_requested`; cancel and require review `cancelled`, work resumed to
-`running`, and `work.unblocked`. Pin work/workspace indexes and
+`running`, and `work.resumed`. Pin work/workspace indexes and
 `NotFoundError` for a missing review.
 
 ## Negative Logic (Prohibited Paths)
