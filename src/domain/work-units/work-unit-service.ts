@@ -3,6 +3,7 @@ import { Chunk, Context, Effect, Layer, Option, Schema } from 'effect'
 import { AppConfigTag } from '../../config/app-config.js'
 import { HookDispatcher } from '../hooks/index.js'
 import { WorkerIdentityService } from '../identity/index.js'
+import { CostService } from '../cost/index.js'
 import {
   allowedTransitions,
   childGatedTargets,
@@ -13,19 +14,9 @@ import {
   newWorkUnit,
   planSubtreeCancellation,
 } from './work-unit-spawn-graph.js'
-import type {
-  BlockedCancellation,
-  ListDescendantsOptions,
-} from './work-unit-spawn-graph.js'
+import type { ListDescendantsOptions } from './work-unit-spawn-graph.js'
 import { EventStore } from '../events/index.js'
 import { Storage } from '../../infrastructure/storage/index.js'
-import type {
-  DepthLimitExceededError,
-  ForbiddenError,
-  HookDeniedError,
-  IncompleteChildrenError,
-  ValidationError,
-} from '../../protocol/errors/protocol-error.js'
 import {
   ClaimConflictError,
   InvalidStateTransitionError,
@@ -34,7 +25,6 @@ import {
 } from '../../protocol/errors/protocol-error.js'
 import { Event, WorkUnit } from '../../protocol/schema/index.js'
 import type {
-  CreateWorkPayload,
   WorkerAssertionPayload,
   EventType,
   Timestamp,
@@ -43,42 +33,21 @@ import type {
   WorkspaceId,
   WorkState,
 } from '../../protocol/schema/index.js'
+import type {
+  CancelSubtreeResult,
+  CreateWorkInput,
+  WorkUnitClaimError,
+  WorkUnitCreateError,
+  WorkUnitTransitionError,
+} from './work-unit-service-types.js'
 
-export interface CreateWorkInput {
-  readonly id: WorkId
-  readonly payload: CreateWorkPayload
-  readonly createdBy: WorkerId
-  readonly now: Timestamp
-}
-
-export type WorkUnitCreateError =
-  | NotFoundError
-  | ValidationError
-  | InvalidStateTransitionError
-  | DepthLimitExceededError
-  | StorageError
-
-export type WorkUnitClaimError =
-  | NotFoundError
-  | ClaimConflictError
-  | InvalidStateTransitionError
-  | HookDeniedError
-  | ForbiddenError
-  | StorageError
-
-export type WorkUnitTransitionError =
-  | NotFoundError
-  | InvalidStateTransitionError
-  | IncompleteChildrenError
-  | HookDeniedError
-  | StorageError
-
-export interface CancelSubtreeResult {
-  /** Cancelled by this call, deepest-first. Empty on a re-run. */
-  readonly cancelled: readonly WorkId[]
-  /** Non-terminal units whose state admits no `cancelled` edge. */
-  readonly blocked: readonly BlockedCancellation[]
-}
+export type {
+  CancelSubtreeResult,
+  CreateWorkInput,
+  WorkUnitClaimError,
+  WorkUnitCreateError,
+  WorkUnitTransitionError,
+} from './work-unit-service-types.js'
 
 export interface WorkUnitServiceApi {
   readonly create: (
@@ -163,6 +132,7 @@ const make = Effect.gen(function* () {
   const config = yield* AppConfigTag
   const hooks = yield* HookDispatcher
   const identity = yield* WorkerIdentityService
+  const cost = yield* CostService
 
   const encodeWork = (work: WorkUnit) =>
     Schema.encode(WorkUnit)(work).pipe(
@@ -314,6 +284,12 @@ const make = Effect.gen(function* () {
         yield* graph.assertChildrenComplete(work.id, to)
       }
 
+      // Budgets gate entry into execution. Work already running is never
+      // interrupted when later reports exhaust its budget.
+      if (to === 'claimed' || to === 'running') {
+        yield* cost.checkAdmission(work.id, actor, now)
+      }
+
       yield* hooks.dispatch('work.before_transition', {
         point: 'work.before_transition',
         workspaceId: work.workspace_id,
@@ -386,6 +362,8 @@ const make = Effect.gen(function* () {
           }),
         )
       }
+
+      yield* cost.checkAdmission(work.id, workerId, now)
 
       yield* hooks.dispatch('work.before_claim', {
         point: 'work.before_claim',
@@ -496,5 +474,10 @@ const make = Effect.gen(function* () {
 export const WorkUnitServiceLive: Layer.Layer<
   WorkUnitService,
   never,
-  Storage | EventStore | AppConfigTag | HookDispatcher | WorkerIdentityService
+  | Storage
+  | EventStore
+  | AppConfigTag
+  | HookDispatcher
+  | WorkerIdentityService
+  | CostService
 > = Layer.effect(WorkUnitService, make)

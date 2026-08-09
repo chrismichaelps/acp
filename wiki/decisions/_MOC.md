@@ -96,6 +96,9 @@ tags: [moc, adr]
   for the one origin that was actually blocked and add `work.resumed` for work
   returning from the review gate, so replaying the log stops implying a
   `blocked` state that never existed.
+- [[ADR-0030-cost-budget-accounting]] — ACCEPTED — record dimensioned token and
+  compute entries, price them by workspace policy, roll spend through the spawn
+  graph, and refuse new execution when any enclosing budget is exhausted.
 
 ## Referenced by
 

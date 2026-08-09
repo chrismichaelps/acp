@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { Cause, Effect, Exit, Layer, Option, Schema } from 'effect'
 import { TestAppConfigLive } from '../../config/app-config-test-support.js'
+import { CostServiceLive } from '../cost/index.js'
 import { EventStoreLive, InProcessEventBrokerLive } from '../events/index.js'
 import { NoHooksLive } from '../hooks/index.js'
 import { InMemoryStorageLive } from '../../infrastructure/storage/index.js'
@@ -89,9 +90,10 @@ const base = Layer.merge(
     ),
   ),
 )
+const cost = Layer.provideMerge(CostServiceLive, base)
 const work = Layer.provideMerge(
   WorkUnitServiceLive,
-  Layer.merge(base, workersLive),
+  Layer.mergeAll(base, workersLive, cost),
 )
 const TestLive = Layer.provideMerge(ReviewServiceLive, work)
 

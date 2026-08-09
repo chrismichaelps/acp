@@ -57,6 +57,7 @@ export const WorkerAssertionPayload = Schema.Struct({
     'work.claim',
     'review.verdict',
     'grill.answer',
+    'cost.report',
   ),
   target_id: Schema.NonEmptyString,
   timestamp: Timestamp,

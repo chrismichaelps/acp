@@ -142,7 +142,7 @@ describe('AcpHttpApi', () => {
       .map(({ method, path }) => routeKey(method, path))
       .sort()
 
-    expect(typedRoutes).toHaveLength(59)
+    expect(typedRoutes).toHaveLength(63)
     expect(typedRoutes).toEqual(productionV1RouteKeys())
   })
 

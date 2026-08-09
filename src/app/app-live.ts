@@ -3,6 +3,7 @@ import { Layer } from 'effect'
 import { AppConfigLive } from '../config/app-config.js'
 import { ArtifactServiceLive } from '../domain/artifacts/index.js'
 import { CheckpointServiceLive } from '../domain/checkpoints/index.js'
+import { CostServiceLive } from '../domain/cost/index.js'
 import { EventStoreLive } from '../domain/events/index.js'
 import { GrillServiceLive } from '../domain/grills/index.js'
 import { LeaseServiceLive } from '../domain/leases/index.js'
@@ -52,12 +53,18 @@ const WorkerIdentityProvidedLive = Layer.provideMerge(
   ),
 )
 
+const CostProvidedLive = Layer.provideMerge(
+  CostServiceLive,
+  EventStoreProvidedLive,
+)
+
 const WorkUnitProvidedLive = Layer.provideMerge(
   WorkUnitServiceLive,
   Layer.mergeAll(
     EventStoreProvidedLive,
     HostHooksLive,
     WorkerIdentityProvidedLive,
+    CostProvidedLive,
   ),
 )
 const WorkspaceProvidedLive = Layer.provideMerge(
@@ -106,6 +113,7 @@ const SandboxProvidedLive = Layer.provideMerge(
     LeaseProvidedLive,
     SandboxAdapterLive,
     AppConfigLive,
+    CostProvidedLive,
   ),
 )
 
@@ -114,6 +122,7 @@ export const AppLive = Layer.mergeAll(
   StorageProvidedLive,
   EventBrokerProvidedLive,
   EventStoreProvidedLive,
+  CostProvidedLive,
   SessionIssuerProvidedLive,
   WorkUnitProvidedLive,
   WorkerServiceLive.pipe(Layer.provide(StorageProvidedLive)),

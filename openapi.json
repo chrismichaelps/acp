@@ -178,6 +178,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -241,6 +243,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -636,6 +640,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -697,6 +703,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -910,6 +918,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -971,6 +981,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -1032,6 +1044,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -1187,6 +1201,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -1248,6 +1264,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -1393,6 +1411,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -1456,6 +1476,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -1517,6 +1539,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -1726,6 +1750,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -1789,6 +1815,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -1850,6 +1878,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -1911,6 +1941,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -2125,6 +2157,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -2186,6 +2220,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -2247,6 +2283,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -2308,6 +2346,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -2512,6 +2552,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -2573,6 +2615,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -2634,6 +2678,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -2793,6 +2839,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -2854,6 +2902,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -2915,6 +2965,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -3090,6 +3142,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -3151,6 +3205,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -3212,6 +3268,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -3407,6 +3465,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -3468,6 +3528,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -3529,6 +3591,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -3716,6 +3780,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -3779,6 +3845,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -3840,6 +3908,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -4100,6 +4170,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -4161,6 +4233,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -4222,6 +4296,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -4416,6 +4492,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -4479,6 +4557,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -4540,6 +4620,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -4601,6 +4683,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -4662,6 +4746,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -4894,6 +4980,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -4955,6 +5043,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -5016,6 +5106,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -5077,6 +5169,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -5218,7 +5312,9 @@
                         "grill.answered",
                         "grill.verdict_set",
                         "grill.passed",
-                        "grill.failed"
+                        "grill.failed",
+                        "budget.granted",
+                        "budget.exhausted"
                       ]
                     },
                     "workspace_id": {
@@ -5290,6 +5386,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -5353,6 +5451,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -5414,6 +5514,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -5475,6 +5577,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -5647,6 +5751,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -5710,6 +5816,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -5771,6 +5879,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -5832,6 +5942,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -5975,6 +6087,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -6036,6 +6150,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -6097,6 +6213,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -6210,6 +6328,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -6271,6 +6391,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -6332,6 +6454,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -6482,6 +6606,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -6543,6 +6669,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -6604,6 +6732,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -6665,6 +6795,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -6869,6 +7001,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -6930,6 +7064,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -6991,6 +7127,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -7210,6 +7348,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -7273,6 +7413,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -7334,6 +7476,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -7395,6 +7539,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -7554,6 +7700,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -7615,6 +7763,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -7676,6 +7826,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -7832,6 +7984,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -7893,6 +8047,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -7954,6 +8110,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -8129,6 +8287,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -8190,6 +8350,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -8251,6 +8413,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -8446,6 +8610,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -8507,6 +8673,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -8568,6 +8736,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -8745,6 +8915,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -8806,6 +8978,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -8964,6 +9138,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -9027,6 +9203,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -9088,6 +9266,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -9149,6 +9329,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -9388,6 +9570,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -9451,6 +9635,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -9512,6 +9698,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -9573,6 +9761,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -9634,6 +9824,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -9757,6 +9949,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -9818,6 +10012,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -9879,6 +10075,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -10053,6 +10251,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -10114,6 +10314,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -10175,6 +10377,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -10236,6 +10440,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -10394,6 +10600,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -10457,6 +10665,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -10518,6 +10728,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -10579,6 +10791,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -10826,6 +11040,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -10889,6 +11105,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -10950,6 +11168,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -11011,6 +11231,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -11253,6 +11475,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -11314,6 +11538,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -11375,6 +11601,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -11490,6 +11718,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -11551,6 +11781,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -11612,6 +11844,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -11754,6 +11988,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -11817,6 +12053,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -11878,6 +12116,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -11939,6 +12179,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -12145,6 +12387,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -12208,6 +12452,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -12269,6 +12515,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -12558,6 +12806,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -12621,6 +12871,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -12682,6 +12934,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -12716,6 +12970,1493 @@
               }
             }
           }
+        }
+      }
+    },
+    "/v1/work/{work_id}/cost": {
+      "post": {
+        "tags": [
+          "cost"
+        ],
+        "operationId": "cost.reportCost",
+        "parameters": [
+          {
+            "name": "work_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "entry_id",
+                    "workspace_id",
+                    "work_id",
+                    "usage",
+                    "source",
+                    "recorded_at"
+                  ],
+                  "properties": {
+                    "entry_id": {
+                      "type": "string"
+                    },
+                    "workspace_id": {
+                      "type": "string"
+                    },
+                    "work_id": {
+                      "type": "string"
+                    },
+                    "worker_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "usage": {
+                      "type": "object",
+                      "required": [
+                        "input_tokens",
+                        "output_tokens",
+                        "cached_input_tokens",
+                        "cpu_seconds",
+                        "mib_seconds"
+                      ],
+                      "properties": {
+                        "model": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/components/schemas/NonEmptyString"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "input_tokens": {
+                          "type": "number",
+                          "description": "a non-negative number",
+                          "title": "nonNegative",
+                          "minimum": 0
+                        },
+                        "output_tokens": {
+                          "type": "number",
+                          "description": "a non-negative number",
+                          "title": "nonNegative",
+                          "minimum": 0
+                        },
+                        "cached_input_tokens": {
+                          "type": "number",
+                          "description": "a non-negative number",
+                          "title": "nonNegative",
+                          "minimum": 0
+                        },
+                        "cpu_seconds": {
+                          "type": "number",
+                          "description": "a non-negative number",
+                          "title": "nonNegative",
+                          "minimum": 0
+                        },
+                        "mib_seconds": {
+                          "type": "number",
+                          "description": "a non-negative number",
+                          "title": "nonNegative",
+                          "minimum": 0
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "attested",
+                        "metered"
+                      ]
+                    },
+                    "recorded_at": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpApiDecodeError"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "error"
+                      ],
+                      "properties": {
+                        "error": {
+                          "type": "object",
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "enum": [
+                                "invalid_request",
+                                "unauthorized",
+                                "forbidden",
+                                "not_found",
+                                "conflict",
+                                "claim_conflict",
+                                "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
+                                "invalid_state_transition",
+                                "unsupported_capability",
+                                "rate_limited",
+                                "internal_error"
+                              ]
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "details": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "required": [],
+                                  "properties": {},
+                                  "additionalProperties": {
+                                    "$id": "/schemas/unknown",
+                                    "title": "unknown"
+                                  }
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "entry_id",
+                  "usage"
+                ],
+                "properties": {
+                  "entry_id": {
+                    "type": "string"
+                  },
+                  "usage": {
+                    "type": "object",
+                    "required": [
+                      "input_tokens",
+                      "output_tokens",
+                      "cached_input_tokens",
+                      "cpu_seconds",
+                      "mib_seconds"
+                    ],
+                    "properties": {
+                      "model": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/components/schemas/NonEmptyString"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "input_tokens": {
+                        "type": "number",
+                        "description": "a non-negative number",
+                        "title": "nonNegative",
+                        "minimum": 0
+                      },
+                      "output_tokens": {
+                        "type": "number",
+                        "description": "a non-negative number",
+                        "title": "nonNegative",
+                        "minimum": 0
+                      },
+                      "cached_input_tokens": {
+                        "type": "number",
+                        "description": "a non-negative number",
+                        "title": "nonNegative",
+                        "minimum": 0
+                      },
+                      "cpu_seconds": {
+                        "type": "number",
+                        "description": "a non-negative number",
+                        "title": "nonNegative",
+                        "minimum": 0
+                      },
+                      "mib_seconds": {
+                        "type": "number",
+                        "description": "a non-negative number",
+                        "title": "nonNegative",
+                        "minimum": 0
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
+        }
+      },
+      "get": {
+        "tags": [
+          "cost"
+        ],
+        "operationId": "cost.getCost",
+        "parameters": [
+          {
+            "name": "work_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "work_id",
+                    "workspace_id",
+                    "own_micro_usd",
+                    "inclusive_micro_usd"
+                  ],
+                  "properties": {
+                    "work_id": {
+                      "type": "string"
+                    },
+                    "workspace_id": {
+                      "type": "string"
+                    },
+                    "own_micro_usd": {
+                      "type": "number",
+                      "description": "a non-negative number",
+                      "title": "nonNegative",
+                      "minimum": 0
+                    },
+                    "inclusive_micro_usd": {
+                      "type": "number",
+                      "description": "a non-negative number",
+                      "title": "nonNegative",
+                      "minimum": 0
+                    },
+                    "budget": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "limit_micro_usd",
+                            "set_by",
+                            "set_at"
+                          ],
+                          "properties": {
+                            "limit_micro_usd": {
+                              "type": "number",
+                              "description": "a non-negative number",
+                              "title": "nonNegative",
+                              "minimum": 0
+                            },
+                            "set_by": {
+                              "type": "string"
+                            },
+                            "set_at": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpApiDecodeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/work/{work_id}/budget": {
+      "put": {
+        "tags": [
+          "cost"
+        ],
+        "operationId": "cost.setBudget",
+        "parameters": [
+          {
+            "name": "work_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "work_id",
+                    "workspace_id",
+                    "own_micro_usd",
+                    "inclusive_micro_usd"
+                  ],
+                  "properties": {
+                    "work_id": {
+                      "type": "string"
+                    },
+                    "workspace_id": {
+                      "type": "string"
+                    },
+                    "own_micro_usd": {
+                      "type": "number",
+                      "description": "a non-negative number",
+                      "title": "nonNegative",
+                      "minimum": 0
+                    },
+                    "inclusive_micro_usd": {
+                      "type": "number",
+                      "description": "a non-negative number",
+                      "title": "nonNegative",
+                      "minimum": 0
+                    },
+                    "budget": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "limit_micro_usd",
+                            "set_by",
+                            "set_at"
+                          ],
+                          "properties": {
+                            "limit_micro_usd": {
+                              "type": "number",
+                              "description": "a non-negative number",
+                              "title": "nonNegative",
+                              "minimum": 0
+                            },
+                            "set_by": {
+                              "type": "string"
+                            },
+                            "set_at": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpApiDecodeError"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "error"
+                      ],
+                      "properties": {
+                        "error": {
+                          "type": "object",
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "enum": [
+                                "invalid_request",
+                                "unauthorized",
+                                "forbidden",
+                                "not_found",
+                                "conflict",
+                                "claim_conflict",
+                                "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
+                                "invalid_state_transition",
+                                "unsupported_capability",
+                                "rate_limited",
+                                "internal_error"
+                              ]
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "details": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "required": [],
+                                  "properties": {},
+                                  "additionalProperties": {
+                                    "$id": "/schemas/unknown",
+                                    "title": "unknown"
+                                  }
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "limit_micro_usd"
+                ],
+                "properties": {
+                  "limit_micro_usd": {
+                    "type": "number",
+                    "description": "a non-negative number",
+                    "title": "nonNegative",
+                    "minimum": 0
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/v1/workspaces/{workspace_id}/prices": {
+      "put": {
+        "tags": [
+          "cost"
+        ],
+        "operationId": "cost.setPrices",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "AcpSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "workspace_id",
+                    "models",
+                    "cpu_micro_usd_per_second",
+                    "mib_micro_usd_per_second",
+                    "updated_at"
+                  ],
+                  "properties": {
+                    "workspace_id": {
+                      "type": "string"
+                    },
+                    "models": {
+                      "type": "object",
+                      "required": [],
+                      "properties": {},
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "input_micro_usd_per_token",
+                          "output_micro_usd_per_token",
+                          "cached_input_micro_usd_per_token"
+                        ],
+                        "properties": {
+                          "input_micro_usd_per_token": {
+                            "type": "number",
+                            "description": "a non-negative number",
+                            "title": "nonNegative",
+                            "minimum": 0
+                          },
+                          "output_micro_usd_per_token": {
+                            "type": "number",
+                            "description": "a non-negative number",
+                            "title": "nonNegative",
+                            "minimum": 0
+                          },
+                          "cached_input_micro_usd_per_token": {
+                            "type": "number",
+                            "description": "a non-negative number",
+                            "title": "nonNegative",
+                            "minimum": 0
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "cpu_micro_usd_per_second": {
+                      "type": "number",
+                      "description": "a non-negative number",
+                      "title": "nonNegative",
+                      "minimum": 0
+                    },
+                    "mib_micro_usd_per_second": {
+                      "type": "number",
+                      "description": "a non-negative number",
+                      "title": "nonNegative",
+                      "minimum": 0
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpApiDecodeError"
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "error"
+                      ],
+                      "properties": {
+                        "error": {
+                          "type": "object",
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "enum": [
+                                "invalid_request",
+                                "unauthorized",
+                                "forbidden",
+                                "not_found",
+                                "conflict",
+                                "claim_conflict",
+                                "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
+                                "invalid_state_transition",
+                                "unsupported_capability",
+                                "rate_limited",
+                                "internal_error"
+                              ]
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "details": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "required": [],
+                                  "properties": {},
+                                  "additionalProperties": {
+                                    "$id": "/schemas/unknown",
+                                    "title": "unknown"
+                                  }
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_request",
+                            "unauthorized",
+                            "forbidden",
+                            "not_found",
+                            "conflict",
+                            "claim_conflict",
+                            "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
+                            "invalid_state_transition",
+                            "unsupported_capability",
+                            "rate_limited",
+                            "internal_error"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "details": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "required": [],
+                              "properties": {},
+                              "additionalProperties": {
+                                "$id": "/schemas/unknown",
+                                "title": "unknown"
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "workspace_id",
+                  "models",
+                  "cpu_micro_usd_per_second",
+                  "mib_micro_usd_per_second",
+                  "updated_at"
+                ],
+                "properties": {
+                  "workspace_id": {
+                    "type": "string"
+                  },
+                  "models": {
+                    "type": "object",
+                    "required": [],
+                    "properties": {},
+                    "additionalProperties": {
+                      "type": "object",
+                      "required": [
+                        "input_micro_usd_per_token",
+                        "output_micro_usd_per_token",
+                        "cached_input_micro_usd_per_token"
+                      ],
+                      "properties": {
+                        "input_micro_usd_per_token": {
+                          "type": "number",
+                          "description": "a non-negative number",
+                          "title": "nonNegative",
+                          "minimum": 0
+                        },
+                        "output_micro_usd_per_token": {
+                          "type": "number",
+                          "description": "a non-negative number",
+                          "title": "nonNegative",
+                          "minimum": 0
+                        },
+                        "cached_input_micro_usd_per_token": {
+                          "type": "number",
+                          "description": "a non-negative number",
+                          "title": "nonNegative",
+                          "minimum": 0
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "cpu_micro_usd_per_second": {
+                    "type": "number",
+                    "description": "a non-negative number",
+                    "title": "nonNegative",
+                    "minimum": 0
+                  },
+                  "mib_micro_usd_per_second": {
+                    "type": "number",
+                    "description": "a non-negative number",
+                    "title": "nonNegative",
+                    "minimum": 0
+                  },
+                  "updated_at": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
         }
       }
     },
@@ -13342,6 +15083,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -13403,6 +15146,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -13464,6 +15209,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -13642,6 +15389,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -13705,6 +15454,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -13766,6 +15517,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -13827,6 +15580,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -14054,6 +15809,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -14117,6 +15874,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -14178,6 +15937,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -14239,6 +16000,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -14300,6 +16063,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -14544,6 +16309,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -14605,6 +16372,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -14666,6 +16435,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -14727,6 +16498,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -14919,6 +16692,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -14980,6 +16755,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -15041,6 +16818,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -15102,6 +16881,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -15294,6 +17075,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -15355,6 +17138,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -15416,6 +17201,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -15477,6 +17264,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -15692,6 +17481,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -15755,6 +17546,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -15816,6 +17609,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -15877,6 +17672,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -16191,6 +17988,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -16252,6 +18051,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -16313,6 +18114,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -16533,6 +18336,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -16594,6 +18399,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -16655,6 +18462,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -16716,6 +18525,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -16936,6 +18747,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -16997,6 +18810,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -17058,6 +18873,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -17119,6 +18936,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -17334,6 +19153,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -17397,6 +19218,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -17458,6 +19281,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -17519,6 +19344,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -17761,6 +19588,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -17822,6 +19651,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -17883,6 +19714,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -18032,6 +19865,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -18095,6 +19930,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -18156,6 +19993,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -18217,6 +20056,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -18278,6 +20119,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -18462,6 +20305,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -18523,6 +20368,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -18584,6 +20431,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -18764,6 +20613,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -18827,6 +20678,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -18888,6 +20741,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -18949,6 +20804,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -19010,6 +20867,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -19217,6 +21076,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -19278,6 +21139,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -19339,6 +21202,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -19400,6 +21265,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -19649,6 +21516,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -19710,6 +21579,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -19771,6 +21642,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -19951,6 +21824,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -20014,6 +21889,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -20075,6 +21952,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -20136,6 +22015,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -20197,6 +22078,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -20396,6 +22279,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -20459,6 +22344,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -20520,6 +22407,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -20581,6 +22470,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -20642,6 +22533,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -20752,7 +22645,53 @@
             "name": "type",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "enum": [
+                "worker.online",
+                "worker.offline",
+                "worker.status_changed",
+                "workspace.created",
+                "workspace.updated",
+                "workspace.archived",
+                "work.created",
+                "work.claimed",
+                "work.started",
+                "work.progressed",
+                "work.blocked",
+                "work.unblocked",
+                "work.resumed",
+                "work.needs_review",
+                "work.completed",
+                "work.cancelled",
+                "lease.requested",
+                "lease.granted",
+                "lease.denied",
+                "lease.renewed",
+                "lease.released",
+                "lease.expired",
+                "lease.revoked",
+                "artifact.created",
+                "artifact.updated",
+                "artifact.deleted",
+                "checkpoint.created",
+                "memory.created",
+                "review.requested",
+                "review.approved",
+                "review.rejected",
+                "review.changes_requested",
+                "review.cancelled",
+                "review_comment.added",
+                "review_comment.resolved",
+                "review_comment.reopened",
+                "grill.opened",
+                "grill.question_added",
+                "grill.answered",
+                "grill.verdict_set",
+                "grill.passed",
+                "grill.failed",
+                "budget.granted",
+                "budget.exhausted"
+              ]
             },
             "required": false
           }
@@ -20828,7 +22767,9 @@
                           "grill.answered",
                           "grill.verdict_set",
                           "grill.passed",
-                          "grill.failed"
+                          "grill.failed",
+                          "budget.granted",
+                          "budget.exhausted"
                         ]
                       },
                       "workspace_id": {
@@ -20901,6 +22842,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -20964,6 +22907,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -21025,6 +22970,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -21149,7 +23096,9 @@
                           "grill.answered",
                           "grill.verdict_set",
                           "grill.passed",
-                          "grill.failed"
+                          "grill.failed",
+                          "budget.granted",
+                          "budget.exhausted"
                         ]
                       },
                       "workspace_id": {
@@ -21222,6 +23171,8 @@
                                 "conflict",
                                 "claim_conflict",
                                 "lease_conflict",
+                                "budget_exhausted",
+                                "unpriced_model",
                                 "invalid_state_transition",
                                 "unsupported_capability",
                                 "rate_limited",
@@ -21285,6 +23236,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -21346,6 +23299,8 @@
                             "conflict",
                             "claim_conflict",
                             "lease_conflict",
+                            "budget_exhausted",
+                            "unpriced_model",
                             "invalid_state_transition",
                             "unsupported_capability",
                             "rate_limited",
@@ -21542,6 +23497,9 @@
     },
     {
       "name": "memory"
+    },
+    {
+      "name": "cost"
     },
     {
       "name": "resume"

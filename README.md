@@ -369,6 +369,34 @@ before opening a live subscription, keeping context recovery proportional to the
 tail it actually needs. Worker presence, by contrast, is host-scoped current
 state (`worker list` / `worker get`), not derived from event history.
 
+### Cost and budgets
+
+ACP records raw token and compute quantities per work unit, prices them with
+workspace policy, and rolls spend through the spawn graph. A budget on a parent
+therefore bounds its entire subtree. Admission is checked when work is claimed,
+enters `running`, or provisions a sandbox; already-running work is never killed
+when later spend exhausts the limit.
+
+Cost entries stay out of the coordination event log. Only budget decisions are
+causal events:
+
+| Event              | Meaning                                      |
+| ------------------ | -------------------------------------------- |
+| `budget.granted`   | A worker or ancestor budget was set.         |
+| `budget.exhausted` | New execution was refused by a spent budget. |
+
+Budget-specific protocol failures are:
+
+| Error code         | Meaning                                                      |
+| ------------------ | ------------------------------------------------------------ |
+| `budget_exhausted` | A budget on the target-to-root path has reached its limit.   |
+| `unpriced_model`   | A report names an unpriced model while a budget is in force. |
+
+The REST surface is `POST/GET /v1/work/:work_id/cost`,
+`PUT /v1/work/:work_id/budget`, and
+`PUT /v1/workspaces/:workspace_id/prices`. Attested reports require a signed
+`cost.report` assertion; sandbox lifetime entries are metered by ACP.
+
 ---
 
 ## Transports

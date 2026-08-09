@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { Chunk, Effect, Layer, Option, Schema } from 'effect'
 import { TestIdentityLive } from '../identity/identity-test-support.js'
+import { CostServiceLive } from '../cost/index.js'
 import {
   EventStore,
   EventStoreLive,
@@ -31,12 +32,14 @@ const StorageAndEventsLive = Layer.provideMerge(
   Layer.merge(InMemoryStorageLive, InProcessEventBrokerLive),
 )
 
+const BaseLive = Layer.merge(
+  StorageAndEventsLive,
+  Layer.mergeAll(TestAppConfigLive(), NoHooksLive, TestIdentityLive),
+)
+const CostLive = Layer.provideMerge(CostServiceLive, BaseLive)
 const TestLive = Layer.provideMerge(
   WorkUnitServiceLive,
-  Layer.merge(
-    StorageAndEventsLive,
-    Layer.mergeAll(TestAppConfigLive(), NoHooksLive, TestIdentityLive),
-  ),
+  Layer.merge(BaseLive, CostLive),
 )
 
 const runSync = <A, E>(
@@ -60,12 +63,17 @@ const CasFailingStorageAndEventsLive = Layer.provideMerge(
   Layer.merge(CasFailingStorageLive, InProcessEventBrokerLive),
 )
 
+const CasFailingBaseLive = Layer.merge(
+  CasFailingStorageAndEventsLive,
+  Layer.mergeAll(TestAppConfigLive(), NoHooksLive, TestIdentityLive),
+)
+const CasFailingCostLive = Layer.provideMerge(
+  CostServiceLive,
+  CasFailingBaseLive,
+)
 const CasFailingTestLive = Layer.provideMerge(
   WorkUnitServiceLive,
-  Layer.merge(
-    CasFailingStorageAndEventsLive,
-    Layer.mergeAll(TestAppConfigLive(), NoHooksLive, TestIdentityLive),
-  ),
+  Layer.merge(CasFailingBaseLive, CasFailingCostLive),
 )
 
 const workId = Schema.decodeUnknownSync(WorkId)('work_state_machine')

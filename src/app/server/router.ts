@@ -32,6 +32,7 @@ import {
   listWorkReviews,
 } from './resume-routes.js'
 import { createMemory, listMemory } from './memory-routes.js'
+import { getCost, reportCost, setBudget, setPrices } from './cost-routes.js'
 import {
   addReviewComment,
   listReviewComments,
@@ -396,7 +397,14 @@ const commandRouter = leaseRouter.pipe(
   HttpRouter.post('/v1/reviews/:review_id/approve', approveReview),
 )
 
-const v1Router = commandRouter.pipe(
+const costRouter = commandRouter.pipe(
+  HttpRouter.post('/v1/work/:work_id/cost', reportCost),
+  HttpRouter.get('/v1/work/:work_id/cost', getCost),
+  HttpRouter.put('/v1/work/:work_id/budget', setBudget),
+  HttpRouter.put('/v1/workspaces/:workspace_id/prices', setPrices),
+)
+
+const v1Router = costRouter.pipe(
   HttpRouter.post('/v1/reviews/:review_id/reject', rejectReview),
   HttpRouter.post(
     '/v1/reviews/:review_id/request_changes',

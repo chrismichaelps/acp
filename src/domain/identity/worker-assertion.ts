@@ -9,7 +9,11 @@ import { Either } from 'effect'
  * to prove authorship of an action that changes nothing.
  */
 export type AssertionAction =
-  'worker.register' | 'work.claim' | 'review.verdict' | 'grill.answer'
+  | 'worker.register'
+  | 'work.claim'
+  | 'review.verdict'
+  | 'grill.answer'
+  | 'cost.report'
 
 export interface AssertionClaims {
   readonly workerId: string

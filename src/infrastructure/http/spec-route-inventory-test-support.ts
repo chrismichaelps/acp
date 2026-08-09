@@ -237,6 +237,30 @@ export const specV1Endpoints: readonly SpecEndpoint[] = [
     path: '/v1/memory',
   },
   {
+    group: 'cost',
+    name: 'reportCost',
+    method: 'POST',
+    path: '/v1/work/:work_id/cost',
+  },
+  {
+    group: 'cost',
+    name: 'getCost',
+    method: 'GET',
+    path: '/v1/work/:work_id/cost',
+  },
+  {
+    group: 'cost',
+    name: 'setBudget',
+    method: 'PUT',
+    path: '/v1/work/:work_id/budget',
+  },
+  {
+    group: 'cost',
+    name: 'setPrices',
+    method: 'PUT',
+    path: '/v1/workspaces/:workspace_id/prices',
+  },
+  {
     group: 'resume',
     name: 'getWorkResumePacket',
     method: 'GET',

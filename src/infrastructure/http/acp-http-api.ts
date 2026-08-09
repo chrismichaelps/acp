@@ -38,6 +38,7 @@ import {
 import { WorkspaceGroup } from './acp-http-api-workspaces.js'
 import { EventsGroup } from './acp-http-api-events.js'
 import { MemoryGroup } from './acp-http-api-memory.js'
+import { CostGroup } from './acp-http-api-cost.js'
 import {
   GrillGroup,
   ReviewCommentGroup,
@@ -442,6 +443,7 @@ export class AcpHttpApi extends HttpApi.make('acp')
   .add(ArtifactGroup)
   .add(CheckpointGroup)
   .add(MemoryGroup)
+  .add(CostGroup)
   .add(ResumeGroup)
   .add(ReviewGroup)
   .add(ReviewCommentGroup)

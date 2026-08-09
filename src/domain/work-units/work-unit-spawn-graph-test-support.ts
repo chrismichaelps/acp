@@ -1,6 +1,7 @@
 /** @Acp.Domain.WorkUnits.SpawnGraph.TestSupport — harness for spawn graph tests */
 import { Cause, Effect, Exit, Layer, Option, Schema } from 'effect'
 import { TestIdentityLive } from '../identity/identity-test-support.js'
+import { CostServiceLive } from '../cost/index.js'
 import { TestAppConfigLive } from '../../config/app-config-test-support.js'
 import { NoHooksLive } from '../hooks/index.js'
 import type { EventStore } from '../events/index.js'
@@ -26,21 +27,21 @@ export const now = Schema.decodeUnknownSync(Timestamp)('2026-08-04T10:00:00Z')
 
 export const id = (raw: string): WorkId => Schema.decodeUnknownSync(WorkId)(raw)
 
-const layerWithDepth = (maxWorkDepth: number) =>
-  Layer.provideMerge(
-    WorkUnitServiceLive,
-    Layer.merge(
-      Layer.provideMerge(
-        EventStoreLive,
-        Layer.merge(InMemoryStorageLive, InProcessEventBrokerLive),
-      ),
-      Layer.mergeAll(
-        TestAppConfigLive({ maxWorkDepth }),
-        NoHooksLive,
-        TestIdentityLive,
-      ),
+const layerWithDepth = (maxWorkDepth: number) => {
+  const base = Layer.merge(
+    Layer.provideMerge(
+      EventStoreLive,
+      Layer.merge(InMemoryStorageLive, InProcessEventBrokerLive),
+    ),
+    Layer.mergeAll(
+      TestAppConfigLive({ maxWorkDepth }),
+      NoHooksLive,
+      TestIdentityLive,
     ),
   )
+  const cost = Layer.provideMerge(CostServiceLive, base)
+  return Layer.provideMerge(WorkUnitServiceLive, Layer.merge(base, cost))
+}
 
 export type TestEnv = WorkUnitService | EventStore | Storage
 
