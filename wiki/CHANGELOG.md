@@ -2,6 +2,15 @@
 
 Temporal ledger of logic deltas (one line each). Forensic Guardian appends.
 
+- 2026-08-08 · cost and budget accounting · accepted and implemented
+  [[ADR-0030-cost-budget-accounting]]: immutable dimensioned cost entries,
+  workspace price tables, CAS own/subtree rollups, rebuildable derived spend,
+  work and sandbox admission checks, sandbox lifetime metering, signed
+  `cost.report` attribution, `budget.granted` / `budget.exhausted` events, and
+  four typed REST routes with regenerated OpenAPI; validation: 161 test files
+  and 1,042 tests passed, plus formatting, lint, typecheck, file-size, route
+  inventory, and OpenAPI drift gates · risk HIGH · [[cost-budget-accounting]]
+
 - 2026-07-16 · operational contracts + upgrade guard · made ACP's run-over-time
   behavior an explicit, tested contract: event retention stays delete-based with
   a monotonic never-reused `seq`, a preserved per-workspace high-water mark, an

@@ -109,10 +109,9 @@ separate provider runner is added.
 
 ## Designs (pre-ADR)
 
-- [[cost-budget-accounting]] — DRAFT; sub-project A of the control-plane
-  evolution. Dimensioned cost ledger, workspace-scoped pricing derived at read
-  time, subtree budget rollup, enforcement at claim boundaries. Opens as
-  ADR-0030 when implementation starts.
+- [[cost-budget-accounting]] — IMPLEMENTED; dimensioned cost ledger,
+  workspace-scoped pricing, subtree budget rollup, and admission enforcement at
+  work and sandbox boundaries. Governed by [[ADR-0030-cost-budget-accounting]].
 
 ## ADRs
 
@@ -147,6 +146,9 @@ separate provider runner is added.
   production Docker self-dogfood path into a one-command SQLite recovery story
   with wire-level collision and review evidence, run-scoped standalone image
   ownership, exhaustive cleanup, and success publication only after cleanup.
+- [[ADR-0030-cost-budget-accounting]] — ACCEPTED; immutable usage entries,
+  workspace price policy, CAS subtree rollups, and boundary-only budget
+  admission are implemented across the domain, sandbox, and REST contract.
 
 ## Build Order (vertical slices)
 
