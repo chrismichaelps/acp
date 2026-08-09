@@ -126,8 +126,7 @@ describe('event routes', () => {
       return (await res.json()) as { type: string }[]
     }
 
-    // Unfiltered sees both events; a type filter narrows to one; an unknown
-    // type yields an empty replay (not the whole log).
+    // Unfiltered sees both events and a valid type filter narrows to one.
     expect((await replay('')).map((e) => e.type)).toEqual([
       'work.created',
       'work.claimed',
@@ -138,7 +137,13 @@ describe('event routes', () => {
     expect((await replay('&type=work.claimed')).map((e) => e.type)).toEqual([
       'work.claimed',
     ])
-    expect(await replay('&type=not_a_real_event')).toEqual([])
+    const invalid = await handler(
+      new Request(
+        'http://acp.test/v1/events?workspace_id=workspace_typefilter&after_seq=0&type=not_a_real_event',
+        { method: 'GET', headers: { authorization: `Bearer ${token}` } },
+      ),
+    )
+    expect(invalid.status).toBe(400)
   })
 
   it('limits replayed workspace events at the route boundary', async () => {

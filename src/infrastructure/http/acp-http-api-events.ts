@@ -3,6 +3,7 @@ import { HttpApiEndpoint, HttpApiGroup } from '@effect/platform'
 import { Schema } from 'effect'
 import {
   Event,
+  EventType,
   ProtocolError,
   WorkspaceId,
 } from '../../protocol/schema/index.js'
@@ -31,10 +32,17 @@ export const EventsReplayParams = Schema.Struct({
     Schema.NumberFromString.pipe(Schema.int(), Schema.positive()),
     { as: 'Option' },
   ),
-  // Optional server-side event-type filter. Kept lenient (a plain string) so an
-  // unknown type yields an empty replay rather than a 400 — matching the CLI's
-  // prior client-side `--type` behavior, now honored across every transport.
-  type: Schema.optional(Schema.String),
+  // Optional server-side event-type filter, validated against the closed
+  // `EventType` vocabulary.
+  //
+  // This was previously a plain string, so an unknown type replayed as `200 []`
+  // to preserve the CLI's old client-side filtering. That made a typo
+  // indistinguishable from "no such events happened" — the caller cannot tell a
+  // wrong question from a true empty answer. Rejecting the filter still yields
+  // the property that comment cared about (an unknown type never replays the
+  // whole log), while every other closed vocabulary in the protocol already
+  // refuses unknown values. See [[ADR-0029-resumption-event-accuracy]].
+  type: Schema.optional(EventType),
 })
 export type EventsReplayParams = typeof EventsReplayParams.Type
 
