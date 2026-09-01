@@ -124,7 +124,7 @@ services:
   # ---- edge: Traefik reverse proxy (overlay on either base profile) ----
   traefik:
     profiles: ['edge']
-    image: traefik:v3.7.10
+    image: traefik:v3.7.12
     depends_on:
       - docker-socket-proxy
     ports:
